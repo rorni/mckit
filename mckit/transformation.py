@@ -115,8 +115,10 @@ class Transformation:
         k : float
             Free term of GQ surface equation in the main coordinate system.
         """
-        # TODO: Implement gq transformation method
-        raise NotImplementedError
+        m = np.dot(np.dot(self._u, m1), np.transpose(self._u))
+        v = np.dot(self._u, v1) - 2 * np.dot(m, self._t)
+        k = k1 - np.dot(v, self._t) - np.dot(self._t, np.dot(m, self._t))
+        return m, v, k
 
     def apply2plane(self, v1, k1):
         """Gets parameters of plane surface in the main coordinate system.

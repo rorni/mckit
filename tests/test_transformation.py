@@ -4,8 +4,8 @@ import unittest
 
 import numpy as np
 
-from mckit.transformation import Transformation
 from mckit.constants import *
+from mckit.transformation import Transformation
 
 places = 10
 
@@ -74,6 +74,22 @@ class TestTransformationMethods(unittest.TestCase):
                 self.assertAlmostEqual(k, k_ref)
                 for j in range(3):
                     self.assertAlmostEqual(v[j], v_ref[j])
+
+    def test_gq_transformation(self):
+        # Sphere transformation example
+        p0 = np.array([3, -4, 7])
+        R = 4
+        m1 = np.eye(3)
+        v1 = -2 * p0
+        k1 = np.linalg.norm(p0)**2 - R**2
+        m, v, k = tr_glob.apply2gq(m1, v1, k1)
+        v_ref = -2 * tr_glob.apply2point(p0)
+        k_ref = np.linalg.norm(-0.5 * v_ref)**2 - R**2
+        self.assertAlmostEqual(k, k_ref)
+        for i in range(3):
+            self.assertAlmostEqual(v_ref[i], v[i])
+            for j in range(3):
+                self.assertAlmostEqual(m1[i, j], m[i, j])
 
 normal_creation_cases = [
     ({}, IDENTITY_ROTATION, ORIGIN),
@@ -152,3 +168,4 @@ plane_transformation_cases = [
     (np.array([1, -2, 3]), np.array([2, 3, 5])),
     (np.array([-4, 0, 5]), np.array([2, 3, 5]))
 ]
+
