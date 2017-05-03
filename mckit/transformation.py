@@ -133,13 +133,14 @@ class Transformation:
         Returns
         -------
         v : numpy.ndarray
-            A vector of size 3 which defines vetor, normal to the plane surface
+            A vector of size 3 which defines vector, normal to the plane surface
             in the main coordinate system.
         k : float
             Free term of plane surface equation in the main coordinate system.
         """
-        # TODO: Implement plane transformation method
-        raise NotImplementedError
+        v = np.dot(self._u, v1)
+        k = k1 - np.dot(v, self._t)
+        return v, k
 
     def apply2point(self, p1):
         """Gets coordinates of point p1 in the main coordinate system.

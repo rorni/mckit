@@ -63,6 +63,17 @@ class TestTransformationMethods(unittest.TestCase):
                     else:
                         self.assertAlmostEqual(result[j], v[j])
 
+    def test_plane_transformation(self):
+        for i, (v1, p1) in enumerate(plane_transformation_cases):
+            with self.subTest(i=i):
+                k1 = -np.dot(v1, p1)
+                v, k = tr_glob.apply2plane(v1, k1)
+                v_ref = tr_glob.apply2vector(v1)
+                k_ref = -np.dot(v_ref, tr_glob.apply2point(p1))
+
+                self.assertAlmostEqual(k, k_ref)
+                for j in range(3):
+                    self.assertAlmostEqual(v[j], v_ref[j])
 
 normal_creation_cases = [
     ({}, IDENTITY_ROTATION, ORIGIN),
@@ -132,4 +143,12 @@ vector_transformation_cases = [
     (np.array([[1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 2, 0], [0, 0, 1]]),
      np.array([[np.sqrt(3) / 2, 0.5, 0], [np.sqrt(3), 1, 0],
                [-0.5, np.sqrt(3) / 2, 0], [-1, np.sqrt(3), 0], [0, 0, 1]]))
+]
+
+plane_transformation_cases = [
+    (np.array([1, 0, 0]), np.array([2, 3, 5])),
+    (np.array([0, 1, 0]), np.array([2, 3, 5])),
+    (np.array([0, 0, 1]), np.array([2, 3, 5])),
+    (np.array([1, -2, 3]), np.array([2, 3, 5])),
+    (np.array([-4, 0, 5]), np.array([2, 3, 5]))
 ]
