@@ -3,6 +3,8 @@
 
 import numpy as np
 
+from .constants import *
+
 
 __all__ = ['Transformation']
 
@@ -47,9 +49,44 @@ class Transformation:
     reverse()
         Reverses this transformation, and returns the result.
     """
-    def __init__(self):
-        # TODO: Implement transformation creation.
-        pass
+    def __init__(self, translation=ORIGIN, rotation=None,
+                 indegrees=False, inverted=False):
+
+        translation = np.array(translation, dtype=float)
+        if translation.shape != (3,):
+            raise ValueError('Wrong length of translation vector.')
+
+        if rotation is None:
+            u = IDENTITY_ROTATION
+        else:
+            u = np.array(rotation, dtype=float)
+            if indegrees:
+                u = np.cos(np.multiply(u, np.pi / 180.0))
+
+            if u.shape == (9,):
+                u = u.reshape((3, 3), order='F')
+            if u.shape != (3, 3):
+                raise ValueError('Wrong number of rotation parameters.')
+            # normalize auxiliary CS basis and orthogonalize it.
+            u, r = np.linalg.qr(u)
+            # QR decomposition returns orthogonal matrix u - which is corrected
+            # rotation matrix, and upper triangular matrix r. On the main
+            # diagonal r contains lengths of corresponding (negative if the
+            # corrected vector is directed opposite to the initial one) input
+            # basis vectors. Other elements are cosines of angles between
+            # different basis vectors.
+
+            # cos(pi/2 - ANGLE_TOLERANCE) = sin(ANGLE_TOLERANCE) - maximum
+            # value of cosine of angle between two basis vectors.
+            cos_th = np.sin(ANGLE_TOLERANCE)
+            if abs(r[0, 1]) > cos_th or abs(r[0, 2]) > cos_th or \
+               abs(r[1, 2]) > cos_th:
+                raise ValueError('Non-orthogonality is greater than 0.001 rad.')
+            # To preserve directions of corrected basis vectors.
+            for i in range(3):
+                u[:, i] = u[:, i] * np.sign(r[i, i])
+        self._u = u
+        self._t = -np.dot(u, translation) if inverted else translation.copy()
 
     def apply2gq(self, m1, v1, k1):
         """Gets parameters of generic quadratic surface in the main CS.
