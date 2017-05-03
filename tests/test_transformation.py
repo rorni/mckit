@@ -40,6 +40,19 @@ class TestTransformationCreation(unittest.TestCase):
                                                IDENTITY_ROTATION[j, k], places)
 
 
+class TestTransformationMethods(unittest.TestCase):
+    def test_point_transformation(self):
+        for i, (p1, p) in enumerate(point_transformation_cases):
+            with self.subTest(i=i):
+                result = tr_glob.apply2point(p1)
+                for j in range(p.shape[0]):
+                    if len(p.shape) > 1:
+                        for k in range(p.shape[1]):
+                            self.assertAlmostEqual(result[j, k], p[j, k])
+                    else:
+                        self.assertAlmostEqual(result[j], p[j])
+
+
 normal_creation_cases = [
     ({}, IDENTITY_ROTATION, ORIGIN),
     ({'indegrees': True}, IDENTITY_ROTATION, ORIGIN),
@@ -83,4 +96,18 @@ orthogonalization_creation_cases = [
     {'rotation': [30, 60, 90, 119.943, 29.943, 90, 90, 90, 0], 'indegrees': True},
     {'rotation': [30, 60, 90, 120, 30, 90, 90.057, 90, 0.057], 'indegrees': True},
     {'rotation': [30, 60, 90, 120, 30, 90, 89.943, 90, 0.057], 'indegrees': True},
+]
+
+tr_glob = Transformation(translation=[1, 2, -3], indegrees=True,
+                         rotation=[30, 60, 90, 120, 30, 90, 90, 90, 0])
+
+point_transformation_cases = [
+    (np.array([1, 0, 0]), np.array([np.sqrt(3) / 2 + 1, 2.5, -3])),
+    (np.array([2, 0, 0]), np.array([np.sqrt(3) + 1, 3, -3])),
+    (np.array([0, 1, 0]), np.array([0.5, np.sqrt(3) / 2 + 2, -3])),
+    (np.array([0, 2, 0]), np.array([0, np.sqrt(3) + 2, -3])),
+    (np.array([0, 0, 1]), np.array([1, 2, -2])),
+    (np.array([[1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 2, 0], [0, 0, 1]]),
+     np.array([[np.sqrt(3) / 2 + 1, 2.5, -3], [np.sqrt(3) + 1, 3, -3],
+        [0.5, np.sqrt(3) / 2 + 2, -3], [0, np.sqrt(3) + 2, -3], [1, 2, -2]]))
 ]

@@ -62,7 +62,7 @@ class Transformation:
             u = np.array(rotation, dtype=float)
             if indegrees:
                 u = np.cos(np.multiply(u, np.pi / 180.0))
-
+            # TODO: Implement creation from reduced rotation parameter set.
             if u.shape == (9,):
                 u = u.reshape((3, 3), order='F')
             if u.shape != (3, 3):
@@ -148,14 +148,17 @@ class Transformation:
         ----------
         p1 : array_like[float]
             Coordinates of the point(s) in the auxiliary coordinate system.
+            It has shape (3,) if there is the only point or (N, 3) - if there
+            are N points.
 
         Returns
         -------
         p : numpy.ndarray
-            Coordinates of the point in the main coordinate system.
+            Coordinates of the point(s) in the main coordinate system.
         """
-        # TODO: Implement point transformation method
-        raise NotImplementedError
+        # Matrix U is transposed to change U p1 -> p1 U^T - to preserve shape
+        # of p1 and p.
+        return np.dot(p1, np.transpose(self._u)) + self._t
 
     def apply2vector(self, v1):
         """Gets coordinates of vector v1 in the main coordinate system.

@@ -83,14 +83,13 @@ MCNP позволяет задать геометрию в такой систе
 
 .. math::
    :label: trpoint
-   
-   \mathbf{r} &= U \mathbf{r'} + \mathbf{T}
+
+   \mathbf{r} = U \mathbf{r'} + \mathbf{T}
    
 Обращая это выражение, получим формулу для обратного преобразования:
 
 .. math::
-   
-   \mathbf{r'} &= U^T (\mathbf{r} - \mathbf{T})
+   \mathbf{r'} = U^T (\mathbf{r} - \mathbf{T})
 
 Если ввести обозначения
 
