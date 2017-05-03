@@ -52,6 +52,17 @@ class TestTransformationMethods(unittest.TestCase):
                     else:
                         self.assertAlmostEqual(result[j], p[j])
 
+    def test_vector_transformation(self):
+        for i, (v1, v) in enumerate(vector_transformation_cases):
+            with self.subTest(i=i):
+                result = tr_glob.apply2vector(v1)
+                for j in range(v.shape[0]):
+                    if len(v.shape) > 1:
+                        for k in range(v.shape[1]):
+                            self.assertAlmostEqual(result[j, k], v[j, k])
+                    else:
+                        self.assertAlmostEqual(result[j], v[j])
+
 
 normal_creation_cases = [
     ({}, IDENTITY_ROTATION, ORIGIN),
@@ -110,4 +121,15 @@ point_transformation_cases = [
     (np.array([[1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 2, 0], [0, 0, 1]]),
      np.array([[np.sqrt(3) / 2 + 1, 2.5, -3], [np.sqrt(3) + 1, 3, -3],
         [0.5, np.sqrt(3) / 2 + 2, -3], [0, np.sqrt(3) + 2, -3], [1, 2, -2]]))
+]
+
+vector_transformation_cases = [
+    (np.array([1, 0, 0]), np.array([np.sqrt(3) / 2, 0.5, 0])),
+    (np.array([2, 0, 0]), np.array([np.sqrt(3), 1, 0])),
+    (np.array([0, 1, 0]), np.array([-0.5, np.sqrt(3) / 2, 0])),
+    (np.array([0, 2, 0]), np.array([-1, np.sqrt(3), 0])),
+    (np.array([0, 0, 1]), np.array([0, 0, 1])),
+    (np.array([[1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 2, 0], [0, 0, 1]]),
+     np.array([[np.sqrt(3) / 2, 0.5, 0], [np.sqrt(3), 1, 0],
+               [-0.5, np.sqrt(3) / 2, 0], [-1, np.sqrt(3), 0], [0, 0, 1]]))
 ]

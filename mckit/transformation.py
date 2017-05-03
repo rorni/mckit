@@ -166,15 +166,15 @@ class Transformation:
         Parameters
         ----------
         v1 : array_like[float]
-            Coordinates of the vector in the auxiliary coordinate system.
+            Coordinates of the vector(s) in the auxiliary coordinate system.
 
         Returns
         -------
         v : numpy.ndarray
-            Coordinates of the vector in the main coordinate system.
+            Coordinates of the vector(s) in the main coordinate system.
         """
-        # TODO: Implement vector transformation method
-        raise NotImplementedError
+        # In contrast with apply2point - no translation is needed.
+        return np.dot(v1, np.transpose(self._u))
 
     def reverse(self):
         """Reverses this transformation.
