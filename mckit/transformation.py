@@ -189,6 +189,6 @@ class Transformation:
         tr : Transform
             Reversed version of this transformation.
         """
-        # TODO: Implement reverse transformation method.
-        raise NotImplementedError
-
+        u1 = np.transpose(self._u)
+        t1 = -np.dot(u1, self._t)
+        return Transformation(translation=t1, rotation=u1)

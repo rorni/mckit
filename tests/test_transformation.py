@@ -91,6 +91,19 @@ class TestTransformationMethods(unittest.TestCase):
             for j in range(3):
                 self.assertAlmostEqual(m1[i, j], m[i, j])
 
+    def test_reverse(self):
+        tr_inv = tr_glob.reverse()
+        for i, (p1, p) in enumerate(point_transformation_cases):
+            with self.subTest(i=i):
+                result = tr_inv.apply2point(p)
+                for j in range(p.shape[0]):
+                    if len(p.shape) > 1:
+                        for k in range(p.shape[1]):
+                            self.assertAlmostEqual(result[j, k], p1[j, k])
+                    else:
+                        self.assertAlmostEqual(result[j], p1[j])
+
+
 normal_creation_cases = [
     ({}, IDENTITY_ROTATION, ORIGIN),
     ({'indegrees': True}, IDENTITY_ROTATION, ORIGIN),
