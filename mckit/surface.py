@@ -137,7 +137,7 @@ class Plane(Surface):
         # Test sense of all region vertices.
         sense = self.test_point(region)
         # Returns 0 if both +1 and -1 values present.
-        return np.max(sense) + np.min(sense)
+        return np.sign(np.max(sense) + np.min(sense))
 
 
 class GQuadratic(Surface):

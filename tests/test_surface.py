@@ -4,8 +4,8 @@ import unittest
 
 import numpy as np
 
-from mckit.transformation import Transformation
 from mckit.surface import Plane
+from mckit.transformation import Transformation
 
 
 tr_glob = Transformation(translation=[1, 2, -3], indegrees=True,
@@ -29,9 +29,16 @@ class TestPlaneSurface(unittest.TestCase):
                 sense = plane.test_point(p1)
                 if isinstance(sense, np.ndarray):
                     for s, a in zip(sense, ans):
-                        self.assertAlmostEqual(s, a)
+                        self.assertEqual(s, a)
                 else:
-                    self.assertAlmostEqual(sense, ans)
+                    self.assertEqual(sense, ans)
+
+    def test_region_test(self):
+        for i, (v, k, ans) in enumerate(plane_region_test_cases):
+            with self.subTest(i=i):
+                plane = Plane(v, k)
+                result = plane.test_region(region)
+                self.assertEqual(result, ans)
 
 
 plane_creation_cases = [
@@ -50,4 +57,28 @@ plane_point_test_cases = [
     (np.array([1.e-6, 100, -300]), +1), (np.array([-1.e-6, 200, -500]), -1),
     (np.array([[1, 0, 0], [-1, 0, 0], [0.1, 0, 0], [-0.1, 0, 0], [1.e-6, 100, -300],
                [-1.e-6, 200, -500]]), np.array([1, -1, 1, -1, 1, -1]))
+]
+
+region = np.array([[-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1],
+                   [1, -1, -1],  [1, -1, 1],  [1, 1, -1],  [1, 1, 1]])
+plane_region_test_cases = [
+    ([1, 0, 0], 0, 0),
+    ([1, 0, 0], 1.001, 1),
+    ([1, 0, 0], -1.001, -1),
+    ([1, 0, 0], 0.999, 0),
+    ([1, 0, 0], -0.999, 0),
+    ([0, 1, 0], 0, 0),
+    ([0, 1, 0], 1.001, 1),
+    ([0, 1, 0], -1.001, -1),
+    ([0, 1, 0], 0.999, 0),
+    ([0, 1, 0], -0.999, 0),
+    ([0, 0, 1], 0, 0),
+    ([0, 0, 1], 1.001, 1),
+    ([0, 0, 1], -1.001, -1),
+    ([0, 0, 1], 0.999, 0),
+    ([0, 0, 1], -0.999, 0),
+    ([1, 1, 1], -2.999, 0),
+    ([1, 1, 1], -3.001, -1),
+    ([1, 1, 1], 2.999, 0),
+    ([1, 1, 1], 3.001, 1)
 ]
