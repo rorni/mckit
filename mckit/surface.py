@@ -57,10 +57,12 @@ class Surface(ABC):
 
         Returns
         -------
-        sense : bool or numpy.ndarray[bool]
-            If the point has positive sense, then True value is returned.
-            Individual point - single bool value, array of points - array of
-            bool of shape (num_points,) is returned.
+        sense : int or numpy.ndarray[int]
+            If the point has positive sense, then +1 value is returned.
+            If point lies on the surface 0 is returned.
+            If point has negative sense -1 is returned.
+            Individual point - single value, array of points - array of
+            ints of shape (num_points,) is returned.
         """
 
     @abstractmethod
@@ -126,8 +128,7 @@ class Plane(Surface):
         self._k = k
 
     def test_point(self, p):
-        # TODO: implement test_point method
-        raise NotImplementedError
+        return np.sign(np.dot(p, self._v) + self._k).astype(int)
 
     def transform(self, tr):
         # TODO: implement transform method
