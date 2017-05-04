@@ -56,6 +56,18 @@ class TestGQuadraticSurface(unittest.TestCase):
                     for l in range(3):
                         self.assertAlmostEqual(p._m[j, l], m_ref[j, l])
 
+    def test_gq_point_test(self):
+        gq = GQuadratic(np.diag([1, 1, 1]), [0, 0, 0], -1, tr_glob)
+        for i, (p, ans) in enumerate(gq_point_test_cases):
+            with self.subTest(i=i):
+                p1 = tr_glob.apply2point(p)
+                sense = gq.test_point(p1)
+                if isinstance(sense, np.ndarray):
+                    for s, a in zip(sense, ans):
+                        self.assertEqual(s, a)
+                else:
+                    self.assertEqual(sense, ans)
+
 
 plane_creation_cases = [
     (np.array([0, 0, 1]), -2, None, np.array([0, 0, 1]), -2),
@@ -102,4 +114,16 @@ plane_region_test_cases = [
 gq_creation_cases = [
     ([[1, 0, 0], [0, 2, 0], [0, 0, 3]], [1, 2, 3], -4, None),
     ([[1, 0, 0], [0, 2, 0], [0, 0, 3]], [1, 2, 3], -4, tr_glob)
+]
+
+gq_point_test_cases = [
+    (np.array([0, 0, 0]), -1), (np.array([-0.999, 0, 0]), -1),
+    (np.array([0.999, 0, 0]), -1), (np.array([-1.001, 0, 0]), +1),
+    (np.array([1.001, 0, 0]), +1), (np.array([0, 0.999, 0]), -1),
+    (np.array([0, 1.001, 0]), +1), (np.array([0, 0, -0.999]), -1),
+    (np.array(
+        [[0, 0, 0], [-0.999, 0, 0], [0.999, 0, 0], [-1.001, 0, 0], [1.001, 0, 0],
+         [0, 0.999, 0], [0, 1.001, 0], [0, 0, -0.999]]),
+     np.array([-1, -1, -1, 1, 1, -1, 1, -1]))
+
 ]

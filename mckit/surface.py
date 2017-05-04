@@ -167,8 +167,9 @@ class GQuadratic(Surface):
         self._k = k
 
     def test_point(self, p):
-        # TODO: implement test_point method
-        raise NotImplementedError
+        # TODO: Check mclight project for possible performance improvement.
+        quad = np.sum(np.multiply(np.dot(p, self._m), p), axis=-1)
+        return np.sign(quad + np.dot(p, self._v) + self._k).astype(int)
 
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr)
