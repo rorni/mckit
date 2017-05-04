@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from mckit.surface import Plane
+from mckit.surface import Plane, GQuadratic
 from mckit.transformation import Transformation
 
 
@@ -39,6 +39,22 @@ class TestPlaneSurface(unittest.TestCase):
                 plane = Plane(v, k)
                 result = plane.test_region(region)
                 self.assertEqual(result, ans)
+
+
+class TestGQuadraticSurface(unittest.TestCase):
+    def test_gq_creation(self):
+        for i, (m, v, k, tr) in enumerate(gq_creation_cases):
+            with self.subTest(i=i):
+                p = GQuadratic(m, v, k, transform=tr)
+                if tr is None:
+                    m_ref, v_ref, k_ref = np.array(m), np.array(v), k
+                else:
+                    m_ref, v_ref, k_ref = tr.apply2gq(m, v, k)
+                self.assertAlmostEqual(p._k, k_ref)
+                for j in range(3):
+                    self.assertAlmostEqual(p._v[j], v_ref[j])
+                    for l in range(3):
+                        self.assertAlmostEqual(p._m[j, l], m_ref[j, l])
 
 
 plane_creation_cases = [
@@ -81,4 +97,9 @@ plane_region_test_cases = [
     ([1, 1, 1], -3.001, -1),
     ([1, 1, 1], 2.999, 0),
     ([1, 1, 1], 3.001, 1)
+]
+
+gq_creation_cases = [
+    ([[1, 0, 0], [0, 2, 0], [0, 0, 3]], [1, 2, 3], -4, None),
+    ([[1, 0, 0], [0, 2, 0], [0, 0, 3]], [1, 2, 3], -4, tr_glob)
 ]

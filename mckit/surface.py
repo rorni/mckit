@@ -154,9 +154,17 @@ class GQuadratic(Surface):
     transform : Transformation
         Transformation to be applied to this surface.
     """
-    def __init(self, m, v, k, transform=None):
-        # TODO: implement GQuadratic instance creation.
-        pass
+    def __init__(self, m, v, k, transform=None):
+        Surface.__init__(self)
+        if transform is not None:
+            m, v, k = transform.apply2gq(m, v, k)
+        else:
+            m = np.array(m)
+            v = np.array(v)
+            k = k
+        self._m = m
+        self._v = v
+        self._k = k
 
     def test_point(self, p):
         # TODO: implement test_point method
