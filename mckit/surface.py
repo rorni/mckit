@@ -171,8 +171,7 @@ class GQuadratic(Surface):
         raise NotImplementedError
 
     def transform(self, tr):
-        # TODO: implement transform method
-        raise NotImplementedError
+        return GQuadratic(self._m, self._v, self._k, transform=tr)
 
     def test_region(self, region):
         # TODO: implement test_region method
