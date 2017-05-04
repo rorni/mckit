@@ -131,8 +131,7 @@ class Plane(Surface):
         return np.sign(np.dot(p, self._v) + self._k).astype(int)
 
     def transform(self, tr):
-        # TODO: implement transform method
-        raise NotImplementedError
+        return Plane(self._v, self._k, transform=tr)
 
     def test_region(self, region):
         # TODO: implement test_region method
