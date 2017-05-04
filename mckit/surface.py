@@ -134,8 +134,10 @@ class Plane(Surface):
         return Plane(self._v, self._k, transform=tr)
 
     def test_region(self, region):
-        # TODO: implement test_region method
-        raise NotImplementedError
+        # Test sense of all region vertices.
+        sense = self.test_point(region)
+        # Returns 0 if both +1 and -1 values present.
+        return np.max(sense) + np.min(sense)
 
 
 class GQuadratic(Surface):
