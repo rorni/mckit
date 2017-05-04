@@ -116,8 +116,14 @@ class Plane(Surface):
         Transformation to be applied to this plane.
     """
     def __init__(self, normal, offset, transform=None):
-        # TODO: implement Plane instance creation.
-        pass
+        Surface.__init__(self)
+        if transform is not None:
+            v, k = transform.apply2plane(normal, offset)
+        else:
+            v = np.array(normal)
+            k = offset
+        self._v = v
+        self._k = k
 
     def test_point(self, p):
         # TODO: implement test_point method
