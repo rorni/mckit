@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 from scipy.optimize import fmin_tnc
 
+from .constants import *
+
 
 def create_surface(kind, *params, transform=None):
     """Creates new surface.
@@ -24,7 +26,74 @@ def create_surface(kind, *params, transform=None):
         New surface.
     """
     # TODO: implement creation of surface.
-    raise NotImplementedError
+    if kind[-1] == 'X':
+        axis = EX
+    elif kind[-1] == 'Y':
+        axis = EY
+    elif kind[-1] == 'Z':
+        axis = EZ
+    # -------- Plane -------------------
+    if kind[0] == 'P':
+        if len(kind) == 2:
+            return Plane(axis, -params[0], transform=transform)
+        else:
+            return Plane(params[:3], -params[3], transform=transform)
+    # -------- Sphere ------------------
+    elif kind[0] == 'S':
+        if kind == 'S':
+            r0 = np.array(params[:3])
+        elif kind == 'SO':
+            r0 = ORIGIN
+        else:
+            r0 = axis * params[0]
+        R = params[-1]
+        return GQuadratic(np.eye(3), -2 * r0, np.sum(r0**2) - R**2, transform)
+    # -------- Cylinder ----------------
+    elif kind[0] == 'C':
+        A = 1 - axis
+        if kind[1] == '/':
+            Ax, Az = np.dot(A, EX), np.dot(A, EZ)
+            r0 = params[0] * (Ax * EX + (1 - Ax) * EY) + \
+                 params[1] * ((1 - Az) * EY + Az * EZ)
+        else:
+            r0 = ORIGIN
+        R = params[-1]
+        return GQuadratic(np.diag(A), -2 * r0, np.sum(r0**2) - R**2, transform)
+    # -------- Cone ---------------
+    elif kind[0] == 'K':
+        if kind[1] == '/':
+            r0 = np.array(params[:3])
+        else:
+            r0 = params[0] * axis
+        t2 = params[-1]
+        m = np.diag(1 - axis - t2 * axis)
+        v05 = r0 * (1 - axis - axis * t2)
+        return GQuadratic(m, -2 * v05, np.dot(v05, r0), transform)
+    # -------- SQ -------------------
+    elif kind == 'SQ':
+        A, B, C, D, E, F, G, x0, y0, z0 = params
+        m = np.diag([A, B, C])
+        v = 2 * np.array([D - A*x0, E - B*y0, F - C*z0])
+        k = A*x0**2 + B*y0**2 + C*z0**2 - 2 * (D*x0 + E*y0 + F*z0) + G
+        return GQuadratic(m, v, k, transform)
+    # ---------- GQ -----------------
+    elif kind == 'GQ':
+        A, B, C, D, E, F, G, H, J, k = params
+        m = np.array([[A, 0.5*D, 0.5*F], [0.5*D, B, 0.5*E], [0.5*F, 0.5*E, C]])
+        v = np.array([G, H, J])
+        return GQuadratic(m, v, k, transform)
+    # ---------- Torus ---------------------
+    elif kind[0] == 'T':
+        x0, y0, z0, R, a, b = params
+        return Torus([x0, y0, z0], axis, R, a, b, transform=transform)
+    # ---------- Axisymmetric surface defined by points ------
+    else:
+        if len(params) == 2:
+            return Plane(axis, -params[0], transform=transform)
+        elif len(params) == 4:
+            pass
+        elif len(params) == 6:
+            pass
 
 
 class Surface(ABC):
