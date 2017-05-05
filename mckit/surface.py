@@ -194,3 +194,36 @@ class GQuadratic(Surface):
     def _grad(self, x, sign=+1):
         return sign * (0.5 * np.dot(x, self._m) + self._v)
 
+
+class Torus(Surface):
+    """Tori surface class.
+
+    Parameters
+    ----------
+    center : array_like[float]
+        The center of torus.
+    axis : array_like[float]
+        The axis of torus.
+    R : float
+        Major radius.
+    a : float
+        Radius parallel to torus axis.
+    b : float
+        Radius perpendicular to torus axis.
+    transform : Transformation
+    """
+    def __init__(self, center, axis, R, a, b, transform=None):
+        # TODO: implement torus creation.
+        pass
+
+    def test_point(self, p):
+        # TODO: implement test_point
+        raise NotImplementedError
+
+    def test_region(self, region):
+        # TODO: implement test_region
+        raise NotImplementedError
+
+    def transform(self, tr):
+        # TODO: implement transform method
+        raise NotImplementedError
