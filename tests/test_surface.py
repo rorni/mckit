@@ -68,6 +68,13 @@ class TestGQuadraticSurface(unittest.TestCase):
                 else:
                     self.assertEqual(sense, ans)
 
+    def test_region_test(self):
+        for i, (m, v, k, ans) in enumerate(gq_region_test_cases):
+            with self.subTest(i=i):
+                gq = GQuadratic(m, v, k)
+                result = gq.test_region(region)
+                self.assertEqual(result, ans)
+
 
 plane_creation_cases = [
     (np.array([0, 0, 1]), -2, None, np.array([0, 0, 1]), -2),
@@ -125,5 +132,16 @@ gq_point_test_cases = [
         [[0, 0, 0], [-0.999, 0, 0], [0.999, 0, 0], [-1.001, 0, 0], [1.001, 0, 0],
          [0, 0.999, 0], [0, 1.001, 0], [0, 0, -0.999]]),
      np.array([-1, -1, -1, 1, 1, -1, 1, -1]))
+]
 
+gq_region_test_cases = [
+    # spheres
+    (np.diag([1, 1, 1]), [0, 0, 0], -1, 0),
+    (np.diag([1, 1, 1]), [0, 0, 0], -0.1, 0),
+    (np.diag([1, 1, 1]), [0, 0, 0], -3.01, -1),
+    (np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), -0.1, 0),
+    (np.diag([1, 1, 1]), -2 * np.array([2, 2, 2]), -3.01, 0),
+    (np.diag([1, 1, 1]), -2 * np.array([2, 2, 2]), -2.99, +1),
+    (np.diag([1, 1, 1]), -2 * np.array([2, 0, 0]), -1.01, 0),
+    (np.diag([1, 1, 1]), -2 * np.array([2, 0, 0]), -0.99, +1)
 ]

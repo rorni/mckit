@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+from scipy.optimize import fmin_tnc
 
 
 def create_surface(kind, *params, transform=None):
@@ -135,9 +136,9 @@ class Plane(Surface):
 
     def test_region(self, region):
         # Test sense of all region vertices.
-        sense = self.test_point(region)
+        senses = self.test_point(region)
         # Returns 0 if both +1 and -1 values present.
-        return np.sign(np.max(sense) + np.min(sense))
+        return np.sign(np.max(senses) + np.min(senses))
 
 
 class GQuadratic(Surface):
@@ -167,13 +168,29 @@ class GQuadratic(Surface):
         self._k = k
 
     def test_point(self, p):
-        # TODO: Check mclight project for possible performance improvement.
-        quad = np.sum(np.multiply(np.dot(p, self._m), p), axis=-1)
-        return np.sign(quad + np.dot(p, self._v) + self._k).astype(int)
+        return np.sign(self._func(p)).astype(int)
 
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr)
 
     def test_region(self, region):
-        # TODO: implement test_region method
-        raise NotImplementedError
+        senses = self.test_point(region)
+        sign = np.sign(np.max(senses) + np.min(senses))
+        if sign != 0:
+            bounds = [[lo, hi] for lo, hi in zip(np.amin(region, axis=0),
+                                                 np.amax(region, axis=0))]
+            for start_pt in region:
+                end_pt = fmin_tnc(self._func, start_pt, fprime=self._grad,
+                                  args=(sign,), bounds=bounds)[0]
+                if self.test_point(end_pt) * sign < 0:
+                    return 0
+        return sign
+
+    def _func(self, x, sign=+1):
+        # TODO: Check mclight project for possible performance improvement.
+        quad = np.sum(np.multiply(np.dot(x, self._m), x), axis=-1)
+        return sign * (quad + np.dot(x, self._v) + self._k)
+
+    def _grad(self, x, sign=+1):
+        return sign * (0.5 * np.dot(x, self._m) + self._v)
+
