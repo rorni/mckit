@@ -181,7 +181,7 @@ class GQuadratic(Surface):
                                                  np.amax(region, axis=0))]
             for start_pt in region:
                 end_pt = fmin_tnc(self._func, start_pt, fprime=self._grad,
-                                  args=(sign,), bounds=bounds)[0]
+                                  args=(sign,), bounds=bounds, disp=0)[0]
                 if self.test_point(end_pt) * sign < 0:
                     return 0
         return sign
@@ -192,7 +192,7 @@ class GQuadratic(Surface):
         return sign * (quad + np.dot(x, self._v) + self._k)
 
     def _grad(self, x, sign=+1):
-        return sign * (0.5 * np.dot(x, self._m) + self._v)
+        return sign * (2 * np.dot(x, self._m) + self._v)
 
 
 class Torus(Surface):
