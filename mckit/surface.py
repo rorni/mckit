@@ -213,8 +213,18 @@ class Torus(Surface):
     transform : Transformation
     """
     def __init__(self, center, axis, R, a, b, transform=None):
-        # TODO: implement torus creation.
-        pass
+        Surface.__init__(self)
+        if transform is not None:
+            center = transform.apply2point(center)
+            axis = transform.apply2vector(axis)
+        else:
+            center = np.array(center)
+            axis = np.array(axis)
+        self._center = center
+        self._axis = axis
+        self._R = R
+        self._a = a
+        self._b = b
 
     def test_point(self, p):
         # TODO: implement test_point
@@ -225,5 +235,4 @@ class Torus(Surface):
         raise NotImplementedError
 
     def transform(self, tr):
-        # TODO: implement transform method
-        raise NotImplementedError
+        return Torus(self._center, self._axis, self._R, self._a, self._b, tr)

@@ -4,8 +4,9 @@ import unittest
 
 import numpy as np
 
-from mckit.surface import Plane, GQuadratic
+from mckit.surface import Plane, GQuadratic, Torus
 from mckit.transformation import Transformation
+from mckit.constants import *
 
 
 tr_glob = Transformation(translation=[1, 2, -3], indegrees=True,
@@ -22,7 +23,7 @@ class TestPlaneSurface(unittest.TestCase):
                     self.assertAlmostEqual(p._v[j], v_ref[j])
 
     def test_point_test(self):
-        plane = Plane([1, 0, 0], 0, tr_glob)
+        plane = Plane(EX, 0, tr_glob)
         for i, (p, ans) in enumerate(plane_point_test_cases):
             with self.subTest(i=i):
                 p1 = tr_glob.apply2point(p)
@@ -76,13 +77,38 @@ class TestGQuadraticSurface(unittest.TestCase):
                 self.assertEqual(result, ans)
 
 
+class TestTorusSurface(unittest.TestCase):
+    def test_torus_creation(self):
+        for i, (center, axis, R, a, b, tr) in enumerate(torus_creation_cases):
+            with self.subTest(i=i):
+                p = Torus(center, axis, R, a, b, transform=tr)
+                if tr is None:
+                    c_ref = center
+                    a_ref = axis
+                else:
+                    c_ref = tr.apply2point(center)
+                    a_ref = tr.apply2vector(axis)
+                self.assertAlmostEqual(p._R, R)
+                self.assertAlmostEqual(p._a, a)
+                self.assertAlmostEqual(p._b, b)
+                for j in range(3):
+                    self.assertAlmostEqual(p._center[j], c_ref[j])
+                    self.assertAlmostEqual(p._axis[j], a_ref[j])
+
+    def test_torus_point_test(self):
+        pass
+
+    def test_region_test(self):
+        pass
+
+
 plane_creation_cases = [
-    (np.array([0, 0, 1]), -2, None, np.array([0, 0, 1]), -2),
-    (np.array([0, 0, 1]), -2, tr_glob, np.array([0, 0, 1]), 1),
-    (np.array([1, 0, 0]), -2, None, np.array([1, 0, 0]), -2),
-    (np.array([1, 0, 0]), -2, tr_glob, np.array([np.sqrt(3) / 2, 0.5, 0]), -3 - 0.5 * np.sqrt(3)),
-    (np.array([0, 1, 0]), -2, None, np.array([0, 1, 0]), -2),
-    (np.array([0, 1, 0]), -2, tr_glob, np.array([-0.5, np.sqrt(3) / 2, 0]), -1.5 - np.sqrt(3))
+    (EZ, -2, None, np.array([0, 0, 1]), -2),
+    (EZ, -2, tr_glob, np.array([0, 0, 1]), 1),
+    (EX, -2, None, np.array([1, 0, 0]), -2),
+    (EX, -2, tr_glob, np.array([np.sqrt(3) / 2, 0.5, 0]), -3 - 0.5 * np.sqrt(3)),
+    (EY, -2, None, np.array([0, 1, 0]), -2),
+    (EY, -2, tr_glob, np.array([-0.5, np.sqrt(3) / 2, 0]), -1.5 - np.sqrt(3))
 ]
 
 plane_point_test_cases = [
@@ -144,4 +170,9 @@ gq_region_test_cases = [
     (np.diag([1, 1, 1]), -2 * np.array([2, 2, 2]), -2.99, +1),
     (np.diag([1, 1, 1]), -2 * np.array([2, 0, 0]), -1.01, 0),
     (np.diag([1, 1, 1]), -2 * np.array([2, 0, 0]), -0.99, +1)
+]
+
+torus_creation_cases = [
+    ([1, 2, 3], [0, 0, 1], 4, 2, 1, None),
+    ([1, 2, 3], [0, 0, 1], 4, 2, 1, tr_glob)
 ]
