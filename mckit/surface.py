@@ -227,8 +227,11 @@ class Torus(Surface):
         self._b = b
 
     def test_point(self, p):
-        # TODO: implement test_point
-        raise NotImplementedError
+        d = np.dot(p, self._axis) - np.dot(self._center, self._axis)
+        c = np.sqrt(np.sum(p**2, axis=-1) - 2 * np.dot(p, self._center) + \
+            np.dot(self._center, self._center) - d**2)
+        sense = (d / self._a)**2 + ((c - self._R) / self._b)**2 - 1
+        return np.sign(sense).astype(int)
 
     def test_region(self, region):
         # TODO: implement test_region

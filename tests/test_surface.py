@@ -96,7 +96,16 @@ class TestTorusSurface(unittest.TestCase):
                     self.assertAlmostEqual(p._axis[j], a_ref[j])
 
     def test_torus_point_test(self):
-        pass
+        tor = Torus([0, 0, 0], EX, 4, 2, 1, tr_glob)
+        for i, (p, ans) in enumerate(torus_point_test_cases):
+            with self.subTest(i=i):
+                p1 = tr_glob.apply2point(p)
+                sense = tor.test_point(p1)
+                if isinstance(sense, np.ndarray):
+                    for s, a in zip(sense, ans):
+                        self.assertEqual(s, a)
+                else:
+                    self.assertEqual(sense, ans)
 
     def test_region_test(self):
         pass
@@ -176,4 +185,14 @@ gq_region_test_cases = [
 torus_creation_cases = [
     ([1, 2, 3], [0, 0, 1], 4, 2, 1, None),
     ([1, 2, 3], [0, 0, 1], 4, 2, 1, tr_glob)
+]
+
+torus_point_test_cases = [
+    ([0, 0, 0], 1), ([0, 0, 2.99], 1), ([0, 0, 5.01], 1), ([0, 0, 3.01], -1),
+    ([0, 0, 4.99], -1), ([0, 2.99, 0], 1), ([0, 5.01, 0], 1),
+    ([0, 3.01, 0], -1), ([0, 4.99, 0], -1), ([2.01, 0, 4], 1), ([1.99, 0, 4], -1),
+    ([2.01, 4, 0], 1), ([1.99, 4, 0], -1),
+    ([[0, 0, 0], [0, 0, 2.99], [0, 0, 5.01], [0, 0, 3.01], [0, 0, 4.99], [0, 2.99, 0],
+      [0, 5.01, 0], [0, 3.01, 0], [0, 4.99, 0], [2.01, 0, 4], [1.99, 0, 4],
+      [2.01, 4, 0], [1.99, 4, 0]], [1, 1, 1, -1, -1, 1, 1, -1, -1, 1, -1, 1, -1])
 ]
