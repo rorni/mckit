@@ -3,7 +3,11 @@
 import numpy as np
 
 
-__all__ = ['EX', 'EY', 'EZ', 'ORIGIN', 'IDENTITY_ROTATION', 'ANGLE_TOLERANCE']
+__all__ = [
+    'EX', 'EY', 'EZ',
+    'ORIGIN', 'IDENTITY_ROTATION',
+    'ANGLE_TOLERANCE', 'RESOLUTION'
+]
 
 
 # basis vectors
@@ -19,3 +23,5 @@ IDENTITY_ROTATION = np.eye(3)
 
 # angle tolerance
 ANGLE_TOLERANCE = 0.001
+
+RESOLUTION = np.finfo(float)

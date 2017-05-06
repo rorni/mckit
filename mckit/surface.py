@@ -91,9 +91,20 @@ def create_surface(kind, *params, transform=None):
         if len(params) == 2:
             return Plane(axis, -params[0], transform=transform)
         elif len(params) == 4:
-            pass
+            h1, r1, h2, r2 = params
+            if abs(h2 - h1) < RESOLUTION * max(abs(h1), abs(h2)):
+                return Plane(axis, -0.5 * (h1 + h2), transform=transform)
+            elif abs(r2 - r1) < RESOLUTION * max(abs(r2), abs(r1)):
+                R = 0.5 * (abs(r1) + abs(r2))
+                return GQuadratic(np.diag(1-axis), [0, 0, 0], -R**2, transform)
+            else:
+                h0 = (abs(r1) * h2 - abs(r2) * h1) / (abs(r1) - abs(r2))
+                t2 = (abs(r1) - abs(r2))**2 / abs(h1 - h2)
+                m = np.diag(1 - axis - t2 * axis)
+                v = 2 * t2 * h0 * axis
+                return GQuadratic(m, v, -t2 * h0**2, transform)
         elif len(params) == 6:
-            pass
+            raise NotImplementedError
 
 
 class Surface(ABC):
