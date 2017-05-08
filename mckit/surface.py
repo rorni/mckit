@@ -25,7 +25,6 @@ def create_surface(kind, *params, transform=None):
     surf : Surface
         New surface.
     """
-    # TODO: implement creation of surface.
     if kind[-1] == 'X':
         axis = EX
     elif kind[-1] == 'Y':
@@ -38,6 +37,13 @@ def create_surface(kind, *params, transform=None):
             return Plane(axis, -params[0], transform=transform)
         else:
             return Plane(params[:3], -params[3], transform=transform)
+    # -------- SQ -------------------
+    elif kind == 'SQ':
+        A, B, C, D, E, F, G, x0, y0, z0 = params
+        m = np.diag([A, B, C])
+        v = 2 * np.array([D - A*x0, E - B*y0, F - C*z0])
+        k = A*x0**2 + B*y0**2 + C*z0**2 - 2 * (D*x0 + E*y0 + F*z0) + G
+        return GQuadratic(m, v, k, transform)
     # -------- Sphere ------------------
     elif kind[0] == 'S':
         if kind == 'S':
@@ -69,13 +75,6 @@ def create_surface(kind, *params, transform=None):
         m = np.diag(1 - axis - t2 * axis)
         v05 = r0 * (1 - axis - axis * t2)
         return GQuadratic(m, -2 * v05, np.dot(v05, r0), transform)
-    # -------- SQ -------------------
-    elif kind == 'SQ':
-        A, B, C, D, E, F, G, x0, y0, z0 = params
-        m = np.diag([A, B, C])
-        v = 2 * np.array([D - A*x0, E - B*y0, F - C*z0])
-        k = A*x0**2 + B*y0**2 + C*z0**2 - 2 * (D*x0 + E*y0 + F*z0) + G
-        return GQuadratic(m, v, k, transform)
     # ---------- GQ -----------------
     elif kind == 'GQ':
         A, B, C, D, E, F, G, H, J, k = params
@@ -104,6 +103,7 @@ def create_surface(kind, *params, transform=None):
                 v = 2 * t2 * h0 * axis
                 return GQuadratic(m, v, -t2 * h0**2, transform)
         elif len(params) == 6:
+            # TODO: Implement creation of surface by 3 points.
             raise NotImplementedError
 
 

@@ -24,4 +24,4 @@ IDENTITY_ROTATION = np.eye(3)
 # angle tolerance
 ANGLE_TOLERANCE = 0.001
 
-RESOLUTION = np.finfo(float)
+RESOLUTION = np.finfo(float).resolution
