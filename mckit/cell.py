@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
 
 class Cell(dict):
     """Represents MCNP's cell.
@@ -94,4 +95,75 @@ class Cell(dict):
         """
         # TODO: implement transform method.
         raise NotImplementedError
+
+
+def _complement(arg):
+    """Finds complement to the given set.
+
+    | C | -1 |  0 | +1 |
+    +---+----+----+----+
+    |   | +1 |  0 | -1 |
+    +---+----+----+----+
+
+    Parameters
+    ----------
+    arg : int or np.ndarray[int]
+        Argument for complement operation.
+
+    Returns
+    -------
+    result : int or np.ndarray[int]
+        The result of operation.
+    """
+    return -1 * arg
+
+
+def _intersection(arg1, arg2):
+    """Finds intersection.
+
+    |  I | -1 |  0 | +1 |
+    +----+----+----+----+
+    | -1 | -1 | -1 | -1 |
+    +----+----+----+----+
+    |  0 | -1 |  0 |  0 |
+    +----+----+----+----+
+    | +1 | -1 |  0 | +1 |
+    +----+----+----+----+
+
+    Parameters
+    ----------
+    arg1, arg2 : int, np.ndarray[int]
+        Operands.
+
+    Returns
+    -------
+    result : int or np.ndarray[int]
+        The result of operation.
+    """
+    return np.minimum(arg1, arg2)
+
+
+def _union(arg1, arg2):
+    """Finds union.
+
+    |  U | -1 |  0 | +1 |
+    +----+----+----+----+
+    | -1 | -1 |  0 | +1 |
+    +----+----+----+----+
+    |  0 |  0 |  0 | +1 |
+    +----+----+----+----+
+    | +1 | +1 | +1 | +1 |
+    +----+----+----+----+
+
+    Parameters
+    ----------
+    arg1, arg2 : int, np.ndarray[int]
+        Operands.
+
+    Returns
+    -------
+    result : int or np.ndarray[int]
+        The result of operation.
+    """
+    return np.maximum(arg1, arg2)
 
