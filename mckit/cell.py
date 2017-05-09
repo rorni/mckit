@@ -2,6 +2,9 @@
 
 import numpy as np
 
+from .surface import Surface
+
+
 class Cell(dict):
     """Represents MCNP's cell.
 
@@ -25,7 +28,7 @@ class Cell(dict):
         Applies transformation tr to this cell.
     """
     def __init__(self, geometry_expr, **options):
-        pass
+        self._expression = geometry_expr.copy()
 
     def get_surfaces(self):
         """Gets a set of surfaces that bound this cell.
@@ -35,8 +38,11 @@ class Cell(dict):
         surfaces : set
             Surfaces that bound this cell.
         """
-        # TODO: implement get_surfaces method
-        raise NotImplementedError
+        surfaces = set()
+        for op in self._expression:
+            if isinstance(op, Surface):
+                surfaces.add(op)
+        return surfaces
 
     def test_point(self, p):
         """Tests whether point(s) p belong to this cell.
@@ -57,8 +63,17 @@ class Cell(dict):
             Individual point - single value, array of points - array of
             ints of shape (num_points,) is returned.
         """
-        # TODO: implement test_point method.
-        raise NotImplementedError
+        stack = []
+        for op in self._expression:
+            if isinstance(op, Surface):
+                stack.append(op.test_point(p))
+            elif op == 'C':
+                stack.append(_complement(stack.pop()))
+            elif op == 'I':
+                stack.append(_intersection(stack.pop(), stack.pop()))
+            elif op == 'U':
+                stack.append(_union(stack.pop(), stack.pop()))
+        return stack.pop()
 
     def test_region(self, region):
         """Checks whether this cell intersects with region.
@@ -77,8 +92,17 @@ class Cell(dict):
              0 if the cell (probably) intersects the region.
             -1 if the cell lies outside the region.
         """
-        # TODO: implement test_region method.
-        raise NotImplementedError
+        stack = []
+        for op in self._expression:
+            if isinstance(op, Surface):
+                stack.append(op.test_region(region))
+            elif op == 'C':
+                stack.append(_complement(stack.pop()))
+            elif op == 'I':
+                stack.append(_intersection(stack.pop(), stack.pop()))
+            elif op == 'U':
+                stack.append(_union(stack.pop(), stack.pop()))
+        return stack.pop()
 
     def transform(self, tr):
         """Applies transformation to this cell.
@@ -93,8 +117,13 @@ class Cell(dict):
         cell : Cell
             The result of this cell transformation.
         """
-        # TODO: implement transform method.
-        raise NotImplementedError
+        new_expr = []
+        for op in self._expression:
+            if isinstance(op, Surface):
+                new_expr.append(op.transform(tr))
+            else:
+                new_expr.append(op)
+        return Cell(new_expr, **self)
 
 
 def _complement(arg):
