@@ -28,6 +28,7 @@ class Cell(dict):
         Applies transformation tr to this cell.
     """
     def __init__(self, geometry_expr, **options):
+        dict.__init__(self, options)
         self._expression = geometry_expr.copy()
 
     def get_surfaces(self):
@@ -88,7 +89,7 @@ class Cell(dict):
         -------
         result : int
             Test result. It equals one of the following values:
-            +1 if the cell lies entirely inside the region.
+            +1 if the region lies entirely inside the cell.
              0 if the cell (probably) intersects the region.
             -1 if the cell lies outside the region.
         """

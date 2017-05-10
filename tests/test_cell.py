@@ -5,6 +5,23 @@ import numpy as np
 from mckit.cell import _complement, _intersection, _union
 
 
+class TestCell(unittest.TestCase):
+    def test_creation(self):
+        pass
+
+    def test_test_point(self):
+        pass
+
+    def test_test_region(self):
+        pass
+
+    def test_transform(self):
+        pass
+
+    def test_get_surfaces(self):
+        pass
+
+
 class TestOperations(unittest.TestCase):
     def test_complement(self):
         for i, (arg, ans) in enumerate(complement_cases):
