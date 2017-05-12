@@ -182,3 +182,5 @@ plane_transformation_cases = [
     (np.array([-4, 0, 5]), np.array([2, 3, 5]))
 ]
 
+if __name__ == '__main__':
+    unittest.main()
