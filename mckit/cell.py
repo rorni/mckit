@@ -64,17 +64,7 @@ class Cell(dict):
             Individual point - single value, array of points - array of
             ints of shape (num_points,) is returned.
         """
-        stack = []
-        for op in self._expression:
-            if isinstance(op, Surface):
-                stack.append(op.test_point(p))
-            elif op == 'C':
-                stack.append(_complement(stack.pop()))
-            elif op == 'I':
-                stack.append(_intersection(stack.pop(), stack.pop()))
-            elif op == 'U':
-                stack.append(_union(stack.pop(), stack.pop()))
-        return stack.pop()
+        return self._geometry_test(p, 'test_point')
 
     def test_region(self, region):
         """Checks whether this cell intersects with region.
@@ -93,10 +83,27 @@ class Cell(dict):
              0 if the cell (probably) intersects the region.
             -1 if the cell lies outside the region.
         """
+        return self._geometry_test(region, 'test_region')
+
+    def _geometry_test(self, arg, method_name):
+        """Performs geometry test.
+
+        Parameters
+        ----------
+        arg : array_like
+            Objects which should be tested.
+        method_name : str
+            The name of Surface's method that must be invoked.
+
+        Returns
+        -------
+        test_results : np.ndarray
+            Test results.
+        """
         stack = []
         for op in self._expression:
             if isinstance(op, Surface):
-                stack.append(op.test_region(region))
+                stack.append(getattr(op, method_name)(arg))
             elif op == 'C':
                 stack.append(_complement(stack.pop()))
             elif op == 'I':
