@@ -4,11 +4,15 @@ import numpy as np
 
 
 __all__ = [
+    'AVOGADRO'
     'EX', 'EY', 'EZ',
     'ORIGIN', 'IDENTITY_ROTATION',
-    'ANGLE_TOLERANCE', 'RESOLUTION'
+    'ANGLE_TOLERANCE', 'RESOLUTION',
+    'ATOM_NAMES', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
 ]
 
+
+AVOGADRO = 6.02214085774e+23
 
 # basis vectors
 EX = np.array([1, 0, 0])

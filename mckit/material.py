@@ -3,6 +3,32 @@
 from .constants import ATOM_NAMES, NATURAL_ABUNDANCE, ISOTOPE_MASS
 
 
+class Material:
+    """Represents material.
+
+    Parameters
+    ----------
+    composition : dict
+        Sets composition of the material. Keys - isotope names, values - weight
+        or atomic concentration.
+
+    Methods
+    -------
+    density2concentration(density)
+        Converts weight density to concentration of atoms.
+    concentration2density(concentration)
+        Converts concentration of atoms to weight density.
+    """
+    def __init__(self, composition):
+        pass
+
+    def density2concentration(self, density):
+        raise NotImplementedError
+
+    def concentration2density(self, concentration):
+        raise NotImplementedError
+
+
 def molar_mass(isotope_name):
     """Gets isotope molar mass.
 
@@ -33,9 +59,8 @@ def molar_mass(isotope_name):
     if a > 0:       # Individual isotope
         if a in ISOTOPE_MASS[z].keys():
             return ISOTOPE_MASS[z][a]
-        else:
-            return a  # If no data about molar mass then A itself is the best
-                      # approximation.
+        else:           # If no data about molar mass present then A itself is
+            return a    # the best approximation.
     else:           # Natural abundance
         mol_mass = 0.0
         for at_num, frac in NATURAL_ABUNDANCE[z].items():
