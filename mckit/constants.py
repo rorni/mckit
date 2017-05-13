@@ -32,7 +32,7 @@ ATOM_NAMES = {}
 NATURAL_ABUNDANCE = {}
 ISOTOPE_MASS = {}
 
-with open('data/isotopes.dat') as f:
+with open('mckit/data/isotopes.dat') as f:
     for line in f:
         number, name, *data = line.split()
         number = int(number)
