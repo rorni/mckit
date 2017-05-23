@@ -1,34 +1,61 @@
 # -*- coding: utf-8 -*-
 
-from .constants import CHARGE_TO_NAME, NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
-                       ISOTOPE_MASS, AVOGADRO
+from .constants import NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
+                       ISOTOPE_MASS
 
 
 class Material:
     """Represents material.
 
+    wgt and atomic are both dictionaries: isotope_name -> fraction. If only
+    wgt or atomic (and is treated as atomic fraction) present then they not
+    need to be normalized.
+
     Parameters
     ----------
-    con_fractions : dict
-    composition : dict
-        Sets composition of the material. Keys - isotope names, values - weight
-        or atomic concentration.
+    atomic : dict
+        Atomic fractions or concentrations. If none of density and concentration
+        as well as wgt present, then atomic is treated as atomic concentrations
+        of isotopes. Otherwise it can be only atomic fractions.
+    wgt : dict
+        Weight fractions of isotopes. density of concentration must present.
+    density : float
+        Density of the material (g/cc). It is incompatible with concentration
+        parameter.
+    concentration : float
+        Sets the atomic concentration (1 / cc). It is incompatible with density
+        parameter.
 
     Methods
     -------
-    density2concentration(density)
-        Converts weight density to concentration of atoms.
-    concentration2density(concentration)
-        Converts concentration of atoms to weight density.
+    density()
+        Gets weight density of the material.
+    concentration()
+        Gets atomic concentration of the material.
+    merge(other)
+        Merges with other material and returns the result.
+    correct(old_vol, new_vol)
+        Correct material density - returns the corrected version of the
+        material.
+    expand()
+        Expands elements of natural composition.
     """
-    def __init__(self, con_fractions=None, wgt_fractions=None,
-                 density=None, concentration=None):
+    def __init__(self, atomic=None, wgt=None, density=None, concentration=None):
         pass
 
-    def density2concentration(self, density):
+    def density(self):
         raise NotImplementedError
 
-    def concentration2density(self, concentration):
+    def concentration(self):
+        raise NotImplementedError
+
+    def merge(self, other):
+        raise NotImplementedError
+
+    def correct(self, old_vol, new_vol):
+        raise NotImplementedError
+
+    def expand(self):
         raise NotImplementedError
 
 
