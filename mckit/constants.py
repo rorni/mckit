@@ -4,11 +4,11 @@ import numpy as np
 
 
 __all__ = [
-    'AVOGADRO'
+    'AVOGADRO',
     'EX', 'EY', 'EZ',
     'ORIGIN', 'IDENTITY_ROTATION',
     'ANGLE_TOLERANCE', 'RESOLUTION',
-    'ATOM_NAMES', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
+    'CHARGE_TO_NAME', 'NAME_TO_CHARGE', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
 ]
 
 
@@ -32,7 +32,8 @@ ANGLE_TOLERANCE = 0.001
 RESOLUTION = np.finfo(float).resolution
 
 # Natural presence of isotopes
-ATOM_NAMES = {}
+CHARGE_TO_NAME = {}
+NAME_TO_CHARGE = {}
 NATURAL_ABUNDANCE = {}
 ISOTOPE_MASS = {}
 
@@ -40,7 +41,9 @@ with open('mckit/data/isotopes.dat') as f:
     for line in f:
         number, name, *data = line.split()
         number = int(number)
-        ATOM_NAMES[name] = number
+        name = name.upper()
+        CHARGE_TO_NAME[number] = name
+        NAME_TO_CHARGE[name] = number
         NATURAL_ABUNDANCE[number] = {}
         ISOTOPE_MASS[number] = {}
         for i in range(len(data) // 3):
@@ -50,8 +53,9 @@ with open('mckit/data/isotopes.dat') as f:
             if abun != '*':
                 NATURAL_ABUNDANCE[number][isotope] = float(abun) / 100.0
 
+
 if __name__ == '__main__':
-    print(ATOM_NAMES)
+    print(NAME_TO_CHARGE)
     print(ISOTOPE_MASS)
     print(NATURAL_ABUNDANCE)
 
