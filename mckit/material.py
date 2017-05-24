@@ -1,23 +1,26 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
+
 from .constants import NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
-                       ISOTOPE_MASS
+                       ISOTOPE_MASS, AVOGADRO
 
 
 class Material:
     """Represents material.
 
-    wgt and atomic are both dictionaries: isotope_name -> fraction. If only
-    wgt or atomic (and is treated as atomic fraction) present then they not
-    need to be normalized.
+    wgt and atomic are both lists of tuples: (element, fraction, ...).
+    If only wgt or atomic (and is treated as atomic fraction) present then they
+    not need to be normalized. atomic's element can be Element instance if
+    only atomic parameter present.
 
     Parameters
     ----------
-    atomic : dict
+    atomic : list
         Atomic fractions or concentrations. If none of density and concentration
         as well as wgt present, then atomic is treated as atomic concentrations
         of isotopes. Otherwise it can be only atomic fractions.
-    wgt : dict
+    wgt : list
         Weight fractions of isotopes. density of concentration must present.
     density : float
         Density of the material (g/cc). It is incompatible with concentration
@@ -32,16 +35,87 @@ class Material:
         Gets weight density of the material.
     concentration()
         Gets atomic concentration of the material.
-    merge(other)
-        Merges with other material and returns the result.
     correct(old_vol, new_vol)
         Correct material density - returns the corrected version of the
         material.
     expand()
         Expands elements of natural composition.
+    merge(other)
+        Merges with other material and returns the result.
+    molar_mass()
+        Gets molar mass of the material.
     """
-    def __init__(self, atomic=None, wgt=None, density=None, concentration=None):
-        pass
+    def __init__(self, atomic=[], wgt=[], density=None, concentration=None):
+        # Attributes: _n - atomic density (concentration)
+        #             _mu - effective molar mass
+        self._composition = {}
+        if density and concentration:
+            raise ValueError('density and concentration both must not present.')
+        elif atomic and not wgt and not density and not concentration:
+            s = 0.0
+            for el, frac in atomic:
+                element = el if isinstance(el, Element) else Element(el)
+                self._composition[el] = frac
+                s += frac * element.molar_mass()
+            self._n = np.sum(self._composition.values())
+            self._mu = s / self._n
+        elif (density and not concentration) or (concentration and not density):
+            elem_w, elem_a = [], []
+            I_w, I_a, J_w, J_a = 0, 0, 0, 0
+            for el, frac in atomic:
+                elem_a.append(Element(el))
+                I_a += frac
+                J_a += frac * elem_a[-1].molar_mass()
+            for el, frac in wgt:
+                elem_w.append(Element(el))
+                I_w += frac
+                J_w += frac / elem_w[-1].molar_mass()
+            II_diff = I_a - I_w
+            sq_root = II_diff**2 + 4 * J_w * J_a
+            if II_diff <= 0:
+                self._mu = 0.5 * (sq_root - II_diff) / J_w
+            else:
+                self._mu = 2 * J_a / (sq_root + II_diff)
+            pass
+
+        # 1. Weight fractions are given
+        elif wgt and not atomic:
+            s = 0.0
+            elements = []
+            fractions = []
+            for el, frac in wgt:
+                elements.append(Element(el))
+                fractions.append(frac)
+            # normalize weight fractions
+            fractions = np.array(fractions) / np.sum(fractions)
+            mol_masses = [el.molar_mass() for el in elements]  # Molar masses.
+            self._mu = 1.0 / np.sum(np.divide(fractions, mol_masses))
+            if concentration is not None:
+                self._n = concentration
+            elif density is not None:
+                self._n = density * AVOGADRO / self._mu
+            else:
+                raise ValueError('density or concentration must present!')
+            for el, frac, mol in zip(elements, fractions, mol_masses):
+                self._composition[el] = self._mu * self._n * frac / mol
+
+        # 2. atomic concentrations are given
+        elif atomic and not wgt and not density and not concentration:
+            s = 0.0
+            for el, frac in atomic:
+                element = el if isinstance(el, Element) else Element(el)
+                self._composition[el] = frac
+                s += frac * element.molar_mass()
+            self._n = np.sum(self._composition.values())
+            self._mu = s / self._n
+
+        # 3. atomic fractions are given
+        elif atomic and not wgt:
+            pass
+        elif atomic and wgt:
+
+
+
 
     def density(self):
         raise NotImplementedError
@@ -49,13 +123,16 @@ class Material:
     def concentration(self):
         raise NotImplementedError
 
-    def merge(self, other):
-        raise NotImplementedError
-
     def correct(self, old_vol, new_vol):
         raise NotImplementedError
 
     def expand(self):
+        raise NotImplementedError
+
+    def merge(self, other):
+        raise NotImplementedError
+
+    def molar_mass(self):
         raise NotImplementedError
 
 
