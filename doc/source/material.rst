@@ -55,13 +55,45 @@
 4. Заданы и массовые доли :math:`\omega_i` и атомные доли :math:`\eta_i`
 ------------------------------------------------------------------------
 
-.. math:: \mu&=\cfrac{\mu I_\omega + J_\eta}{\mu J_\omega + I_\eta}\\
-   I_\omega &= \sum_i{\omega_i}\\
-   I_\eta &= \sum_i{\eta_i}\\
-   J_\omega &= \sum_i{\cfrac{\omega_i}{\mu_i}}\\
-   J_\eta &= \sum_i{\eta_i \mu_i}
+Пусть нам заданы как массовые доли :math:`\tilde{\omega}_i,\:i\in S_w`, так и
+атомные доли :math:`\tilde{\eta}_i,\:i\in S_a`. :math:`S_w` - множество
+индексов элементов, для которых заданы массовые доли, и :math:`S_a` - множество
+индексов элементов, для которых заданы атомные доли. Тильда сверху означает, что
+эти доли не нормированны на единицу. При этом, чтобы однозначно определить
+состав - нормировочные коэффициенты у атомных и массовых долей должны быть
+одинаковыми. Пусть этот коэффициент равен :math:`K`. Тогда реальные массовые и
+атомные доли будут соответственно равны :math:`\omega_i=\cfrac{\tilde{\omega}_i}
+{K}` и :math:`\eta_i=\cfrac{\tilde{\eta}_i}{K}`.
 
-Отсюда можно прийти к уравнению относительно :math:`\mu`:
+Найдем молярную массу получившегося материала:
+
+.. math:: \mu=\cfrac{m}{\nu}=\cfrac{\displaystyle\sum_i{m_i}}{\displaystyle
+   \sum_i{\nu_i}}=\cfrac{m\displaystyle\sum_{i\in S_w}{\omega_i}+\cfrac{N}{N_a}
+   \displaystyle\sum_{i\in S_a}{\eta_i\mu_i}}{m\displaystyle\sum_{i\in S_w}
+   {\cfrac{\omega_i}{\mu_i}}+\cfrac{N}{N_a}\displaystyle\sum_{i\in S_a}{\eta_i}}
+   =\cfrac{\cfrac{\mu N}{N_a}\displaystyle\sum_{i\in S_w}{\omega_i}+\cfrac{N}
+   {N_a}\displaystyle\sum_{i\in S_a}{\eta_i\mu_i}}{\cfrac{\mu N}{N_a}
+   \displaystyle\sum_{i\in S_w}{\cfrac{\omega_i}{\mu_i}}+\cfrac{N}{N_a}
+   \displaystyle\sum_{i\in S_a}{\eta_i}}=
+   \cfrac{\mu\displaystyle\sum_{i\in S_w}{\omega_i}+\displaystyle\sum_{i\in S_a}
+   {\eta_i\mu_i}}{\mu\displaystyle\sum_{i\in S_w}{\cfrac{\omega_i}{\mu_i}}+
+   \displaystyle\sum_{i\in S_a}{\eta_i}}
+
+Но, поскольку реальные атомные и массовые доли нам не известны, то заменим их
+теми, что нам даны, и домножим и числитель и знаменатель на :math:`K`. Получим
+
+.. math:: \mu=\cfrac{\mu I_\omega + J_\eta}{\mu J_\omega + I_\eta}
+   :label: mu_eq
+
+где введены обозначения
+
+.. math:: I_\omega &= \sum_{i\in S_w}{\tilde{\omega}_i}\\
+   J_\omega &= \sum_{i\in S_w}{\cfrac{\tilde{\omega}_i}{\mu_i}}\\
+   I_\eta &= \sum_{i\in S_a}{\tilde{\eta}_i}\\
+   J_\eta &= \sum_{i\in S_a}{\tilde{\eta}_i\mu_i}
+
+В итоге, молярная масса не зависит от нормировки. Из формулы :eq:`mu_eq` можно
+прийти к уравнению относительно :math:`\mu`:
 
 .. math:: J_\omega\mu^2 + (I_\eta-I_\omega)\mu - J_\eta=0
 
@@ -84,12 +116,39 @@
 :eq:`molar_mass_1`, если :math:`I_\omega\geqslant I_\eta`, и формулой
 :eq:`molar_mass_2`, если :math:`I_\omega<I_\eta`. Смысл этого, если в кратце,
 заключается в том, что к корню должно прибавляться положительное число - это
-гарантия, что в числителе и знаменателе будут конечные числа.
+гарантия того, что в числителе и знаменателе будут конечные числа.
 
-Концентрации можно посчитать по формулам:
+Теперь перейдем к расчету атомных концентраций. Концентрации можно посчитать по
+формулам:
 
 .. math:: n_i &= \mu n \cfrac{\omega_i}{\mu_i}\\
    n_i &= n \eta_i
+   :label: conc_1
+
+Но реальные доли нам не известны. Поэтому необходимо рассчитать нормировочный
+коэффициент K. Для этого воспользуемся тем условием, что сумма всех атомных
+долей должна быть равна единице. Но сначала выразим атомную долю через массовую:
+
+.. math:: \eta_i=\cfrac{N_i}{N}=\cfrac{\nu_i}{\nu}=\cfrac{\cfrac{m_i}{\mu_i}}
+   {\cfrac{m}{\mu}}=\cfrac{m \omega_i}{\mu_i}\cfrac{\mu}{m}=\cfrac{\omega_i}
+   {\mu_i}\mu=\cfrac{\tilde{\omega}_i}{\mu_i}\cfrac{\mu}{K}
+
+Теперь, когда все доли выражены через атомные, просуммируем их:
+
+.. math:: \sum_i{\eta_i}=\sum_{i\in S_w}{\eta_i} + \sum_{i\in S_a}{\eta_i}=
+   \cfrac{\mu}{K}\sum_{i\in S_w}{\cfrac{\tilde{\omega}_i}{\mu_i}} +
+   \cfrac{1}{K}\sum_{i\in S_a}{\tilde{\eta}_i}=\cfrac{1}{K}\left(\mu J_\omega +
+   I_\eta\right)=1
+
+Откуда можно найти :math:`K`:
+
+.. math:: K=\mu J_\omega + I_\eta
+   :label: k_eq
+
+Теперь, воспользовавшись формулами для концентраций :eq:`conc_1`, получим:
+
+.. math:: n_i&=\cfrac{\mu n}{K}\cfrac{\tilde{\omega}_i}{\mu_i},\;i\in S_w\\
+   n_i&=\cfrac{n}{K}\eta_i,\; i\in S_a
 
 Стоит отметить, что этот случай включает в себя варианты 1 и 3, рассмотренные
 выше. При этом, тут автоматически учитывается нормировка долей на 1. Поэтому
