@@ -60,68 +60,42 @@ class Material:
             self._n = np.sum(self._composition.values())
             self._mu = s / self._n
         elif (density and not concentration) or (concentration and not density):
-            elem_w, elem_a = [], []
-            I_w, I_a, J_w, J_a = 0, 0, 0, 0
-            for el, frac in atomic:
-                elem_a.append(Element(el))
-                I_a += frac
-                J_a += frac * elem_a[-1].molar_mass()
-            for el, frac in wgt:
-                elem_w.append(Element(el))
-                I_w += frac
-                J_w += frac / elem_w[-1].molar_mass()
+            elem_w = [Element(item[0]) for item in wgt]
+            elem_a = [Element(item[0]) for item in atomic]
+            frac_w = np.array([item[1] for item in wgt])
+            frac_a = np.array([item[1] for item in atomic])
+            I_w = np.sum(frac_w)
+            I_a = np.sum(frac_a)
+            J_w = np.sum(np.divide(frac_w, map(Element.molar_mass, elem_w)))
+            J_a = np.sum(np.multiply(frac_a, map(Element.molar_mass, elem_a)))
+
             II_diff = I_a - I_w
             sq_root = II_diff**2 + 4 * J_w * J_a
             if II_diff <= 0:
                 self._mu = 0.5 * (sq_root - II_diff) / J_w
             else:
                 self._mu = 2 * J_a / (sq_root + II_diff)
-            pass
 
-        # 1. Weight fractions are given
-        elif wgt and not atomic:
-            s = 0.0
-            elements = []
-            fractions = []
-            for el, frac in wgt:
-                elements.append(Element(el))
-                fractions.append(frac)
-            # normalize weight fractions
-            fractions = np.array(fractions) / np.sum(fractions)
-            mol_masses = [el.molar_mass() for el in elements]  # Molar masses.
-            self._mu = 1.0 / np.sum(np.divide(fractions, mol_masses))
-            if concentration is not None:
+            norm_factor = self._mu * J_w + I_a
+            if concentration:
                 self._n = concentration
-            elif density is not None:
-                self._n = density * AVOGADRO / self._mu
             else:
-                raise ValueError('density or concentration must present!')
-            for el, frac, mol in zip(elements, fractions, mol_masses):
-                self._composition[el] = self._mu * self._n * frac / mol
-
-        # 2. atomic concentrations are given
-        elif atomic and not wgt and not density and not concentration:
-            s = 0.0
-            for el, frac in atomic:
-                element = el if isinstance(el, Element) else Element(el)
-                self._composition[el] = frac
-                s += frac * element.molar_mass()
-            self._n = np.sum(self._composition.values())
-            self._mu = s / self._n
-
-        # 3. atomic fractions are given
-        elif atomic and not wgt:
-            pass
-        elif atomic and wgt:
-
-
-
+                self._n = density * AVOGADRO / self._mu
+            coeff = self._mu * self._n / norm_factor
+            for el, frac in zip(elem_w, frac_w):
+                self._composition[el] = coeff * frac / el.molar_mass()
+            for el, frac in zip(elem_a, frac_a):
+                self._composition[el] = self._n / norm_factor * frac
+        else:
+            raise ValueError('Incorrect set of parameters.')
 
     def density(self):
-        raise NotImplementedError
+        """Gets material's density [g per cc]."""
+        return self._n * self._mu / AVOGADRO
 
     def concentration(self):
-        raise NotImplementedError
+        """Gets material's concentration [atoms per cc]."""
+        return self._n
 
     def correct(self, old_vol, new_vol):
         raise NotImplementedError
@@ -133,7 +107,8 @@ class Material:
         raise NotImplementedError
 
     def molar_mass(self):
-        raise NotImplementedError
+        """Gets material's effective molar mass [g / mol]."""
+        return self._mu
 
 
 class Element:

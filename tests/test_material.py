@@ -45,6 +45,11 @@ class TestElement(unittest.TestCase):
                     self.assertAlmostEqual(v, exp_dict[k], delta=1.e-5)
 
 
+class TestMaterial(unittest.TestCase):
+    def test_material_creation(self):
+        pass
+
+
 isotope_name_cases = [
     ('1001', '1', '001'), ('13027', '13', '027'), ('92235', '92', '235'),
     ('H2', 'H', '2'), ('H-3', 'H', '3'), ('I', 'I', '0'), ('HE3', 'HE', '3'),
