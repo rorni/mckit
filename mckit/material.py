@@ -52,12 +52,13 @@ class Material:
         if density and concentration:
             raise ValueError('density and concentration both must not present.')
         elif atomic and not wgt and not density and not concentration:
-            s = 0.0
+            elements = []
+            fractions = []
             for el, frac in atomic:
-                element = el if isinstance(el, Element) else Element(el)
-                self._composition[el] = frac
-                s += frac * element.molar_mass()
-            self._n = np.sum(self._composition.values())
+                elements.append(el if isinstance(el, Element) else Element(el))
+                fractions.append(frac)
+            s = np.sum([f*e.molar_mass() for e, f in zip(elements, fractions)])
+            self._n = np.sum(fractions)
             self._mu = s / self._n
         elif (density and not concentration) or (concentration and not density):
             elem_w = [Element(item[0]) for item in wgt]
@@ -66,11 +67,11 @@ class Material:
             frac_a = np.array([item[1] for item in atomic])
             I_w = np.sum(frac_w)
             I_a = np.sum(frac_a)
-            J_w = np.sum(np.divide(frac_w, map(Element.molar_mass, elem_w)))
-            J_a = np.sum(np.multiply(frac_a, map(Element.molar_mass, elem_a)))
+            J_w = np.sum(np.divide(frac_w, [e.molar_mass() for e in elem_w]))
+            J_a = np.sum(np.multiply(frac_a, [e.molar_mass() for e in elem_a]))
 
             II_diff = I_a - I_w
-            sq_root = II_diff**2 + 4 * J_w * J_a
+            sq_root = np.sqrt(II_diff**2 + 4 * J_w * J_a)
             if II_diff <= 0:
                 self._mu = 0.5 * (sq_root - II_diff) / J_w
             else:

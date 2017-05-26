@@ -1,6 +1,6 @@
 import unittest
 
-from mckit.material import Element
+from mckit.material import Element, Material
 
 
 class TestElement(unittest.TestCase):
@@ -47,7 +47,32 @@ class TestElement(unittest.TestCase):
 
 class TestMaterial(unittest.TestCase):
     def test_material_creation(self):
-        pass
+        for i, (kwargs, n, mu, rho) in enumerate(material_creation_cases):
+            with self.subTest(i=i):
+                mat = Material(**kwargs)
+                self.assertAlmostEqual(mat.molar_mass(), mu, delta=mu * 1.e-4)
+                self.assertAlmostEqual(mat.concentration(), n, delta=n * 1.e-4)
+                self.assertAlmostEqual(mat.density(), rho, delta=rho * 1.e-4)
+
+
+material_creation_cases = [
+    ({'atomic': [('NI58', 0.680769), ('NI60', 0.262231), ('NI61', 0.011399), ('NI62', 0.036345), ('NI64',  0.009256)],
+      'density': 8.902}, 9.133753e+22, 58.6934, 8.902),
+    ({'atomic': [('NI58', 68.0769), ('NI60', 26.2231), ('NI61', 1.1399), ('NI62', 3.6345), ('NI64',  0.9256)],
+      'density': 8.902}, 9.133753e+22, 58.6934, 8.902),
+    ({'atomic': [('NI58', 0.680769), ('NI60', 0.262231), ('NI61', 0.011399), ('NI62', 0.036345), ('NI64',  0.009256)],
+      'concentration': 9.133753e+22}, 9.133753e+22, 58.6934, 8.902),
+    ({'atomic': [('NI58', 68.0769), ('NI60', 26.2231), ('NI61', 1.1399), ('NI62', 3.6345), ('NI64',  0.9256)],
+      'concentration': 9.133753e+22}, 9.133753e+22, 58.6934, 8.902),
+    ({'atomic': [('NI58', 0.680769), ('NI60', 0.262231), ('NI61', 0.011399), ('NI62', 0.036345), ('NI64', 0.009256)]},
+      1.0, 58.6934, 9.7462675e-23),
+    ({'atomic': [('NI58', 68.0769), ('NI60', 26.2231), ('NI61', 1.1399), ('NI62', 3.6345), ('NI64', 0.9256)]},
+      100.0, 58.6934, 9.7462675e-21),
+    ({'wgt': [('N', 0.755), ('O', 0.232), ('AR', 0.013)], 'density': 1.2929e-3}, 5.351034567e+19, 14.551, 1.2929e-3),
+    ({'wgt': [('N', 75.5), ('O', 23.2), ('AR', 1.3)], 'density': 1.2929e-3}, 5.351034567e+19, 14.551, 1.2929e-3),
+    ({'wgt': [('N', 0.755), ('O', 0.232), ('AR', 0.013)], 'concentration': 5.351034567e+19}, 5.351034567e+19, 14.551, 1.2929e-3),
+    ({'wgt': [('N', 75.5), ('O', 23.2), ('AR', 1.3)], 'concentration': 5.351034567e+19}, 5.351034567e+19, 14.551, 1.2929e-3)
+]
 
 
 isotope_name_cases = [
