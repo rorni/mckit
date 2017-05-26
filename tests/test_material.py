@@ -54,6 +54,23 @@ class TestMaterial(unittest.TestCase):
                 self.assertAlmostEqual(mat.concentration(), n, delta=n * 1.e-4)
                 self.assertAlmostEqual(mat.density(), rho, delta=rho * 1.e-4)
 
+    def test_material_correct(self):
+        fact = [2, 0.5]
+        vol1 = 100
+        for j, f in enumerate(fact):
+            vol2 = vol1 * f
+            for i, (kwargs, n, mu, rho) in enumerate(material_creation_cases):
+                with self.subTest(i=j*2 + i):
+                    mat = Material(**kwargs)
+                    mc = mat.correct(vol1, vol2)
+                    self.assertEqual(len(mat._composition.keys()),
+                                     len(mc._composition.keys()))
+                    self.assertAlmostEqual(mat._n, mc._n * f, delta=n * 1.e-5)
+                    for k, v in mat._composition.items():
+                        self.assertAlmostEqual(v, mc._composition[k] * f,
+                                               delta=v * 1.e-5)
+
+
 
 material_creation_cases = [
     ({'atomic': [('NI58', 0.680769), ('NI60', 0.262231), ('NI61', 0.011399), ('NI62', 0.036345), ('NI64',  0.009256)],
@@ -73,7 +90,6 @@ material_creation_cases = [
     ({'wgt': [('N', 0.755), ('O', 0.232), ('AR', 0.013)], 'concentration': 5.351034567e+19}, 5.351034567e+19, 14.551, 1.2929e-3),
     ({'wgt': [('N', 75.5), ('O', 23.2), ('AR', 1.3)], 'concentration': 5.351034567e+19}, 5.351034567e+19, 14.551, 1.2929e-3)
 ]
-
 
 isotope_name_cases = [
     ('1001', '1', '001'), ('13027', '13', '027'), ('92235', '92', '235'),

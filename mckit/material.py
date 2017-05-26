@@ -49,22 +49,21 @@ class Material:
         # Attributes: _n - atomic density (concentration)
         #             _mu - effective molar mass
         self._composition = {}
+        elem_w = [Element(item[0]) if not isinstance(item[0], Element)
+                  else item[0] for item in wgt]
+        elem_a = [Element(item[0]) if not isinstance(item[0], Element)
+                  else item[0] for item in atomic]
+        frac_w = np.array([item[1] for item in wgt])
+        frac_a = np.array([item[1] for item in atomic])
         if density and concentration:
             raise ValueError('density and concentration both must not present.')
         elif atomic and not wgt and not density and not concentration:
-            elements = []
-            fractions = []
-            for el, frac in atomic:
-                elements.append(el if isinstance(el, Element) else Element(el))
-                fractions.append(frac)
-            s = np.sum([f*e.molar_mass() for e, f in zip(elements, fractions)])
-            self._n = np.sum(fractions)
+            s = np.sum([f * e.molar_mass() for e, f in zip(elem_a, frac_a)])
+            for e, v in zip(elem_a, frac_a):
+                self._composition[e] = v
+            self._n = np.sum(frac_a)
             self._mu = s / self._n
         elif (density and not concentration) or (concentration and not density):
-            elem_w = [Element(item[0]) for item in wgt]
-            elem_a = [Element(item[0]) for item in atomic]
-            frac_w = np.array([item[1] for item in wgt])
-            frac_a = np.array([item[1] for item in atomic])
             I_w = np.sum(frac_w)
             I_a = np.sum(frac_a)
             J_w = np.sum(np.divide(frac_w, [e.molar_mass() for e in elem_w]))
@@ -89,6 +88,7 @@ class Material:
                 self._composition[el] = self._n / norm_factor * frac
         else:
             raise ValueError('Incorrect set of parameters.')
+        # TODO: take into account duplicate isotopes.
 
     def density(self):
         """Gets material's density [g per cc]."""
@@ -99,7 +99,23 @@ class Material:
         return self._n
 
     def correct(self, old_vol, new_vol):
-        raise NotImplementedError
+        """Creates new material with fixed density to keep cell's mass.
+        
+        Parameters
+        ----------
+        old_vol : float
+            Initial volume of the cell.
+        new_vol : float
+            New volume of the cell.
+            
+        Returns
+        -------
+        new_mat : Material
+            New material that takes into account new volume of the cell.
+        """
+        factor = old_vol / new_vol
+        elements = [(k, v * factor) for k, v in self._composition.items()]
+        return Material(atomic=elements)
 
     def expand(self):
         raise NotImplementedError
