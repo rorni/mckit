@@ -60,7 +60,9 @@ class Material:
         elif atomic and not wgt and not density and not concentration:
             s = np.sum([f * e.molar_mass() for e, f in zip(elem_a, frac_a)])
             for e, v in zip(elem_a, frac_a):
-                self._composition[e] = v
+                if e not in self._composition.keys():
+                    self._composition[e] = 0.0
+                self._composition[e] += v
             self._n = np.sum(frac_a)
             self._mu = s / self._n
         elif (density and not concentration) or (concentration and not density):
@@ -83,12 +85,15 @@ class Material:
                 self._n = density * AVOGADRO / self._mu
             coeff = self._mu * self._n / norm_factor
             for el, frac in zip(elem_w, frac_w):
-                self._composition[el] = coeff * frac / el.molar_mass()
+                if el not in self._composition.keys():
+                    self._composition[el] = 0.0
+                self._composition[el] += coeff * frac / el.molar_mass()
             for el, frac in zip(elem_a, frac_a):
-                self._composition[el] = self._n / norm_factor * frac
+                if el not in self._composition.keys():
+                    self._composition[el] = 0.0
+                self._composition[el] += self._n / norm_factor * frac
         else:
             raise ValueError('Incorrect set of parameters.')
-        # TODO: take into account duplicate isotopes.
 
     def density(self):
         """Gets material's density [g per cc]."""
@@ -118,7 +123,18 @@ class Material:
         return Material(atomic=elements)
 
     def expand(self):
-        raise NotImplementedError
+        """Expands natural elements into detailed isotope composition.
+        
+        Returns
+        -------
+        new_mat : Material
+            New material with detailed isotope composition.
+        """
+        composition = []
+        for el, conc in self._composition.items():
+            for isotope, frac in el.expand().items():
+                composition.append((isotope, conc * frac))
+        return Material(atomic=composition)
 
     def merge(self, other):
         raise NotImplementedError
