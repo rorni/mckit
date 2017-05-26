@@ -1,6 +1,6 @@
 import unittest
 
-from mckit.material import Element, Material
+from mckit.material import Element, Material, merge_materials
 
 
 class TestElement(unittest.TestCase):
@@ -79,7 +79,18 @@ class TestMaterial(unittest.TestCase):
                     elem = Element(k)
                     self.assertAlmostEqual(exp._composition[elem], v,
                                            delta=v * 1.e-5)
-    # TODO: add duplicate isotope testing.
+
+    def test_material_merge(self):
+        for i, (m1, v1, m2, v2, ans) in enumerate(material_merge_cases):
+            with self.subTest(i=i):
+                mat = merge_materials(Material(atomic=m1), v1,
+                                      Material(atomic=m2), v2)
+                mat_ans = Material(atomic=ans)
+                self.assertEqual(len(mat._composition.keys()),
+                                 len(mat_ans._composition.keys()))
+                for k, v in mat._composition.items():
+                    self.assertAlmostEqual(v, mat_ans._composition[k],
+                                           delta=v * 1.e-5)
 
 
 
@@ -113,6 +124,11 @@ material_expand_cases = [
     ([('NI58', 0.680769), ('NI60', 0.262231), ('NI61', 0.011399), ('NI62', 0.036345), ('NI64', 0.009256)], [('NI58', 0.680769), ('NI60', 0.262231), ('NI61', 0.011399), ('NI62', 0.036345), ('NI64', 0.009256)]),
     ([('NI58', 0.380769), ('NI60', 0.162231), ('NI61', 0.011399), ('NI58', 0.300000), ('NI62', 0.036345), ('NI64', 0.009256), ('NI60', 0.1)], [('NI58', 0.680769), ('NI60', 0.262231), ('NI61', 0.011399), ('NI62', 0.036345), ('NI64', 0.009256)]),
     ([('B', 2), ('C', 3)], [('B10', 0.398), ('B11', 1.602), ('C12', 2.9679), ('C13', 0.0321)])
+]
+
+material_merge_cases = [
+    ([('NI', 1.0)], 2, [('H', 2)], 2, [('NI', 0.5), ('H', 1.0)]),
+    ([('NI', 1.0)], 2, [('H', 2), ('NI', 2)], 2, [('NI', 1.5), ('H', 1.0)]),
 ]
 
 isotope_name_cases = [

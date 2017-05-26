@@ -40,8 +40,6 @@ class Material:
         material.
     expand()
         Expands elements of natural composition.
-    merge(other)
-        Merges with other material and returns the result.
     molar_mass()
         Gets molar mass of the material.
     """
@@ -136,12 +134,28 @@ class Material:
                 composition.append((isotope, conc * frac))
         return Material(atomic=composition)
 
-    def merge(self, other):
-        raise NotImplementedError
-
     def molar_mass(self):
         """Gets material's effective molar mass [g / mol]."""
         return self._mu
+
+
+def merge_materials(material1, volume1, material2, volume2):
+    """Merges materials.
+
+    Parameters
+    ----------
+    material1, material2 : Material
+        Materials to be merged.
+    volume1, volume2 : float
+        Volumes of merging cells.
+    """
+    total_vol = volume1 + volume2
+    composition = []
+    for el, frac in material1._composition.items():
+        composition.append((el, frac * volume1 / total_vol))
+    for el, frac in material2._composition.items():
+        composition.append((el, frac * volume2 / total_vol))
+    return Material(atomic=composition)
 
 
 class Element:
