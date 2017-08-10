@@ -10,25 +10,26 @@
 Последний блок рекомендуется заканчивать пустой строкой. Все что идет после нее
 -- игнорируется. Структура входного файла MCNP:
 
-Message Block  // опционально
-Blank Line Delimiter  // В случае, если есть Message Block
-Title Card
-Cell Card 1
-Cell Card 2
-.
-.
-Blank Line Delimiter
-Surface Card 1
-Surface Card 2
-.
-.
-Blank Line Delimiter
-Data Card 1
-Data Card 2
-.
-.
-Blank Line Delimiter // рекомендуется
-Anything else        // опционально
+.. line-block::
+    Message Block  // опционально
+    Blank Line Delimiter  // В случае, если есть Message Block
+    Title Card
+    Cell Card 1
+    Cell Card 2
+    .
+    .
+    Blank Line Delimiter
+    Surface Card 1
+    Surface Card 2
+    .
+    .
+    Blank Line Delimiter
+    Data Card 1
+    Data Card 2
+    .
+    .
+    Blank Line Delimiter // рекомендуется
+    Anything else        // опционально
 
 Message Block
 -------------
@@ -228,4 +229,29 @@ Material card
 - params = keyword=value [keyword=value]; = - optional
 
 - keyword = GAS | ESTEP | NLIB | PLIB | PNLIB | ELIB | COND
+
+Формальная граматика
+--------------------
+
+Cell card
+^^^^^^^^^
+
+.. code::
+
+    cell-card = name material geometry params | name LIKE n BUT params
+    name, n = int (>0)
+    material = 0 | mat_name density
+    mat_name = int (>0)
+    density = float
+    geometry = expression
+    expression = term : expression | term
+    term = operand term | factor
+    factor = surf_name | #(expression) | #name | (expression)
+    surf_name = int
+    params = kwpair | kwpair params
+    kwpair = int_pair | float_pair | complex_pair
+    int_pair = kwint int | kwint = int
+    kwint = U | TRCL
+    float_pair = kwfloat float | kwfloat = float
+    kwfloat = IMP:N | IMP:P | IMP:E | VOL
 
