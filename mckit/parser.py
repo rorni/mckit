@@ -4,8 +4,34 @@ import re
 
 import ply.lex as lex
 
+
+literals = ['+', '-', ':', '*', '(', ')', '#', ',']
+
+reserved = {
+    'IMP', 'VOL', 'PWT', 'EXT', 'FCL', 'WWN', 'DXC', 'NONU', 'PD', 'TMP', 'U',
+    'TRCL', 'LAT', 'FILL', 'LIKE', 'BUT', 'MAT', 'RHO',
+    'MODE', 'AREA', 'TR', 'ESPLT', 'TSPLT', 'VECT', 'WWE', 'WWP', 'WWG', 'WWGE',
+    'MESH', 'BBREM',
+    'SDEF', 'SI', 'SP', 'SB', 'DS', 'SC', 'SSW', 'SSR', 'KCODE', 'KSRC', 'ERG',
+    'TME', 'UUU', 'VVV', 'WWW', 'XXX', 'YYY', 'ZZZ', 'IPT', 'WGT', 'ICL', 'JSU',
+    'NRM', 'POS', 'RAD', 'X', 'Y', 'Z', 'CCC', 'ARA', 'EFF', 'PAR',
+    'F', 'FC', 'E', 'T', 'C', 'FQ', 'FM', 'DE', 'DF', 'EM', 'TM', 'CM', 'CF',
+    'SF', 'FS', 'SD', 'FU', 'TF', 'DD', 'DXT', 'FT', 'FMESH', 'GEOM', 'ORIGIN',
+    'AXS', 'VEC', 'IMESH', 'IINTS', 'JMESH', 'JINTS', 'KMESH', 'KINTS', 'EMESH',
+    'EINTS', 'FACTOR', 'OUT', 'M', 'MPN', 'DRXS', 'TOTNU', 'AWTAB', 'XS',
+    'VOID', 'PIKMT', 'MGOPT', 'GAS', 'ESTEP', 'NLIB', 'PLIB', 'PNLIB', 'ELIB',
+    'COND', 'N', 'P', 'E',
+    'P', 'PX', 'PY', 'PZ', 'S', 'SO', 'SX', 'SY', 'SZ', 'CX', 'CY', 'CZ', 'KX',
+    'KY', 'KZ', 'TX', 'TY', 'TZ', 'C/X', 'C/Y', 'C/Z', 'K/X', 'K/Y', 'K/Z',
+    'SQ', 'GQ',
+    'PHYS', 'THTME', 'MT', 'CUT', 'ELPT', 'NOTRN', 'NPS', 'CTME', 'IDUM',
+    'RDUM', 'PRDMP', 'LOST', 'DBCN', 'FILES', 'PRINT', 'TALNP', 'MPLOT',
+    'PTRAC', 'PERT',
+    'R', 'I', 'ILOG', 'J'
+}
+
 # List of token names
-tokens = (
+tokens = [
     'BLANK_LINE_DELIMITER',
     'LINE_COMMENT',
     'CARD_COMMENT',
@@ -15,14 +41,9 @@ tokens = (
     'INT_NUMBER',
     'FLT_NUMBER',
     'INT_ZERO',
-    'SURFACE_SPEC',
-    'KW_FLOAT',
-    'KW_INT',
-    'KW_COMPOUND',
-    'KW_VECTOR3'
-)
+    'KEYWORD'
+] + list(reserved)
 
-literals = ['+', '-', ':', '*', '(', ')', '#']
 
 states = (
     ('continue', 'inclusive'),
@@ -97,28 +118,13 @@ def t_INT_NUMBER(t):
     return t
 
 
-def t_SURFACE_SPEC(t):
-    r'[PTS][XYZ]|[CK]/?[XYZ]|[PS]|SO|[SG]Q'
+def t_KEYWORD(t):
+    r'[A-Z]+(/[A-Z]+)?'
+    if t.value in reserved:
+        t.type = t.value
+    else:
+        raise ValueError('Unknown word')
     return t
-
-
-def t_KW_INT(t):
-    r'U|TRCL'
-    return t
-
-
-def t_KW_FLOAT(t):
-    r'IMP:N|IMP:P|IMP:E|VOL'
-    return t
-
-
-def t_KW_VECTOR3(t):
-    r'POS|VEC|AXS'
-    return t
-
-
-def t_KW_COMPOUND(t):
-    r''
 
 
 def t_ignore_SKIP(t):
@@ -234,12 +240,19 @@ def p_surface_card(p):
 
 
 def p_surface_description(p):
-    '''surface_description : integer SURFACE_SPEC surface_params
-                           | SURFACE_SPEC surface_params'''
+    '''surface_description : integer surface_spec surface_params
+                           | surface_spec param_list'''
     if len(p) == 4:
         p[0] = (p[2], p[3], p[1])
     else:
         p[0] = (p[1], p[2], None)
+
+
+def p_surface_spec(p):
+    '''surface_spec : X | Y | Z | P | PX | PY | PZ | S | SO | SX | SY | SZ
+                    | CX | CY | CZ | C/X | C/Y | C/Z | KX | KY | KZ | K/X
+                    | K/Y | K/Z | TX | TY | TZ | SQ | GQ'''
+    p[0] = p[1]
 
 
 def p_integer(p):
@@ -254,8 +267,8 @@ def p_integer(p):
         p[0] = p[1]
 
 
-def p_surface_params(p):
-    '''surface_params : float surface_params | float'''
+def p_param_list(p):
+    '''param_list : float param_list | float'''
     if len(p) == 2:
         p[0] = [p[1]]
     else:
