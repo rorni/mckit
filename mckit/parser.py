@@ -33,7 +33,7 @@ reserved = {
 
 # List of token names
 tokens = [
-    'BLANK_LINE_DELIMITER',
+    'BLANK_LINE',
     'LINE_COMMENT',
     'CARD_COMMENT',
     'CONTINUE',
@@ -53,22 +53,29 @@ states = (
 )
 
 
+def t_eof(t):
+    t.type = 'BLANK_LINE'
+    t.value = 'eof'
+    return t
+
 def t_title_TITLE(t):
     r'^.+'
-    t.lexer.lineno += 1
+    #t.lexer.lineno += 1
     t.lexer.begin('INITIAL')
     return t
 
 
-def t_BLANK_LINE_DELIMITER(t):
+def t_BLANK_LINE(t):
     r'^[ ]*\n'
     t.lexer.lineno += 1
+    t.lexer.begin('continue')
     return t
 
 
 def t_LINE_COMMENT(t):
     r'^[ ]{0,4}C( .*)?'
-    pass  # return t
+    #return t
+    pass
 
 
 def t_CARD_COMMENT(t):
@@ -149,16 +156,17 @@ lexer.begin('title')
 
 
 #def p_model(p):
-#    '''model : message_block BLANK_LINE_DELIMITER model_body
+#    '''model : message_block BLANK_LINE model_body
 #             | model_body
 #    '''
 #    pass
 
 
 def p_model_body(p):
-    '''model_body : TITLE NEWLINE cell_cards BLANK_LINE_DELIMITER \
-                    surface_cards BLANK_LINE_DELIMITER \
-                    data_cards BLANK_LINE_DELIMITER'''
+    '''model_body : TITLE NEWLINE cell_cards BLANK_LINE \
+                    surface_cards BLANK_LINE \
+                    data_cards
+    '''
     p[0] = p[1], p[3], p[5], p[7]
 
 
@@ -166,13 +174,17 @@ def p_cell_cards(p):
     '''cell_cards : cell_cards cell_card
                   | cell_card
     '''
-    name = p[1][0]
-    params = p[1][1:]
-    if len(p) == 3:
+    if len(p) == 2:
+        print(p[1])
+        name = p[1][0]
+        params = p[1][1:]
         p[0] = {name: params}
-    elif len(p) == 4:
-        p[3][name] = params
-        p[0] = p[3]
+    elif len(p) == 3:
+        print(p[2])
+        name = p[2][0]
+        params = p[2][1:]
+        p[1][name] = params
+        p[0] = p[1]
 
 
 def p_cell_card(p):
@@ -221,7 +233,7 @@ def p_cell_option(p):
 
 def p_importance_option(p):
     '''importance_option : IMP ':' particle float'''
-    p[0] = 'IMP', p[3], p[4]
+    p[0] = 'IMP', (p[3], p[4])
 
 
 def p_fill_option(p):
@@ -257,15 +269,21 @@ def p_cell_material(p):
 def p_expression(p):
     '''expression : expression ':' term
                   | term'''
-    p[0] = p[1] + p[3]
-    p[0].append('U')
+    if len(p) == 4:
+        p[0] = p[1] + p[3]
+        p[0].append('U')
+    else:
+        p[0] = p[1]
 
 
 def p_term(p):
     '''term : term factor
             | factor'''
-    p[0] = p[1] + p[2]
-    p[0].append('I')
+    if len(p) == 3:
+        p[0] = p[1] + p[2]
+        p[0].append('I')
+    else:
+        p[0] = p[1]
 
 
 def p_factor(p):
@@ -298,32 +316,45 @@ def p_surface_cards(p):
         name, *params = p[1]
         p[0] = {name: params}
     elif len(p) == 3:
+        print(p[2])
         name, *params = p[2]
-        p[2][name] = params
-        p[0] = p[2]
+        p[1][name] = params
+        p[0] = p[1]
 
 
 def p_data_cards(p):
     '''data_cards : data_cards data_card
                   | data_card
     '''
-    pass
+    if len(p) == 2:
+        print(p[1])
+        name, *params = p[1]
+        p[0] = {name: params}
+    elif len(p) == 3:
+        print(p[2])
+        name, *params = p[2]
+        p[1][name] = params
+        p[0] = p[1]
 
 
 def p_data_card(p):
     '''data_card : mode_card
-                 | volume_card'''
+                 | volume_card
+    '''
+    print('fff')
     p[0] = p[1]
 
 
 def p_mode_card(p):
-    '''mode_card : MODE particle_list'''
+    '''mode_card : MODE particle_list NEWLINE'''
     p[0] = 'MODE', p[2]
+  #  print(p[2])
 
 
 def p_particle_list(p):
     '''particle_list : particle_list particle
-                     | particle'''
+                     | particle
+    '''
     if len(p) == 2:
         p[0] = [p[1]]
     else:
@@ -331,9 +362,10 @@ def p_particle_list(p):
 
 
 def p_volume_card(p):
-    '''volume_card : VOL integer_list
-                   | VOL NO integer_list'''
-    if len(p) == 3:
+    '''volume_card : VOL integer_list NEWLINE
+                   | VOL NO integer_list NEWLINE
+    '''
+    if len(p) == 4:
         p[0] = 'VOL', p[2]
     else:
         p[0] = 'VOL', p[3]
@@ -341,7 +373,8 @@ def p_volume_card(p):
 
 def p_integer_list(p):
     '''integer_list : integer_list INT_NUMBER
-                    | INT_NUMBER'''
+                    | INT_NUMBER
+    '''
     if len(p) == 2:
         p[0] = [p[1]]
     else:
@@ -381,7 +414,8 @@ def p_transform_card(p):
 def p_surface_card(p):
     '''surface_card : '*' INT_NUMBER surface_description NEWLINE
                     | '+' INT_NUMBER surface_description NEWLINE
-                    | INT_NUMBER surface_description NEWLINE'''
+                    | INT_NUMBER surface_description NEWLINE
+    '''
     if len(p) == 4:
         p[0] = p[1], *p[2], None
     else:
@@ -461,7 +495,7 @@ def p_param_list(p):
         else:
             p[0] = p[1]
     else:
-        if isinstance(p[2], float):
+        if not isinstance(p[2], list):
             p[0] = p[1] + [p[2]]
         else:
             p[0] = p[1] + p[2]
@@ -512,9 +546,9 @@ parser = yacc.yacc()
 
 with open('c:\\Users\\Roma\\projects\\UPP02\\upp02_m9.i') as f:
     text = f.read()
-#    lexer.input(text)
-#    while True:
-#        tok = lexer.token()
-#        print(tok)
+    #lexer.input(text.upper())
+    #while True:
+    #    tok = lexer.token()
+    #    print(tok)
     result = parser.parse(text.upper())
     print(result)
