@@ -33,24 +33,40 @@ reserved = {
 
 # List of token names
 tokens = [
-    'BLANK_LINE',
-    'LINE_COMMENT',
-    'CARD_COMMENT',
-    'CONTINUE',
-    'NEWLINE',
-    'SKIP_NEWLINE',
-    'INT_NUMBER',
-    'FLT_NUMBER',
-    'INT_ZERO',
-    'KEYWORD',
-    'TITLE'
+    'blank_line',
+    'line_comment',
+    'card_comment',
+    'continue',
+    'card_end',
+    'int_number',
+    'flt_number',
+    'keyword',
+    'title',
+    'void_material'
 ] + list(reserved)
 
 
 states = (
     ('continue', 'inclusive'),
-    ('title', 'exclusive')
+    ('title', 'exclusive'),
+    ('cells', 'inclusive'),
+    ('ckw', 'inclusive')
 )
+
+LINE_COMMENT = r'(^[ ]{0,4}C.*\n)'
+BLANK_LINE = r'^[ ]*\n'
+CARD_COMMENT = r'\$.*'
+CARD_START = r'^[ ]{0,4}[^C\s]'
+CARD_END = r'\n(?=' + LINE_COMMENT + r'*' + CARD_START + r')'
+CONTINUE = r'&'
+MANTISSA = r'(\.\d+)'
+EXPONENT = r'(E[-+]?\d+)'
+INT_NUMBER = r'(\d+)'
+FLT_NUMBER = INT_NUMBER + r'?' + MANTISSA + EXPONENT + r'?|' + INT_NUMBER + EXPONENT
+KEYWORD = r'[A-Z]+(/[A-Z]+)?'
+VOID_MATERIAL = r' 0 '
+SKIP = r'[=\s]'
+
 
 
 def t_eof(t):
@@ -58,29 +74,29 @@ def t_eof(t):
     t.value = 'eof'
     return t
 
-def t_title_TITLE(t):
+
+def t_title_title(t):
     r'^.+'
-    #t.lexer.lineno += 1
+    t.lexer.begin('cells')
+    return t
+
+
+@lex.TOKEN(BLANK_LINE)
+def t_ANY_blank_line(t):
+    t.lexer.lineno += 1
     t.lexer.begin('INITIAL')
     return t
 
 
-def t_BLANK_LINE(t):
-    r'^[ ]*\n'
-    t.lexer.lineno += 1
-    t.lexer.begin('continue')
+@lex.TOKEN(LINE_COMMENT)
+def t_ANY_line_comment(t):
     return t
+    #pass
 
 
-def t_LINE_COMMENT(t):
-    r'^[ ]{0,4}C( .*)?'
-    #return t
-    pass
-
-
-def t_CARD_COMMENT(t):
-    r'\$.*'
-    pass  # return t
+@lex.TOKEN(CARD_COMMENT)
+def t_ANY_card_comment(t):
+    return t
 
 
 def t_error(t):
@@ -88,66 +104,68 @@ def t_error(t):
     t.lexer.skip(1)
 
 
-def t_CONTINUE(t):
-    r'&'
-    t.lexer.begin('continue')
+@lex.TOKEN(CONTINUE)
+def t_continue(t):
+    t.lexer.push_state('continue')
 
 
-def t_continue_SKIP_NEWLINE(t):
-    r'\n(?=[ ]{0,4}C( .*)?)'
+@lex.TOKEN(CARD_END)
+def t_ckw_card_end(t):
     t.lexer.lineno += 1
-    # return t
+    t.lexer.pop_state()
+    return t
 
 
-def t_continue_NEWLINE(t):
-    r'\n(?![ ]{0,4}C( .*)?)'
+@lex.TOKEN(CARD_END)
+def t_continue_card_end(t):
     t.lexer.lineno += 1
-    t.lexer.begin('INITIAL')
-    # t.value += 'continue'
-    # return t
+    t.pop_state()
 
 
-def t_SKIP_NEWLINE(t):
-    r'\n(?=[ ]{5,}[^\s]|[ ]{0,4}C( .*)?)'
-    t.lexer.lineno += 1
-    # return t
-
-
-def t_NEWLINE(t):
-    r'\n'
+@lex.TOKEN(CARD_END)
+def t_card_end(t):
     t.lexer.lineno += 1
     return t
 
 
-def t_FLT_NUMBER(t):
-    r'\d*\.\d+(E[-+]?\d+)?|\d+\.?E[-+]?\d+'
+@lex.TOKEN(FLT_NUMBER)
+def t_flt_number(t):
     t.value = float(t.value)
     return t
 
-def t_INT_ZERO(t):
-    r'0'
-    t.value = 0
+
+@lex.TOKEN(VOID_MATERIAL)
+def t_cells_void_material(t):
     return t
 
-def t_INT_NUMBER(t):
-    r'\d+'
+
+@lex.TOKEN(INT_NUMBER)
+def t_int_number(t):
     t.value = int(t.value)
     return t
 
 
-def t_KEYWORD(t):
-    r'[A-Z]+(/[A-Z]+)?'
-    if '/' in t.value:
-        t.value = t.value.replace('/', '_')
-    if t.value in reserved:
-        t.type = t.value
+@lex.TOKEN(KEYWORD)
+def t_cells_keyword(t):
+    if t.value not in reserved:
+        raise ValueError('Unknown word' + t.value)
+    t.type = t.value
+    t.lexer.push_state('ckw')
+    return t
+
+
+@lex.TOKEN(KEYWORD)
+def t_keyword(t):
+    value = t.value.replace('/', '_')
+    if value in reserved:
+        t.type = value
     else:
         raise ValueError('Unknown word' + t.value)
     return t
 
 
-def t_ignore_SKIP(t):
-    r'[ ]+|='
+@lex.TOKEN(SKIP)
+def t_ignore_skip(t):
     pass
 
 
@@ -490,7 +508,7 @@ def p_param_list(p):
                   | float
     '''
     if len(p) == 2:
-        if isinstance(p[1], float):
+        if not isinstance(p[1], list):
             p[0] = [p[1]]
         else:
             p[0] = p[1]
@@ -542,13 +560,13 @@ def p_float(p):
 
 
 
-parser = yacc.yacc()
+#parser = yacc.yacc()
 
-with open('c:\\Users\\Roma\\projects\\UPP02\\upp02_m9.i') as f:
+with open('..\\experiments\\test2.i') as f:
     text = f.read()
-    #lexer.input(text.upper())
-    #while True:
-    #    tok = lexer.token()
-    #    print(tok)
+    lexer.input(text.upper())
+    while True:
+        tok = lexer.token()
+        print(tok)
     result = parser.parse(text.upper())
     print(result)
