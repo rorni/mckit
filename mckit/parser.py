@@ -37,7 +37,7 @@ tokens = [
     'line_comment',
     'card_comment',
     'continue',
-    'card_end',
+    'separator',
     'int_number',
     'flt_number',
     'keyword',
@@ -53,20 +53,22 @@ states = (
     ('ckw', 'inclusive')
 )
 
-LINE_COMMENT = r'(^[ ]{0,4}C.*\n)'
-BLANK_LINE = r'^[ ]*\n'
+LINE_COMMENT = r'^[ ]{0,4}C.*'
+BLANK_LINE = r'\n[ ]*$'
 CARD_COMMENT = r'\$.*'
 CARD_START = r'^[ ]{0,4}[^C\s]'
-CARD_END = r'\n(?=' + LINE_COMMENT + r'*' + CARD_START + r')'
+SEPARATOR = r'\n(?=(' + LINE_COMMENT + r'\n)*' + CARD_START + r')'
 CONTINUE = r'&'
+RESET_CONTINUE = r'\n(?=' + CARD_START + r')'
 MANTISSA = r'(\.\d+)'
 EXPONENT = r'(E[-+]?\d+)'
 INT_NUMBER = r'(\d+)'
 FLT_NUMBER = INT_NUMBER + r'?' + MANTISSA + EXPONENT + r'?|' + INT_NUMBER + EXPONENT
 KEYWORD = r'[A-Z]+(/[A-Z]+)?'
 VOID_MATERIAL = r' 0 '
-SKIP = r'[=\s]'
+SKIP = r'[= ]'
 
+t_ANY_ignore = SKIP
 
 
 def t_eof(t):
@@ -78,6 +80,7 @@ def t_eof(t):
 def t_title_title(t):
     r'^.+'
     t.lexer.begin('cells')
+    t.lexer.push_state('continue')
     return t
 
 
@@ -85,18 +88,18 @@ def t_title_title(t):
 def t_ANY_blank_line(t):
     t.lexer.lineno += 1
     t.lexer.begin('INITIAL')
+    t.lexer.push_state('continue')
     return t
 
 
 @lex.TOKEN(LINE_COMMENT)
 def t_ANY_line_comment(t):
-    return t
-    #pass
+    pass
 
 
 @lex.TOKEN(CARD_COMMENT)
 def t_ANY_card_comment(t):
-    return t
+    pass #return t
 
 
 def t_error(t):
@@ -104,26 +107,26 @@ def t_error(t):
     t.lexer.skip(1)
 
 
+@lex.TOKEN(RESET_CONTINUE)
+def t_continue_reset(t):
+    t.lexer.lineno += 1
+    t.lexer.pop_state()
+
+
 @lex.TOKEN(CONTINUE)
 def t_continue(t):
     t.lexer.push_state('continue')
 
 
-@lex.TOKEN(CARD_END)
-def t_ckw_card_end(t):
+@lex.TOKEN(SEPARATOR)
+def t_ckw_separator(t):
     t.lexer.lineno += 1
     t.lexer.pop_state()
     return t
 
 
-@lex.TOKEN(CARD_END)
-def t_continue_card_end(t):
-    t.lexer.lineno += 1
-    t.pop_state()
-
-
-@lex.TOKEN(CARD_END)
-def t_card_end(t):
+@lex.TOKEN(SEPARATOR)
+def t_INITIAL_cells_title_separator(t):
     t.lexer.lineno += 1
     return t
 
@@ -164,9 +167,9 @@ def t_keyword(t):
     return t
 
 
-@lex.TOKEN(SKIP)
-def t_ignore_skip(t):
-    pass
+def t_ANY_newline_skip(t):
+    r'\n'
+    t.lexer.lineno += 1
 
 
 lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
