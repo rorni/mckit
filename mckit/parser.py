@@ -8,28 +8,45 @@ import ply.yacc as yacc
 
 literals = ['+', '-', ':', '*', '(', ')', '#', ',', '.']
 
-reserved = {
+
+CELL_KEYWORDS = {
     'IMP', 'VOL', 'PWT', 'EXT', 'FCL', 'WWN', 'DXC', 'NONU', 'PD', 'TMP', 'U',
-    'TRCL', 'LAT', 'FILL', 'LIKE', 'BUT', 'MAT', 'RHO',
-    'MODE', 'AREA', 'TR', 'ESPLT', 'TSPLT', 'VECT', 'WWE', 'WWP', 'WWG', 'WWGE',
-    'MESH', 'BBREM',
-    'SDEF', 'SI', 'SP', 'SB', 'DS', 'SC', 'SSW', 'SSR', 'KCODE', 'KSRC', 'ERG',
-    'TME', 'UUU', 'VVV', 'WWW', 'XXX', 'YYY', 'ZZZ', 'IPT', 'WGT', 'ICL', 'JSU',
-    'NRM', 'POS', 'RAD', 'X', 'Y', 'Z', 'CCC', 'ARA', 'EFF', 'PAR',
-    'F', 'FC', 'E', 'T', 'C', 'FQ', 'FM', 'DE', 'DF', 'EM', 'TM', 'CM', 'CF',
-    'SF', 'FS', 'SD', 'FU', 'TF', 'DD', 'DXT', 'FT', 'FMESH', 'GEOM', 'ORIGIN',
-    'AXS', 'VEC', 'IMESH', 'IINTS', 'JMESH', 'JINTS', 'KMESH', 'KINTS', 'EMESH',
-    'EINTS', 'FACTOR', 'OUT', 'M', 'MPN', 'DRXS', 'TOTNU', 'AWTAB', 'XS',
-    'VOID', 'PIKMT', 'MGOPT', 'GAS', 'ESTEP', 'NLIB', 'PLIB', 'PNLIB', 'ELIB',
-    'COND', 'N', 'P', 'E',
-    'P', 'PX', 'PY', 'PZ', 'S', 'SO', 'SX', 'SY', 'SZ', 'CX', 'CY', 'CZ', 'KX',
-    'KY', 'KZ', 'TX', 'TY', 'TZ', 'C_X', 'C_Y', 'C_Z', 'K_X', 'K_Y', 'K_Z',
-    'SQ', 'GQ',
-    'PHYS', 'THTME', 'MT', 'CUT', 'ELPT', 'NOTRN', 'NPS', 'CTME', 'IDUM',
-    'RDUM', 'PRDMP', 'LOST', 'DBCN', 'FILES', 'PRINT', 'TALNP', 'MPLOT',
-    'PTRAC', 'PERT',
-    'R', 'I', 'ILOG', 'J', 'NO', 'MESSAGE'
+    'TRCL', 'LAT', 'FILL', 'N', 'P', 'E', 'LIKE', 'BUT', 'RHO', 'MAT'
 }
+
+SURFACE_TYPES = {
+    'P', 'PX', 'PY', 'PZ', 'S', 'SO', 'SX', 'SY', 'SZ', 'CX', 'CY', 'CZ', 'KX',
+    'KY', 'KZ', 'TX', 'TY', 'TZ', 'C/X', 'C/Y', 'C/Z', 'K/X', 'K/Y', 'K/Z',
+    'SQ', 'GQ', 'X', 'Y', 'Z'
+}
+
+DATA_KEYWORDS = {
+    'MODE', 'N', 'P', 'E',
+    'VOL', 'AREA', 'TR',
+    'IMP', 'ESPLT', 'TSPLT', 'PWT', 'EXT', 'VECT', 'FCL', 'WWE', 'WWN', 'WWP',
+    'WWG', 'WWGE', 'PD', 'DXC', 'BBREM',
+    'MESH', 'GEOM', 'REF', 'ORIGIN', 'AXS', 'VEC', 'IMESH', 'IINTS', 'JMESH',
+    'JINTS', 'KMESH', 'KINTS',
+    'SDEF', 'CEL', 'SUR', 'ERG', 'TME', 'DIR', 'VEC', 'NRM', 'POS', 'RAD',
+    'EXT', 'AXS', 'X', 'Y', 'Z', 'CCC', 'ARA', 'WGT', 'EFF', 'PAR', 'TR',
+    'SI', 'SP', 'SB', 'H', 'L', 'A', 'S', 'D', 'C', 'V', 'DS', 'T','Q', 'SC',
+    'SSW', 'SYM', 'PTY', 'SSR', 'OLD', 'NEW', 'COL', 'PSC', 'POA', 'BCW',
+    'KCODE', 'KSRC',
+    'F', 'FC', 'E', 'T', 'C', 'FQ', 'FM', 'DE', 'DF', 'LOG', 'LIN', 'EM', 'TM',
+    'CM', 'CF', 'SF', 'FS', 'SD', 'FU', 'TF', 'DD', 'DXT', 'FT',
+    'FMESH', 'GEOM', 'ORIGIN', 'AXS', 'VEC', 'IMESH', 'IINTS', 'JMESH',
+    'JINTS', 'KMESH', 'KINTS', 'EMESH', 'EINTS', 'FACTOR', 'OUT', 'TR',
+    'M', 'GAS', 'ESTEP', 'NLIB', 'PLIB', 'PNLIB', 'ELIB', 'COND',
+    'MPN', 'DRX', 'TOTNU', 'NONU', 'AWTAB', 'XS', 'VOID', 'PIKMT', 'MGOPT',
+    'NO',
+    'PHYS', 'TMP', 'THTME', 'MT',
+    'CUT', 'ELPT', 'NOTRN', 'NPS', 'CTME',
+    'PRDMP', 'LOST', 'DBCN', 'FILES', 'PRINT', 'TALNP', 'MPLOT', 'PTRAC',
+    'PERT',
+    'RAND', 'GEN', 'SEED', 'STRIDE', 'HIST'
+}
+
+COMMON_KEYWORDS = {'R', 'I', 'ILOG', 'J', 'NO', 'MESSAGE'}
 
 # List of token names
 tokens = [
@@ -38,19 +55,22 @@ tokens = [
     'card_comment',
     'continue',
     'separator',
+    'surface_type',
     'int_number',
     'flt_number',
     'keyword',
     'title',
     'void_material'
-] + list(reserved)
+] + list(CELL_KEYWORDS.union(DATA_KEYWORDS))
 
 
 states = (
     ('continue', 'inclusive'),
     ('title', 'exclusive'),
     ('cells', 'inclusive'),
-    ('ckw', 'inclusive')
+    ('ckw', 'inclusive'),
+    ('surfs', 'inclusive'),
+    ('data', 'inclusive')
 )
 
 LINE_COMMENT = r'^[ ]{0,4}C.*'
@@ -87,7 +107,11 @@ def t_title_title(t):
 @lex.TOKEN(BLANK_LINE)
 def t_ANY_blank_line(t):
     t.lexer.lineno += 1
-    t.lexer.begin('INITIAL')
+    if t.lexer.states:
+        section_state = t.lexer.states.pop()
+    else:
+        section_state = 'INITIAL'
+    t.lexer.begin(section_state)
     t.lexer.push_state('continue')
     return t
 
@@ -126,7 +150,7 @@ def t_ckw_separator(t):
 
 
 @lex.TOKEN(SEPARATOR)
-def t_INITIAL_cells_title_separator(t):
+def t_INITIAL_surfs_cells_title_separator(t):
     t.lexer.lineno += 1
     return t
 
@@ -150,7 +174,7 @@ def t_int_number(t):
 
 @lex.TOKEN(KEYWORD)
 def t_cells_keyword(t):
-    if t.value not in reserved:
+    if t.value not in CELL_KEYWORDS:
         raise ValueError('Unknown word' + t.value)
     t.type = t.value
     t.lexer.push_state('ckw')
@@ -158,10 +182,17 @@ def t_cells_keyword(t):
 
 
 @lex.TOKEN(KEYWORD)
-def t_keyword(t):
-    value = t.value.replace('/', '_')
-    if value in reserved:
-        t.type = value
+def t_surfs_keyword(t):
+    if t.value not in SURFACE_TYPES:
+        raise ValueError('Unknown surface type' + t.value)
+    t.type = 'surface_type'
+    return t
+
+
+@lex.TOKEN(KEYWORD)
+def t_data_keyword(t):
+    if t.value in DATA_KEYWORDS:
+        t.type = t.value
     else:
         raise ValueError('Unknown word' + t.value)
     return t
@@ -174,6 +205,7 @@ def t_ANY_newline_skip(t):
 
 lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
 lexer.begin('title')
+lexer.states = ['data', 'surfs']
 
 
 #def p_model(p):
