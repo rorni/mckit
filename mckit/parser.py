@@ -75,17 +75,19 @@ states = (
 )
 
 LINE_COMMENT = r'^[ ]{0,4}C.*'
-BLANK_LINE = r'\n[ ]*$'
+BLANK_LINE = r'\n(?=[ ]*$)'
 CARD_COMMENT = r'\$.*'
 CARD_START = r'^[ ]{0,4}[^C\s]'
 NEWLINE_SKIP = r'\n(?=' + LINE_COMMENT + r'|[ ]{5,}[^\s])'
+RESET_CONTINUE = r'\n(?=[ ]{5,}[^\s])'
 CONTINUE = r'&(?=[ ]*(' + CARD_COMMENT + r')?$)'
 SEPARATOR = r'\n(?=' + CARD_START + r')'
-MANTISSA = r'(\.\d+)'
+FRACTION = r'\.'
 EXPONENT = r'(E[-+]?\d+)'
 INT_NUMBER = r'(\d+)'
-FLT_NUMBER = INT_NUMBER + r'?' + MANTISSA + EXPONENT + r'?|' +\
-             INT_NUMBER + EXPONENT
+FLT_NUMBER = INT_NUMBER + r'?' + FRACTION + INT_NUMBER + EXPONENT + r'?|' +\
+             INT_NUMBER + FRACTION + r'?' + EXPONENT + r'|' + \
+             INT_NUMBER + FRACTION
 KEYWORD = r'[A-Z]+(/[A-Z]+)?'
 VOID_MATERIAL = r' 0 '
 SKIP = r'[= ]'
@@ -102,6 +104,8 @@ def t_eof(t):
 def t_title(t):
     r'^.+'
     t.lexer.section_index = 0
+    lexer.lineno = 1
+    t.lineno = 1
     t.lexer.begin('cells')
     #t.lexer.push_state('continue')
     return t
@@ -135,8 +139,20 @@ def t_ANY_error(t):
 
 
 @lex.TOKEN(CONTINUE)
-def t_continue_cells_ckw_surfs_data_continue(t):
+def t_cells_ckw_surfs_data_continue(t):
     t.lexer.push_state('continue')
+
+
+@lex.TOKEN(RESET_CONTINUE)
+def t_continue_reset_continue(t):
+    t.lexer.pop_state()
+    t.lexer.lineno += 1
+
+
+@lex.TOKEN(SEPARATOR)
+def t_continue_separator(t):
+    t.lexer.lineno += 1
+    t.lexer.pop_state()
 
 
 @lex.TOKEN(SEPARATOR)
@@ -144,12 +160,6 @@ def t_ckw_separator(t):
     t.lexer.lineno += 1
     t.lexer.pop_state()
     return t
-
-
-@lex.TOKEN(SEPARATOR)
-def t_continue_separator(t):
-    t.lexer.lineno += 1
-    t.lexer.pop_state()
 
 
 @lex.TOKEN(SEPARATOR)
@@ -177,9 +187,10 @@ def t_cells_ckw_surfs_data_int_number(t):
 
 @lex.TOKEN(KEYWORD)
 def t_cells_ckw_keyword(t):
-    if t.value not in CELL_KEYWORDS:
+    value = t.value.upper()
+    if value not in CELL_KEYWORDS:
         raise ValueError('Unknown word' + t.value)
-    t.type = t.value
+    t.type = value
     if t.lexer.current_state() == 'cells':
         t.lexer.push_state('ckw')
     return t
@@ -187,6 +198,7 @@ def t_cells_ckw_keyword(t):
 
 @lex.TOKEN(KEYWORD)
 def t_surfs_keyword(t):
+    t.value = t.value.upper()
     if t.value not in SURFACE_TYPES:
         raise ValueError('Unknown surface type' + t.value)
     t.type = 'surface_type'
@@ -195,8 +207,9 @@ def t_surfs_keyword(t):
 
 @lex.TOKEN(KEYWORD)
 def t_data_keyword(t):
-    if t.value in KEYWORDS:
-        t.type = t.value
+    value = t.value.upper()
+    if value in KEYWORDS:
+        t.type = value
     else:
         raise ValueError('Unknown word' + t.value)
     return t
@@ -599,11 +612,11 @@ def p_float(p):
 
 #parser = yacc.yacc()
 
-with open('..\\experiments\\test2.i') as f:
-    text = f.read()
-    lexer.input(text.upper())
-    while True:
-        tok = lexer.token()
-        print(tok)
-    result = parser.parse(text.upper())
-    print(result)
+# with open('..\\tests\\parser_test_data\\lex2.txt') as f:
+#     text = f.read()
+#     lexer.input(text.upper())
+#     while True:
+#         tok = lexer.token()
+#         print(tok)
+#     result = parser.parse(text.upper())
+#     print(result)
