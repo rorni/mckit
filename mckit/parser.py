@@ -48,6 +48,8 @@ DATA_KEYWORDS = {
 
 COMMON_KEYWORDS = {'R', 'I', 'ILOG', 'J', 'NO', 'MESSAGE'}
 
+KEYWORDS = CELL_KEYWORDS.union(DATA_KEYWORDS)
+
 # List of token names
 tokens = [
     'blank_line',
@@ -61,29 +63,29 @@ tokens = [
     'keyword',
     'title',
     'void_material'
-] + list(CELL_KEYWORDS.union(DATA_KEYWORDS))
+] + list(KEYWORDS)
 
 
 states = (
-    ('continue', 'inclusive'),
-    ('title', 'exclusive'),
-    ('cells', 'inclusive'),
-    ('ckw', 'inclusive'),
-    ('surfs', 'inclusive'),
-    ('data', 'inclusive')
+    ('continue', 'exclusive'),
+    ('cells', 'exclusive'),
+    ('ckw', 'exclusive'),
+    ('surfs', 'exclusive'),
+    ('data', 'exclusive')
 )
 
 LINE_COMMENT = r'^[ ]{0,4}C.*'
 BLANK_LINE = r'\n[ ]*$'
 CARD_COMMENT = r'\$.*'
 CARD_START = r'^[ ]{0,4}[^C\s]'
-SEPARATOR = r'\n(?=(' + LINE_COMMENT + r'\n)*' + CARD_START + r')'
-CONTINUE = r'&'
-RESET_CONTINUE = r'\n(?=' + CARD_START + r')'
+NEWLINE_SKIP = r'\n(?=' + LINE_COMMENT + r'|[ ]{5,}[^\s])'
+CONTINUE = r'&(?=[ ]*(' + CARD_COMMENT + r')?$)'
+SEPARATOR = r'\n(?=' + CARD_START + r')'
 MANTISSA = r'(\.\d+)'
 EXPONENT = r'(E[-+]?\d+)'
 INT_NUMBER = r'(\d+)'
-FLT_NUMBER = INT_NUMBER + r'?' + MANTISSA + EXPONENT + r'?|' + INT_NUMBER + EXPONENT
+FLT_NUMBER = INT_NUMBER + r'?' + MANTISSA + EXPONENT + r'?|' +\
+             INT_NUMBER + EXPONENT
 KEYWORD = r'[A-Z]+(/[A-Z]+)?'
 VOID_MATERIAL = r' 0 '
 SKIP = r'[= ]'
@@ -97,48 +99,43 @@ def t_eof(t):
     return t
 
 
-def t_title_title(t):
+def t_title(t):
     r'^.+'
+    t.lexer.section_index = 0
     t.lexer.begin('cells')
-    t.lexer.push_state('continue')
+    #t.lexer.push_state('continue')
     return t
 
 
 @lex.TOKEN(BLANK_LINE)
-def t_ANY_blank_line(t):
+def t_continue_cells_ckw_surfs_data_blank_line(t):
     t.lexer.lineno += 1
-    if t.lexer.states:
-        section_state = t.lexer.states.pop()
+    t.lexer.section_index += 1
+    if t.lexer.section_index == 1:
+        t.lexer.begin('surfs')
     else:
-        section_state = 'INITIAL'
-    t.lexer.begin(section_state)
+        t.lexer.begin('data')
     t.lexer.push_state('continue')
     return t
 
 
 @lex.TOKEN(LINE_COMMENT)
-def t_ANY_line_comment(t):
+def t_continue_cells_ckw_surfs_data_line_comment(t):
     pass
 
 
 @lex.TOKEN(CARD_COMMENT)
-def t_ANY_card_comment(t):
+def t_continue_cells_ckw_surfs_data_card_comment(t):
     pass #return t
 
 
-def t_error(t):
+def t_ANY_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
 
-@lex.TOKEN(RESET_CONTINUE)
-def t_continue_reset(t):
-    t.lexer.lineno += 1
-    t.lexer.pop_state()
-
-
 @lex.TOKEN(CONTINUE)
-def t_continue(t):
+def t_continue_cells_ckw_surfs_data_continue(t):
     t.lexer.push_state('continue')
 
 
@@ -150,13 +147,19 @@ def t_ckw_separator(t):
 
 
 @lex.TOKEN(SEPARATOR)
-def t_INITIAL_surfs_cells_title_separator(t):
+def t_continue_separator(t):
+    t.lexer.lineno += 1
+    t.lexer.pop_state()
+
+
+@lex.TOKEN(SEPARATOR)
+def t_INITIAL_surfs_cells_data_separator(t):
     t.lexer.lineno += 1
     return t
 
 
 @lex.TOKEN(FLT_NUMBER)
-def t_flt_number(t):
+def t_cells_ckw_surfs_data_flt_number(t):
     t.value = float(t.value)
     return t
 
@@ -167,17 +170,18 @@ def t_cells_void_material(t):
 
 
 @lex.TOKEN(INT_NUMBER)
-def t_int_number(t):
+def t_cells_ckw_surfs_data_int_number(t):
     t.value = int(t.value)
     return t
 
 
 @lex.TOKEN(KEYWORD)
-def t_cells_keyword(t):
+def t_cells_ckw_keyword(t):
     if t.value not in CELL_KEYWORDS:
         raise ValueError('Unknown word' + t.value)
     t.type = t.value
-    t.lexer.push_state('ckw')
+    if t.lexer.current_state() == 'cells':
+        t.lexer.push_state('ckw')
     return t
 
 
@@ -191,21 +195,19 @@ def t_surfs_keyword(t):
 
 @lex.TOKEN(KEYWORD)
 def t_data_keyword(t):
-    if t.value in DATA_KEYWORDS:
+    if t.value in KEYWORDS:
         t.type = t.value
     else:
         raise ValueError('Unknown word' + t.value)
     return t
 
 
-def t_ANY_newline_skip(t):
-    r'\n'
+@lex.TOKEN(NEWLINE_SKIP)
+def t_continue_cells_ckw_surfs_data_newline_skip(t):
     t.lexer.lineno += 1
 
 
 lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
-lexer.begin('title')
-lexer.states = ['data', 'surfs']
 
 
 #def p_model(p):
