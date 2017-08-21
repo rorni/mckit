@@ -51,6 +51,9 @@ ans = {
         ('flt_number', 400, 21), ('blank_line', '\n', 21),
         ('MODE', 'mode', 23), ('N', 'n', 23), ('separator', '\n', 23),
         ('VOL', 'vol', 24), ('int_number', 1, 24), ('int_number', 2, 24),
-        ('blank_line', '\n', 25)
+        ('separator', '\n', 24),
+        ('M', 'm', 25), ('int_number', 1, 25), ('int_number', 1001, 25),
+        ('.', '.', 25), ('int_number', 50, 25), ('C', 'c', 25),
+        ('blank_line', '\n', 26)
     ]
 }

@@ -85,9 +85,10 @@ SEPARATOR = r'\n(?=' + CARD_START + r')'
 FRACTION = r'\.'
 EXPONENT = r'(E[-+]?\d+)'
 INT_NUMBER = r'(\d+)'
-FLT_NUMBER = INT_NUMBER + r'?' + FRACTION + INT_NUMBER + EXPONENT + r'?|' +\
+FLT_NUMBER = r'(' + \
+             INT_NUMBER + r'?' + FRACTION + INT_NUMBER + EXPONENT + r'?|' +\
              INT_NUMBER + FRACTION + r'?' + EXPONENT + r'|' + \
-             INT_NUMBER + FRACTION
+             INT_NUMBER + FRACTION + r')(?=[ \n-+])'
 KEYWORD = r'[A-Z]+(/[A-Z]+)?'
 VOID_MATERIAL = r' 0 '
 SKIP = r'[=, ]'

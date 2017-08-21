@@ -22,4 +22,5 @@ c yet one
     
 mode n
 vol 1 2
+m1 1001.50c
 c omment
