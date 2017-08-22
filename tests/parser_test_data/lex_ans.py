@@ -55,5 +55,24 @@ ans = {
         ('M', 'm', 25), ('int_number', 1, 25), ('int_number', 1001, 25),
         ('.', '.', 25), ('int_number', 50, 25), ('C', 'c', 25),
         ('blank_line', '\n', 26)
+    ],
+    'lex3': [
+        ('title', 'Title card', 1), ('separator', '\n', 3),
+        ('int_number', 1, 4), ('int_number', 1, 4), ('-', '-', 4),
+        ('flt_number', 1.0, 4), ('int_number', 1, 4), ('int_number', 2, 4),
+        ('+', '+', 4), ('int_number', 3, 4), ('IMP', 'imp', 4), (':', ':', 4),
+        ('N', 'n', 4), ('int_number', 1, 4), ('separator', '\n', 5),
+        ('int_number', 2, 6), ('void_material', '0', 6), ('int_number', 1, 6),
+        ('-', '-', 6), ('int_number', 2, 6), ('int_number', 3, 9),
+        ('IMP', 'imp', 9), (':', ':', 9), ('P', 'p', 9), ('int_number', 0, 9),
+        ('separator', '\n', 9),
+        ('int_number', 3, 10), ('void_material', '0', 11), ('int_number', 1, 11),
+        ('int_number', 2, 11), ('int_number', 3, 11), ('int_number', 4, 12),
+        ('int_number', 5, 12), ('separator', '\n', 12),
+        ('int_number', 4, 13), ('int_number', 2, 13), ('-', '-', 13),
+        ('int_number', 5, 13), ('int_number', 1, 13), ('VOL', 'vol', 14),
+        ('int_number', 1, 14), ('separator', '\n', 14),
+        ('int_number', 5, 15), ('void_material', '0', 15), ('-', '-', 15),
+        ('int_number', 1, 15), ('int_number', 2, 15), (ValueError, 16, 15)
     ]
 }

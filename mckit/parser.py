@@ -107,14 +107,16 @@ def t_title(t):
     t.lexer.section_index = 0
     lexer.lineno = 1
     t.lineno = 1
+    t.lexer.last_pos = 1
     t.lexer.begin('cells')
     #t.lexer.push_state('continue')
     return t
 
 
 @lex.TOKEN(BLANK_LINE)
-def t_continue_cells_ckw_surfs_data_blank_line(t):
+def t_cells_ckw_surfs_data_blank_line(t):
     t.lexer.lineno += 1
+    t.lexer.last_pos = t.lexer.lexpos
     t.lexer.section_index += 1
     if t.lexer.section_index == 1:
         t.lexer.begin('surfs')
@@ -135,8 +137,10 @@ def t_continue_cells_ckw_surfs_data_card_comment(t):
 
 
 def t_ANY_error(t):
-    print("Illegal character '%s'" % t.value[0])
-    t.lexer.skip(1)
+    column = t.lexer.lexpos - t.lexer.last_pos + 1
+    msg = r"Illegal character '{0}' at line {1} column {2}".format(
+        t.value[0], t.lexer.lineno, column)
+    raise ValueError(msg, t.value[0], t.lexer.lineno, column)
 
 
 @lex.TOKEN(CONTINUE)
@@ -148,17 +152,20 @@ def t_cells_ckw_surfs_data_continue(t):
 def t_continue_reset_continue(t):
     t.lexer.pop_state()
     t.lexer.lineno += 1
+    t.lexer.last_pos = t.lexer.lexpos
 
 
 @lex.TOKEN(SEPARATOR)
 def t_continue_separator(t):
     t.lexer.lineno += 1
+    t.lexer.last_pos = t.lexer.lexpos
     t.lexer.pop_state()
 
 
 @lex.TOKEN(SEPARATOR)
 def t_ckw_separator(t):
     t.lexer.lineno += 1
+    t.lexer.last_pos = t.lexer.lexpos
     t.lexer.pop_state()
     return t
 
@@ -166,6 +173,7 @@ def t_ckw_separator(t):
 @lex.TOKEN(SEPARATOR)
 def t_INITIAL_surfs_cells_data_separator(t):
     t.lexer.lineno += 1
+    t.lexer.last_pos = t.lexer.lexpos
     return t
 
 
@@ -219,6 +227,7 @@ def t_data_keyword(t):
 @lex.TOKEN(NEWLINE_SKIP)
 def t_continue_cells_ckw_surfs_data_newline_skip(t):
     t.lexer.lineno += 1
+    t.lexer.last_pos = t.lexer.lexpos
 
 
 lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
