@@ -247,14 +247,11 @@ def p_cell_cards(p):
     '''
     if len(p) == 2:
         # print(p[1])
-        name = p[1][0]
-        params = p[1][1:]
-        p[0] = {name: params}
+        p[0] = {p[1][0]: p[1][1]}
     elif len(p) == 4:
-        # print(p[3])
-        name = p[3][0]
-        params = p[3][1:]
-        p[1][name] = params
+        #print(p[3])
+        name, value = p[3]
+        p[1][name] = value
         p[0] = p[1]
 
 
@@ -269,24 +266,21 @@ def p_cell_card(p):
         params.update(p[5])
     else:
         params = {'geometry': p[3]}
-        if p[2] is None:
-            params['MAT'] = None
-        else:
+        if p[2] is not None:
             params['MAT'] = p[2][0]
             params['RHO'] = p[2][1]
         if len(p) == 5:
             params.update(p[4])
-        p[0] = name, params
+    p[0] = name, params
 
 
 def p_cell_options(p):
     '''cell_options : cell_options cell_option
                     | cell_option'''
     if len(p) == 2:
-        p[0] = {p[1][0]: p[1][1]}
+        p[0] = p[1]
     else:
-        name, value = p[2]
-        p[1][name] = value
+        p[1].update(p[2])
         p[0] = p[1]
 
 
@@ -303,35 +297,33 @@ def p_cell_int_option(p):
     '''cell_int_option : U integer
                        | MAT integer
     '''
-    p[0] = p[1], p[2]
+    p[0] = {p[1]: p[2]}
 
 
 def p_cell_float_option(p):
-    '''cell_float_option : IMP particle_list float
+    '''cell_float_option : IMP ':' particle_list float
                          | TMP float
                          | RHO float
+                         | VOL float
     '''
-    if len(p) == 4:
-        name = p[1], *p[2]
-        value = p[3]
+    if len(p) == 5:
+        p[0] = {(p[1].upper(), par): p[4] for par in p[3]}
     else:
-        name = p[1]
-        value = p[2]
-    p[0] = name, value
+        p[0] = {p[1].upper(): p[2]}
 
 
 def p_trcl_option(p):
-    '''trcl_option : '*' TRCL '(' param_list ')'
-                   | TRCL '(' param_list ')'
+    '''trcl_option : '*' TRCL '(' transform_params ')'
+                   | TRCL '(' transform_params ')'
                    | TRCL int_number
     '''
-    if len(p) == 6:
-        indegrees = True
-        tr = p[4]
+    if len(p) == 3:
+        p[0] = {'TRCL': p[2]}
+    elif len(p) == 5:
+        p[0] = {'TRCL': p[3]}
     else:
-        indegrees = False
-        tr = p[3] if len(p) == 5 else p[2]
-    p[0] = 'TRCL', tr, indegrees
+        p[4]['indegrees'] = True
+        p[0] = {'TRCL': p[4]}
 
 
 def p_fill_option(p):
@@ -409,12 +401,10 @@ def p_surface_cards(p):
                      | surface_card
     '''
     if len(p) == 2:
-        name, *params = p[1]
-        p[0] = {name: params}
+        p[0] = {p[1][0]: p[1][1]}
     elif len(p) == 4:
-        print(p[3])
-        name, *params = p[3]
-        p[1][name] = params
+        name, value = p[3]
+        p[1][name] = value
         p[0] = p[1]
 
 
@@ -424,18 +414,19 @@ def p_surface_card(p):
                     | int_number surface_description
     '''
     if len(p) == 3:
-        p[0] = p[1], *p[2], None
+        p[0] = p[1], p[2]
     else:
-        p[0] = p[2], *p[3], p[1]
+        p[3][2]['modifier'] = p[1]
+        p[0] = p[2], p[3]
 
 
 def p_surface_description(p):
     '''surface_description : integer surface_type param_list
                            | surface_type param_list'''
     if len(p) == 4:
-        p[0] = p[2], p[3], p[1]
+        p[0] = p[2], p[3], {'transform': p[1]}
     else:
-        p[0] = p[1], p[2], None
+        p[0] = p[1], p[2], {}
 
 
 def p_param_list(p):
@@ -445,7 +436,7 @@ def p_param_list(p):
     if len(p) == 2:
         p[0] = [p[1]]
     else:
-        p[0] = p[1] + p[2]
+        p[0] = p[1] + [p[2]]
 
 
 def p_float(p):
@@ -480,13 +471,14 @@ def p_data_cards(p):
                   | data_card
     '''
     if len(p) == 2:
-        print(p[1])
-        name, *params = p[1]
-        p[0] = {name: params}
+        name, value = p[1]
+        p[0] = {name: value}
     elif len(p) == 4:
-        print(p[3])
-        name, *params = p[3]
-        p[1][name] = params
+        name, value = p[3]
+        if name in p[1].keys() and isinstance(value, dict):
+            p[1][name].update(value)
+        else:
+            p[1][name] = value
         p[0] = p[1]
 
 
@@ -522,18 +514,44 @@ def p_particle(p):
 
 
 def p_transform_card(p):
-    '''transform_card : '*' TR int_number param_list
-                      | TR int_number param_list
+    '''transform_card : '*' TR int_number transform_params
+                      | TR int_number transform_params
     '''
-    if len(p) == 4:
-        shift = 2
-        indegrees = False
+    if len(p) == 5:
+        tr = {'indegrees': True}
+        tr.update(p[4])
+        name = p[3]
     else:
-        shift = 3
-        indegrees = True
-    name = p[shift]
-    params = p[shift + 1]
-    p[0] = 'TR', name, params, indegrees
+        name = p[2]
+        tr = p[3]
+    p[0] = 'TR', {name: tr}
+
+
+def p_transform_params(p):
+    '''transform_params : translation rotation integer
+                        | translation rotation
+                        | translation
+    '''
+    tr = {'translation': p[1]}
+    if len(p) > 2:
+        tr['rotation'] = p[2]
+    if len(p) == 4:
+        tr['inverted'] = True
+    p[0] = tr
+
+
+def p_translation(p):
+    '''translation : float float float'''
+    p[0] = [p[1], p[2], p[3]]
+
+
+def p_rotation(p):
+    '''rotation : float float float float float float float float float
+                | float float float float float float
+                | float float float float float
+                | float float float
+    '''
+    p[0] = [p[i] for i in range(1, len(p))]
 
 
 def p_material_card(p):
@@ -541,31 +559,38 @@ def p_material_card(p):
                      | M int_number composition_list
     '''
     if len(p) == 5:
-        options = p[4]
-    else:
-        options = None
-    p[0] = 'M', p[2], p[3], options
+        p[3].update(p[4])
+    p[0] = 'M', {p[2]: p[3]}
 
 
 def p_composition_list(p):
-    '''composition_list : composition_list zaid float
-                        | zaid float
+    '''composition_list : composition_list zaid_fraction
+                        | zaid_fraction
     '''
-    if len(p) == 3:
-        p[0] = [(p[1], p[2])]
+    if len(p) == 2:
+        key = p[1][0]
+        value = p[1][1:]
+        p[0] = {key: [value]}
     else:
-        p[0] = p[1] + [(p[2], p[3])]
+        key = p[2][0]
+        value = p[2][1:]
+        if key in p[1].keys():
+            p[1][key].append(value)
+        else:
+            p[1][key] = [value]
+        p[0] = p[1]
 
 
-def p_zaid(p):
-    '''zaid : int_number '.' int_number data_spec
-            | int_number
+def p_zaid_fraction(p):
+    '''zaid_fraction : int_number '.' int_number data_spec float
+            | int_number float
     '''
-    if len(p) == 5:
-        lib = p[3], p[4]
+    if len(p) == 6:
+        key = 'atomic' if p[5] > 0 else 'wgt'
+        p[0] = key, p[1], abs(p[5]), p[3], p[4]
     else:
-        lib = None
-    p[0] = p[1], lib
+        key = 'atomic' if p[2] > 0 else 'wgt'
+        p[0] = key, p[1], abs(p[2])
 
 
 def p_data_spec(p):
