@@ -200,6 +200,7 @@ def t_cells_ckw_keyword(t):
     if value not in CELL_KEYWORDS:
         raise ValueError('Unknown word' + t.value)
     t.type = value
+    t.value = value
     if t.lexer.current_state() == 'cells':
         t.lexer.push_state('ckw')
     return t
@@ -207,10 +208,11 @@ def t_cells_ckw_keyword(t):
 
 @lex.TOKEN(KEYWORD)
 def t_surfs_keyword(t):
-    t.value = t.value.upper()
-    if t.value not in SURFACE_TYPES:
+    value = t.value.upper()
+    if value not in SURFACE_TYPES:
         raise ValueError('Unknown surface type' + t.value)
     t.type = 'surface_type'
+    t.value = value
     return t
 
 
@@ -219,6 +221,7 @@ def t_data_keyword(t):
     value = t.value.upper()
     if value in KEYWORDS:
         t.type = value
+        t.value = value
     else:
         raise ValueError('Unknown word' + t.value)
     return t
@@ -307,9 +310,9 @@ def p_cell_float_option(p):
                          | VOL float
     '''
     if len(p) == 5:
-        p[0] = {(p[1].upper(), par): p[4] for par in p[3]}
+        p[0] = {(p[1], par): p[4] for par in p[3]}
     else:
-        p[0] = {p[1].upper(): p[2]}
+        p[0] = {p[1]: p[2]}
 
 
 def p_trcl_option(p):
@@ -327,19 +330,18 @@ def p_trcl_option(p):
 
 
 def p_fill_option(p):
-    '''fill_option : '*' FILL int_number '(' param_list ')'
-                   | FILL int_number '(' param_list ')'
+    '''fill_option : '*' FILL int_number '(' transform_params ')'
+                   | FILL int_number '(' transform_params ')'
+                   | FILL int_number '(' int_number ')'
                    | FILL int_number
     '''
     if len(p) == 7:
-        indegrees = True
-        universe = p[3]
-        tr = p[5]
+        p[5]['indegrees'] = True
+        p[0] = {'FILL': {'universe': p[3], 'transform': p[5]}}
+    elif len(p) == 6:
+        p[0] = {'FILL': {'universe': p[2], 'transform': p[4]}}
     else:
-        indegrees = False
-        universe = p[2]
-        tr = p[4] if len(p) == 6 else None
-    p[0] = 'FILL', universe, tr, indegrees
+        p[0] = {'FILL': {'universe': p[2]}}
 
 
 def p_cell_material(p):
