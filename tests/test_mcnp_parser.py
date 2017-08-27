@@ -38,34 +38,9 @@ class TestParser(unittest.TestCase):
                 title, cells, surfaces, data = parser.parse(text)
                 ans = parser_ans.ans[name]
                 self.assertEqual(title, ans['title'])
-                self.recursive_dict_equality(cells, ans['cells'])
-                self.recursive_dict_equality(surfaces, ans['surfaces'])
-                self.recursive_dict_equality(data, ans['data'])
-
-    def recursive_dict_equality(self, data1, data2):
-        self.assertCountEqual(data1.keys(), data2.keys())
-        for key, val1 in data1.items():
-            val2 = data2[key]
-            if isinstance(val1, list) or isinstance(val1, tuple):
-                self.assertIsInstance(val2, val1.__class__)
-                self.recursive_list_equality(val1, val2)
-            elif isinstance(val1, dict):
-                self.assertIsInstance(val2, dict)
-                self.recursive_dict_equality(val1, val2)
-            else:
-                self.assertEqual(val1, val2)
-
-    def recursive_list_equality(self, data1, data2):
-        self.assertCountEqual(data1, data2)
-        for d1, d2 in zip(data1, data2):
-            if isinstance(d1, list) or isinstance(d1, tuple):
-                self.assertIsInstance(d2, d1.__class__)
-                self.recursive_list_equality(d1, d2)
-            elif isinstance(d1, dict):
-                self.assertIsInstance(d2, dict)
-                self.recursive_dict_equality(d1, d2)
-            else:
-                self.assertEqual(d1, d2)
+                self.assertEqual(cells, ans['cells'])
+                self.assertEqual(surfaces, ans['surfaces'])
+                self.assertEqual(data, ans['data'])
 
 
 if __name__ == '__main__':
