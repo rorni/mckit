@@ -1,8 +1,8 @@
 import unittest
 
 from mckit.parser import lexer, parser
-from .parser_test_data import lex_ans
-from .parser_test_data import parser_ans
+from tests.parser_test_data import lex_ans
+from tests.parser_test_data import parser_ans
 
 
 class TestLexer(unittest.TestCase):
