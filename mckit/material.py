@@ -163,7 +163,7 @@ class Element:
 
     Parameters
     ----------
-    name : str
+    name : str or int
         Name of isotope. It can be ZAID = Z * 1000 + A, where Z - charge,
         A - the number of protons and neutrons. If A = 0, then natural abundance
         is used. Also it can be an atom_name optionally followed by '-' and A.
@@ -183,12 +183,16 @@ class Element:
         Gets isotope's molar mass.
     """
     def __init__(self, name, lib=None):
-        z, a = self._split_name(name.upper())
-        if z.isalpha():
-            self._charge = NAME_TO_CHARGE[z]
+        if isinstance(name, int):
+            self._charge = name // 1000
+            self._mass_number = name % 1000
         else:
-            self._charge = int(z)
-        self._mass_number = int(a)
+            z, a = self._split_name(name.upper())
+            if z.isalpha():
+                self._charge = NAME_TO_CHARGE[z]
+            else:
+                self._charge = int(z)
+            self._mass_number = int(a)
         self._lib = lib
 
     def __hash__(self):
