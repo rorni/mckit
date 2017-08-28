@@ -53,7 +53,8 @@ def create_surface(kind, *params, transform=None):
         else:
             r0 = axis * params[0]
         R = params[-1]
-        return GQuadratic(np.eye(3), -2 * r0, np.sum(r0**2) - R**2, transform)
+        #return GQuadratic(np.eye(3), -2 * r0, np.sum(r0**2) - R**2, transform)
+        return Sphere(r0, R, transform)
     # -------- Cylinder ----------------
     elif kind[0] == 'C':
         A = 1 - axis
@@ -219,6 +220,43 @@ class Plane(Surface):
         senses = self.test_point(region)
         # Returns 0 if both +1 and -1 values present.
         return np.sign(np.max(senses) + np.min(senses))
+
+
+class Sphere(Surface):
+    """Sphere surface class.
+    
+    Parameters
+    ----------
+    center : array_like[float]
+        Center of the sphere.
+    radius : float
+        The radius of the sphere.
+    transform : Transformation
+        Transformation to be applied to this sphere.
+    """
+    def __init__(self, center, radius, transform=None):
+        Surface.__init__(self)
+        if transform is not None:
+            center = transform.apply2point(center)
+        self._center = np.array(center)
+        self._radius = radius
+
+    def test_point(self, p):
+        return np.sign(self._func(p)).astype(int)
+
+    def transform(self, tr):
+        return Sphere(self._center, self._radius, transform=tr)
+
+    def test_region(self, region):
+        return GQuadratic.test_region(self, region)
+
+    def _func(self, x, sign=+1):
+        dist = x - self._center
+        quad = np.sum(np.multiply(dist, dist), axis=-1)
+        return sign * (quad - self._radius**2)
+
+    def _grad(self, x, sign=+1):
+        return sign * 2 * (x - self._center)
 
 
 class GQuadratic(Surface):
