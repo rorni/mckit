@@ -259,6 +259,45 @@ class Sphere(Surface):
         return sign * 2 * (x - self._center)
 
 
+class Cylinder(Surface):
+    """Cylinder surface class.
+    
+    Parameters
+    ----------
+    pt : array_like[float]
+        Point on the cylinder's axis.
+    axis : array_like[float]
+        Cylinder's axis direction.
+    radius : float
+        Cylinder's radius.
+    transform : Transformation
+        Transformation to be applied to the cylinder being created.
+    """
+    def __init__(self, pt, axis, radius, transform=None):
+        Surface.__init__(self)
+        if transform is not None:
+            pt = transform.apply2point(pt)
+            axis = transform.apply2vector(axis)
+        self._pt = np.array(pt)
+        self._axis = np.array(axis) / np.linalg.norm(axis)
+        self._radius = radius
+
+    def test_point(self, p):
+        return np.sign(self._func(p)).astype(int)
+
+    def transform(self, tr):
+        return Cylinder(self._pt, self._axis, self._radius, transform=tr)
+
+    def test_region(self, region):
+        return GQuadratic.test_region(self, region)
+
+    def _func(self, x, sign=+1):
+        pass
+
+    def _grad(self, x, sign=+1):
+        pass
+
+
 class GQuadratic(Surface):
     """Generic quadratic surface class.
 
