@@ -431,25 +431,44 @@ class Torus(Surface):
         self._R = R
         self._a = a
         self._b = b
+        # case of degenerate torus
+        self._spec_pts = []
+        if b > R:
+            offset = a * np.sqrt(1 - (R / b)**2)
+            self._spec_pts.append(self._center + offset * self._axis)
+            self._spec_pts.append(self._center - offset * self._axis)
 
     def test_point(self, p):
         return np.sign(self._func(p)).astype(int)
 
     def test_region(self, region):
         # TODO: implement test_region
+        bounds = [[lo, hi] for lo, hi in zip(np.amin(region, axis=0),
+                                             np.amax(region, axis=0))]
+        # If special point is inside region, then torus boundary definitely
+        # in the region.
+        for spec_pt in self._spec_pts:
+            result = True
+            for v, (lo, hi) in zip(spec_pt, bounds):
+                result = result and (lo < v < hi)
+            if result:
+                return 0
         return GQuadratic.test_region(self, region)
 
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b, tr)
 
     def _func(self, x, sign=+1):
-        d = np.dot(x, self._axis) - np.dot(self._center, self._axis)
-        c = np.sqrt(np.sum(x**2, axis=-1) - 2 * np.dot(x, self._center) + \
-            np.dot(self._center, self._center) - d**2)
-        return sign * ((d / self._a)**2 + ((c - self._R) / self._b)**2 - 1)
+        p = x - self._center
+        pn = np.dot(p, self._axis)
+        pp = np.sum(np.multiply(p, p), axis=-1)
+        sq = np.sqrt(np.maximum(pp - pn**2, 0))
+        return sign * (pn / self._a)**2 + ((sq - self._R) / self._b)**2 - 1
 
     def _grad(self, x, sign=+1):
-        d = np.dot(x, self._axis) - np.dot(self._center, self._axis)
-        c = np.sqrt(np.sum(x ** 2, axis=-1) - 2 * np.dot(x, self._center) + \
-                    np.dot(self._center, self._center) - d ** 2)
-        return sign * 2 * (d / self._a * self._axis + (c - self._R) / (self._b * c) * (x - self._center))
+        p = x - self._center
+        pn = np.dot(p, self._axis)
+        pp = np.sum(np.multiply(p, p), axis=-1)
+        sq = np.sqrt(np.maximum(pp - pn ** 2, 0))
+        return sign * 2 * (pn / self._a**2 * self._axis + \
+                 (sq - self._R) / (sq * self._b**2) * (p - pn * self._axis))
