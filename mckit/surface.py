@@ -43,7 +43,7 @@ def create_surface(kind, *params, transform=None):
         m = np.diag([A, B, C])
         v = 2 * np.array([D - A*x0, E - B*y0, F - C*z0])
         k = A*x0**2 + B*y0**2 + C*z0**2 - 2 * (D*x0 + E*y0 + F*z0) + G
-        return GQuadratic(m, v, k, transform)
+        return GQuadratic(m, v, k, transform=transform)
     # -------- Sphere ------------------
     elif kind[0] == 'S':
         if kind == 'S':
@@ -54,7 +54,7 @@ def create_surface(kind, *params, transform=None):
             r0 = axis * params[0]
         R = params[-1]
         #return GQuadratic(np.eye(3), -2 * r0, np.sum(r0**2) - R**2, transform)
-        return Sphere(r0, R, transform)
+        return Sphere(r0, R, transform=transform)
     # -------- Cylinder ----------------
     elif kind[0] == 'C':
         A = 1 - axis
@@ -65,7 +65,8 @@ def create_surface(kind, *params, transform=None):
         else:
             r0 = ORIGIN
         R = params[-1]
-        return GQuadratic(np.diag(A), -2 * r0, np.sum(r0**2) - R**2, transform)
+        return Cylinder(r0, axis, R, transform=transform)
+        #return GQuadratic(np.diag(A), -2 * r0, np.sum(r0**2) - R**2, transform)
     # -------- Cone ---------------
     elif kind[0] == 'K':
         if kind[1] == '/':
@@ -75,13 +76,13 @@ def create_surface(kind, *params, transform=None):
         t2 = params[-1]
         m = np.diag(1 - axis - t2 * axis)
         v05 = r0 * (1 - axis - axis * t2)
-        return GQuadratic(m, -2 * v05, np.dot(v05, r0), transform)
+        return GQuadratic(m, -2 * v05, np.dot(v05, r0), transform=transform)
     # ---------- GQ -----------------
     elif kind == 'GQ':
         A, B, C, D, E, F, G, H, J, k = params
         m = np.array([[A, 0.5*D, 0.5*F], [0.5*D, B, 0.5*E], [0.5*F, 0.5*E, C]])
         v = np.array([G, H, J])
-        return GQuadratic(m, v, k, transform)
+        return GQuadratic(m, v, k, transform=transform)
     # ---------- Torus ---------------------
     elif kind[0] == 'T':
         x0, y0, z0, R, a, b = params
@@ -102,7 +103,7 @@ def create_surface(kind, *params, transform=None):
                 t2 = (abs(r1) - abs(r2))**2 / abs(h1 - h2)
                 m = np.diag(1 - axis - t2 * axis)
                 v = 2 * t2 * h0 * axis
-                return GQuadratic(m, v, -t2 * h0**2, transform)
+                return GQuadratic(m, v, -t2 * h0**2, transform=transform)
         elif len(params) == 6:
             # TODO: Implement creation of surface by 3 points.
             raise NotImplementedError
@@ -292,10 +293,14 @@ class Cylinder(Surface):
         return GQuadratic.test_region(self, region)
 
     def _func(self, x, sign=+1):
-        pass
+        a = x - self._pt
+        an = np.dot(a, self._axis)
+        quad = np.sum(np.multiply(a, a), axis=-1) - np.multiply(an, an)
+        return sign * (quad - self._radius**2)
 
     def _grad(self, x, sign=+1):
-        pass
+        a = x - self._pt
+        return sign * 2 * (a - np.dot(a, self._axis) * self._axis)
 
 
 class GQuadratic(Surface):

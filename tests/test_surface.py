@@ -5,7 +5,8 @@ import unittest
 import numpy as np
 
 from mckit.constants import *
-from mckit.surface import Plane, GQuadratic, Torus, Sphere, create_surface
+from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, \
+    create_surface
 from mckit.transformation import Transformation
 
 
@@ -71,6 +72,41 @@ class TestSphereSurface(unittest.TestCase):
             with self.subTest(i=i):
                 sph = Sphere(c, r)
                 result = sph.test_region(region)
+                self.assertEqual(result, ans)
+
+
+class TestCylinderSurface(unittest.TestCase):
+    def test_creation(self):
+        for i, (pt, ax, r, tr) in enumerate(cylinder_creation_cases):
+            with self.subTest(i=i):
+                cyl = Cylinder(pt, ax, r, transform=tr)
+                if tr is None:
+                    pt_ref = np.array(pt)
+                    ax_ref = np.array(ax) / np.linalg.norm(ax)
+                else:
+                    pt_ref = tr.apply2point(pt)
+                    ax_ref = tr.apply2vector(ax) / np.linalg.norm(ax)
+                self.assertAlmostEqual(cyl._radius, r)
+                for j in range(3):
+                    self.assertAlmostEqual(cyl._pt[j], pt_ref[j])
+                    self.assertAlmostEqual(cyl._axis[j], ax_ref[j])
+
+    def test_point_test(self):
+        cyl = Cylinder([-1, 3, 4], [1, 0, 0], 2)
+        for i, (p, ans) in enumerate(cylinder_point_test_cases):
+            with self.subTest(i=i):
+                sense = cyl.test_point(p)
+                if isinstance(sense, np.ndarray):
+                    for s, a in zip(sense, ans):
+                        self.assertEqual(s, a)
+                else:
+                    self.assertEqual(sense, ans)
+
+    def test_region_test(self):
+        for i, (pt, ax, r, ans) in enumerate(cylinder_region_test_cases):
+            with self.subTest(i=i):
+                cyl = Cylinder(pt, ax, r)
+                result = cyl.test_region(region)
                 self.assertEqual(result, ans)
 
 
@@ -140,6 +176,10 @@ class TestTorusSurface(unittest.TestCase):
                     self.assertEqual(sense, ans)
 
     @unittest.expectedFailure
+    def test_transform(self):
+        raise NotImplementedError
+
+    @unittest.expectedFailure
     def test_region_test(self):
         raise NotImplementedError
 
@@ -159,6 +199,15 @@ class TestSurfaceCreation(unittest.TestCase):
                 surf = create_surface(kind, *params)
                 for j in range(3):
                     self.assertAlmostEqual(surf._center[j], c[j])
+                self.assertAlmostEqual(surf._radius, r)
+
+    def test_cylinder_creation(self):
+        for i, (kind, params, pt, ax, r) in enumerate(create_surface_cylinder_cases):
+            with self.subTest(i=i):
+                surf = create_surface(kind, *params)
+                for j in range(3):
+                    self.assertAlmostEqual(surf._pt[j], pt[j])
+                    self.assertAlmostEqual(surf._axis[j], ax[j])
                 self.assertAlmostEqual(surf._radius, r)
 
     def test_gq_creation(self):
@@ -255,6 +304,33 @@ sphere_region_test_cases = [
     (np.array([-2, 0, -2]), 4.3, 0), (np.array([-2, 0, -2]), 4.4, -1)
 ]
 
+cylinder_creation_cases = [
+    ([1, 2, 3], [1, 2, 3], 5, None),
+    ([-1, 2, -3], [1, 2, 3], 5, tr_glob)
+]
+
+cylinder_point_test_cases = [
+    ([0, 3, 4], -1), ([-2, 3, 2.001], -1), ([-3, 3, 1.999], +1),
+    ([2, 3, 5.999], -1), ([3, 3, 6.001], +1), ([4, 1.001, 4], -1),
+    ([-4, 0.999, 4], +1), ([-5, 4.999, 4], -1), ([5, 5.001, 4], +1),
+    (np.array([[0, 3, 4], [-2, 3, 2.001], [-3, 3, 1.999], [2, 3, 5.999],
+               [3, 3, 6.001], [4, 1.001, 4], [-4, 0.999, 4], [-5, 4.999, 4],
+               [5, 5.001, 4]]), [-1, -1, +1, -1, +1, -1, +1, -1, +1])
+]
+
+cylinder_region_test_cases = [
+    ([0, 0, 0], [1, 0, 0], 0.5, 0), ([0, 0, 0], [1, 0, 0], 1.4, 0),
+    ([0, 0, 0], [1, 0, 0], 1.5, -1), ([0, 1, 1], [1, 0, 0], 0.001, 0),
+    ([0, 1, 1], [1, 0, 0], 2.8, 0), ([0, 1, 1], [1, 0, 0], 2.9, -1),
+    ([0, 2, 0], [1, 0, 0], 0.999, +1), ([0, 2, 0], [1, 0, 0], 1.001, 0),
+    ([0, 2, 0], [1, 0, 0], 3.1, 0), ([0, 2, 0], [1, 0, 0], 3.2, -1),
+    ([0, 0, 0], [0, 1, 0], 0.5, 0), ([0, 0, 0], [0, 1, 0], 1.4, 0),
+    ([0, 0, 0], [0, 1, 0], 1.5, -1), ([1, 0, 1], [0, 1, 0], 0.001, 0),
+    ([1, 0, 1], [0, 1, 0], 2.8, 0), ([1, 0, 1], [0, 1, 0], 2.9, -1),
+    ([2, 0, 0], [0, 1, 0], 0.999, +1), ([2, 0, 0], [0, 1, 0], 1.001, 0),
+    ([2, 0, 0], [0, 1, 0], 3.1, 0), ([2, 0, 0], [0, 1, 0], 3.2, -1)
+]
+
 gq_creation_cases = [
     ([[1, 0, 0], [0, 2, 0], [0, 0, 3]], [1, 2, 3], -4, None),
     ([[1, 0, 0], [0, 2, 0], [0, 0, 3]], [1, 2, 3], -4, tr_glob)
@@ -320,16 +396,16 @@ create_surface_sphere_cases = [
     ('S', [3.7, -3.8, 3.9, 6.5], np.array([3.7, -3.8, 3.9]), 6.5)
 ]
 
+create_surface_cylinder_cases = [
+    ('CX', [6.6], [0, 0, 0], [1, 0, 0], 6.6),
+    ('CY', [6.7], [0, 0, 0], [0, 1, 0], 6.7),
+    ('CZ', [6.8], [0, 0, 0], [0, 0, 1], 6.8),
+    ('C/X', [4.0, -4.1, 6.9], [0, 4.0, -4.1], [1, 0, 0], 6.9),
+    ('C/Y', [-4.2, 4.3, 7.0], [-4.2, 0, 4.3], [0, 1, 0], 7.0),
+    ('C/Z', [4.4, 4.5, 7.1], [4.4, 4.5, 0], [0, 0, 1], 7.1)
+]
+
 create_surface_gq_cases = [
-    ('CX', [6.6], [[0, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 0, 0], -6.6**2),
-    ('CY', [6.7], [[1, 0, 0], [0, 0, 0], [0, 0, 1]], [0, 0, 0], -6.7**2),
-    ('CZ', [6.8], [[1, 0, 0], [0, 1, 0], [0, 0, 0]], [0, 0, 0], -6.8**2),
-    ('C/X', [4.0, -4.1, 6.9], [[0, 0, 0], [0, 1, 0], [0, 0, 1]],
-     -2 * np.array([0, 4.0, -4.1]), 4.0**2 + 4.1**2 - 6.9**2),
-    ('C/Y', [-4.2, 4.3, 7.0], [[1, 0, 0], [0, 0, 0], [0, 0, 1]],
-     -2 * np.array([-4.2, 0, 4.3]), 4.2**2 + 4.3**2 - 7.0**2),
-    ('C/Z', [4.4, 4.5, 7.1], [[1, 0, 0], [0, 1, 0], [0, 0, 0]],
-     -2 * np.array([4.4, 4.5, 0]), 4.4 ** 2 + 4.5 ** 2 - 7.1 ** 2),
     ('KX', [4.6, 0.33], [[-0.33, 0, 0], [0, 1, 0], [0, 0, 1]],
      -2 * np.array([-0.33 * 4.6, 0, 0]), -0.33 * 4.6**2),
     ('KY', [4.7, 0.33], [[1, 0, 0], [0, -0.33, 0], [0, 0, 1]],
