@@ -91,6 +91,7 @@ def create_surface(kind, *params, transform=None):
         if len(params) == 2:
             return Plane(axis, -params[0], transform=transform)
         elif len(params) == 4:
+            # TODO: Use special classes instead of GQ
             h1, r1, h2, r2 = params
             if abs(h2 - h1) < RESOLUTION * max(abs(h1), abs(h2)):
                 return Plane(axis, -0.5 * (h1 + h2), transform=transform)
@@ -426,21 +427,29 @@ class Torus(Surface):
             center = np.array(center)
             axis = np.array(axis)
         self._center = center
-        self._axis = axis
+        self._axis = axis / np.linalg.norm(axis)
         self._R = R
         self._a = a
         self._b = b
 
     def test_point(self, p):
-        d = np.dot(p, self._axis) - np.dot(self._center, self._axis)
-        c = np.sqrt(np.sum(p**2, axis=-1) - 2 * np.dot(p, self._center) + \
-            np.dot(self._center, self._center) - d**2)
-        sense = (d / self._a)**2 + ((c - self._R) / self._b)**2 - 1
-        return np.sign(sense).astype(int)
+        return np.sign(self._func(p)).astype(int)
 
     def test_region(self, region):
         # TODO: implement test_region
-        raise NotImplementedError
+        return GQuadratic.test_region(self, region)
 
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b, tr)
+
+    def _func(self, x, sign=+1):
+        d = np.dot(x, self._axis) - np.dot(self._center, self._axis)
+        c = np.sqrt(np.sum(x**2, axis=-1) - 2 * np.dot(x, self._center) + \
+            np.dot(self._center, self._center) - d**2)
+        return sign * ((d / self._a)**2 + ((c - self._R) / self._b)**2 - 1)
+
+    def _grad(self, x, sign=+1):
+        d = np.dot(x, self._axis) - np.dot(self._center, self._axis)
+        c = np.sqrt(np.sum(x ** 2, axis=-1) - 2 * np.dot(x, self._center) + \
+                    np.dot(self._center, self._center) - d ** 2)
+        return sign * 2 * (d / self._a * self._axis + (c - self._R) / (self._b * c) * (x - self._center))
