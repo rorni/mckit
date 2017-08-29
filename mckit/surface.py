@@ -73,10 +73,9 @@ def create_surface(kind, *params, transform=None):
             r0 = np.array(params[:3])
         else:
             r0 = params[0] * axis
-        t2 = params[-1]
-        m = np.diag(1 - axis - t2 * axis)
-        v05 = r0 * (1 - axis - axis * t2)
-        return GQuadratic(m, -2 * v05, np.dot(v05, r0), transform=transform)
+        ta = np.sqrt(params[-1])
+        return Cone(r0, axis, ta, transform=transform)
+        #return GQuadratic(m, -2 * v05, np.dot(v05, r0), transform=transform)
     # ---------- GQ -----------------
     elif kind == 'GQ':
         A, B, C, D, E, F, G, H, J, k = params
@@ -301,6 +300,50 @@ class Cylinder(Surface):
     def _grad(self, x, sign=+1):
         a = x - self._pt
         return sign * 2 * (a - np.dot(a, self._axis) * self._axis)
+
+
+class Cone(Surface):
+    """Cone surface class.
+
+    Parameters
+    ----------
+    apex : array_like[float]
+        Cone's apex.
+    axis : array_like[float]
+        Cone's axis.
+    ta : float
+        Tangent of angle between axis and generatrix.
+    transform : Transformation
+        Transformation to be applied to this surface.
+    """
+    def __init__(self, apex, axis, ta, transform=None):
+        Surface.__init__(self)
+        if transform is not None:
+            apex = transform.apply2point(apex)
+            axis = transform.apply2vector(axis)
+        self._apex = np.array(apex)
+        self._axis = np.array(axis) / np.linalg.norm(axis)
+        self._t2 = ta**2
+
+    def test_point(self, p):
+        return np.sign(self._func(p)).astype(int)
+
+    def transform(self, tr):
+        return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr)
+
+    def test_region(self, region):
+        return GQuadratic.test_region(self, region)
+
+    def _func(self, x, sign=+1):
+        a = x - self._apex
+        an = np.dot(a, self._axis)
+        quad = np.sum(np.multiply(a, a), axis=-1)
+        return sign * (quad - np.multiply(an, an) * (1 + self._t2))
+
+    def _grad(self, x, sign=+1):
+        a = x - self._apex
+        t2plus1 = 1 + self._t2
+        return sign * 2 * (a - np.dot(a, self._axis) * self._axis * t2plus1)
 
 
 class GQuadratic(Surface):
