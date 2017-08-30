@@ -127,7 +127,6 @@ class Surface(ABC):
     def __eq__(self, other):
         return id(self) == id(other)
 
-    @abstractmethod
     def test_point(self, p):
         """Checks the sense of point(s) p.
 
@@ -147,23 +146,8 @@ class Surface(ABC):
             Individual point - single value, array of points - array of
             ints of shape (num_points,) is returned.
         """
+        return np.sign(self._func(p)).astype(int)
 
-    @abstractmethod
-    def transform(self, tr):
-        """Applies transformation to this surface.
-
-        Parameters
-        ----------
-        tr : Transform
-            Transformation to be applied.
-
-        Returns
-        -------
-        surf : Surface
-            The result of this surface transformation.
-        """
-
-    @abstractmethod
     def test_region(self, region):
         """Checks whether this surface crosses the region.
 
@@ -185,6 +169,73 @@ class Surface(ABC):
              0 if there are both points with positive and negative sense inside
                region
             -1 if every point inside region has negative sense.
+        """
+        senses = self.test_point(region)
+        sign = np.sign(np.max(senses) + np.min(senses))
+        if sign != 0:
+            bounds = [[lo, hi] for lo, hi in zip(np.amin(region, axis=0),
+                                                 np.amax(region, axis=0))]
+            for start_pt in region:
+                end_pt = fmin_tnc(self._func, start_pt, fprime=self._grad,
+                                  args=(sign,), bounds=bounds, disp=0)[0]
+                if self.test_point(end_pt) * sign < 0:
+                    return 0
+        return sign
+
+    @abstractmethod
+    def transform(self, tr):
+        """Applies transformation to this surface.
+
+        Parameters
+        ----------
+        tr : Transform
+            Transformation to be applied.
+
+        Returns
+        -------
+        surf : Surface
+            The result of this surface transformation.
+        """
+
+    @abstractmethod
+    def _func(self, x, sign=+1):
+        """Calculates deviation of point x from this surface.
+
+        If the result is positive, then point has positive sense. Else -
+        negative. sign parameter change sense to the opposite.
+
+        Parameters
+        ----------
+        x : array_like[float]
+            Coordinates of individual point to be tested (if shape (3,)) or
+            of a set of points (if shape (N_pts, 3)).
+        sign : int
+            Multiplier to change test result. It is used in optimization
+            problem to find function minimum.
+
+        Returns
+        -------
+        result : float or array_like[float]
+            Test result for individual point or points.
+        """
+
+    @abstractmethod
+    def _grad(self, x, sign=+1):
+        """Calculates gradient of function _func.
+
+        Parameters
+        ----------
+        x : array_like[float]
+            Coordinates of individual point to be tested (if shape (3,)) or
+            of a set of points (if shape (N_pts, 3)).
+        sign : int
+            Multiplier to change test result. It is used in optimization
+            problem to find function minimum.
+
+        Returns
+        -------
+        result : array_like[float]
+            Gradient values of function in every given point.
         """
 
 
@@ -210,9 +261,6 @@ class Plane(Surface):
         self._v = v
         self._k = k
 
-    def test_point(self, p):
-        return np.sign(np.dot(p, self._v) + self._k).astype(int)
-
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr)
 
@@ -221,6 +269,12 @@ class Plane(Surface):
         senses = self.test_point(region)
         # Returns 0 if both +1 and -1 values present.
         return np.sign(np.max(senses) + np.min(senses))
+
+    def _func(self, x, sign=+1):
+        return sign * (np.dot(x, self._v) + self._k)
+
+    def _grad(self, x, sign=+1):
+        return self._v
 
 
 class Sphere(Surface):
@@ -242,14 +296,8 @@ class Sphere(Surface):
         self._center = np.array(center)
         self._radius = radius
 
-    def test_point(self, p):
-        return np.sign(self._func(p)).astype(int)
-
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr)
-
-    def test_region(self, region):
-        return GQuadratic.test_region(self, region)
 
     def _func(self, x, sign=+1):
         dist = x - self._center
@@ -283,14 +331,8 @@ class Cylinder(Surface):
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._radius = radius
 
-    def test_point(self, p):
-        return np.sign(self._func(p)).astype(int)
-
     def transform(self, tr):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr)
-
-    def test_region(self, region):
-        return GQuadratic.test_region(self, region)
 
     def _func(self, x, sign=+1):
         a = x - self._pt
@@ -326,14 +368,8 @@ class Cone(Surface):
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._t2 = ta**2
 
-    def test_point(self, p):
-        return np.sign(self._func(p)).astype(int)
-
     def transform(self, tr):
         return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr)
-
-    def test_region(self, region):
-        return GQuadratic.test_region(self, region)
 
     def _func(self, x, sign=+1):
         a = x - self._apex
@@ -373,24 +409,8 @@ class GQuadratic(Surface):
         self._v = v
         self._k = k
 
-    def test_point(self, p):
-        return np.sign(self._func(p)).astype(int)
-
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr)
-
-    def test_region(self, region):
-        senses = self.test_point(region)
-        sign = np.sign(np.max(senses) + np.min(senses))
-        if sign != 0:
-            bounds = [[lo, hi] for lo, hi in zip(np.amin(region, axis=0),
-                                                 np.amax(region, axis=0))]
-            for start_pt in region:
-                end_pt = fmin_tnc(self._func, start_pt, fprime=self._grad,
-                                  args=(sign,), bounds=bounds, disp=0)[0]
-                if self.test_point(end_pt) * sign < 0:
-                    return 0
-        return sign
 
     def _func(self, x, sign=+1):
         # TODO: Check mclight project for possible performance improvement.
@@ -438,9 +458,6 @@ class Torus(Surface):
             self._spec_pts.append(self._center + offset * self._axis)
             self._spec_pts.append(self._center - offset * self._axis)
 
-    def test_point(self, p):
-        return np.sign(self._func(p)).astype(int)
-
     def test_region(self, region):
         # TODO: implement test_region
         bounds = [[lo, hi] for lo, hi in zip(np.amin(region, axis=0),
@@ -453,7 +470,7 @@ class Torus(Surface):
                 result = result and (lo < v < hi)
             if result:
                 return 0
-        return GQuadratic.test_region(self, region)
+        return super(Torus, self).test_region(region)
 
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b, tr)
