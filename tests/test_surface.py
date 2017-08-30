@@ -8,11 +8,42 @@ from mckit.constants import *
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
     create_surface
 from mckit.transformation import Transformation
+from tests.surface_test_data import surface_test_point_data
+from tests.surface_test_data import surface_test_region_data
 
 
 tr_glob = Transformation(translation=[1, 2, -3], indegrees=True,
                          rotation=[30, 60, 90, 120, 30, 90, 90, 90, 0])
 
+class_apply = {'Plane': Plane, 'Sphere': Sphere, 'Cylinder': Cylinder,
+               'Cone': Cone, 'Torus': Torus, 'GQuadratic': GQuadratic}
+
+
+class TestSurfaceMethods(unittest.TestCase):
+    def test_point_test(self):
+        for class_name, test_cases in surface_test_point_data.data.items():
+            TClass = class_apply[class_name]
+            for surf_params, test_points in test_cases:
+                surf = TClass(*surf_params)
+                for i, (p, ans) in enumerate(test_points):
+                    msg = class_name + ' params: {0}, case {1}'.format(surf_params, i)
+                    with self.subTest(msg=msg):
+                        sense = surf.test_point(p)
+                        if isinstance(sense, np.ndarray):
+                            for s, a in zip(sense, ans):
+                                self.assertEqual(s, a)
+                        else:
+                            self.assertEqual(sense, ans)
+
+    def test_region_test(self):
+        for class_name, test_cases in surface_test_region_data.data.items():
+            TClass = class_apply[class_name]
+            for i, (*params, ans) in enumerate(test_cases):
+                msg = class_name + ' case {0}'.format(i)
+                with self.subTest(msg=msg):
+                    surf = TClass(*params)
+                    result = surf.test_region(surface_test_region_data.region)
+                    self.assertEqual(result, ans)
 
 class TestPlaneSurface(unittest.TestCase):
     def test_plane_creation(self):
@@ -23,24 +54,9 @@ class TestPlaneSurface(unittest.TestCase):
                 for j in range(3):
                     self.assertAlmostEqual(p._v[j], v_ref[j])
 
-    def test_point_test(self):
-        plane = Plane(EX, 0, tr_glob)
-        for i, (p, ans) in enumerate(plane_point_test_cases):
-            with self.subTest(i=i):
-                p1 = tr_glob.apply2point(p)
-                sense = plane.test_point(p1)
-                if isinstance(sense, np.ndarray):
-                    for s, a in zip(sense, ans):
-                        self.assertEqual(s, a)
-                else:
-                    self.assertEqual(sense, ans)
 
-    def test_region_test(self):
-        for i, (v, k, ans) in enumerate(plane_region_test_cases):
-            with self.subTest(i=i):
-                plane = Plane(v, k)
-                result = plane.test_region(region)
-                self.assertEqual(result, ans)
+
+
 
 
 class TestSphereSurface(unittest.TestCase):
@@ -56,23 +72,9 @@ class TestSphereSurface(unittest.TestCase):
                 for j in range(3):
                     self.assertAlmostEqual(sph._center[j], c_ref[j])
 
-    def test_point_test(self):
-        sph = Sphere([1, 2, 3], 5)
-        for i, (p, ans) in enumerate(sphere_point_test_cases):
-            with self.subTest(i=i):
-                sense = sph.test_point(p)
-                if isinstance(sense, np.ndarray):
-                    for s, a in zip(sense, ans):
-                        self.assertEqual(s, a)
-                else:
-                    self.assertEqual(sense, ans)
 
-    def test_region_test(self):
-        for i, (c, r, ans) in enumerate(sphere_region_test_cases):
-            with self.subTest(i=i):
-                sph = Sphere(c, r)
-                result = sph.test_region(region)
-                self.assertEqual(result, ans)
+
+
 
 
 class TestCylinderSurface(unittest.TestCase):
@@ -91,23 +93,9 @@ class TestCylinderSurface(unittest.TestCase):
                     self.assertAlmostEqual(cyl._pt[j], pt_ref[j])
                     self.assertAlmostEqual(cyl._axis[j], ax_ref[j])
 
-    def test_point_test(self):
-        cyl = Cylinder([-1, 3, 4], [1, 0, 0], 2)
-        for i, (p, ans) in enumerate(cylinder_point_test_cases):
-            with self.subTest(i=i):
-                sense = cyl.test_point(p)
-                if isinstance(sense, np.ndarray):
-                    for s, a in zip(sense, ans):
-                        self.assertEqual(s, a)
-                else:
-                    self.assertEqual(sense, ans)
 
-    def test_region_test(self):
-        for i, (pt, ax, r, ans) in enumerate(cylinder_region_test_cases):
-            with self.subTest(i=i):
-                cyl = Cylinder(pt, ax, r)
-                result = cyl.test_region(region)
-                self.assertEqual(result, ans)
+
+
 
 
 class TestConeSurface(unittest.TestCase):
@@ -126,23 +114,9 @@ class TestConeSurface(unittest.TestCase):
                     self.assertAlmostEqual(cone._apex[j], ap_ref[j])
                     self.assertAlmostEqual(cone._axis[j], ax_ref[j])
 
-    def test_point_test(self):
-        cone = Cone([-3, 1, 2], [1, 0, 0], 1 / np.sqrt(3))
-        for i, (p, ans) in enumerate(cone_point_test_cases):
-            with self.subTest(i=i):
-                sense = cone.test_point(p)
-                if isinstance(sense, np.ndarray):
-                    for s, a in zip(sense, ans):
-                        self.assertEqual(s, a)
-                else:
-                    self.assertEqual(sense, ans)
 
-    def test_region_test(self):
-        for i, (ap, ax, ta, ans) in enumerate(cone_region_test_cases):
-            with self.subTest(i=i):
-                cone = Cone(ap, ax, ta)
-                result = cone.test_region(region)
-                self.assertEqual(result, ans)
+
+
 
 
 class TestGQuadraticSurface(unittest.TestCase):
@@ -160,24 +134,8 @@ class TestGQuadraticSurface(unittest.TestCase):
                     for l in range(3):
                         self.assertAlmostEqual(p._m[j, l], m_ref[j, l])
 
-    def test_gq_point_test(self):
-        gq = GQuadratic(np.diag([1, 1, 1]), [0, 0, 0], -1, tr_glob)
-        for i, (p, ans) in enumerate(gq_point_test_cases):
-            with self.subTest(i=i):
-                p1 = tr_glob.apply2point(p)
-                sense = gq.test_point(p1)
-                if isinstance(sense, np.ndarray):
-                    for s, a in zip(sense, ans):
-                        self.assertEqual(s, a)
-                else:
-                    self.assertEqual(sense, ans)
 
-    def test_region_test(self):
-        for i, (m, v, k, ans) in enumerate(gq_region_test_cases):
-            with self.subTest(i=i):
-                gq = GQuadratic(m, v, k)
-                result = gq.test_region(region)
-                self.assertEqual(result, ans)
+
 
 
 class TestTorusSurface(unittest.TestCase):
@@ -198,24 +156,8 @@ class TestTorusSurface(unittest.TestCase):
                     self.assertAlmostEqual(p._center[j], c_ref[j])
                     self.assertAlmostEqual(p._axis[j], a_ref[j])
 
-    def test_torus_point_test(self):
-        tor = Torus([0, 0, 0], EX, 4, 2, 1, tr_glob)
-        for i, (p, ans) in enumerate(torus_point_test_cases):
-            with self.subTest(i=i):
-                p1 = tr_glob.apply2point(p)
-                sense = tor.test_point(p1)
-                if isinstance(sense, np.ndarray):
-                    for s, a in zip(sense, ans):
-                        self.assertEqual(s, a)
-                else:
-                    self.assertEqual(sense, ans)
 
-    def test_region_test(self):
-        for i, (c, ax, r, a, b, ans) in enumerate(torus_region_test_cases):
-            with self.subTest(i=i):
-                tor = Torus(c, ax, r, a, b)
-                result = tor.test_region(region)
-                self.assertEqual(result, ans)
+
 
 
 class TestSurfaceCreation(unittest.TestCase):
@@ -285,208 +227,40 @@ plane_creation_cases = [
     (EY, -2, tr_glob, np.array([-0.5, np.sqrt(3) / 2, 0]), -1.5 - np.sqrt(3))
 ]
 
-plane_point_test_cases = [
-    (np.array([1, 0, 0]), +1), (np.array([-1, 0, 0]), -1),
-    (np.array([1, 0, 0]), +1), (np.array([-1, 0, 0]), -1),
-    (np.array([0.1, 0, 0]), +1), (np.array([-0.1, 0, 0]), -1),
-    (np.array([1.e-6, 100, -300]), +1), (np.array([-1.e-6, 200, -500]), -1),
-    (np.array([[1, 0, 0], [-1, 0, 0], [0.1, 0, 0], [-0.1, 0, 0], [1.e-6, 100, -300],
-               [-1.e-6, 200, -500]]), np.array([1, -1, 1, -1, 1, -1]))
-]
 
-region = np.array([[-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1],
-                   [1, -1, -1],  [1, -1, 1],  [1, 1, -1],  [1, 1, 1]])
-plane_region_test_cases = [
-    ([1, 0, 0], 0, 0),
-    ([1, 0, 0], 1.001, 1),
-    ([1, 0, 0], -1.001, -1),
-    ([1, 0, 0], 0.999, 0),
-    ([1, 0, 0], -0.999, 0),
-    ([0, 1, 0], 0, 0),
-    ([0, 1, 0], 1.001, 1),
-    ([0, 1, 0], -1.001, -1),
-    ([0, 1, 0], 0.999, 0),
-    ([0, 1, 0], -0.999, 0),
-    ([0, 0, 1], 0, 0),
-    ([0, 0, 1], 1.001, 1),
-    ([0, 0, 1], -1.001, -1),
-    ([0, 0, 1], 0.999, 0),
-    ([0, 0, 1], -0.999, 0),
-    ([1, 1, 1], -2.999, 0),
-    ([1, 1, 1], -3.001, -1),
-    ([1, 1, 1], 2.999, 0),
-    ([1, 1, 1], 3.001, 1)
-]
 
 sphere_creation_cases = [
     ([1, 2, 3], 5, None),
     ([-1, 2, -3], 5, tr_glob)
 ]
 
-sphere_point_test_cases = [
-    (np.array([1, 2, 3]), -1), (np.array([5.999, 2, 3]), -1),
-    (np.array([6.001, 2, 3]), +1), (np.array([1, 6.999, 3]), -1),
-    (np.array([1, 7.001, 3]), +1), (np.array([1, 2, 7.999]), -1),
-    (np.array([1, 2, 8.001]), +1), (np.array([-3.999, 2, 3]), -1),
-    (np.array([-4.001, 2, 3]), +1), (np.array([1, 2.999, 3]), -1),
-    (np.array([1, -3.001, 3]), +1), (np.array([1, 2, -1.999]), -1),
-    (np.array([1, 2, -2.001]), +1),
-    (np.array([[1, 2, 3], [5.999, 2, 3], [6.001, 2, 3], [1, 6.999, 3],
-               [1, 7.001, 3], [1, 2, 7.999], [1, 2, 8.001], [-3.999, 2, 3],
-               [-4.001, 2, 3], [1, 2.999, 3], [1, -3.001, 3], [1, 2, -1.999],
-               [1, 2, -2.001]]),
-     np.array([-1, -1, +1, -1, +1, -1, +1, -1, +1, -1, +1, -1, +1]))
-]
 
-sphere_region_test_cases = [
-    (np.array([0, 0, 0]), 1.8, -1), (np.array([0, 0, 0]), 1.7, 0),
-    (np.array([0, 0, -2]), 0.999, +1), (np.array([0, 0, -2]), 1.001, 0),
-    (np.array([-2, -2, -2]), 1.7, +1), (np.array([-2, -2, -2]), 1.8, 0),
-    (np.array([-2, -2, -2]), 5.1, 0),  (np.array([-2, -2, -2]), 5.2, -1),
-    (np.array([-2, 0, -2]), 1.4, +1), (np.array([-2, 0, -2]), 1.5, 0),
-    (np.array([-2, 0, -2]), 4.3, 0), (np.array([-2, 0, -2]), 4.4, -1)
-]
 
 cylinder_creation_cases = [
     ([1, 2, 3], [1, 2, 3], 5, None),
     ([-1, 2, -3], [1, 2, 3], 5, tr_glob)
 ]
 
-cylinder_point_test_cases = [
-    ([0, 3, 4], -1), ([-2, 3, 2.001], -1), ([-3, 3, 1.999], +1),
-    ([2, 3, 5.999], -1), ([3, 3, 6.001], +1), ([4, 1.001, 4], -1),
-    ([-4, 0.999, 4], +1), ([-5, 4.999, 4], -1), ([5, 5.001, 4], +1),
-    (np.array([[0, 3, 4], [-2, 3, 2.001], [-3, 3, 1.999], [2, 3, 5.999],
-               [3, 3, 6.001], [4, 1.001, 4], [-4, 0.999, 4], [-5, 4.999, 4],
-               [5, 5.001, 4]]), [-1, -1, +1, -1, +1, -1, +1, -1, +1])
-]
 
-cylinder_region_test_cases = [
-    ([0, 0, 0], [1, 0, 0], 0.5, 0), ([0, 0, 0], [1, 0, 0], 1.4, 0),
-    ([0, 0, 0], [1, 0, 0], 1.5, -1), ([0, 1, 1], [1, 0, 0], 0.001, 0),
-    ([0, 1, 1], [1, 0, 0], 2.8, 0), ([0, 1, 1], [1, 0, 0], 2.9, -1),
-    ([0, 2, 0], [1, 0, 0], 0.999, +1), ([0, 2, 0], [1, 0, 0], 1.001, 0),
-    ([0, 2, 0], [1, 0, 0], 3.1, 0), ([0, 2, 0], [1, 0, 0], 3.2, -1),
-    ([0, 0, 0], [0, 1, 0], 0.5, 0), ([0, 0, 0], [0, 1, 0], 1.4, 0),
-    ([0, 0, 0], [0, 1, 0], 1.5, -1), ([1, 0, 1], [0, 1, 0], 0.001, 0),
-    ([1, 0, 1], [0, 1, 0], 2.8, 0), ([1, 0, 1], [0, 1, 0], 2.9, -1),
-    ([2, 0, 0], [0, 1, 0], 0.999, +1), ([2, 0, 0], [0, 1, 0], 1.001, 0),
-    ([2, 0, 0], [0, 1, 0], 3.1, 0), ([2, 0, 0], [0, 1, 0], 3.2, -1)
-]
 
 cone_creation_cases = [
     ([1, 2, 3], [1, 2, 3], 0.5, None),
     ([-1, 2, -3], [1, 2, 3], 0.5, tr_glob)
 ]
 
-cone_point_test_cases = [
-    ([0, 1, 2], -1), ([0, 1, 0.3], -1), ([0, 1, 0.2], +1), ([0, 1, 3.7], -1),
-    ([0, 1, 3.8], +1), ([0, 2.7, 2], -1), ([0, 2.8, 2], +1),
-    ([0, -0.7, 2], -1), ([0, -0.8, 2], +1), ([-6, 1, 0.3], -1),
-    ([-6, 1, 0.2], +1), ([-6, 1, 3.7], -1), ([-6, 1, 3.8], +1),
-    ([-6, 2.7, 2], -1), ([-6, 2.8, 2], +1), ([-6, -0.7, 2], -1),
-    ([-6, -0.8, 2], +1), ([3, 1, -1.4], -1), ([3, 1, -1.5], +1),
-    ([3, 1, 5.4], -1), ([3, 1, 5.5], +1), ([3, 4.4, 2], -1), ([3, 4.5, 2], +1),
-    ([3, -2.4, 2], -1), ([3, -2.5, 2], +1),
-    (np.array([[0, 1, 2], [0, 1, 0.3], [0, 1, 0.2], [0, 1, 3.7], [0, 1, 3.8],
-               [0, 2.7, 2], [0, 2.8, 2], [0, -0.7, 2], [0, -0.8, 2],
-               [-6, 1, 0.3], [-6, 1, 0.2], [-6, 1, 3.7], [-6, 1, 3.8],
-               [-6, 2.7, 2], [-6, 2.8, 2], [-6, -0.7, 2], [-6, -0.8, 2],
-               [3, 1, -1.4], [3, 1, -1.5], [3, 1, 5.4], [3, 1, 5.5],
-               [3, 4.4, 2], [3, 4.5, 2], [3, -2.4, 2], [3, -2.5, 2]]),
-     [-1, -1, +1, -1, +1, -1, +1, -1, +1, -1, +1, -1, +1, -1, +1, -1, +1, -1,
-      +1, -1, +1, -1, +1, -1, +1])
-]
 
-cone_region_test_cases = [
-    ([0, 0, 0], [1, 0, 0], 0.5, 0), ([0, 1.4, 0], [1, 0, 0], 0.5, 0),
-    ([0, 1.6, 0], [1, 0, 0], 0.5, +1), ([0, -1.4, 0], [1, 0, 0], 0.5, 0),
-    ([0, -1.6, 0], [1, 0, 0], 0.5, +1), ([-1, 1.9, 0], [1, 0, 0], 0.5, 0),
-    ([1, 2.1, 0], [1, 0, 0], 0.5, +1), ([3.9, 0, 0], [1, 0, 0], 0.5, -1),
-    ([-3.9, 0, 0], [1, 0, 0], 0.5, -1), ([0, 0, -3.9], [0, 0, 1], 0.5, -1),
-    ([0, 0, 3.9], [0, 0, 1], 0.5, -1), ([0, -3.9, 0], [0, 1, 0], 0.5, -1),
-    ([3.8, 0, 0], [1, 0, 0], 0.5, 0),
-    ([-3.8, 0, 0], [1, 0, 0], 0.5, 0), ([0, 0, -3.8], [0, 0, 1], 0.5, 0),
-    ([0, 0, 3.8], [0, 0, 1], 0.5, 0), ([0, -3.8, 0], [0, 1, 0], 0.5, 0)
-]
 
 gq_creation_cases = [
     ([[1, 0, 0], [0, 2, 0], [0, 0, 3]], [1, 2, 3], -4, None),
     ([[1, 0, 0], [0, 2, 0], [0, 0, 3]], [1, 2, 3], -4, tr_glob)
 ]
 
-gq_point_test_cases = [
-    (np.array([0, 0, 0]), -1), (np.array([-0.999, 0, 0]), -1),
-    (np.array([0.999, 0, 0]), -1), (np.array([-1.001, 0, 0]), +1),
-    (np.array([1.001, 0, 0]), +1), (np.array([0, 0.999, 0]), -1),
-    (np.array([0, 1.001, 0]), +1), (np.array([0, 0, -0.999]), -1),
-    (np.array(
-        [[0, 0, 0], [-0.999, 0, 0], [0.999, 0, 0], [-1.001, 0, 0], [1.001, 0, 0],
-         [0, 0.999, 0], [0, 1.001, 0], [0, 0, -0.999]]),
-     np.array([-1, -1, -1, 1, 1, -1, 1, -1]))
-]
-
-gq_region_test_cases = [
-    # spheres
-    (np.diag([1, 1, 1]), [0, 0, 0], -1, 0),
-    (np.diag([1, 1, 1]), [0, 0, 0], -0.1, 0),
-    (np.diag([1, 1, 1]), [0, 0, 0], -3.01, -1),
-    (np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), 3 - 0.1, 0),
-    (np.diag([1, 1, 1]), -2 * np.array([2, 2, 2]), 12 - 3.01, 0),
-    (np.diag([1, 1, 1]), -2 * np.array([2, 2, 2]), 12 - 2.99, +1),
-    (np.diag([1, 1, 1]), -2 * np.array([2, 0, 0]), 4 - 1.01, 0),
-    (np.diag([1, 1, 1]), -2 * np.array([2, 0, 0]), 4 - 0.99, +1),
-    (np.diag([1, 1, 1]), -2 * np.array([100, 0, 100]), 20000 - 2, +1)
-]
 
 torus_creation_cases = [
     ([1, 2, 3], [0, 0, 1], 4, 2, 1, None),
     ([1, 2, 3], [0, 0, 1], 4, 2, 1, tr_glob)
 ]
 
-torus_point_test_cases = [
-    ([0, 0, 0], 1), ([0, 0, 2.99], 1), ([0, 0, 5.01], 1), ([0, 0, 3.01], -1),
-    ([0, 0, 4.99], -1), ([0, 2.99, 0], 1), ([0, 5.01, 0], 1),
-    ([0, 3.01, 0], -1), ([0, 4.99, 0], -1), ([2.01, 0, 4], 1), ([1.99, 0, 4], -1),
-    ([2.01, 4, 0], 1), ([1.99, 4, 0], -1),
-    ([[0, 0, 0], [0, 0, 2.99], [0, 0, 5.01], [0, 0, 3.01], [0, 0, 4.99], [0, 2.99, 0],
-      [0, 5.01, 0], [0, 3.01, 0], [0, 4.99, 0], [2.01, 0, 4], [1.99, 0, 4],
-      [2.01, 4, 0], [1.99, 4, 0]], [1, 1, 1, -1, -1, 1, 1, -1, -1, 1, -1, 1, -1])
-]
-
-torus_region_test_cases = [
-    ([0, 0, 0], [1, 0, 0], 1, 0.5, 0.5, 0),
-    ([0, 0, 0], [1, 0, 0], 1.91, 0.5, 0.5, 0),
-    ([0, 0, 0], [1, 0, 0], 1.92, 0.5, 0.5, +1),
-    ([1.4, 0, 0], [1, 0, 0], 1, 0.5, 0.5, 0),
-    ([1.6, 0, 0], [1, 0, 0], 1, 0.5, 0.5, +1),
-    ([0.5, 3, 0], [1, 0, 0], 1.6, 0.5, 0.5, 0),
-    ([0.5, 3, 0], [1, 0, 0], 1.4, 0.5, 0.5, +1),
-    ([0, 3, 0], [1, 0, 0], 3, 1.4, 1.4, 0),
-    ([0, 3, 0], [1, 0, 0], 3, 1.55, 1.55, -1),
-    ([0, 0, 0], [1, 0, 0], 1, 1.4, 1.4, 0),
-    ([0, 0, 0], [1, 0, 0], 1, 1.5, 1.5, -1),
-    ([0, 0, 0], [1, 0, 0], -1, 1.4, 1.4, 0),
-    ([0, 0, 0], [1, 0, 0], -1, 2.6, 2.6, 0),
-    ([0, 0, 0], [1, 0, 0], -1, 2.7, 2.7, -1),
-    ([0, 0, 0], [1, 0, 0], 1.41, 1.42, 2, -1),
-    ([0, 0, 0], [1, 0, 0], 1.41, 1.40, 2, 0),
-    ([0, 0, 0], [0, 1, 1], 2.2, 0.5, 0.5, 0),
-    ([0, 0, 0], [0, 1, 1], 2.3, 0.5, 0.5, +1),
-    ([0, 0, 0], [1, 1, 1], 1, 1.9, 1.9, 0),
-    ([0, 0, 0], [1, 1, 1], 1, 2.1, 2.1, -1),
-    ([0, 0, 0], [0, 1, 0], 1, 0.5, 0.5, 0),
-    ([0, 0, 0], [0, 1, 0], 1.91, 0.5, 0.5, 0),
-    ([0, 0, 0], [0, 1, 0], 1.92, 0.5, 0.5, +1),
-    ([0, 1.4, 0], [0, 1, 0], 1, 0.5, 0.5, 0),
-    ([0, 1.6, 0], [0, 1, 0], 1, 0.5, 0.5, +1),
-    ([3, 0.5, 0], [0, 1, 0], 1.6, 0.5, 0.5, 0),
-    ([3, 0.5, 0], [0, 1, 0], 1.4, 0.5, 0.5, +1),
-    ([3, 0, 0], [0, 1, 0], 3, 1.4, 1.4, 0),
-    ([3, 0, 0], [0, 1, 0], 3, 1.55, 1.55, -1),
-    ([0, 0, 0], [0, 1, 0], 1, 1.4, 1.4, 0),
-    ([0, 0, 0], [0, 1, 0], 1, 1.5, 1.5, -1)
-]
 
 create_surface_plane_cases = [
     ('PX', [5.3], np.array([1, 0, 0]), -5.3),
