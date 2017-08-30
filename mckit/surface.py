@@ -487,5 +487,9 @@ class Torus(Surface):
         pn = np.dot(p, self._axis)
         pp = np.sum(np.multiply(p, p), axis=-1)
         sq = np.sqrt(np.maximum(pp - pn ** 2, 0))
+        if sq < RESOLUTION:
+            add_term = 0
+        else:
+            add_term = self._R / (sq * self._b**2) * (p - pn * self._axis)
         return sign * 2 * (pn / self._a**2 * self._axis + \
-                 (sq - self._R) / (sq * self._b**2) * (p - pn * self._axis))
+               (p - pn * self._axis) / self._b**2 - add_term)
