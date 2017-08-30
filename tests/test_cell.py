@@ -42,11 +42,7 @@ class TestCell(unittest.TestCase):
         for op1, op2 in zip(c._expression, c_tr._expression):
             if isinstance(op1, Surface):
                 sur1 = op1.transform(tr)
-                self.assertAlmostEqual(sur1._k, op2._k)
-                for i in range(3):
-                    self.assertAlmostEqual(sur1._v[i], op2._v[i])
-                    for j in range(3):
-                        self.assertAlmostEqual(sur1._m[i, j], op2._m[i, j])
+                np.testing.assert_almost_equal(sur1._center, op2._center)
         for k, v in c.items():
             self.assertEqual(v, c_tr[k])
 
