@@ -38,14 +38,21 @@ class TestSurfaceMethods(unittest.TestCase):
                 for j, tr in enumerate(trs):
                     msg = class_name + ' case {0}, tr={1}'.format(i, j)
                     with self.subTest(msg=msg):
-                        surf = TClass(*params, transform=tr)
-                        if tr is not None and class_name != 'GQuadratic':
-                            answer1 = {k: getattr(tr, type_tr[k])(v) for k, v in answer.items() if k in type_tr.keys()}
-                        elif tr is not None:
-                            m, v, k = tr.apply2gq(answer['_m'], answer['_v'], answer['_k'])
-                            answer1 = {'_m': m, '_v': v, '_k': k}
+                        options = {}
+                        if tr is not None:
+                            options['transform'] = tr
+                            if class_name == 'GQuadratic':
+                                m, v, k = tr.apply2gq(answer['_m'],
+                                                      answer['_v'],
+                                                      answer['_k'])
+                                answer1 = {'_m': m, '_v': v, '_k': k}
+                            else:
+                                answer1 = {k: getattr(tr, type_tr[k])(v) for
+                                           k, v in answer.items() if
+                                           k in type_tr.keys()}
                         else:
                             answer1 = answer
+                        surf = TClass(*params, **options)
                         for name, ans_value in answer1.items():
                             sur_value = getattr(surf, name)
                             np.testing.assert_almost_equal(sur_value, ans_value)

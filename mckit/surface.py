@@ -8,7 +8,7 @@ from scipy.optimize import fmin_tnc
 from .constants import *
 
 
-def create_surface(kind, *params, transform=None):
+def create_surface(kind, *params, **options):
     """Creates new surface.
 
     Parameters
@@ -17,8 +17,10 @@ def create_surface(kind, *params, transform=None):
         Surface kind designator. See MCNP manual.
     params : list[float]
         List of surface parameters.
-    transform : Transformation
-        Transformation to be applied to the surface being created.
+    options : dict
+        Dictionary of surface's options. Possible values:
+            transform = tr - transformation to be applied to the surface being
+                             created. Transformation instance.
 
     Returns
     -------
@@ -34,16 +36,16 @@ def create_surface(kind, *params, transform=None):
     # -------- Plane -------------------
     if kind[0] == 'P':
         if len(kind) == 2:
-            return Plane(axis, -params[0], transform=transform)
+            return Plane(axis, -params[0], **options)
         else:
-            return Plane(params[:3], -params[3], transform=transform)
+            return Plane(params[:3], -params[3], **options)
     # -------- SQ -------------------
     elif kind == 'SQ':
         A, B, C, D, E, F, G, x0, y0, z0 = params
         m = np.diag([A, B, C])
         v = 2 * np.array([D - A*x0, E - B*y0, F - C*z0])
         k = A*x0**2 + B*y0**2 + C*z0**2 - 2 * (D*x0 + E*y0 + F*z0) + G
-        return GQuadratic(m, v, k, transform=transform)
+        return GQuadratic(m, v, k, **options)
     # -------- Sphere ------------------
     elif kind[0] == 'S':
         if kind == 'S':
@@ -53,8 +55,7 @@ def create_surface(kind, *params, transform=None):
         else:
             r0 = axis * params[0]
         R = params[-1]
-        #return GQuadratic(np.eye(3), -2 * r0, np.sum(r0**2) - R**2, transform)
-        return Sphere(r0, R, transform=transform)
+        return Sphere(r0, R, **options)
     # -------- Cylinder ----------------
     elif kind[0] == 'C':
         A = 1 - axis
@@ -65,8 +66,7 @@ def create_surface(kind, *params, transform=None):
         else:
             r0 = ORIGIN
         R = params[-1]
-        return Cylinder(r0, axis, R, transform=transform)
-        #return GQuadratic(np.diag(A), -2 * r0, np.sum(r0**2) - R**2, transform)
+        return Cylinder(r0, axis, R, **options)
     # -------- Cone ---------------
     elif kind[0] == 'K':
         if kind[1] == '/':
@@ -74,36 +74,35 @@ def create_surface(kind, *params, transform=None):
         else:
             r0 = params[0] * axis
         ta = np.sqrt(params[-1])
-        return Cone(r0, axis, ta, transform=transform)
-        #return GQuadratic(m, -2 * v05, np.dot(v05, r0), transform=transform)
+        return Cone(r0, axis, ta, **options)
     # ---------- GQ -----------------
     elif kind == 'GQ':
         A, B, C, D, E, F, G, H, J, k = params
         m = np.array([[A, 0.5*D, 0.5*F], [0.5*D, B, 0.5*E], [0.5*F, 0.5*E, C]])
         v = np.array([G, H, J])
-        return GQuadratic(m, v, k, transform=transform)
+        return GQuadratic(m, v, k, **options)
     # ---------- Torus ---------------------
     elif kind[0] == 'T':
         x0, y0, z0, R, a, b = params
-        return Torus([x0, y0, z0], axis, R, a, b, transform=transform)
+        return Torus([x0, y0, z0], axis, R, a, b, **options)
     # ---------- Axisymmetric surface defined by points ------
     else:
         if len(params) == 2:
-            return Plane(axis, -params[0], transform=transform)
+            return Plane(axis, -params[0], **options)
         elif len(params) == 4:
             # TODO: Use special classes instead of GQ
             h1, r1, h2, r2 = params
             if abs(h2 - h1) < RESOLUTION * max(abs(h1), abs(h2)):
-                return Plane(axis, -0.5 * (h1 + h2), transform=transform)
+                return Plane(axis, -0.5 * (h1 + h2), **options)
             elif abs(r2 - r1) < RESOLUTION * max(abs(r2), abs(r1)):
                 R = 0.5 * (abs(r1) + abs(r2))
-                return GQuadratic(np.diag(1-axis), [0, 0, 0], -R**2, transform)
+                return GQuadratic(np.diag(1-axis), [0, 0, 0], -R**2, **options)
             else:
                 h0 = (abs(r1) * h2 - abs(r2) * h1) / (abs(r1) - abs(r2))
                 t2 = (abs(r1) - abs(r2))**2 / abs(h1 - h2)
                 m = np.diag(1 - axis - t2 * axis)
                 v = 2 * t2 * h0 * axis
-                return GQuadratic(m, v, -t2 * h0**2, transform=transform)
+                return GQuadratic(m, v, -t2 * h0**2, **options)
         elif len(params) == 6:
             # TODO: Implement creation of surface by 3 points.
             raise NotImplementedError
@@ -248,18 +247,22 @@ class Plane(Surface):
         The normal to the plane being created.
     offset : float
         Free term.
-    transform : Transformation
-        Transformation to be applied to this plane.
+    options : dict
+        Dictionary of surface's options. Possible values:
+            transform = tr - transformation to be applied to this plane.
+                             Transformation instance.
     """
-    def __init__(self, normal, offset, transform=None):
+    def __init__(self, normal, offset, **options):
         Surface.__init__(self)
-        if transform is not None:
-            v, k = transform.apply2plane(normal, offset)
+        if 'transform' in options.keys():
+            tr = options.pop('transform')
+            v, k = tr.apply2plane(normal, offset)
         else:
             v = np.array(normal)
             k = offset
         self._v = v
         self._k = k
+        self.options = options
 
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr)
@@ -286,15 +289,19 @@ class Sphere(Surface):
         Center of the sphere.
     radius : float
         The radius of the sphere.
-    transform : Transformation
-        Transformation to be applied to this sphere.
+    options : dict
+        Dictionary of surface's options. Possible values:
+            transform = tr - transformation to be applied to the sphere being
+                             created. Transformation instance.
     """
-    def __init__(self, center, radius, transform=None):
+    def __init__(self, center, radius, **options):
         Surface.__init__(self)
-        if transform is not None:
-            center = transform.apply2point(center)
+        if 'transform' in options.keys():
+            tr = options.pop('transform')
+            center = tr.apply2point(center)
         self._center = np.array(center)
         self._radius = radius
+        self.options = options
 
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr)
@@ -319,17 +326,21 @@ class Cylinder(Surface):
         Cylinder's axis direction.
     radius : float
         Cylinder's radius.
-    transform : Transformation
-        Transformation to be applied to the cylinder being created.
+    options : dict
+        Dictionary of surface's options. Possible values:
+            transform = tr - transformation to be applied to the cylinder being
+                             created. Transformation instance.
     """
-    def __init__(self, pt, axis, radius, transform=None):
+    def __init__(self, pt, axis, radius, **options):
         Surface.__init__(self)
-        if transform is not None:
-            pt = transform.apply2point(pt)
-            axis = transform.apply2vector(axis)
+        if 'transform' in options.keys():
+            tr = options.pop('transform')
+            pt = tr.apply2point(pt)
+            axis = tr.apply2vector(axis)
         self._pt = np.array(pt)
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._radius = radius
+        self.options = options
 
     def transform(self, tr):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr)
@@ -356,17 +367,21 @@ class Cone(Surface):
         Cone's axis.
     ta : float
         Tangent of angle between axis and generatrix.
-    transform : Transformation
-        Transformation to be applied to this surface.
+    options : dict
+        Dictionary of surface's options. Possible values:
+            transform = tr - transformation to be applied to the cone being
+                             created. Transformation instance.
     """
-    def __init__(self, apex, axis, ta, transform=None):
+    def __init__(self, apex, axis, ta, **options):
         Surface.__init__(self)
-        if transform is not None:
-            apex = transform.apply2point(apex)
-            axis = transform.apply2vector(axis)
+        if 'transform' in options.keys():
+            tr = options.pop('transform')
+            apex = tr.apply2point(apex)
+            axis = tr.apply2vector(axis)
         self._apex = np.array(apex)
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._t2 = ta**2
+        self.options = options
 
     def transform(self, tr):
         return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr)
@@ -394,13 +409,16 @@ class GQuadratic(Surface):
         Vector of coefficients of linear terms. v.shape=(3,)
     k : float
         Free term.
-    transform : Transformation
-        Transformation to be applied to this surface.
+    options : dict
+        Dictionary of surface's options. Possible values:
+            transform = tr - transformation to be applied to the surface being
+                             created. Transformation instance.
     """
-    def __init__(self, m, v, k, transform=None):
+    def __init__(self, m, v, k, **options):
         Surface.__init__(self)
-        if transform is not None:
-            m, v, k = transform.apply2gq(m, v, k)
+        if 'transform' in options.keys():
+            tr = options.pop('transform')
+            m, v, k = tr.apply2gq(m, v, k)
         else:
             m = np.array(m)
             v = np.array(v)
@@ -408,6 +426,7 @@ class GQuadratic(Surface):
         self._m = m
         self._v = v
         self._k = k
+        self.options = options
 
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr)
@@ -436,13 +455,17 @@ class Torus(Surface):
         Radius parallel to torus axis.
     b : float
         Radius perpendicular to torus axis.
-    transform : Transformation
+    options : dict
+        Dictionary of surface's options. Possible values:
+            transform = tr - transformation to be applied to the torus being
+                             created. Transformation instance.
     """
-    def __init__(self, center, axis, R, a, b, transform=None):
+    def __init__(self, center, axis, R, a, b, **options):
         Surface.__init__(self)
-        if transform is not None:
-            center = transform.apply2point(center)
-            axis = transform.apply2vector(axis)
+        if 'transform' in options.keys():
+            tr = options.pop('transform')
+            center = tr.apply2point(center)
+            axis = tr.apply2vector(axis)
         else:
             center = np.array(center)
             axis = np.array(axis)
@@ -457,6 +480,7 @@ class Torus(Surface):
             offset = a * np.sqrt(1 - (R / b)**2)
             self._spec_pts.append(self._center + offset * self._axis)
             self._spec_pts.append(self._center - offset * self._axis)
+        self.options = options
 
     def test_region(self, region):
         # TODO: implement test_region
@@ -473,7 +497,8 @@ class Torus(Surface):
         return super(Torus, self).test_region(region)
 
     def transform(self, tr):
-        return Torus(self._center, self._axis, self._R, self._a, self._b, tr)
+        return Torus(self._center, self._axis, self._R, self._a, self._b,
+                     transform=tr)
 
     def _func(self, x, sign=+1):
         p = x - self._center
