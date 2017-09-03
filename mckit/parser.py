@@ -62,7 +62,8 @@ tokens = [
     'flt_number',
     'keyword',
     'title',
-    'void_material'
+    'void_material',
+    'lib_spec'
 ] + list(KEYWORDS)
 
 
@@ -89,6 +90,7 @@ FLT_NUMBER = r'(' + \
              INT_NUMBER + r'?' + FRACTION + INT_NUMBER + EXPONENT + r'?|' +\
              INT_NUMBER + FRACTION + r'?' + EXPONENT + r'|' + \
              INT_NUMBER + FRACTION + r')(?=[ \n-+])'
+LIB_SPEC = INT_NUMBER + r'[CDEPUY]'
 KEYWORD = r'[A-Z]+(/[A-Z]+)?'
 VOID_MATERIAL = r' 0 '
 SKIP = r'[=, ]'
@@ -96,10 +98,10 @@ SKIP = r'[=, ]'
 t_ANY_ignore = SKIP
 
 
-def t_eof(t):
-    t.type = 'BLANK_LINE'
-    t.value = 'eof'
-    return t
+#def t_eof(t):
+#    t.type = 'BLANK_LINE'
+#    t.value = 'eof'
+#    return t
 
 
 def t_title(t):
@@ -188,17 +190,14 @@ def t_cells_void_material(t):
     return t
 
 
-@lex.TOKEN(INT_NUMBER)
-def t_cells_ckw_surfs_data_int_number(t):
-    t.value = int(t.value)
-    return t
-
-
 @lex.TOKEN(KEYWORD)
 def t_cells_ckw_keyword(t):
     value = t.value.upper()
     if value not in CELL_KEYWORDS:
-        raise ValueError('Unknown word' + t.value)
+        column = t.lexer.lexpos - t.lexer.last_pos + 1 - len(value)
+        msg = r"Unknown keyword '{0}' at line {1} column {2}".format(
+            t.value[0], t.lexer.lineno, column)
+        raise ValueError(msg, t.value[0], t.lexer.lineno, column)
     t.type = value
     t.value = value
     if t.lexer.current_state() == 'cells':
@@ -210,9 +209,24 @@ def t_cells_ckw_keyword(t):
 def t_surfs_keyword(t):
     value = t.value.upper()
     if value not in SURFACE_TYPES:
-        raise ValueError('Unknown surface type' + t.value)
+        column = t.lexer.lexpos - t.lexer.last_pos + 1 - len(value)
+        msg = r"Unknown surface type '{0}' at line {1} column {2}".format(
+            t.value[0], t.lexer.lineno, column)
+        raise ValueError(msg, t.value[0], t.lexer.lineno, column)
     t.type = 'surface_type'
     t.value = value
+    return t
+
+
+@lex.TOKEN(LIB_SPEC)
+def t_data_lib_spec(t):
+    t.value = t.value.upper()
+    return t
+
+
+@lex.TOKEN(INT_NUMBER)
+def t_cells_ckw_surfs_data_int_number(t):
+    t.value = int(t.value)
     return t
 
 
@@ -223,7 +237,10 @@ def t_data_keyword(t):
         t.type = value
         t.value = value
     else:
-        raise ValueError('Unknown word' + t.value)
+        column = t.lexer.lexpos - t.lexer.last_pos + 1 - len(value)
+        msg = r"Unknown keyword '{0}' at line {1} column {2}".format(
+            t.value[0], t.lexer.lineno, column)
+        raise ValueError(msg, t.value[0], t.lexer.lineno, column)
     return t
 
 
@@ -584,47 +601,38 @@ def p_composition_list(p):
 
 
 def p_zaid_fraction(p):
-    '''zaid_fraction : int_number '.' int_number data_spec float
-            | int_number float
+    '''zaid_fraction : int_number '.' lib_spec float
+                     | int_number float
     '''
-    if len(p) == 6:
-        key = 'atomic' if p[5] > 0 else 'wgt'
-        p[0] = key, p[1], abs(p[5]), p[3], p[4]
+    if len(p) == 5:
+        key = 'atomic' if p[4] > 0 else 'wgt'
+        p[0] = key, p[1], abs(p[4]), p[3]
     else:
         key = 'atomic' if p[2] > 0 else 'wgt'
         p[0] = key, p[1], abs(p[2])
 
 
-def p_data_spec(p):
-    '''data_spec : C
-                 | D
-                 | P
-                 | Y
-    '''
-    p[0] = p[1]
-
-
 def p_material_options(p):
-    '''material_options : material_options mat_opt_name integer
-                        | mat_opt_name integer
+    '''material_options : material_options material_option
+                        | material_option
     '''
-    if len(p) == 3:
-        p[0] = {p[1]: p[2]}
+    if len(p) == 2:
+        p[0] = {p[1][0]: p[1][1]}
     else:
-        p[1][p[2]] = p[3]
+        p[1][p[2][0]] = p[2][1]
         p[0] = p[1]
 
 
-def p_mat_opt_name(p):
-    '''mat_opt_name : GAS
-                    | ESTEP
-                    | NLIB
-                    | PLIB
-                    | PNLIB
-                    | ELIB
-                    | COND
+def p_material_option(p):
+    '''material_option : GAS integer
+                       | ESTEP integer
+                       | NLIB lib_spec
+                       | PLIB lib_spec
+                       | PNLIB lib_spec
+                       | ELIB lib_spec
+                       | COND integer
     '''
-    p[0] = p[1]
+    p[0] = p[1], p[2]
 
 
 parser = yacc.yacc()

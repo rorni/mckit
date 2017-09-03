@@ -54,6 +54,11 @@ class TestMaterial(unittest.TestCase):
                 self.assertAlmostEqual(mat.concentration(), n, delta=n * 1.e-4)
                 self.assertAlmostEqual(mat.density(), rho, delta=rho * 1.e-4)
 
+    def test_material_creation_failure(self):
+        for i, kwargs in enumerate(material_creation_failed_cases):
+            with self.subTest(i=i):
+                self.assertRaises(ValueError, Material, **kwargs)
+
     def test_material_correct(self):
         fact = [2, 0.5]
         vol1 = 100
@@ -119,6 +124,15 @@ material_creation_cases = [
      'density': 1.2929e-3}, 5.351034567e+19, 14.551, 1.2929e-3),
     ({'atomic': [(28058, 0.680769), (28060, 0.262231), (28061, 0.011399), (28062, 0.036345), (28064, 0.009256)]},
      1.0, 58.6934, 9.7462675e-23)
+]
+
+material_creation_failed_cases = [
+    {'atomic': [('NI58', 0.680769), ('NI60', 0.262231), ('NI61', 0.011399), ('NI62', 0.036345), ('NI64',  0.009256)],
+     'density': 8.902, 'concentration': 1.e+23},
+    {'wgt': [('N', 0.755), ('O', 0.232), ('AR', 0.013)], 'density': 1.2929e-3, 'concentration': 1.e+23},
+    {'density': 8.902, 'concentration': 1.e+23},
+    {'density': 8.902}, {'concentration': 1.e+23},
+    {'wgt': [('N', 0.755), ('O', 0.232), ('AR', 0.013)]}
 ]
 
 material_expand_cases = [

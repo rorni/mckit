@@ -54,8 +54,8 @@ with open('mckit/data/isotopes.dat') as f:
                 NATURAL_ABUNDANCE[number][isotope] = float(abun) / 100.0
 
 
-if __name__ == '__main__':
-    print(NAME_TO_CHARGE)
-    print(ISOTOPE_MASS)
-    print(NATURAL_ABUNDANCE)
+# if __name__ == '__main__':
+#    print(NAME_TO_CHARGE)
+#    print(ISOTOPE_MASS)
+#    print(NATURAL_ABUNDANCE)
 

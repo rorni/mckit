@@ -63,7 +63,8 @@ class Material:
                 self._composition[e] += v
             self._n = np.sum(frac_a)
             self._mu = s / self._n
-        elif (density and not concentration) or (concentration and not density):
+        elif (bool(density) ^ bool(concentration)) and \
+                (frac_w.size + frac_a.size > 0):
             I_w = np.sum(frac_w)
             I_a = np.sum(frac_a)
             J_w = np.sum(np.divide(frac_w, [e.molar_mass() for e in elem_w]))

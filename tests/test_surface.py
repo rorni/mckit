@@ -4,15 +4,12 @@ import unittest
 
 import numpy as np
 
-from mckit.constants import *
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
     create_surface
 from mckit.transformation import Transformation
-
-# Test data
+from tests.surface_test_data import surface_create_data
 from tests.surface_test_data import surface_test_point_data
 from tests.surface_test_data import surface_test_region_data
-from tests.surface_test_data import surface_create_data
 from tests.surface_test_data import surfobj_create_data
 
 
@@ -68,6 +65,24 @@ class TestSurfaceMethods(unittest.TestCase):
                         else:
                             self.assertEqual(sense, ans)
 
+    def test_transform(self):
+        for class_name, test_cases in surfobj_create_data.data.items():
+            TClass = class_apply[class_name]
+            for i, (*params, answer) in enumerate(test_cases):
+                surf = TClass(*params)
+                for j, tr in enumerate(trs[1:]):
+                    msg = class_name + ' case {0}, tr={1}'.format(i, j)
+                    with self.subTest(msg=msg):
+                        surf_tr = surf.transform(tr)
+                        if class_name == 'GQuadratic':
+                            m, v, k = tr.apply2gq(answer['_m'], answer['_v'], answer['_k'])
+                            answer1 = {'_m': m, '_v': v, '_k': k}
+                        else:
+                            answer1 = {k: getattr(tr, type_tr[k])(v) for k, v in answer.items() if k in type_tr.keys()}
+                        for name, ans_value in answer1.items():
+                            sur_value = getattr(surf_tr, name)
+                            np.testing.assert_almost_equal(sur_value, ans_value)
+
     def test_region_test(self):
         for class_name, test_cases in surface_test_region_data.data.items():
             TClass = class_apply[class_name]
@@ -82,7 +97,6 @@ class TestSurfaceMethods(unittest.TestCase):
 class TestSurfaceCreation(unittest.TestCase):
     def test_surface_creation(self):
         for class_name, test_cases in surface_create_data.data.items():
-            TClass = class_apply[class_name]
             for i, (kind, params, answer) in enumerate(test_cases):
                 msg = class_name + ' case {0}'.format(i)
                 with self.subTest(msg=msg):
