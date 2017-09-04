@@ -98,20 +98,20 @@ SKIP = r'[=, ]'
 t_ANY_ignore = SKIP
 
 
-#def t_eof(t):
+# def t_eof(t):
 #    t.type = 'BLANK_LINE'
 #    t.value = 'eof'
 #    return t
 
 
 def t_title(t):
-    r'^.+'
+    r""".+"""
     t.lexer.section_index = 0
     lexer.lineno = 1
     t.lineno = 1
     t.lexer.last_pos = 1
     t.lexer.begin('cells')
-    #t.lexer.push_state('continue')
+    # t.lexer.push_state('continue')
     return t
 
 
@@ -135,7 +135,7 @@ def t_continue_cells_ckw_surfs_data_line_comment(t):
 
 @lex.TOKEN(CARD_COMMENT)
 def t_continue_cells_ckw_surfs_data_card_comment(t):
-    pass #return t
+    pass  # return t
 
 
 def t_ANY_error(t):
@@ -254,32 +254,30 @@ lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
 
 
 def p_model(p):
-    '''model_body : title separator cell_cards blank_line \
+    """model_body : title separator cell_cards blank_line \
                     surface_cards blank_line \
                     data_cards blank_line
-    '''
+    """
     p[0] = p[1], p[3], p[5], p[7]
 
 
 def p_cell_cards(p):
-    '''cell_cards : cell_cards separator cell_card
+    """cell_cards : cell_cards separator cell_card
                   | cell_card
-    '''
+    """
     if len(p) == 2:
-        # print(p[1])
         p[0] = {p[1][0]: p[1][1]}
     elif len(p) == 4:
-        #print(p[3])
         name, value = p[3]
         p[1][name] = value
         p[0] = p[1]
 
 
 def p_cell_card(p):
-    '''cell_card : int_number cell_material expression cell_options
+    """cell_card : int_number cell_material expression cell_options
                  | int_number cell_material expression
                  | int_number LIKE int_number BUT cell_options
-    '''
+    """
     name = p[1]
     if len(p) == 6:
         params = {'reference': p[3]}
@@ -295,8 +293,8 @@ def p_cell_card(p):
 
 
 def p_cell_options(p):
-    '''cell_options : cell_options cell_option
-                    | cell_option'''
+    """cell_options : cell_options cell_option
+                    | cell_option"""
     if len(p) == 2:
         p[0] = p[1]
     else:
@@ -305,27 +303,27 @@ def p_cell_options(p):
 
 
 def p_cell_option(p):
-    '''cell_option : fill_option
+    """cell_option : fill_option
                    | trcl_option
                    | cell_float_option
                    | cell_int_option
-    '''
+    """
     p[0] = p[1]
 
 
 def p_cell_int_option(p):
-    '''cell_int_option : U integer
+    """cell_int_option : U integer
                        | MAT integer
-    '''
+    """
     p[0] = {p[1]: p[2]}
 
 
 def p_cell_float_option(p):
-    '''cell_float_option : IMP ':' particle_list float
+    """cell_float_option : IMP ':' particle_list float
                          | TMP float
                          | RHO float
                          | VOL float
-    '''
+    """
     if len(p) == 5:
         p[0] = {(p[1], par): p[4] for par in p[3]}
     else:
@@ -333,10 +331,10 @@ def p_cell_float_option(p):
 
 
 def p_trcl_option(p):
-    '''trcl_option : '*' TRCL '(' transform_params ')'
+    """trcl_option : '*' TRCL '(' transform_params ')'
                    | TRCL '(' transform_params ')'
                    | TRCL int_number
-    '''
+    """
     if len(p) == 3:
         p[0] = {'TRCL': p[2]}
     elif len(p) == 5:
@@ -347,11 +345,11 @@ def p_trcl_option(p):
 
 
 def p_fill_option(p):
-    '''fill_option : '*' FILL int_number '(' transform_params ')'
+    """fill_option : '*' FILL int_number '(' transform_params ')'
                    | FILL int_number '(' transform_params ')'
                    | FILL int_number '(' int_number ')'
                    | FILL int_number
-    '''
+    """
     if len(p) == 7:
         p[5]['indegrees'] = True
         p[0] = {'FILL': {'universe': p[3], 'transform': p[5]}}
@@ -362,9 +360,9 @@ def p_fill_option(p):
 
 
 def p_cell_material(p):
-    '''cell_material : int_number float
+    """cell_material : int_number float
                      | void_material
-    '''
+    """
     if len(p) == 2:
         p[0] = None
     else:
@@ -372,9 +370,9 @@ def p_cell_material(p):
 
 
 def p_expression(p):
-    '''expression : expression ':' term
+    """expression : expression ':' term
                   | term
-    '''
+    """
     if len(p) == 4:
         p[0] = p[1] + p[3]
         p[0].append('U')
@@ -383,9 +381,9 @@ def p_expression(p):
 
 
 def p_term(p):
-    '''term : term factor
+    """term : term factor
             | factor
-    '''
+    """
     if len(p) == 3:
         p[0] = p[1] + p[2]
         p[0].append('I')
@@ -394,13 +392,13 @@ def p_term(p):
 
 
 def p_factor(p):
-    '''factor : '#' '(' expression ')'
+    """factor : '#' '(' expression ')'
               | '(' expression ')'
               | '-' int_number
               | '+' int_number
               | '#' int_number
               | int_number
-    '''
+    """
     if len(p) == 2:
         p[0] = [p[1]]
     elif len(p) == 3:
@@ -416,9 +414,9 @@ def p_factor(p):
 
 
 def p_surface_cards(p):
-    '''surface_cards : surface_cards separator surface_card
+    """surface_cards : surface_cards separator surface_card
                      | surface_card
-    '''
+    """
     if len(p) == 2:
         p[0] = {p[1][0]: p[1][1]}
     elif len(p) == 4:
@@ -428,10 +426,10 @@ def p_surface_cards(p):
 
 
 def p_surface_card(p):
-    '''surface_card : '*' int_number surface_description
+    """surface_card : '*' int_number surface_description
                     | '+' int_number surface_description
                     | int_number surface_description
-    '''
+    """
     if len(p) == 3:
         p[0] = p[1], p[2]
     else:
@@ -440,8 +438,8 @@ def p_surface_card(p):
 
 
 def p_surface_description(p):
-    '''surface_description : integer surface_type param_list
-                           | surface_type param_list'''
+    """surface_description : integer surface_type param_list
+                           | surface_type param_list"""
     if len(p) == 4:
         p[0] = p[2], p[3], {'transform': p[1]}
     else:
@@ -449,9 +447,9 @@ def p_surface_description(p):
 
 
 def p_param_list(p):
-    '''param_list : param_list float
+    """param_list : param_list float
                   | float
-    '''
+    """
     if len(p) == 2:
         p[0] = [p[1]]
     else:
@@ -459,11 +457,11 @@ def p_param_list(p):
 
 
 def p_float(p):
-    '''float : '+' flt_number
+    """float : '+' flt_number
              | '-' flt_number
              | flt_number
              | integer
-    '''
+    """
     if p[1] == '-':
         p[0] = -p[2]
     elif p[1] == '+':
@@ -473,10 +471,10 @@ def p_float(p):
 
 
 def p_integer(p):
-    '''integer : '+' int_number
+    """integer : '+' int_number
                | '-' int_number
                | int_number
-    '''
+    """
     if p[1] == '-':
         p[0] = -p[2]
     elif p[1] == '+':
@@ -486,9 +484,9 @@ def p_integer(p):
 
 
 def p_data_cards(p):
-    '''data_cards : data_cards separator data_card
+    """data_cards : data_cards separator data_card
                   | data_card
-    '''
+    """
     if len(p) == 2:
         name, value = p[1]
         p[0] = {name: value}
@@ -502,22 +500,22 @@ def p_data_cards(p):
 
 
 def p_data_card(p):
-    '''data_card : mode_card
+    """data_card : mode_card
                  | material_card
                  | transform_card
-    '''
+    """
     p[0] = p[1]
 
 
 def p_mode_card(p):
-    '''mode_card : MODE particle_list'''
+    """mode_card : MODE particle_list"""
     p[0] = 'MODE', p[2]
 
 
 def p_particle_list(p):
-    '''particle_list : particle_list particle
+    """particle_list : particle_list particle
                      | particle
-    '''
+    """
     if len(p) == 2:
         p[0] = [p[1]]
     else:
@@ -525,17 +523,17 @@ def p_particle_list(p):
 
 
 def p_particle(p):
-    '''particle : N
+    """particle : N
                 | P
                 | E
-    '''
+    """
     p[0] = p[1]
 
 
 def p_transform_card(p):
-    '''transform_card : '*' TR int_number transform_params
+    """transform_card : '*' TR int_number transform_params
                       | TR int_number transform_params
-    '''
+    """
     if len(p) == 5:
         tr = {'indegrees': True}
         tr.update(p[4])
@@ -547,10 +545,10 @@ def p_transform_card(p):
 
 
 def p_transform_params(p):
-    '''transform_params : translation rotation integer
+    """transform_params : translation rotation integer
                         | translation rotation
                         | translation
-    '''
+    """
     tr = {'translation': p[1]}
     if len(p) > 2:
         tr['rotation'] = p[2]
@@ -560,32 +558,32 @@ def p_transform_params(p):
 
 
 def p_translation(p):
-    '''translation : float float float'''
+    """translation : float float float"""
     p[0] = [p[1], p[2], p[3]]
 
 
 def p_rotation(p):
-    '''rotation : float float float float float float float float float
+    """rotation : float float float float float float float float float
                 | float float float float float float
                 | float float float float float
                 | float float float
-    '''
+    """
     p[0] = [p[i] for i in range(1, len(p))]
 
 
 def p_material_card(p):
-    '''material_card : M int_number composition_list material_options
+    """material_card : M int_number composition_list material_options
                      | M int_number composition_list
-    '''
+    """
     if len(p) == 5:
         p[3].update(p[4])
     p[0] = 'M', {p[2]: p[3]}
 
 
 def p_composition_list(p):
-    '''composition_list : composition_list zaid_fraction
+    """composition_list : composition_list zaid_fraction
                         | zaid_fraction
-    '''
+    """
     if len(p) == 2:
         key = p[1][0]
         value = p[1][1:]
@@ -601,9 +599,9 @@ def p_composition_list(p):
 
 
 def p_zaid_fraction(p):
-    '''zaid_fraction : int_number '.' lib_spec float
+    """zaid_fraction : int_number '.' lib_spec float
                      | int_number float
-    '''
+    """
     if len(p) == 5:
         key = 'atomic' if p[4] > 0 else 'wgt'
         p[0] = key, p[1], abs(p[4]), p[3]
@@ -613,9 +611,9 @@ def p_zaid_fraction(p):
 
 
 def p_material_options(p):
-    '''material_options : material_options material_option
+    """material_options : material_options material_option
                         | material_option
-    '''
+    """
     if len(p) == 2:
         p[0] = {p[1][0]: p[1][1]}
     else:
@@ -624,14 +622,14 @@ def p_material_options(p):
 
 
 def p_material_option(p):
-    '''material_option : GAS integer
+    """material_option : GAS integer
                        | ESTEP integer
                        | NLIB lib_spec
                        | PLIB lib_spec
                        | PNLIB lib_spec
                        | ELIB lib_spec
                        | COND integer
-    '''
+    """
     p[0] = p[1], p[2]
 
 
