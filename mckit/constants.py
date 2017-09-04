@@ -7,7 +7,7 @@ __all__ = [
     'AVOGADRO',
     'EX', 'EY', 'EZ',
     'ORIGIN', 'IDENTITY_ROTATION',
-    'ANGLE_TOLERANCE', 'RESOLUTION',
+    'ANGLE_TOLERANCE', 'RESOLUTION', 'RELATIVE_DENSITY_TOLERANCE',
     'CHARGE_TO_NAME', 'NAME_TO_CHARGE', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
 ]
 
@@ -27,6 +27,10 @@ IDENTITY_ROTATION = np.eye(3)
 
 # angle tolerance
 ANGLE_TOLERANCE = 0.001
+
+# Relative density tolerance. Relative difference in densities when materials
+# with the same composition are supposed to be the same.
+RELATIVE_DENSITY_TOLERANCE = 1.e-4
 
 # Resolution of float number
 RESOLUTION = np.finfo(float).resolution

@@ -5,6 +5,8 @@ from collections import deque
 from .parser import lexer, parser
 from .surface import create_surface
 from .transformation import Transformation
+from .material import Material
+from .constants import RELATIVE_DENSITY_TOLERANCE
 
 
 def read_mcnp_model(filename):
@@ -42,6 +44,7 @@ def read_mcnp_model(filename):
     _replace_geometry_names_by_objects(cells, surfaces)
 
 
+
 def _replace_geometry_names_by_objects(cells, surfaces):
     """Replaces surface and cell names in geometry description by objects.
 
@@ -69,9 +72,66 @@ def _replace_geometry_names_by_objects(cells, surfaces):
                     if comp_cell in unhandled_cells:
                         unhandled_cells.append(name)
                         break
-                    geom[i-1:i+1] = cells[comp_cell]['geometry']
+                    geom[i-1:i+1] = cells[comp_cell]['geometry'] + ['C']
                 elif isinstance(geom[i], int):
                     geom[i] = surfaces[geom[i]]
+
+
+def _create_material_objects(cells, compositions):
+    """Creates material objects and assign them to cells.
+
+    Materials objects are assigned to 'material' keyword of cell.
+
+    Parameters
+    ----------
+    cells : dict
+        Dictionary of cell parameters.
+    compositions : dict
+        Dictionary of material parameters, that define material composition.
+        Its values are also dictionaries with 'wgt' or 'atomic' keywords.
+    """
+    created_materials = {}  # Stores created materials in dictionary
+                            # composition_name -> material_instance
+    for cell in cells.values():
+        if 'MAT' in cell.keys():
+            comp_name = cell['MAT']
+            density = cell['RHO']
+            if comp_name in created_materials.keys():
+                pass
+            else:
+
+                material = Material()
+                created_materials[comp_name] = [material]
+
+
+def _check_material(materials, density):
+    """Checks if material with specified density already exists.
+
+    Parameters
+    ----------
+    materials : list[Material]
+        List of materials with the same composition.
+    density : float
+        Density of material. If positive, then it is concentration; if negative,
+        it is weight density.
+
+    Returns
+    -------
+    material : Material
+        If material with specified density already exists, it is returned.
+        Otherwise None is returned.
+    """
+    if density < 0:
+        method = Material.density
+        density = abs(density)
+    else:
+        method = Material.concentration
+    for mat in materials:
+        mat_den = method(mat)
+        rel = 2 * abs(mat_den - density) / (mat_den + density)
+        if rel < RELATIVE_DENSITY_TOLERANCE:
+            return mat
+    return None
 
 
 class Model:
