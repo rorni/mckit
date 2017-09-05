@@ -43,6 +43,9 @@ def read_mcnp_model(filename):
     # and surface numbers by corresponding Surface instances.
     _replace_geometry_names_by_objects(cells, surfaces)
 
+    # Create Material instances and assign them to cells
+    _create_material_objects(cells, data['M'])
+
 
 
 def _replace_geometry_names_by_objects(cells, surfaces):
@@ -90,22 +93,37 @@ def _create_material_objects(cells, compositions):
         Dictionary of material parameters, that define material composition.
         Its values are also dictionaries with 'wgt' or 'atomic' keywords.
     """
-    created_materials = {}  # Stores created materials in dictionary
+    created_materials = {}  # Stores materials created in dictionary
                             # composition_name -> material_instance
     for cell in cells.values():
         if 'MAT' in cell.keys():
             comp_name = cell['MAT']
             density = cell['RHO']
+            # Check if material already exists.
             if comp_name in created_materials.keys():
-                pass
+                mat = _get_material(created_materials[comp_name], density)
             else:
+                mat = None
+                created_materials[comp_name] = []
 
-                material = Material()
-                created_materials[comp_name] = [material]
+            # Create new material
+            if not mat:
+                mat_params = {}
+                if density > 0:
+                    mat_params['concentration'] = density
+                elif density < 0:
+                    mat_params['density'] = abs(density)
+                if 'atomic' in compositions[comp_name].keys():
+                    mat_params['atomic'] = compositions[comp_name]['atomic']
+                if 'wgt' in compositions[comp_name].keys():
+                    mat_params['wgt'] = compositions[comp_name]['wgt']
+                mat = Material(**mat_params)
+                created_materials[comp_name].append(mat)
+            cell['material'] = mat
 
 
-def _check_material(materials, density):
-    """Checks if material with specified density already exists.
+def _get_material(materials, density):
+    """Checks if material with specified density already exists and returns it.
 
     Parameters
     ----------
