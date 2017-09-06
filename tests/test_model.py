@@ -2,7 +2,43 @@ import unittest
 
 from tests.model_test_data.geometry_replace import surf_obj, cell_cases
 from mckit.model import _replace_geometry_names_by_objects, _get_material, \
-    _create_material_objects
+    _create_material_objects, read_mcnp_model, Model
+
+from tests.model_test_data.model_data import *
+
+
+class TestModel(unittest.TestCase):
+    def test_get_surface_indices(self):
+        for case, data in get_surface_indices_ans.items():
+            model = read_mcnp_model('tests/model_test_data/{0}.txt'.format(case))
+            for cname, cell in model.cells.items():
+                with self.subTest(i=cname):
+                    surfs = Model.get_surface_indices(cell['geometry'])
+                    self.assertEqual(surfs, data[cname])
+
+    def test_get_universe_list(self):
+        for case, data in get_universe_list_ans.items():
+            model = read_mcnp_model('tests/model_test_data/{0}.txt'.format(case))
+            self.assertEqual(data, model.get_universe_list())
+
+    def test_get_contained_universes_ans(self):
+        for case, data in contained_universes_ans.items():
+            model = read_mcnp_model('tests/model_test_data/{0}.txt'.format(case))
+            for uname, ucont in data.items():
+                with self.subTest(i=uname):
+                    self.assertEqual(model.get_contained_universes(uname), ucont)
+
+    def test_get_universe_model(self):
+        for case, data in get_universe_model_ans.items():
+            model = read_mcnp_model('tests/model_test_data/{0}.txt'.format(case))
+            for uname, part_ans in data.items():
+                with self.subTest(i=uname):
+                    part = model.get_universe_model(uname)
+                    self.assertEqual(part.title, part_ans['title'])
+                    self.assertEqual(part.cells.keys(), part_ans['cells'])
+                    self.assertEqual(part.surfaces.keys(), part_ans['surfaces'])
+                    self.assertEqual(part.data['M'].keys(), part_ans['material'])
+                    self.assertEqual(part.data['TR'].keys(), part_ans['transform'])
 
 
 class TestAuxiliaryFunctions(unittest.TestCase):

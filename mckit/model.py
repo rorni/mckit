@@ -191,25 +191,52 @@ class Model:
         """
         return list(self.universes.keys())
 
-    def get_universe_model(self, uname):
+    def get_universe_model(self, uname, title=None):
         """Gets the Model instance that corresponds to the specified universe.
         
         Parameters
         ----------
         uname : int
             The name of universe under consideration.
+        title : str
+            A brief description of the universe.
             
         Returns
         -------
         model : Model
             Model, that corresponds to the specified universe.
         """
-        cells = self.universes[uname].copy()
-        surf_ind = reduce(set.union, [self.get_surface_indices(c['geometry'])
-                                      for c in cells.values()])
-        surfaces = {i: self.surfaces[i] for i in surf_ind}
+        if title is None:
+            title = "Universe {0}".format(uname)
 
-    def get_universes_contained(self, uname):
+        contained_univ = self.get_contained_universes(uname) | {uname}
+        cells = {}
+        for u in contained_univ:
+            cells.update(self.universes[u])
+        surf_ind = reduce(set.union, [self.get_surface_indices(c['geometry'])
+                                      for c in cells.values()], set())
+        surfaces = {i: self.surfaces[i] for i in surf_ind}
+        tr_ind = set()  # indices of transformations
+        for s in surfaces.values():
+            if 'transform' in s[2].keys():
+                tr_ind.add(s[2]['transform'])
+        mat_ind = set()  # indices of material compositions
+        for c in cells.values():
+            if 'TRCL' in c.keys() and isinstance(c['TRCL'], int):
+                tr_ind.add(c['TRCL'])
+            if 'FILL' in c.keys():
+                if 'transform' in c['FILL'].keys() and \
+                        isinstance(c['FILL']['transform'], int):
+                    tr_ind.add(c['FILL']['transform'])
+            if 'MAT' in c.keys():
+                mat_ind.add(c['MAT'])
+        data = self.data.copy()     # All data cards remain the same except
+                                    # material and transformation cards.
+        data['TR'] = {i: data['TR'][i] for i in tr_ind}
+        data['M'] = {i: data['M'][i] for i in mat_ind}
+        return Model(title, cells, surfaces, data)
+
+    def get_contained_universes(self, uname):
         """Gets a list of universes, that are contained in this one."""
         contained = set()
         for c in self.universes[uname].values():
@@ -217,11 +244,11 @@ class Model:
                 contained.add(c['FILL']['universe'])
         inner = []
         for u in contained:
-            inner.append(self.get_universes_contained(u))
+            inner.append(self.get_contained_universes(u))
         return contained.union(*inner)
 
     @classmethod
-    def get_surface_indices(self, geometry):
+    def get_surface_indices(cls, geometry):
         """Gets a set of surface indices included in the geometry."""
         surfs = set()
         for i, c in enumerate(geometry):
