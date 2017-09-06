@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from collections import deque
+from functools import reduce
 
 from .parser import lexer, parser
 from .surface import create_surface
+from .cell import Cell
 from .transformation import Transformation
 from .material import Material
 from .constants import RELATIVE_DENSITY_TOLERANCE
@@ -19,33 +21,14 @@ def read_mcnp_model(filename):
 
     Returns
     -------
-    title : str
-        Model's title.
-    cells, surfaces, data : dict
-        Dictionaries of created cells, surfaces and data cards respectively.
+    model : Model
+        Calculation model.
     """
     with open(filename) as f:
         text = f.read()
     lexer.begin('INITIAL')
     title, cells, surfaces, data = parser.parse(text)
-    # Transformation instances creation
-    if 'TR' in data.keys():
-        for tr_name, tr_data in data['TR'].items():
-            data['TR'][tr_name] = Transformation(**tr_data)
-    # Creation of Surface instances
-    for sur_name, (kind, params, options) in surfaces.items():
-        if 'transform' in options.keys():
-            tr_name = options['transform']
-            options['transform'] = data['TR'][tr_name]
-        surfaces[sur_name] = create_surface(kind, *params, **options)
-    # Creation of Cell instances
-    # First, we must replace all cell complement operations (NUM followed by#)
-    # and surface numbers by corresponding Surface instances.
-    _replace_geometry_names_by_objects(cells, surfaces)
-
-    # Create Material instances and assign them to cells
-    _create_material_objects(cells, data['M'])
-
+    return Model(title, cells, surfaces, data)
 
 
 def _replace_geometry_names_by_objects(cells, surfaces):
@@ -97,7 +80,7 @@ def _create_material_objects(cells, compositions):
     -------
     materials : dict
         A dictionary of created material objects. Keys - composition numbers, 
-        values - lists of correcponding Material instances (they differ only in
+        values - lists of corresponding Material instances (they differ only in
         density). 
     """
     created_materials = {}  # Stores materials created in dictionary
@@ -161,5 +144,111 @@ def _get_material(materials, density):
 
 
 class Model:
-    def __init__(self):
-        pass
+    """Represents calculation model.
+    
+    Parameters
+    ----------
+    title : str
+        Title that briefly describes the model.
+    cells : dict
+        A dictionary of cell data. It is pairs cell_name -> cell_params. 
+        Cell_params is also a dictionary of raw cell parameters. It contains
+        indices (references) of other model objects like transformations, 
+        surfaces, materials, etc.
+    surfaces : dict
+        A dictionary of raw surface data. It is pairs surf_name -> surf_params.
+    data : dict
+        Dictionary of raw data, that describes datacards.
+        
+    Methods
+    -------
+    get_universe_model(uname)
+        Gets the Model instance that corresponds to the specified universe.
+    get_universe_list()
+        Gets the list of universe names.
+    universe()
+        Gets the model in object representation (as Universe instance). 
+    """
+    def __init__(self, title, cells, surfaces, data):
+        self.title = title
+        self.cells = cells
+        self.surfaces = surfaces
+        self.data = data
+        self.universes = {0: {}}
+        for cell_name, cell_params in cells.items():
+            uname = cell_params.get('U', 0)
+            if uname not in self.universes.keys():
+                self.universes[uname] = {}
+            self.universes[uname][cell_name] = cell_params
+
+    def get_universe_list(self):
+        """Gets the list of universe names.
+        
+        Returns
+        -------
+        unames : list[int]
+            List of included universe names.
+        """
+        return list(self.universes.keys())
+
+    def get_universe_model(self, uname):
+        """Gets the Model instance that corresponds to the specified universe.
+        
+        Parameters
+        ----------
+        uname : int
+            The name of universe under consideration.
+            
+        Returns
+        -------
+        model : Model
+            Model, that corresponds to the specified universe.
+        """
+        cells = self.universes[uname].copy()
+        surf_ind = reduce(set.union, [self.get_surface_indices(c['geometry'])
+                                      for c in cells.values()])
+        surfaces = {i: self.surfaces[i] for i in surf_ind}
+
+    def get_universes_contained(self, uname):
+        """Gets a list of universes, that are contained in this one."""
+        contained = set()
+        for c in self.universes[uname].values():
+            if 'FILL' in c.keys():
+                contained.add(c['FILL']['universe'])
+        inner = []
+        for u in contained:
+            inner.append(self.get_universes_contained(u))
+        return contained.union(*inner)
+
+    @classmethod
+    def get_surface_indices(self, geometry):
+        """Gets a set of surface indices included in the geometry."""
+        surfs = set()
+        for i, c in enumerate(geometry):
+            if isinstance(c, int) and geometry[i+1] != '#':
+                surfs.add(c)
+        return surfs
+
+        # # --------------------------------------------------------------------------
+        # # Transformation instances creation
+        # if 'TR' in data.keys():
+        #     for tr_name, tr_data in data['TR'].items():
+        #         data['TR'][tr_name] = Transformation(**tr_data)
+        # # Creation of Surface instances
+        # for sur_name, (kind, params, options) in surfaces.items():
+        #     if 'transform' in options.keys():
+        #         tr_name = options['transform']
+        #         options['transform'] = data['TR'][tr_name]
+        #     surfaces[sur_name] = create_surface(kind, *params, **options)
+        # # Creation of Cell instances
+        # # First, we must replace all cell complement operations (NUM followed by#)
+        # # and surface numbers by corresponding Surface instances.
+        # _replace_geometry_names_by_objects(cells, surfaces)
+        #
+        # # Create Material instances and assign them to cells
+        # _create_material_objects(cells, data['M'])
+        #
+        # # Create Cell objects itself.
+        # for cell_name, cell_params in cells.items():
+        #     geometry = cell_params.pop('geometry')
+        #     cells[cell_name] = Cell(geometry, **cell_params)
