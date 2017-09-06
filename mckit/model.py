@@ -92,6 +92,13 @@ def _create_material_objects(cells, compositions):
     compositions : dict
         Dictionary of material parameters, that define material composition.
         Its values are also dictionaries with 'wgt' or 'atomic' keywords.
+        
+    Returns
+    -------
+    materials : dict
+        A dictionary of created material objects. Keys - composition numbers, 
+        values - lists of correcponding Material instances (they differ only in
+        density). 
     """
     created_materials = {}  # Stores materials created in dictionary
                             # composition_name -> material_instance
@@ -120,6 +127,7 @@ def _create_material_objects(cells, compositions):
                 mat = Material(**mat_params)
                 created_materials[comp_name].append(mat)
             cell['material'] = mat
+    return created_materials
 
 
 def _get_material(materials, density):

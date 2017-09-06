@@ -22,7 +22,17 @@ class TestAuxiliaryFunctions(unittest.TestCase):
                 self.assertIs(mat, ans)
 
     def test_create_material_objects(self):
-        pass
+        from tests.model_test_data.material_creation import compositions, \
+            cells, mat_cell_ans
+        materials = _create_material_objects(cells, compositions)
+        with self.subTest(msg='Void cells'):
+            for cell_name in mat_cell_ans[0]:
+                self.assertNotIn('material', cells[cell_name].keys())
+        for comp_name, mats in materials.items():
+            with self.subTest(msg="composition = {0}".format(comp_name)):
+                for i, mat in enumerate(mats):
+                    for cn in mat_cell_ans[comp_name][i]:
+                        self.assertIs(cells[cn]['material'], mat)
 
 
 if __name__ == '__main__':
