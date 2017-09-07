@@ -97,6 +97,43 @@ class TestMaterial(unittest.TestCase):
                     self.assertAlmostEqual(v, mat_ans._composition[k],
                                            delta=v * 1.e-5)
 
+    def test_material_eq(self):
+        materials = [Material(**eq_cases) for eq_cases in material_eq_cases]
+        N = len(material_eq_cases)
+        for i in range(N):
+            for j in range(N):
+                with self.subTest(msg="i={0}, j={1}".format(i, j)):
+                    result = (materials[i] == materials[j])
+                    self.assertTrue(result == material_eq_matrix[i][j])
+
+
+material_eq_cases = [
+    {'atomic': [(1000, 2), (8000, 1)], 'density': 0.9982},
+    {'atomic': [(1000, 2), (8000, 1)], 'density': 0.99825},
+    {'atomic': [(1000, 2), (8000, 1)], 'density': 0.99815},
+    {'atomic': [(1000, 2), (8000, 1)], 'density': 0.9980},
+    {'atomic': [(1000, 4), (8000, 2)], 'density': 0.9982},
+    {'atomic': [(1001, 2), (8016, 1)], 'density': 0.9982},
+    {'atomic': [(1001, 2.001), (8016, 0.999)], 'concentration': 1.0e+22},
+    {'wgt': [('N', 75.5), ('O', 23.15), ('Ar', 1.292)], 'density': 1.292e-3},
+    {'wgt': [('N', 75.501), ('O', 23.1499), ('Ar', 1.29201)], 'density': 1.292e-3},
+    {'wgt': [('N', 75.6), ('O', 23.15), ('Ar', 1.292)], 'density': 1.292e-3},
+    {'wgt': [('N', 75.5), ('O', 23.15), ('Ar', 1.292)], 'concentration': 1.0e+22}
+]
+
+material_eq_matrix = [
+    [1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+    [1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+    [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+]
 
 
 material_creation_cases = [

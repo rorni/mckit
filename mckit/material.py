@@ -3,7 +3,9 @@
 import numpy as np
 
 from .constants import NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
-                       ISOTOPE_MASS, AVOGADRO
+                       ISOTOPE_MASS, AVOGADRO, \
+                       RELATIVE_COMPOSITION_TOLERANCE,\
+                       RELATIVE_DENSITY_TOLERANCE
 
 
 class Material:
@@ -93,6 +95,18 @@ class Material:
                 self._composition[el] += self._n / norm_factor * frac
         else:
             raise ValueError('Incorrect set of parameters.')
+
+    def __eq__(self, other):
+        rel = 2 * abs(self._n - other._n) / (self._n + other._n)
+        if rel >= RELATIVE_DENSITY_TOLERANCE:
+            return False
+        if len(self._composition.keys()) != len(other._composition.keys()):
+            return False
+        for (k1, v1), (k2, v2) in zip(self._composition.items(), other._composition.items()):
+            rel = 2 * abs(v1 - v2) / (v1 + v2)
+            if k1 != k2 or rel >= RELATIVE_COMPOSITION_TOLERANCE:
+                return False
+        return True
 
     def density(self):
         """Gets material's density [g per cc]."""

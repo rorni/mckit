@@ -31,6 +31,8 @@ ANGLE_TOLERANCE = 0.001
 # Relative density tolerance. Relative difference in densities when materials
 # with the same composition are supposed to be the same.
 RELATIVE_DENSITY_TOLERANCE = 1.e-4
+# Relative composition element concentration tolerance
+RELATIVE_COMPOSITION_TOLERANCE = 1.e-4
 
 # Resolution of float number
 RESOLUTION = np.finfo(float).resolution
