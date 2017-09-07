@@ -3,6 +3,8 @@
 from collections import deque
 from functools import reduce
 
+import numpy as np
+
 from .parser import lexer, parser
 from .surface import create_surface
 from .cell import Cell
@@ -180,6 +182,150 @@ class Model:
             if uname not in self.universes.keys():
                 self.universes[uname] = {}
             self.universes[uname][cell_name] = cell_params
+
+    def universe(self):
+        """Gets the model in object representation.
+        
+        Returns
+        -------
+        universe : Universe
+            The model represented as universe object.
+        """
+        # 1. Create transformation objects
+        self._transformations = {}
+        if 'TR' in self.data.keys():
+            for tr_name, tr_data in self.data['TR'].items():
+                self._transformations[tr_name] = Transformation(**tr_data)
+        # 2. Create surface objects
+        self._surfaces = {}
+        for sur_name, (kind, params, options) in self._surfaces.items():
+            if 'transform' in options.keys():
+                tr_name = options['transform']
+                options['transform'] = self._transformations[tr_name]
+            self._surfaces[sur_name] = create_surface(kind, *params, **options)
+        # 3. Create cell geometries
+        geometries = {}
+        self._materials = {}
+        self._densities = {}
+        # 3. Create material objects
+        materials = []
+        # 4. Adjust cell params and create corresponding objects.
+        # 5. Create cell objects
+        # 6. Create universe
+
+    def _create_universe(self, uname):
+        """Creates new universe from data of this model.
+        
+        Returns
+        -------
+        universe : Universe
+        """
+        for cell_data in self.universes[uname].values():
+            pass
+
+    def _produce_cell_geometry(self, cell_name):
+        """Creates a list that describes cell geometry.
+        
+        This function can use reference geometry. It replaces cell complement
+        operations, replaces surface numbers by surface objects.
+        
+        Parameters
+        ----------
+        cell_name : dict
+            A name of the cell under consideration.
+            
+        Returns
+        -------
+        geometry : list
+            List that describes cell geometry in object representation.
+        """
+        geometry = self._get_reference_geometry(cell_name).copy()
+        i = 0
+        while i < len(geometry):
+            elem = geometry[i]
+            if isinstance(elem, int) and geometry[i+1] == '#':
+                geometry[i:i+2] = self._get_reference_geometry(elem)
+                continue
+            elif isinstance(elem, int):
+                geometry[i] = self._get_surface_object(elem)
+            i += 1
+        return geometry
+
+    def _get_reference_geometry(self, cell_no):
+        """Gets geometry of the cell with name cell_no."""
+        ref_cell = cell_no
+        while 'reference' in self.cells[ref_cell].keys():
+            ref_cell = self.cells[ref_cell]['reference']
+        return self.cells[ref_cell]['geometry']
+
+    def _get_material_object(self, comp_no, density):
+        """Gets material object that corresponds to comp_no and density.
+        
+        Parameters
+        ----------
+        comp_no : int
+            Composition name.
+        density : float
+            Density of material.
+            
+        Returns 
+        -------
+        material : Material
+            Material object.
+        """
+        if comp_no not in self._compositions.keys():
+            self._densities[comp_no] = [0]
+            self._materials[comp_no] = [None]
+        i = np.searchsorted(self._densities[comp_no], density)
+        test_indices = []
+        if i-1 > 0:
+            test_indices.append(i-1)
+        if i < len(self._densities):
+            test_indices.append(i)
+        rels = []
+        for ti in test_indices:
+            t_den = self._densities[ti]
+            rels.append(abs(t_den - density) / abs(t_den + density))
+        min_ind = np.argmin(rels)
+        if rels[min_ind] >= RELATIVE_DENSITY_TOLERANCE:
+            mat_params = {}
+            if density > 0:
+                mat_params['concentration'] = density
+            elif density < 0:
+                mat_params['density'] = abs(density)
+            if 'atomic' in self.data['M'][comp_no].keys():
+                mat_params['atomic'] = self.data['M'][comp_no]['atomic']
+            if 'wgt' in self.data['M'][comp_no].keys():
+                mat_params['wgt'] = self.data['M'][comp_no]['wgt']
+            mat = Material(**mat_params)
+            self._densities[comp_no].insert(i, density)
+            if density > 0:
+                self._densities[comp_no].insert(-i, mat.density())
+            else:
+                self._densities[comp_no].insert(-i, mat.concentration())
+            self._materials[comp_no].insert(i, mat)
+            self._materials[comp_no].insert(-i, mat)
+            min_ind = i
+        return self._materials[min_ind]
+
+
+    def _get_surface_object(self, surf_no):
+        """Gets surface object that corresponds to surf_no."""
+        if surf_no not in self._surfaces.keys():
+            kind, params, options = self.surfaces[surf_no]
+            if 'transform' in options.keys():
+                tr_name = options['transform']
+                options = options.copy()
+                options['transform'] = self._get_transform_object(tr_name)
+            self._surfaces[surf_no] = create_surface(kind, *params, **options)
+        return self._surfaces[surf_no]
+
+    def _get_transform_object(self, tr_no):
+        """Gets transformation object that corresponds to tr_no."""
+        if tr_no not in self._transformations.keys():
+            tr_data = self.data['TR'][tr_no]
+            self._transformations[tr_no] = Transformation(**tr_data)
+        return self._transformations[tr_no]
 
     def get_universe_list(self):
         """Gets the list of universe names.
