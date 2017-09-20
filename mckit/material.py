@@ -159,6 +159,50 @@ def merge_materials(material1, volume1, material2, volume2):
     return Material(atomic=composition)
 
 
+def make_mixture(*materials, fraction_type='weight'):
+    """Creates new material as a mixture of others.
+    
+    Fractions are not needed to be normalized, but normalization has effect.
+    If the sum of fractions is less than 1, then missing fraction is considered
+    to be void (density is reduced). If the sum of fractions is greater than 1,
+    the effect of compression is taking place.
+    
+    Parameters
+    ----------
+    materials : list
+        A list of pairs material-fraction. material must be an Material class
+        instance because for mixture not only composition but density is 
+        important.
+    fraction_type : str
+        Indicate how fraction should be interpreted.
+        'weight' - weight fractions (default);
+        'volume' - volume fractions;
+        'atomic' - atomic fractions.
+
+    Returns
+    -------
+    material : Material
+        New material.
+    """
+    elements = {}
+    if fraction_type == 'weight':
+        s = np.sum([frac / (mat._mu * mat._n) for mat, frac in materials])
+        norm = lambda m: 1.0 / (m._mu * s)
+    elif fraction_type == 'volume':
+        norm = lambda m: m._n
+    elif fraction_type == 'atomic':
+        s = np.sum([frac / mat._n for mat, frac in materials])
+        norm = lambda m: 1.0 / s
+    else:
+        raise ValueError('Unknown fraction type')
+    for mat, frac in materials:
+        for el, conc in mat._composition:
+            if el not in elements.keys():
+                elements[el] = 0.0
+            elements[el] += frac * conc * norm(mat)
+    return Material(atomic=elements.items())
+
+
 class Element:
     """Represents isotope or isotope mixture for natural abundance case.
 
