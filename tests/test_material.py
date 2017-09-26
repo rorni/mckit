@@ -97,6 +97,20 @@ class TestMaterial(unittest.TestCase):
                     self.assertAlmostEqual(v, mat_ans._composition[k],
                                            delta=v * 1.e-5)
 
+    def test_make_mixture(self):
+        pass
+
+
+material_mix_cases = [
+    ({'atomic': [('N', 1)], 'density': 1.2506e-3},
+     {'atomic': [('O', 1)], 'density': 1.42897e-3},
+     {'atomic': [('Ar', 1)], 'density': 1.784e-3},
+     {'atomic': [('C', 1), ('O', 2)], 'density': 1.9768e-3},
+     {'atomic': [('Ne', 1)], 'density': 0.9002e-3},
+     {'atomic': [('Kr', 1)], 'density': 3.749e-3}),
+    {'weight': [0.755, 0.2315, 0.01292, 0.00046, 0.000014, 0.00003],
+     'volume': [0.78084, 0.209476, 0.00934, 0.000314, 0.00001818, 0.00000114]}
+]
 
 
 material_creation_cases = [
