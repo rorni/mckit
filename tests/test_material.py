@@ -1,6 +1,6 @@
 import unittest
 
-from mckit.material import Element, Material, merge_materials
+from mckit.material import Element, Material, merge_materials, make_mixture
 
 
 class TestElement(unittest.TestCase):
@@ -98,18 +98,70 @@ class TestMaterial(unittest.TestCase):
                                            delta=v * 1.e-5)
 
     def test_make_mixture(self):
-        pass
+        for i, case in enumerate(material_mix_cases):
+            components = [Material(**c) for c in case['components']]
+            for ftype, fvalues in case['fractions'].items():
+                with self.subTest(msg='{0} - {1}'.format(i, ftype)):
+                    new_mat = make_mixture(*zip(components, fvalues), fraction_type=ftype)
+                    if 'molar_mass' in case.keys():
+                        self.assertAlmostEqual(new_mat.molar_mass(), case['molar_mass'], delta=case['molar_mass'] * 1.e-3)
+                    if 'density' in case.keys():
+                        self.assertAlmostEqual(new_mat.density(), case['density'], delta=case['density'] * 5.e-3)
+                    if 'concentration' in case.keys():
+                        self.assertAlmostEqual(new_mat.concentration(), case['concentration'], delta=case['concentration'] * 5.e-3)
 
 
 material_mix_cases = [
-    ({'atomic': [('N', 1)], 'density': 1.2506e-3},
-     {'atomic': [('O', 1)], 'density': 1.42897e-3},
-     {'atomic': [('Ar', 1)], 'density': 1.784e-3},
-     {'atomic': [('C', 1), ('O', 2)], 'density': 1.9768e-3},
-     {'atomic': [('Ne', 1)], 'density': 0.9002e-3},
-     {'atomic': [('Kr', 1)], 'density': 3.749e-3}),
-    {'weight': [0.755, 0.2315, 0.01292, 0.00046, 0.000014, 0.00003],
-     'volume': [0.78084, 0.209476, 0.00934, 0.000314, 0.00001818, 0.00000114]}
+    {
+        'components': ({'atomic': [('N', 1)], 'density': 1.2506e-3},
+                       {'atomic': [('O', 1)], 'density': 1.42897e-3},
+                       {'atomic': [('Ar', 1)], 'density': 1.784e-3},
+                       {'atomic': [('C', 1), ('O', 2)], 'density': 1.9768e-3},
+                       {'atomic': [('Ne', 1)], 'density': 0.9002e-3},
+                       {'atomic': [('Kr', 1)], 'density': 3.749e-3}),
+        'fractions': {
+            'weight': [0.755, 0.2315, 0.01292, 0.00046, 0.000014, 0.00003],
+            'volume': [0.78084, 0.209476, 0.00934, 0.000314, 0.00001818, 0.00000114]
+        },
+        'density': 1.2929e-3
+    },
+    {
+        'components': ({'atomic': [('H', 2), ('O', 1)], 'density': 1.0},),
+        'fractions': {
+            'weight': [0.5],
+            'volume': [0.5],
+            'atomic': [0.5]
+        },
+        'density': 0.5
+    },
+    {
+        'components': ({'atomic': [('H', 2), ('O', 1)], 'density': 1.0},),
+        'fractions': {
+            'weight': [0.7],
+            'volume': [0.7],
+            'atomic': [0.7]
+        },
+        'density': 0.7
+    },
+    {
+        'components': ({'atomic': [('H', 2), ('O', 1)], 'density': 1.0},),
+        'fractions': {
+            'weight': [0.3],
+            'volume': [0.3],
+            'atomic': [0.3]
+        },
+        'density': 0.3
+    },
+    {
+        'components': ({'atomic': [('H', 2), ('O', 1)], 'density': 1.0},
+                       {'atomic': [('H', 2), ('O', 1)], 'density': 1.0}),
+        'fractions': {
+            'weight': [0.3, 0.7],
+            'volume': [0.7, 0.3],
+            'atomic': [0.1, 0.9]
+        },
+        'density': 1.0
+    }
 ]
 
 

@@ -187,7 +187,7 @@ def make_mixture(*materials, fraction_type='weight'):
     elements = {}
     if fraction_type == 'weight':
         s = np.sum([frac / (mat._mu * mat._n) for mat, frac in materials])
-        norm = lambda m: 1.0 / (m._mu * s)
+        norm = lambda m: 1.0 / (m._mu * m._n * s)
     elif fraction_type == 'volume':
         norm = lambda m: m._n
     elif fraction_type == 'atomic':
@@ -196,10 +196,10 @@ def make_mixture(*materials, fraction_type='weight'):
     else:
         raise ValueError('Unknown fraction type')
     for mat, frac in materials:
-        for el, conc in mat._composition:
+        for el, conc in mat._composition.items():
             if el not in elements.keys():
                 elements[el] = 0.0
-            elements[el] += frac * conc * norm(mat)
+            elements[el] += frac * conc
     return Material(atomic=elements.items())
 
 
