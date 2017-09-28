@@ -1,6 +1,6 @@
 import unittest
 
-from mckit.material import Element, Material, merge_materials
+from mckit.material import Element, Material, merge_materials, make_mixture
 
 
 class TestElement(unittest.TestCase):
@@ -97,6 +97,110 @@ class TestMaterial(unittest.TestCase):
                     self.assertAlmostEqual(v, mat_ans._composition[k],
                                            delta=v * 1.e-5)
 
+    def test_material_eq(self):
+        materials = [Material(**eq_cases) for eq_cases in material_eq_cases]
+        N = len(material_eq_cases)
+        for i in range(N):
+            for j in range(N):
+                with self.subTest(msg="i={0}, j={1}".format(i, j)):
+                    result = (materials[i] == materials[j])
+                    self.assertTrue(result == material_eq_matrix[i][j])
+
+    def test_make_mixture(self):
+        for i, case in enumerate(material_mix_cases):
+            components = [Material(**c) for c in case['components']]
+            for ftype, fvalues in case['fractions'].items():
+                with self.subTest(msg='{0} - {1}'.format(i, ftype)):
+                    new_mat = make_mixture(*zip(components, fvalues), fraction_type=ftype)
+                    if 'molar_mass' in case.keys():
+                        self.assertAlmostEqual(new_mat.molar_mass(), case['molar_mass'], delta=case['molar_mass'] * 1.e-3)
+                    if 'density' in case.keys():
+                        self.assertAlmostEqual(new_mat.density(), case['density'], delta=case['density'] * 5.e-3)
+                    if 'concentration' in case.keys():
+                        self.assertAlmostEqual(new_mat.concentration(), case['concentration'], delta=case['concentration'] * 5.e-3)
+
+
+material_eq_cases = [
+    {'atomic': [(1000, 2), (8000, 1)], 'density': 0.9982},
+    {'atomic': [(1000, 2), (8000, 1)], 'density': 0.99825},
+    {'atomic': [(1000, 2), (8000, 1)], 'density': 0.99815},
+    {'atomic': [(1000, 2), (8000, 1)], 'density': 0.9980},
+    {'atomic': [(1000, 4), (8000, 2)], 'density': 0.9982},
+    {'atomic': [(1001, 2), (8016, 1)], 'density': 0.9982},
+    {'atomic': [(1001, 2.001), (8016, 0.999)], 'concentration': 1.0e+22},
+    {'wgt': [('N', 75.5), ('O', 23.15), ('Ar', 1.292)], 'density': 1.292e-3},
+    {'wgt': [('N', 75.501), ('O', 23.1499), ('Ar', 1.29201)], 'density': 1.292e-3},
+    {'wgt': [('N', 75.6), ('O', 23.15), ('Ar', 1.292)], 'density': 1.292e-3},
+    {'wgt': [('N', 75.5), ('O', 23.15), ('Ar', 1.292)], 'concentration': 1.0e+22}
+]
+
+material_eq_matrix = [
+    [1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+    [1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+    [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+]
+
+
+material_mix_cases = [
+    {
+        'components': ({'atomic': [('N', 1)], 'density': 1.2506e-3},
+                       {'atomic': [('O', 1)], 'density': 1.42897e-3},
+                       {'atomic': [('Ar', 1)], 'density': 1.784e-3},
+                       {'atomic': [('C', 1), ('O', 2)], 'density': 1.9768e-3},
+                       {'atomic': [('Ne', 1)], 'density': 0.9002e-3},
+                       {'atomic': [('Kr', 1)], 'density': 3.749e-3}),
+        'fractions': {
+            'weight': [0.755, 0.2315, 0.01292, 0.00046, 0.000014, 0.00003],
+            'volume': [0.78084, 0.209476, 0.00934, 0.000314, 0.00001818, 0.00000114]
+        },
+        'density': 1.2929e-3
+    },
+    {
+        'components': ({'atomic': [('H', 2), ('O', 1)], 'density': 1.0},),
+        'fractions': {
+            'weight': [0.5],
+            'volume': [0.5],
+            'atomic': [0.5]
+        },
+        'density': 0.5
+    },
+    {
+        'components': ({'atomic': [('H', 2), ('O', 1)], 'density': 1.0},),
+        'fractions': {
+            'weight': [0.7],
+            'volume': [0.7],
+            'atomic': [0.7]
+        },
+        'density': 0.7
+    },
+    {
+        'components': ({'atomic': [('H', 2), ('O', 1)], 'density': 1.0},),
+        'fractions': {
+            'weight': [0.3],
+            'volume': [0.3],
+            'atomic': [0.3]
+        },
+        'density': 0.3
+    },
+    {
+        'components': ({'atomic': [('H', 2), ('O', 1)], 'density': 1.0},
+                       {'atomic': [('H', 2), ('O', 1)], 'density': 1.0}),
+        'fractions': {
+            'weight': [0.3, 0.7],
+            'volume': [0.7, 0.3],
+            'atomic': [0.1, 0.9]
+        },
+        'density': 1.0
+    }
+]
 
 
 material_creation_cases = [
@@ -123,7 +227,8 @@ material_creation_cases = [
     ({'wgt': [('N', 0.2), ('O', 0.132), ('AR', 0.013), ('N', 0.255), ('O', 0.1), ('N', 0.3)],
      'density': 1.2929e-3}, 5.351034567e+19, 14.551, 1.2929e-3),
     ({'atomic': [(28058, 0.680769), (28060, 0.262231), (28061, 0.011399), (28062, 0.036345), (28064, 0.009256)]},
-     1.0, 58.6934, 9.7462675e-23)
+     1.0, 58.6934, 9.7462675e-23),
+    ({'atomic': [('H', 2 / 3), ('O', 1 / 3)], 'density': 0.9982}, 1.0010337342849073e+23, 18.01528 / 3, 0.9982)
 ]
 
 material_creation_failed_cases = [
