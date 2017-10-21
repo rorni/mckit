@@ -8,6 +8,7 @@ import numpy as np
 from .parser import lexer, parser
 from .surface import create_surface, Surface
 from .cell import Cell
+from .universe import Universe
 from .transformation import Transformation
 from .material import Material
 from .constants import RELATIVE_DENSITY_TOLERANCE
@@ -185,47 +186,42 @@ class Model:
                 self.universes[uname] = {}
             self.universes[uname][cell_name] = cell_params
 
-    def universe(self):
+    def universe(self, title=""):
         """Gets the model in object representation.
         
         Returns
         -------
         universe : Universe
             The model represented as universe object.
+        title : str, optional
+            A brief description.
         """
-        # 1. Create transformation objects
         self._transformations = {}
-        if 'TR' in self.data.keys():
-            for tr_name, tr_data in self.data['TR'].items():
-                self._transformations[tr_name] = Transformation(**tr_data)
-        # 2. Create surface objects
         self._surfaces = {}
-        for sur_name, (kind, params, options) in self._surfaces.items():
-            if 'transform' in options.keys():
-                tr_name = options['transform']
-                options['transform'] = self._transformations[tr_name]
-            self._surfaces[sur_name] = create_surface(kind, *params, **options)
-        # 3. Create cell geometries
-        geometries = {}
         self._materials = {}
-        self._densities = {}
-        # 3. Create material objects
-        materials = []
-        # 4. Adjust cell params and create corresponding objects.
-        # 5. Create cell objects
-        # 6. Create universe
+        self._universes = {}
+        return self._get_universe_object(0, title)
 
-    def _create_universe(self, uname):
+    def _get_universe_object(self, uname, title=""):
         """Creates new universe from data of this model.
-        
+
+        Parameters
+        ----------
+        uname : int
+            A name of universe to be created.
+        title : str, optional
+            A brief description.
+
         Returns
         -------
         universe : Universe
         """
-        cells = []
-        for cell_name in self.universes[uname].keys():
-            cells.append(self._produce_cell(cell_name))
-
+        if uname not in self._universes.keys():
+            cells = []
+            for cell_name in self.universes[uname].keys():
+                cells.append(self._produce_cell(cell_name))
+            self._universes[uname] = Universe(cells, name=uname, title=title)
+        return self._universes[uname]
 
     def _produce_cell(self, cell_name):
         """Creates Cell instance."""
@@ -235,7 +231,7 @@ class Model:
         options.pop('reference', None)
         fill = options.pop('FILL', None)
         if fill:
-            universe = self._create_universe(fill.pop('universe'))
+            universe = self._get_universe_object(fill.pop('universe'))
             tr = self._get_transform_object(fill.pop('transform', None))
             if tr:
                 universe = universe.transform(tr)
