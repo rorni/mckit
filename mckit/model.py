@@ -6,7 +6,7 @@ from functools import reduce
 import numpy as np
 
 from .parser import lexer, parser
-from .surface import create_surface
+from .surface import create_surface, Surface
 from .cell import Cell
 from .transformation import Transformation
 from .material import Material
@@ -220,8 +220,36 @@ class Model:
         -------
         universe : Universe
         """
-        for cell_data in self.universes[uname].values():
-            pass
+        cells = []
+        for cell_name in self.universes[uname].keys():
+            geometry = self._produce_cell_geometry(cell_name)
+            options = self.cells[cell_name].copy()
+            options.pop('geometry', None)
+            options.pop('reference', None)
+
+    def _produce_cell(self, cell_name):
+        """Creates Cell instance."""
+        geometry = self._produce_cell_geometry(cell_name)
+        options = self.cells[cell_name].copy()
+        options.pop('geometry', None)
+        options.pop('reference', None)
+        fill = options.pop('FILL', None)
+        if fill:
+            universe = self._create_universe(fill.pop('universe'))
+            tr = self._get_transform_object(fill.pop('transform', None))
+            if tr:
+                universe = universe.transform(tr)
+            options['FILL'] = universe
+
+        tr = options.pop('TRCL', None)
+        if tr:
+            for i, s in enumerate(geometry):
+                if isinstance(s, Surface):
+                    geometry[i] = s.transform(tr)
+            if 'FILL' in options.keys():
+                options['FILL'] = universe.transform(tr)
+        self._cells[cell_name] = Cell(geometry, **options)
+        return self._cells[cell_name]
 
     def _produce_cell_geometry(self, cell_name):
         """Creates a list that describes cell geometry.
@@ -231,7 +259,7 @@ class Model:
         
         Parameters
         ----------
-        cell_name : dict
+        cell_name : int
             A name of the cell under consideration.
             
         Returns
@@ -244,7 +272,7 @@ class Model:
         while i < len(geometry):
             elem = geometry[i]
             if isinstance(elem, int) and geometry[i+1] == '#':
-                geometry[i:i+2] = self._get_reference_geometry(elem)
+                geometry[i:i+2] = self._get_reference_geometry(elem) + ['C']
                 continue
             elif isinstance(elem, int):
                 geometry[i] = self._get_surface_object(elem)
@@ -308,7 +336,6 @@ class Model:
             min_ind = i
         return self._materials[min_ind]
 
-
     def _get_surface_object(self, surf_no):
         """Gets surface object that corresponds to surf_no."""
         if surf_no not in self._surfaces.keys():
@@ -320,12 +347,15 @@ class Model:
             self._surfaces[surf_no] = create_surface(kind, *params, **options)
         return self._surfaces[surf_no]
 
-    def _get_transform_object(self, tr_no):
-        """Gets transformation object that corresponds to tr_no."""
-        if tr_no not in self._transformations.keys():
-            tr_data = self.data['TR'][tr_no]
-            self._transformations[tr_no] = Transformation(**tr_data)
-        return self._transformations[tr_no]
+    def _get_transform_object(self, tr):
+        """Gets transformation object that corresponds to tr."""
+        if isinstance(tr, dict):
+            return Transformation(**tr)
+        elif isinstance(tr, int):
+            if tr not in self._transformations.keys():
+                tr_data = self.data['TR'][tr]
+                self._transformations[tr] = Transformation(**tr_data)
+            return self._transformations[tr]
 
     def get_universe_list(self):
         """Gets the list of universe names.

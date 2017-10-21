@@ -20,6 +20,8 @@ class Cell(dict):
     -------
     get_surfaces()
         Returns a set of surfaces that bound this cell.
+    populate()
+        Fills this cell by universe.
     test_point(p)
         Tests whether point(s) p belong to this cell (lies inside it).
     test_region(region)
@@ -44,6 +46,20 @@ class Cell(dict):
             if isinstance(op, Surface):
                 surfaces.add(op)
         return surfaces
+
+    def populate(self):
+        """Fills this cell by filling universe.
+
+        If this cell doesn't contain fill options, the cell itself is returned
+        as list of length 1. Otherwise a list of cells from filling universe
+        bounded by cell being filled is returned.
+
+        Returns
+        -------
+        cells : list
+            Resulting cells.
+        """
+        raise NotImplemented
 
     def test_point(self, p):
         """Tests whether point(s) p belong to this cell.
