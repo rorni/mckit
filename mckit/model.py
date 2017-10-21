@@ -169,7 +169,9 @@ class Model:
     get_universe_list()
         Gets the list of universe names.
     universe()
-        Gets the model in object representation (as Universe instance). 
+        Gets the model in object representation (as Universe instance).
+    save(filename)
+        Saves model.
     """
     def __init__(self, title, cells, surfaces, data):
         self.title = title
@@ -222,10 +224,8 @@ class Model:
         """
         cells = []
         for cell_name in self.universes[uname].keys():
-            geometry = self._produce_cell_geometry(cell_name)
-            options = self.cells[cell_name].copy()
-            options.pop('geometry', None)
-            options.pop('reference', None)
+            cells.append(self._produce_cell(cell_name))
+
 
     def _produce_cell(self, cell_name):
         """Creates Cell instance."""
@@ -248,8 +248,7 @@ class Model:
                     geometry[i] = s.transform(tr)
             if 'FILL' in options.keys():
                 options['FILL'] = universe.transform(tr)
-        self._cells[cell_name] = Cell(geometry, **options)
-        return self._cells[cell_name]
+        return Cell(geometry, **options)
 
     def _produce_cell_geometry(self, cell_name):
         """Creates a list that describes cell geometry.
