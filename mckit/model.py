@@ -2,6 +2,7 @@
 
 from collections import deque
 from functools import reduce
+from copy import deepcopy
 
 import numpy as np
 
@@ -162,6 +163,10 @@ class Model:
         A dictionary of raw surface data. It is pairs surf_name -> surf_params.
     data : dict
         Dictionary of raw data, that describes datacards.
+    base_universe : int
+        A name of base universe for model. Cells of this universe will have
+        parameter U=0. The model will contain only cells that belong to
+        inner universes of this one.
         
     Methods
     -------
@@ -174,17 +179,12 @@ class Model:
     save(filename)
         Saves model.
     """
-    def __init__(self, title, cells, surfaces, data):
-        self.title = title
+    def __init__(self, title, cells, surfaces, data, base_universe=0):
+        self.title = deepcopy(title)
         self.cells = cells
         self.surfaces = surfaces
         self.data = data
-        self.universes = {0: {}}
-        for cell_name, cell_params in cells.items():
-            uname = cell_params.get('U', 0)
-            if uname not in self.universes.keys():
-                self.universes[uname] = {}
-            self.universes[uname][cell_name] = cell_params
+
 
     def universe(self, title=""):
         """Gets the model in object representation.
@@ -380,6 +380,9 @@ class Model:
         if title is None:
             title = "Universe {0}".format(uname)
 
+        cells = {}
+        for c in self.universes[uname]:
+            cells[]
         contained_univ = self.get_contained_universes(uname) | {uname}
         cells = {}
         for u in contained_univ:
@@ -418,14 +421,92 @@ class Model:
             inner.append(self.get_contained_universes(u))
         return contained.union(*inner)
 
-    @classmethod
-    def get_surface_indices(cls, geometry):
-        """Gets a set of surface indices included in the geometry."""
-        surfs = set()
-        for i, c in enumerate(geometry):
-            if isinstance(c, int) and geometry[i+1] != '#':
-                surfs.add(c)
-        return surfs
+
+def _get_contained_surfaces(cells, surfaces):
+    """Gets all surfaces containd in the specified cells.
+
+    Parameters
+    ----------
+    cells : dict
+        Dictionary of cells.
+    surfaces : dict
+        Dictionary of surfaces.
+
+    Returns
+    -------
+    new_surfaces : dict
+        Dictionary of new surfaces.
+    """
+
+
+
+def _get_contained_cells(cells, uname):
+    """Gets all cells contained in universe uname, directly or indirectly.
+
+    Parameters
+    ----------
+    cells : dict
+        Dictionary of cells.
+    uname : int
+        Name of universe to start search from.
+
+    Returns
+    -------
+    new_cells : dict
+        Dictionary of contained cells.
+    """
+    u_dep = _get_universe_dependencies(cells)
+    universes = {uname}
+    check_queue = deque([uname])
+    while check_queue:
+        u = check_queue.popleft()
+        contained = u_dep[u]
+        for c in contained:
+            if c not in universes:
+                universes.add(c)
+                check_queue.append(c)
+
+    new_cells = {}
+    for cell_name, cell_params in cells.items():
+        u = cell_params.get('U', 0)
+        if u in universes:
+            new_params = deepcopy(cell_params)
+            if u == uname:
+                new_params.pop('U', 0)
+            new_cells[cell_name] = new_params
+    return new_cells
+
+
+def _get_universe_dependencies(cells):
+    """Gets a dictionary of universe dependencies.
+
+    Parameters
+    ----------
+    cells : dict
+        Dictionary of cells.
+
+    Returns
+    -------
+    universes : dict
+        Dictionary of universe name -> set of contained universe names.
+    """
+    universes = {}
+    for cell_name, cell_params in cells.items():
+        uname = cell_params.get('U', 0)
+        if uname not in universes.keys():
+            universes[uname] = set()
+        if 'FILL' in cell_params.keys():
+            universes[uname].add(cell_params['FILL']['universe'])
+    return universes
+
+
+def _get_surface_indices(geometry):
+    """Gets a set of surface indices included in the geometry."""
+    surfs = set()
+    for i, c in enumerate(geometry):
+        if isinstance(c, int) and geometry[i+1] != '#':
+            surfs.add(c)
+    return surfs
 
         # # --------------------------------------------------------------------------
         # # Transformation instances creation
