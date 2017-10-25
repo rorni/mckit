@@ -1,3 +1,5 @@
+case_names = ['model1']
+
 get_surface_indices_ans = {
     'model1': {
         1: {1, 2, 3, 4},
@@ -59,5 +61,95 @@ get_universe_model_ans = {
             'transform': {1, 2, 4},
             'material': {2, 3}
         }
+    }
+}
+
+get_universe_dependencies_ans = {
+    'model1': {
+        0: {2, 3},
+        1: set(),
+        2: {1},
+        3: {4},
+        4: {1}
+    }
+}
+
+get_contained_cells_ans = {
+    'model1': {
+        (0, True): {
+            0: {1, 2, 11, 12}, 1: {3, 4}, 2: {5, 6}, 3: {7, 8}, 4: {9, 10}
+        },
+        (0, False): {
+            0: {1, 2, 11, 12}
+        },
+        (1, True): {
+            0: {3, 4}
+        },
+        (1, False): {
+            0: {3, 4}
+        },
+        (2, True): {
+            0: {5, 6}, 1: {3, 4}
+        },
+        (2, False): {
+            0: {5, 6}
+        },
+        (3, True): {
+            0: {7, 8}, 4: {9, 10}, 1: {3, 4}
+        },
+        (3, False): {
+            0: {7, 8}
+        },
+        (4, True): {
+            0: {9, 10}, 1: {3, 4}
+        },
+        (4, False): {
+            0: {9, 10}
+        }
+    }
+}
+
+get_contained_compositions_ans = {
+    'model1': {
+        (0, True): {1, 2, 3, 4},
+        (0, False): {1, 2},
+        (1, True): {3},
+        (1, False): {3},
+        (2, True): {3},
+        (2, False): set(),
+        (3, True): {4, 3, 2},
+        (3, False): {4},
+        (4, True): {2, 3},
+        (4, False): {2}
+    }
+}
+
+get_contained_transformations_ans = {
+    'model1': {
+        (0, True): {1, 2, 3, 4},
+        (0, False): {1, 2, 3},
+        (1, True): {1, 2},
+        (1, False): {1, 2},
+        (2, True): {1, 2, 4},
+        (2, False): {1, 2, 4},
+        (3, True): {1, 2, 3},
+        (3, False): {1, 2},
+        (4, True): {2, 1},
+        (4, False): {2}
+    }
+}
+
+get_contained_surfaces_ans = {
+    'model1': {
+        (0, True): {1, 2, 3, 4, 5, 6, 7},
+        (0, False): {1, 2, 3, 4, 5, 6, 7},
+        (1, True): {1, 2, 4, 6},
+        (1, False): {1, 2, 4, 6},
+        (2, True): {1, 2, 4, 6, 3, 7},
+        (2, False): {1, 2, 3, 4, 7},
+        (3, True): {1, 2, 4, 6, 5, 7},
+        (3, False): {1, 2, 5, 6, 7},
+        (4, True): {1, 2, 4, 6, 5, 7},
+        (4, False): {2, 5, 6, 7}
     }
 }

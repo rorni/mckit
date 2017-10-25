@@ -382,7 +382,7 @@ class Model:
 
         cells = {}
         for c in self.universes[uname]:
-            cells[]
+            pass
         contained_univ = self.get_contained_universes(uname) | {uname}
         cells = {}
         for u in contained_univ:
@@ -422,25 +422,7 @@ class Model:
         return contained.union(*inner)
 
 
-def _get_contained_surfaces(cells, surfaces):
-    """Gets all surfaces containd in the specified cells.
-
-    Parameters
-    ----------
-    cells : dict
-        Dictionary of cells.
-    surfaces : dict
-        Dictionary of surfaces.
-
-    Returns
-    -------
-    new_surfaces : dict
-        Dictionary of new surfaces.
-    """
-
-
-
-def _get_contained_cells(cells, uname):
+def _get_contained_cells(cells, uname, take_inserted=True):
     """Gets all cells contained in universe uname, directly or indirectly.
 
     Parameters
@@ -449,22 +431,26 @@ def _get_contained_cells(cells, uname):
         Dictionary of cells.
     uname : int
         Name of universe to start search from.
+    take_inserted : bool
+        Whether to take cells inserted by fill operations. If False, no filling
+        universes are taken, fill options are moved in comments. Default True.
 
     Returns
     -------
     new_cells : dict
         Dictionary of contained cells.
     """
-    u_dep = _get_universe_dependencies(cells)
     universes = {uname}
-    check_queue = deque([uname])
-    while check_queue:
-        u = check_queue.popleft()
-        contained = u_dep[u]
-        for c in contained:
-            if c not in universes:
-                universes.add(c)
-                check_queue.append(c)
+    if take_inserted:
+        u_dep = _get_universe_dependencies(cells)
+        check_queue = deque([uname])
+        while check_queue:
+            u = check_queue.popleft()
+            contained = u_dep[u]
+            for c in contained:
+                if c not in universes:
+                    universes.add(c)
+                    check_queue.append(c)
 
     new_cells = {}
     for cell_name, cell_params in cells.items():
@@ -473,6 +459,9 @@ def _get_contained_cells(cells, uname):
             new_params = deepcopy(cell_params)
             if u == uname:
                 new_params.pop('U', 0)
+            if not take_inserted and 'FILL' in new_params.keys():
+                # TODO: Add transition of FILL param to comment.
+                new_params.pop('FILL')
             new_cells[cell_name] = new_params
     return new_cells
 
@@ -500,13 +489,80 @@ def _get_universe_dependencies(cells):
     return universes
 
 
-def _get_surface_indices(geometry):
-    """Gets a set of surface indices included in the geometry."""
+def _get_surface_indices(cells):
+    """Gets a set of surface indices included in the geometry.
+    
+    Parameters
+    ----------
+    cells : dict
+        Dictionary of cells to be considered.
+        
+    Returns
+    -------
+    surfs : set
+        A set of surface names.
+    """
     surfs = set()
-    for i, c in enumerate(geometry):
-        if isinstance(c, int) and geometry[i+1] != '#':
-            surfs.add(c)
+    for cell in cells.values():
+        geometry = cell.get('geometry', None)
+        if not geometry:
+            continue
+        for i, c in enumerate(geometry):
+            if isinstance(c, int) and geometry[i+1] != '#':
+                surfs.add(c)
     return surfs
+
+
+def _get_transformation_indices(cells, surfaces):
+    """Gets a set of transformation indices included in the cells.
+    
+    Parameters
+    ----------
+    cells : dict
+        Dictionary of cells under consideration.
+    surfaces : dict
+        Dictionary of surfaces under consideration.
+        
+    Returns
+    -------
+    trans : set
+        A set of transformation names.
+    """
+    trans = set()
+    for cell in cells.values():
+        trcl = cell.get('TRCL', None)
+        if isinstance(trcl, int):
+            trans.add(trcl)
+        if 'FILL' in cell.keys():
+            utr = cell['FILL'].get('transform', None)
+            if isinstance(utr, int):
+                trans.add(utr)
+
+    for surf in surfaces.values():
+        if 'transform' in surf[2].keys():
+            trans.add(surf[2]['transform'])
+
+    return trans
+
+
+def _get_composition_indices(cells):
+    """Gets a set of composition indices included in the cells.
+    
+    Parameters
+    ----------
+    cells : dict
+        Dictionary of cells under consideration.
+        
+    Returns
+    -------
+    comps : set
+        A set of composition names.
+    """
+    comps = set()
+    for cell in cells.values():
+        if 'MAT' in cell.keys():
+            comps.add(cell['MAT'])
+    return comps
 
         # # --------------------------------------------------------------------------
         # # Transformation instances creation
