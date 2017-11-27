@@ -86,7 +86,14 @@ class Model:
         if tr_ind:
             self.data['TR'] = {ti: deepcopy(data['TR'][ti]) for ti in tr_ind}
 
-    def save(self, filename):
+    def save(self, filename, ):
+        """Saves the model into file.
+        
+        Parameters
+        ----------
+        filename : str
+            Name of file.
+        """
         raise NotImplementedError
 
     def list_universes(self):
@@ -435,3 +442,58 @@ def _get_composition_indices(cells):
         if 'MAT' in cell.keys():
             comps.add(cell['MAT'])
     return comps
+
+
+class MCPrinter:
+    """MCNP input file printer"""
+
+    @classmethod
+    def transformation_print(cls, tr_obj, name=None, accuracy=1.e-6):
+        """Gets array of words that describe a tr card.
+        
+        Parameters
+        ----------
+        tr_obj : dict
+            Dictionary that describes transformation. 
+        name : int
+            Name of transformation.
+        accuracy : float
+            Accuracy of numerical data.
+            
+        Returns
+        -------
+        card : list[str]
+            List of words that describes transformation.
+        """
+        card = ['tr{0:d}'.format(name)]
+        if tr_obj.get('indegrees', False):
+            card[0] = '*' + card[0]
+        places = int(np.ceil(np.log10(1 / accuracy))) + 1
+        for t in tr_obj.get('transformation', [0, 0, 0]):
+            card.append(('{0:.' + '{0}'.format(places) + 'g}').format(t))
+        for t in tr_obj.get('rotation', []):
+            card.append(('{0:.' + '{0}'.format(places) + 'g}').format(t))
+        if tr_obj.get('inverted', False):
+            card.append('-1')
+        return card
+
+    @classmethod
+    def material_print(cls, mat_obj, name=None, accuracy=1.e-6):
+        """Gets array of words that describe material card.
+        
+        Parameters
+        ----------
+        mat_obj : dict
+            Dictionary that describes material.
+        name : int
+            Name of material.
+        accuracy : float
+            Accuracy of numerical data.
+            
+        Returns
+        -------
+        card : list[str]
+            List of words that describes material.
+        """
+        pass
+
