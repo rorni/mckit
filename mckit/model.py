@@ -446,9 +446,16 @@ def _get_composition_indices(cells):
 
 class MCPrinter:
     """MCNP input file printer"""
+    def __init__(self, cell_acc=1.e-6, surf_acc=1.e-10, mat_acc=1.e-6,
+                 tr_acc=1.e-6):
+        self.cell_acc = cell_acc
+        self.surf_acc = surf_acc
+        self.mat_acc = mat_acc
+        self.tr_acc = tr_acc
+        self.option_list = [('IMP', 'N'), ('IMP', 'P'), ('IMP', 'E'),
+                            'U', 'TRCL', 'FILL']
 
-    @classmethod
-    def transformation_print(cls, tr_obj, name=None, accuracy=1.e-6):
+    def transformation_print(self, tr_obj, name=None):
         """Gets array of words that describe a tr card.
         
         Parameters
@@ -457,18 +464,18 @@ class MCPrinter:
             Dictionary that describes transformation. 
         name : int
             Name of transformation.
-        accuracy : float
-            Accuracy of numerical data.
-            
+                    
         Returns
         -------
         card : list[str]
             List of words that describes transformation.
         """
-        card = ['tr{0:d}'.format(name)]
-        if tr_obj.get('indegrees', False):
-            card[0] = '*' + card[0]
-        places = int(np.ceil(np.log10(1 / accuracy))) + 1
+        card = []
+        if name is not None:
+            card.append('tr{0:d}'.format(name))
+            if tr_obj.get('indegrees', False):
+                card[0] = '*' + card[0]
+        places = int(np.ceil(np.log10(1 / self.tr_acc))) + 1
         for t in tr_obj.get('transformation', [0, 0, 0]):
             card.append(('{0:.' + '{0}'.format(places) + 'g}').format(t))
         for t in tr_obj.get('rotation', []):
@@ -477,8 +484,7 @@ class MCPrinter:
             card.append('-1')
         return card
 
-    @classmethod
-    def material_print(cls, mat_obj, name=None, accuracy=1.e-6):
+    def material_print(self, mat_obj, name=None):
         """Gets array of words that describe material card.
         
         Parameters
@@ -487,13 +493,171 @@ class MCPrinter:
             Dictionary that describes material.
         name : int
             Name of material.
-        accuracy : float
-            Accuracy of numerical data.
-            
+                    
         Returns
         -------
         card : list[str]
             List of words that describes material.
         """
-        pass
+        card = ['m{0:d}'.format(name)]
+        places = int(np.ceil(np.log10(1 / self.mat_acc))) + 1
+        # atomic data
+        for pair in mat_obj.get('atomic', []):
+            if len(pair) == 2:
+                card.append('{0:5d}'.format(pair[0]))
+            else:
+                card.append('{0:5d}.{1}'.format(pair[0], pair[2]))
+            card.append(('{0:.' + '{0}'.format(places) + 'g}').format(pair[1]))
+        # weight data
+        for pair in mat_obj.get('wgt', []):
+            if len(pair) == 2:
+                card.append('{0:5d}'.format(pair[0]))
+            else:
+                card.append('{0:5d}.{1}'.format(pair[0], pair[2]))
+            card.append(('{0:.' + '{0}'.format(places) + 'g}').format(-pair[1]))
+        # keywords
+        for key in set(mat_obj.keys()).difference({'atomic', 'wgt'}):
+            card.append('{0}={1}'.format(key, mat_obj[key]))
+        return card
 
+    def surface_print(self, surf_obj, name=None):
+        """Gets array of words that describe surface card.
+        
+        Parameters
+        ----------
+        surf_obj : tuple
+            Tuple of surface parameters.
+        name : int
+            Name of surface.
+                    
+        Returns
+        -------
+        card : list[str]
+            List of words that describe surface.
+        """
+        surf_spec, params, options = surf_obj
+        card = ['{0}{1:d}'.format(options.get('modifier', ''), name)]
+        if 'transform' in options.keys():
+            card.append('{0:d}'.format(options['transform']))
+        places = int(np.ceil(np.log10(1 / self.surf_acc))) + 1
+        for p in params:
+            card.append(('{0:.' + '{0}'.format(places) + 'g}').format(p))
+        return card
+
+    def cell_print(self, cell_obj, name=None):
+        """Gets array of words that describe cell card.
+        
+        Parameters
+        ----------
+        cell_obj : dict
+            Dictionary of cell parameters.
+        name : int
+            Name of cell.
+                
+        Returns
+        -------
+        card : list[str]
+            List of words that describe cell.
+        """
+        card = ['{0:d}'.format(name)]
+        places = int(np.ceil(np.log10(1 / self.cell_acc))) + 1
+        mat = cell_obj.get('MAT', 0)
+        card.append('{0:d}'.format(mat))
+        if mat:
+            den = cell_obj.get('RHO')
+            card.append(('{0:.' + '{0}'.format(places) + 'g}').format(den))
+
+        # Geometry description
+        if 'geometry' in cell_obj.keys():
+            expr = self._get_geometry_description(cell_obj['geometry'].copy())
+            card.extend(expr)
+        else:
+            card.extend(['LIKE', str(cell_obj['reference']), 'BUT'])
+
+        # Cell options
+        for key in self.option_list:
+            if key not in cell_obj.keys():
+                continue
+            item = cell_obj[key]
+            if isinstance(key, tuple):
+                card.append(':'.join(key) + '=' +
+                            ('{0:.' + '{0}'.format(places) + 'g}').format(item))
+            elif key == 'TRCL':
+                if isinstance(item, int):
+                    card.append('TRCL={0:d}'.format(item))
+                else:
+                    if 'indegrees' in item.keys():
+                        key = '*' + key
+                    card.append(key + '=')
+                    tr_rep = self.transformation_print(item)
+                    card.extend(self._parentheses(tr_rep))
+            elif key == 'FILL':
+                u = item['universe']
+                card.append('FILL={0:d}'.format(u))
+                if 'tranform' in item.keys():
+                    tr = item['transform']
+                    if isinstance(tr, int):
+                        card[-1] = card[-1] + '({0:d})'.format(tr)
+                    else:
+                        if 'indegrees' in tr.keys():
+                            card[-1] = '*' + card[-1]
+                        tr_rep = self.transformation_print(tr)
+                        card.extend(self._parentheses(tr_rep))
+            else:
+                card.append(key + '=' +
+                            ('{0:.' + '{0}'.format(places) + 'g}').format(item))
+        return card
+
+    @classmethod
+    def _get_geometry_description(cls, expr, priority=3):
+        """Converts inverse Polish notation into MCNP description.
+        
+        It modifies expr list, so it's copy should be passed.
+        
+        Parameters
+        ----------
+        expr : list
+            Geometry expression list.
+        priotity : int
+            External operation priority. 1 - number, complement; 
+            2 - intersection, 3 - union.
+        
+        Returns
+        -------
+        geom : list
+            List of MCNP geometry tokens.
+        """
+        if not expr:
+            return
+        operation = expr.pop()
+        if operation == 'U':
+            op2 = cls._get_geometry_description(expr, 3)
+            op1 = cls._get_geometry_description(expr, 3)
+            op1.append(':')
+            op = op1 + op2
+            if priority < 3:
+                op = cls._parentheses(op, priority == 1)
+        elif operation == 'I':
+            op2 = cls._get_geometry_description(expr, 2)
+            op1 = cls._get_geometry_description(expr, 2)
+            op = op1 + op2
+            if priority < 2:
+                op = cls._parentheses(op, priority == 1)
+        elif operation == 'C':
+            op = cls._get_geometry_description(expr, 1)
+        elif operation == '#':
+            cell = expr.pop()
+            op = ['#{0:d}'.format(cell)]
+        else:
+            sign = -1 if priority == 1 else +1
+            op = ['{0:d}'.format(operation * sign)]
+        return op
+
+    @classmethod
+    def _parentheses(cls, expr, complement=False):
+        """Rounds expr with parentheses."""
+        left = '#(' if complement else '('
+        right = ')'
+        expr.insert(0, left)
+        expr.append(right)
+        return expr
