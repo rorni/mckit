@@ -20,7 +20,7 @@ c surfaces
 4 pz 7
 5 py 5
 6 px 6
-7 4 so 8
+7 so 8
 
 c data
 tr1 5 -3 4
