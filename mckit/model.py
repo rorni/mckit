@@ -86,7 +86,7 @@ class Model:
         if tr_ind:
             self.data['TR'] = {ti: deepcopy(data['TR'][ti]) for ti in tr_ind}
 
-    def save(self, filename, ):
+    def save(self, filename):
         """Saves the model into file.
         
         Parameters
@@ -94,7 +94,8 @@ class Model:
         filename : str
             Name of file.
         """
-        raise NotImplementedError
+        printer = MCPrinter()
+        printer.print(self, filename)
 
     def list_universes(self):
         """Gets the list of universe names.
@@ -174,6 +175,7 @@ class Model:
     def _produce_cell(self, cell_name):
         """Creates Cell instance."""
         geometry = self._produce_cell_geometry(cell_name)
+        # TODO: Handle like but cell options properly.
         options = self.cells[cell_name].copy()
         options.pop('geometry', None)
         options.pop('reference', None)
@@ -386,8 +388,9 @@ def _get_surface_indices(cells):
         geometry = cell.get('geometry', None)
         if not geometry:
             continue
+        L = len(geometry) - 1
         for i, c in enumerate(geometry):
-            if isinstance(c, int) and geometry[i+1] != '#':
+            if isinstance(c, int) and (i < L and geometry[i+1] != '#' or i == L):
                 surfs.add(c)
     return surfs
 
@@ -454,6 +457,71 @@ class MCPrinter:
         self.tr_acc = tr_acc
         self.option_list = [('IMP', 'N'), ('IMP', 'P'), ('IMP', 'E'),
                             'U', 'TRCL', 'FILL']
+
+    def print(self, model, filename):
+        """Prints model to file.
+        
+        Parameters
+        ----------
+        model : Model
+            Model to be printed.
+        filename : str
+            File name.
+        """
+        cards = [model.title, 'c cell section']
+        for i, cell_obj in model.cells.items():
+            cards.append(self.print_card(self.cell_print(cell_obj, name=i)))
+
+        cards.append('\nC surface section')
+        for i, surf_obj in model.surfaces.items():
+            cards.append(self.print_card(self.surface_print(surf_obj, name=i)))
+
+        cards.append('\nC data section')
+        if 'TR' in model.data.keys():
+            cards.append('C transformations')
+            for i, tr_obj in model.data['TR'].items():
+                cards.append(self.print_card(
+                    self.transformation_print(tr_obj, name=i))
+                )
+
+        if 'M' in model.data.keys():
+            cards.append('C materials')
+            for i, mat_obj in model.data['M'].items():
+                cards.append(self.print_card(
+                    self.material_print(mat_obj, name=i))
+                )
+
+        cards.append('\n')
+        text = '\n'.join(cards)
+        with open(filename, mode='w') as f:
+            f.write(text)
+
+    @staticmethod
+    def print_card(card, offset=8):
+        """Format card words to satisfy MCNP rules.
+        
+        Parameters
+        ----------
+        card : list[str]
+            List of words.
+        offset : int
+            The number of spaces to make continuation of line. Minimum 5.
+            
+        Returns
+        -------
+        text : str
+            Text string that describes the card.
+        """
+        length = 0
+        words = []
+        line_sep = '\n' + ' ' * offset
+        for w in card:
+            if length + len(w) + 1 > 80:
+                words.append(line_sep)
+                length = offset
+            words.append(w)
+            length += len(w) + 1
+        return ' '.join(words)
 
     def transformation_print(self, tr_obj, name=None):
         """Gets array of words that describe a tr card.
@@ -539,6 +607,7 @@ class MCPrinter:
         card = ['{0}{1:d}'.format(options.get('modifier', ''), name)]
         if 'transform' in options.keys():
             card.append('{0:d}'.format(options['transform']))
+        card.append(surf_spec)
         places = int(np.ceil(np.log10(1 / self.surf_acc))) + 1
         for p in params:
             card.append(('{0:.' + '{0}'.format(places) + 'g}').format(p))
@@ -594,7 +663,7 @@ class MCPrinter:
             elif key == 'FILL':
                 u = item['universe']
                 card.append('FILL={0:d}'.format(u))
-                if 'tranform' in item.keys():
+                if 'transform' in item.keys():
                     tr = item['transform']
                     if isinstance(tr, int):
                         card[-1] = card[-1] + '({0:d})'.format(tr)
