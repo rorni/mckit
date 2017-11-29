@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import sys
+import os
+
 import numpy as np
 
 
@@ -41,7 +44,9 @@ NAME_TO_CHARGE = {}
 NATURAL_ABUNDANCE = {}
 ISOTOPE_MASS = {}
 
-with open('mckit/data/isotopes.dat') as f:
+path = os.path.dirname(sys.modules[__name__].__file__)
+
+with open(path + '/data/isotopes.dat') as f:
     for line in f:
         number, name, *data = line.split()
         number = int(number)
