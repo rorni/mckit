@@ -1,9 +1,10 @@
 import unittest
+import os
 
 from tests.model_test_data.geometry_replace import surf_obj, cell_cases
 from mckit.model import _get_universe_dependencies, read_mcnp, \
     _get_surface_indices, _get_contained_cells, _get_composition_indices, \
-    _get_transformation_indices, Model
+    _get_transformation_indices, Model, MCPrinter
 
 from tests.model_test_data.model_data import *
 
@@ -113,6 +114,56 @@ class TestAuxiliaryFunctions(unittest.TestCase):
                 self.assertDictEqual(model.cells, read_mcnp_ans[case]['cells'])
                 self.assertDictEqual(model.surfaces, read_mcnp_ans[case]['surfaces'])
                 self.assertDictEqual(model.data, read_mcnp_ans[case]['data'])
+
+
+class TestMCPrinter(unittest.TestCase):
+    def test_cell_print(self):
+        printer = MCPrinter()
+        for case in case_names:
+            with self.subTest(msg='case: {0}'.format(case)):
+                model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
+                ans = {k: printer.cell_print(v, k) for k, v in model.cells.items()}
+                self.assertDictEqual(ans, cell_print_ans[case])
+
+    def test_surface_print(self):
+        printer = MCPrinter()
+        for case in case_names:
+            with self.subTest(msg='case: {0}'.format(case)):
+                model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
+                ans = {k: printer.surface_print(v, k) for k, v in model.surfaces.items()}
+                self.assertDictEqual(ans, surface_print_ans[case])
+
+    def test_material_print(self):
+        printer = MCPrinter()
+        for case in case_names:
+            with self.subTest(msg='case: {0}'.format(case)):
+                model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
+                ans = {k: printer.material_print(v, k) for k, v in model.data['M'].items()}
+                self.assertDictEqual(ans, material_print_ans[case])
+
+    def test_transformation_print(self):
+        printer = MCPrinter()
+        self.maxDiff = None
+        for case in case_names:
+            with self.subTest(msg='case: {0}'.format(case)):
+                model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
+                ans = {k: printer.transformation_print(v, k) for k, v in model.data['TR'].items()}
+                self.assertDictEqual(ans, transformation_print_ans[case])
+
+    def test_print(self):
+        printer = MCPrinter()
+        self.maxDiff = None
+        for case in case_names:
+            with self.subTest(msg='case: {0}'.format(case)):
+                model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
+                printer.print(model, 'tests/model_test_data/{0}_p.txt'.format(case))
+                with open('tests/model_test_data/{0}_ans.txt'.format(case)) as f:
+                    text_ans = f.read()
+                with open('tests/model_test_data/{0}_p.txt'.format(case)) as f:
+                    text = f.read()
+                self.assertEqual(text, text_ans)
+                os.remove('tests/model_test_data/{0}_p.txt'.format(case))
+
 
 
 if __name__ == '__main__':

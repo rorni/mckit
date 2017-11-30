@@ -468,7 +468,7 @@ class MCPrinter:
         filename : str
             File name.
         """
-        cards = [model.title, 'c cell section']
+        cards = [model.title, 'C cell section']
         for i, cell_obj in model.cells.items():
             cards.append(self.print_card(self.cell_print(cell_obj, name=i)))
 
@@ -540,11 +540,11 @@ class MCPrinter:
         """
         card = []
         if name is not None:
-            card.append('tr{0:d}'.format(name))
+            card.append('TR{0:d}'.format(name))
             if tr_obj.get('indegrees', False):
                 card[0] = '*' + card[0]
         places = int(np.ceil(np.log10(1 / self.tr_acc))) + 1
-        for t in tr_obj.get('transformation', [0, 0, 0]):
+        for t in tr_obj.get('translation', [0, 0, 0]):
             card.append(('{0:.' + '{0}'.format(places) + 'g}').format(t))
         for t in tr_obj.get('rotation', []):
             card.append(('{0:.' + '{0}'.format(places) + 'g}').format(t))
@@ -567,7 +567,7 @@ class MCPrinter:
         card : list[str]
             List of words that describes material.
         """
-        card = ['m{0:d}'.format(name)]
+        card = ['M{0:d}'.format(name)]
         places = int(np.ceil(np.log10(1 / self.mat_acc))) + 1
         # atomic data
         for pair in mat_obj.get('atomic', []):
@@ -696,8 +696,6 @@ class MCPrinter:
         geom : list
             List of MCNP geometry tokens.
         """
-        if not expr:
-            return
         operation = expr.pop()
         if operation == 'U':
             op2 = cls._get_geometry_description(expr, 3)
