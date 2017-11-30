@@ -630,11 +630,12 @@ class MCPrinter:
         """
         card = ['{0:d}'.format(name)]
         places = int(np.ceil(np.log10(1 / self.cell_acc))) + 1
-        mat = cell_obj.get('MAT', 0)
-        card.append('{0:d}'.format(mat))
-        if mat:
-            den = cell_obj.get('RHO')
-            card.append(('{0:.' + '{0}'.format(places) + 'g}').format(den))
+        if 'geometry' in cell_obj.keys():
+            mat = cell_obj.get('MAT', 0)
+            card.append('{0:d}'.format(mat))
+            if mat:
+                den = cell_obj.get('RHO')
+                card.append(('{0:.' + '{0}'.format(places) + 'g}').format(den))
 
         # Geometry description
         if 'geometry' in cell_obj.keys():

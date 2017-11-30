@@ -44,7 +44,20 @@ class TestModel(unittest.TestCase):
         pass
 
     def test_save(self):
-        pass
+        self.maxDiff = None
+        for case in case_names:
+            with self.subTest(msg='case: {0}'.format(case)):
+                model = read_mcnp(
+                    'tests/model_test_data/{0}.txt'.format(case))
+                model.save('tests/model_test_data/{0}_p.txt'.format(case))
+                with open('tests/model_test_data/{0}_ans.txt'.format(
+                        case)) as f:
+                    text_ans = f.read()
+                with open('tests/model_test_data/{0}_p.txt'.format(
+                        case)) as f:
+                    text = f.read()
+                self.assertEqual(text, text_ans)
+                os.remove('tests/model_test_data/{0}_p.txt'.format(case))
 
     
 class TestAuxiliaryFunctions(unittest.TestCase):
@@ -149,21 +162,6 @@ class TestMCPrinter(unittest.TestCase):
                 model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
                 ans = {k: printer.transformation_print(v, k) for k, v in model.data['TR'].items()}
                 self.assertDictEqual(ans, transformation_print_ans[case])
-
-    def test_print(self):
-        printer = MCPrinter()
-        self.maxDiff = None
-        for case in case_names:
-            with self.subTest(msg='case: {0}'.format(case)):
-                model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
-                printer.print(model, 'tests/model_test_data/{0}_p.txt'.format(case))
-                with open('tests/model_test_data/{0}_ans.txt'.format(case)) as f:
-                    text_ans = f.read()
-                with open('tests/model_test_data/{0}_p.txt'.format(case)) as f:
-                    text = f.read()
-                self.assertEqual(text, text_ans)
-                os.remove('tests/model_test_data/{0}_p.txt'.format(case))
-
 
 
 if __name__ == '__main__':
