@@ -9,5 +9,6 @@ setup(
     license='',
     author='Roman Rodionov',
     author_email='r.rodionov@iterrf.ru',
-    description='Tool for handling neutronic models and results'
+    description='Tool for handling neutronic models and results',
+    install_requires=['numpy', 'scipy']
 )
