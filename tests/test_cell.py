@@ -6,6 +6,7 @@ from mckit.cell import _complement, _intersection, _union, Cell
 from mckit.constants import *
 from mckit.surface import Plane, create_surface, Surface
 from mckit.transformation import Transformation
+from mckit.fmesh import Box
 
 
 class TestCell(unittest.TestCase):
@@ -30,7 +31,7 @@ class TestCell(unittest.TestCase):
         for i, (geom, ans) in enumerate(cell_test_region_cases):
             with self.subTest(i=i):
                 c = Cell(geom)
-                r = c.test_region(region)
+                r = c.test_box(region)
                 self.assertEqual(r, ans)
 
     def test_transform(self):
@@ -132,8 +133,7 @@ cell_test_point_cases = [
      [-1, 1, 1, -1, 1, -1])
 ]
 
-region = np.array([[-5, -5, -5], [-5, -5, 5], [-5, 5, -5], [-5, 5, 5],
-                   [5, -5, -5], [5, -5, 5], [5, 5, -5], [5, 5, 5]])
+region = Box([-5, -5, -5], [10, 0, 0], [0, 10, 0], [0, 0, 10])
 
 cell_test_region_cases = [
     ([create_surface('SO', 3), 'C'], 0),

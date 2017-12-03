@@ -9,7 +9,7 @@ from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
 from mckit.transformation import Transformation
 from tests.surface_test_data import surface_create_data
 from tests.surface_test_data import surface_test_point_data
-from tests.surface_test_data import surface_test_region_data
+from tests.surface_test_data import surface_test_box_data
 from tests.surface_test_data import surfobj_create_data
 
 
@@ -90,14 +90,14 @@ class TestSurfaceMethods(unittest.TestCase):
                             sur_value = getattr(surf_tr, name)
                             np.testing.assert_almost_equal(sur_value, ans_value)
 
-    def test_region_test(self):
-        for class_name, test_cases in surface_test_region_data.data.items():
+    def test_box_test(self):
+        for class_name, test_cases in surface_test_box_data.data.items():
             TClass = class_apply[class_name]
             for i, (*params, ans) in enumerate(test_cases):
                 msg = class_name + ' case {0}'.format(i)
                 with self.subTest(msg=msg):
                     surf = TClass(*params)
-                    result = surf.test_region(surface_test_region_data.region)
+                    result = surf.test_box(surface_test_box_data.box)
                     self.assertEqual(result, ans)
 
 

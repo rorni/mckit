@@ -24,7 +24,7 @@ class Cell(dict):
         Fills this cell by universe.
     test_point(p)
         Tests whether point(s) p belong to this cell (lies inside it).
-    test_region(region)
+    test_box(box)
         Checks whether this cell intersects with region.
     transform(tr)
         Applies transformation tr to this cell.
@@ -82,24 +82,23 @@ class Cell(dict):
         """
         return self._geometry_test(p, 'test_point')
 
-    def test_region(self, region):
-        """Checks whether this cell intersects with region.
+    def test_box(self, box):
+        """Checks whether this cell intersects with the box.
 
         Parameters
         ----------
-        region : array_like[float]
-            Describes the region. Region is a cuboid with sides perpendicular to
-            the coordinate axis. It has shape 8x3 - defines 8 points.
+        box : Box
+            Region of space, which intersection with the cell is checked.
 
         Returns
         -------
         result : int
             Test result. It equals one of the following values:
-            +1 if the region lies entirely inside the cell.
-             0 if the cell (probably) intersects the region.
-            -1 if the cell lies outside the region.
+            +1 if the box lies entirely inside the cell.
+             0 if the box (probably) intersects the region.
+            -1 if the box lies outside the region.
         """
-        return self._geometry_test(region, 'test_region')
+        return self._geometry_test(box, 'test_box')
 
     def _geometry_test(self, arg, method_name):
         """Performs geometry test.

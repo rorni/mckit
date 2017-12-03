@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from scipy.optimize import fmin_tnc
+from scipy.optimize import fmin_slsqp
 
 from .constants import *
 
@@ -117,8 +117,8 @@ class Surface(ABC):
         Checks the sense of point p with respect to this surface.
     transform(tr)
         Applies transformation tr to this surface.
-    test_region(region)
-        Checks whether this surface crosses the region.
+    test_box(box)
+        Checks whether this surface crosses the box.
     """
     def __hash__(self):
         return id(self)
@@ -147,36 +147,37 @@ class Surface(ABC):
         """
         return np.sign(self._func(p)).astype(int)
 
-    def test_region(self, region):
+    def test_box(self, box):
         """Checks whether this surface crosses the region.
 
-        Region defines a rectangular cuboid. This method checks if this surface
-        crosses the box, i.e. there is two points belonging to this region which
+        Box defines a rectangular cuboid. This method checks if this surface
+        crosses the box, i.e. there is two points belonging to this box which
         have different sense with respect to this surface.
 
         Parameters
         ----------
-        region : array_like[float]
-            Describes the region. Region is a cuboid with sides perpendicular to
-            the coordinate axis. It has shape 8x3 - defines 8 points.
+        box : Box
+            Describes the box.
 
         Returns
         -------
         result : int
             Test result. It equals one of the following values:
-            +1 if every point inside region has positive sense.
+            +1 if every point inside the box has positive sense.
              0 if there are both points with positive and negative sense inside
-               region
-            -1 if every point inside region has negative sense.
+               the box
+            -1 if every point inside the box has negative sense.
         """
-        senses = self.test_point(region)
+        corners = box.corners()
+        senses = self.test_point(corners)
         sign = np.sign(np.max(senses) + np.min(senses))
         if sign != 0:
-            bounds = [[lo, hi] for lo, hi in zip(np.amin(region, axis=0),
-                                                 np.amax(region, axis=0))]
-            for start_pt in region:
-                end_pt = fmin_tnc(self._func, start_pt, fprime=self._grad,
-                                  args=(sign,), bounds=bounds, disp=0)[0]
+            bounds = box.bounds()
+            for start_pt in corners:
+                end_pt = fmin_slsqp(self._func, start_pt, fprime=self._grad,
+                                    f_ieqcons=box.f_ieqcons(),
+                                    fprime_ieqcons=box.fprime_ieqcons(),
+                                    args=(sign,), bounds=bounds, disp=0)
                 if self.test_point(end_pt) * sign < 0:
                     return 0
         return sign
@@ -267,9 +268,9 @@ class Plane(Surface):
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr)
 
-    def test_region(self, region):
+    def test_box(self, box):
         # Test sense of all region vertices.
-        senses = self.test_point(region)
+        senses = self.test_point(box.corners())
         # Returns 0 if both +1 and -1 values present.
         return np.sign(np.max(senses) + np.min(senses))
 
@@ -482,10 +483,9 @@ class Torus(Surface):
             self._spec_pts.append(self._center - offset * self._axis)
         self.options = options
 
-    def test_region(self, region):
-        # TODO: implement test_region
-        bounds = [[lo, hi] for lo, hi in zip(np.amin(region, axis=0),
-                                             np.amax(region, axis=0))]
+    def test_box(self, box):
+        # TODO: implement test_box
+        bounds = box.bounds()
         # If special point is inside region, then torus boundary definitely
         # in the region.
         for spec_pt in self._spec_pts:
@@ -494,7 +494,7 @@ class Torus(Surface):
                 result = result and (lo < v < hi)
             if result:
                 return 0
-        return super(Torus, self).test_region(region)
+        return super(Torus, self).test_box(box)
 
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b,

@@ -34,7 +34,7 @@ class Box:
 
     def corners(self):
         """Gets coordinates of all corners in global coordinate system."""
-        corners = np.array((8, 3))
+        corners = np.zeros((8, 3))
         multipliers = product([0, 1], [0, 1], [0, 1])
         for i, (x, y, z) in enumerate(multipliers):
             corners[i, :] = self.base + x * self.ex + y * self.ey + z * self.ez
@@ -58,10 +58,13 @@ class Box:
             point x is inside the Box.
         """
         n = np.vstack((self.ex, self.ey, self.ez, -self.ex, -self.ey, -self.ez))
-        p1 = self.base.reshape((3, 1))
-        p2 = (self.base + self.ex + self.ey + self.ez).reshape((3, 1))
-        p0 = np.hstack((np.repeat(p1, 3, axis=1), np.repeat(p2, 3, axis=1)))
-        p = np.dot(n, p0)
+        p1 = self.base.reshape((1, 3))
+        p2 = (self.base + self.ex + self.ey + self.ez).reshape((1, 3))
+        p0 = np.vstack((np.repeat(p1, 3, axis=0), np.repeat(p2, 3, axis=0)))
+        p = np.sum(np.multiply(n, p0), axis=1)
+        #print(n)
+        #print(p0)
+        #print(p)
         return lambda x, *args: np.dot(n, x) - p
 
     def fprime_ieqcons(self):

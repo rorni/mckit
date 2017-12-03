@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from mckit.fmesh import Box
 
-region = np.array([[-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1],
-                   [1, -1, -1],  [1, -1, 1],  [1, 1, -1],  [1, 1, 1]])
+box = Box([-1, -1, -1], [2, 0, 0], [0, 2, 0], [0, 0, 2])
+print(box.f_ieqcons()([0, 0, 0]))
 
 data = {
     'Plane': [
