@@ -14,7 +14,7 @@ class Universe:
         
     Methods
     -------
-    get_volumes(cell_names)
+    get_volumes(region, cell_names)
         Calculates volumes of cells.
     get_concentrations()
         Calculates concentrations of materials in voxels.
@@ -28,11 +28,14 @@ class Universe:
         self.name = name
         self.description = description
 
-    def get_volumes(self, cell_names=None):
+    def get_volumes(self, region, cell_names=None):
         """Calculates volumes of cells.
 
         Parameters
         ----------
+        region : array_like[float]
+            Describes the region. Region is a cuboid with sides perpendicular to
+            the coordinate axis. It has shape 8x3 - defines 8 points.
         cell_names : list[int]
             Names of cells which volumes are to be calculated.
 
