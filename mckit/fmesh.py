@@ -23,14 +23,21 @@ class Box:
     -------
     bounds() - gets bounds in global coordinate system.
     corners() - gets coordinates of all corners in global CS.
-    f_ieqcons() - gets constraint function of the Box.
-    fprime_ieqcons() - gets derivatives of constraint function of the Box.
+    f_ieqcons(x, *arg) - gets constraint function of the Box.
+    fprime_ieqcons(x, *arg) - gets derivatives of constraint function of the Box.
+    random_points(n) - generates n random points inside the box.
+    volume() - gets volume of the box.
     """
     def __init__(self, base, ex, ey, ez):
         self.base = np.array(base)
         self.ex = np.array(ex)
         self.ey = np.array(ey)
         self.ez = np.array(ez)
+        self._tr = Transformation(translation=self.base,
+                                  rotation=np.concatenate((ex, ey, ez)))
+        self._scale = np.array([np.linalg.norm(self.ex),
+                                np.linalg.norm(self.ey),
+                                np.linalg.norm(self.ez)])
 
     def corners(self):
         """Gets coordinates of all corners in global coordinate system."""
@@ -46,6 +53,15 @@ class Box:
         bounds = [[lo, hi] for lo, hi in zip(np.amin(corners, axis=0),
                                              np.amax(corners, axis=0))]
         return bounds
+
+    def random_points(self, n):
+        """Generates n random points inside the box."""
+        points = np.random.random((n, 3)) * self._scale
+        return self._tr.apply2point(points)
+
+    def volume(self):
+        """Gets volume of the box."""
+        return np.multiply.reduce(self._scale)
 
     def f_ieqcons(self):
         """Gets constraint function of the Box.

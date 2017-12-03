@@ -25,7 +25,7 @@ class Cell(dict):
     test_point(p)
         Tests whether point(s) p belong to this cell (lies inside it).
     test_box(box)
-        Checks whether this cell intersects with region.
+        Checks whether this cell intersects with the box.
     transform(tr)
         Applies transformation tr to this cell.
     """

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
+
+
 class Universe:
     """Describes universe - a set of cells.
     
@@ -28,23 +31,70 @@ class Universe:
         self.name = name
         self.description = description
 
-    def get_volumes(self, region, cell_names=None):
-        """Calculates volumes of cells.
+    def get_volumes(self, region, accuracy=0.1, pool_size=20000):
+        """Calculates volumes of cells that intersect the box or mesh voxels.
+
+        Monte Carlo method of calculations is used.
 
         Parameters
         ----------
-        region : array_like[float]
-            Describes the region. Region is a cuboid with sides perpendicular to
-            the coordinate axis. It has shape 8x3 - defines 8 points.
-        cell_names : list[int]
-            Names of cells which volumes are to be calculated.
+        region : Box or RectMesh
+            Region of calculations. If it is RectMesh instance, then volumes of
+            cells in every voxel are returned.
+        accuracy : float
+            Average linear density of random points (distance between two
+            points). Given in cm. Default - 0.1 cm.
+        pool_size : int
+            The number of points generated at one iteration.
 
         Returns
         -------
-        volumes : dict or list
-            Volumes of cells
+        volumes : dict
+            Volumes of cells. The key is the index of cell.
         """
-        raise NotImplementedError
+
+    def _get_box_volumes(self, box, accuracy=0.1, pool_size=20000):
+        """Calculates volumes of cells that intersect the box.
+
+        Monte Carlo method of calculations is used.
+
+        Parameters
+        ----------
+        box : Box
+            The box.
+        accuracy : float
+            Average linear density of random points (distance between two
+            points). Given in cm. Default - 0.1 cm.
+        pool_size : int
+            The number of points generated at one iteration.
+
+        Returns
+        -------
+        volumes : dict
+            Volumes of cells. The key is the index of cell.
+        """
+        volumes = {}
+        base_volume = box.volume()
+        # First find cells that might intersect box.
+        candidates = []
+        for i, c in enumerate(self.cells):
+            s = c.test_box(box)
+            if s == +1:  # Box lies entirely inside cell c.
+                return {i: base_volume}
+            elif s == 0:
+                candidates.append(i)
+                volumes[i] = 0
+        # Calculate volumes.
+        n_points = max(int(np.ceil(base_volume / accuracy**3)), pool_size)
+        n_repeat = int(np.ceil(n_points // pool_size))
+        for i in range(n_repeat):
+            points = box.random_points(pool_size)
+            for name in candidates:
+                cell_result = self.cells[name].test_point(points)
+                volumes[name] += np.count_nonzero(cell_result == +1)
+        for k in volumes.keys():
+            volumes[k] *= base_volume / n_points
+        return volumes
 
     def get_concentrations(self, mesh):
         """Calculates concentrations of each material in mesh.
