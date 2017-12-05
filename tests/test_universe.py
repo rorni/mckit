@@ -20,7 +20,7 @@ class TestUniverse(unittest.TestCase):
                     ez = [0, 0, box_data[2][1] - box_data[2][0]]
                     box = Box(base, ex, ey, ez)
                     volume_dict = universe.get_box_volumes(
-                        box, accuracy=0.2, names=range(len(ans_volumes)),
+                        box, accuracy=1, names=range(len(ans_volumes)),
                         verbose=True, pool_size=100000
                     )
                     volumes = np.zeros((len(ans_volumes),))

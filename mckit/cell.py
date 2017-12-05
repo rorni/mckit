@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import numpy as np
 
 from .surface import Surface
@@ -82,6 +83,30 @@ class Cell(dict):
         """
         return self._geometry_test(p, 'test_point')
 
+    def calculate_volume(self, box, accuracy=1, pool_size=100):
+        """Calculates volume of the cell inside the box.
+        
+        Parameters
+        ----------
+        box : Box
+            The box.
+        accuracy : float
+            accuracy
+        """
+        sense = self.test_box(box)
+        if sense == +1:
+            return box.volume()
+        elif box.volume() <= accuracy**3:
+            points = box.generate_random_points(pool_size)
+            cell_result = self.test_point(points)
+            return np.count_nonzero(cell_result == +1) / pool_size * box.volume()
+        elif sense == 0:
+            box1, box2 = box.split()
+            return self.calculate_volume(box1, accuracy=accuracy) + \
+                   self.calculate_volume(box2, accuracy=accuracy)
+        else:
+            return 0
+
     def test_box(self, box):
         """Checks whether this cell intersects with the box.
 
@@ -95,7 +120,7 @@ class Cell(dict):
         result : int
             Test result. It equals one of the following values:
             +1 if the box lies entirely inside the cell.
-             0 if the box (probably) intersects the region.
+             0 if the box (probably) intersects the cell.
             -1 if the box lies outside the region.
         """
         return self._geometry_test(box, 'test_box')
@@ -119,9 +144,6 @@ class Cell(dict):
         for op in self._expression:
             if isinstance(op, Surface):
                 stack.append(getattr(op, method_name)(arg))
-                if method_name == 'test_point' and stack[-1].shape == (8,):
-                    print(stack[-1], arg.get_random_points().shape)
-                    print(type(op))
             elif op == 'C':
                 stack.append(_complement(stack.pop()))
             elif op == 'I':

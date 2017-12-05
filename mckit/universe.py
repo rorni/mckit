@@ -100,43 +100,23 @@ class Universe:
             Volumes of cells. The key is the index of cell.
         """
         volumes = {}
-        base_volume = box.volume()
-        # First find cells that might intersect box.
-        candidates = []
         checking_cells = names if names else list(range(len(self.cells)))
-        for i in checking_cells:
-            c = self.cells[i]
-            s = c.test_box(box)
-            if s == +1:  # Box lies entirely inside cell c.
-                return {i: base_volume}
-            elif s == 0:
-                candidates.append(i)
-                volumes[i] = 0
-        # Calculate volumes.
-        n_points = max(int(np.ceil(base_volume / accuracy**3)), pool_size)
+        tot_cells = len(checking_cells)
         if verbose:
-            print("Total number of points: {0}".format(n_points))
-            print("Tolerance: {0:.5f} cm".format(
-                  np.power(base_volume / n_points, 1 / 3)))
-            print("The number of cell candidates: {0}".format(len(candidates)))
-        n_repeat = int(np.ceil(n_points // pool_size))
-        for i in range(n_repeat):
-            box.generate_random_points(pool_size)
-            for name in candidates:
-                cell_result = self.cells[name].test_point(box)
-                volumes[name] += np.count_nonzero(cell_result == +1)
+            print("The number of cells: {0}".format(tot_cells))
+        for i, name in enumerate(checking_cells):
+            vol = self.cells[name].calculate_volume(box, accuracy=accuracy, pool_size=pool_size)
+            if vol > 0:
+                volumes[name] = vol
             if verbose:
                 sys.stdout.write('\r')
                 sys.stdout.write(
-                    "iteration = {0} / {1}\t ({2:.1f}%)".format(
-                        i + 1, n_repeat, (i + 1) * 100 / n_repeat
-                    )
+                    "cell={0} ({1}/{2}) ".format(name, i, tot_cells)
                 )
                 sys.stdout.flush()
         if verbose:
+            print(volumes)
             print("\nDone")
-        for k in volumes.keys():
-            volumes[k] *= base_volume / n_points
         return volumes
 
     def get_concentrations(self, mesh):

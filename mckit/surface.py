@@ -122,10 +122,10 @@ class Surface(ABC):
         Checks whether this surface crosses the box.
     """
     def __init__(self):
-        self._last_box = None
-        self._box_result = None
         self._last_result = None
         self._last_generation = None
+        self._box_results = {}
+        self._box_stack = []
 
     def __hash__(self):
         return id(self)
@@ -186,25 +186,30 @@ class Surface(ABC):
                the box
             -1 if every point inside the box has negative sense.
         """
-        if self._last_box != box:
-            corners = box.corners()
-            senses = self.test_point(corners)
-            sign = np.sign(np.max(senses) + np.min(senses))
-            if sign != 0:
-                bounds = box.bounds()
-                for start_pt in corners:
-                    end_pt = fmin_slsqp(
-                        self._func, start_pt, fprime=self._grad,
-                        f_ieqcons=box.f_ieqcons(),
-                        fprime_ieqcons=box.fprime_ieqcons(),
-                        args=(sign,), bounds=bounds, disp=0
-                    )
-                    if self.test_point(end_pt) * sign < 0:
-                        sign = 0
-            self._last_box = box
-            self._box_result = sign
+        if box not in self._box_results.keys():
+            while self._box_stack and box.ancestor != self._box_stack[-1]:
+                b_out = self._box_stack.pop()
+                self._box_results.pop(b_out)
+            sign = self._box_results.get(box.ancestor, 0)
+            if sign == 0:
+                corners = box.corners()
+                senses = self.test_point(corners)
+                sign = np.sign(np.max(senses) + np.min(senses))
+                if sign != 0:
+                    bounds = box.bounds()
+                    for start_pt in corners:
+                        end_pt = fmin_slsqp(
+                            self._func, start_pt, fprime=self._grad,
+                            f_ieqcons=box.f_ieqcons(),
+                            fprime_ieqcons=box.fprime_ieqcons(),
+                            args=(sign,), bounds=bounds, disp=0
+                        )
+                        if self.test_point(end_pt) * sign < 0:
+                            sign = 0
+            self._box_results[box] = sign
+            self._box_stack.append(box)
             self._last_generation = None
-        return self._box_result
+        return self._box_results[box]
 
     @abstractmethod
     def transform(self, tr):

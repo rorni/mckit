@@ -29,8 +29,9 @@ class Box:
     fprime_ieqcons(x, *arg) - gets derivatives of constraint function of the Box.
     generate_random_points(n) - generates n random points inside the box.
     volume() - gets volume of the box.
+    split(n) - splits the box into n boxes.
     """
-    def __init__(self, base, ex, ey, ez):
+    def __init__(self, base, ex, ey, ez, ancestor=None):
         self.base = np.array(base)
         self.ex = np.array(ex)
         self.ey = np.array(ey)
@@ -49,6 +50,7 @@ class Box:
         )
         self._points_generation = 0
         self._points = None
+        self.ancestor = ancestor
 
     def __hash__(self):
         return self._hash_value
@@ -58,6 +60,27 @@ class Box:
     #           np.all(np.equal(self.ex, other.ex)) and \
     #           np.all(np.equal(self.ey, other.ey)) and \
     #           np.all(np.equal(self.ez, other.ez))
+
+    def split(self):
+        """Splits the box two boxes.
+        
+        Returns
+        -------
+        boxes : list
+            List of the resulting boxes.
+        """
+        i = np.argmax(self._scale)
+        m = np.ones((3,))
+        m[i] *= 0.5
+        offset = np.zeros((3,))
+        offset[i] = 0.5
+        new_base = self.base + offset[0] * self.ex + offset[1] * self.ey + \
+                                offset[2] * self.ez
+        return Box(self.base, m[0] * self.ex, m[1] * self.ey, m[2] * self.ez,
+                   ancestor=self), \
+               Box(new_base, m[0] * self.ex, m[1] * self.ey, m[2] * self.ez,
+                   ancestor=self)
+
 
     def corners(self):
         """Gets coordinates of all corners in global coordinate system."""
