@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
 from itertools import product
+import hashlib
+
+import numpy as np
 
 from .transformation import Transformation
 
@@ -25,7 +27,7 @@ class Box:
     corners() - gets coordinates of all corners in global CS.
     f_ieqcons(x, *arg) - gets constraint function of the Box.
     fprime_ieqcons(x, *arg) - gets derivatives of constraint function of the Box.
-    random_points(n) - generates n random points inside the box.
+    generate_random_points(n) - generates n random points inside the box.
     volume() - gets volume of the box.
     """
     def __init__(self, base, ex, ey, ez):
@@ -38,6 +40,24 @@ class Box:
         self._scale = np.array([np.linalg.norm(self.ex),
                                 np.linalg.norm(self.ey),
                                 np.linalg.norm(self.ez)])
+
+        self._hash_value = hash(
+            hashlib.sha256(self.base).hexdigest() +
+            hashlib.sha256(self.ex).hexdigest() +
+            hashlib.sha256(self.ey).hexdigest() +
+            hashlib.sha256(self.ez).hexdigest()
+        )
+        self._points_generation = 0
+        self._points = None
+
+    def __hash__(self):
+        return self._hash_value
+
+    #def __eq__(self, other):
+    #    return np.all(np.equal(self.base, other.base)) and \
+    #           np.all(np.equal(self.ex, other.ex)) and \
+    #           np.all(np.equal(self.ey, other.ey)) and \
+    #           np.all(np.equal(self.ez, other.ez))
 
     def corners(self):
         """Gets coordinates of all corners in global coordinate system."""
@@ -54,10 +74,20 @@ class Box:
                                              np.amax(corners, axis=0))]
         return bounds
 
-    def random_points(self, n):
+    def generate_random_points(self, n):
         """Generates n random points inside the box."""
         points = np.random.random((n, 3)) * self._scale
-        return self._tr.apply2point(points)
+        self._points = self._tr.apply2point(points)
+        self._points_generation += 1
+        return self._points
+
+    def get_random_points(self):
+        """Gets already generated random points."""
+        return self._points
+
+    def get_generation(self):
+        """Gets the last point generation number."""
+        return self._points_generation
 
     def volume(self):
         """Gets volume of the box."""
@@ -78,9 +108,6 @@ class Box:
         p2 = (self.base + self.ex + self.ey + self.ez).reshape((1, 3))
         p0 = np.vstack((np.repeat(p1, 3, axis=0), np.repeat(p2, 3, axis=0)))
         p = np.sum(np.multiply(n, p0), axis=1)
-        #print(n)
-        #print(p0)
-        #print(p)
         return lambda x, *args: np.dot(n, x) - p
 
     def fprime_ieqcons(self):

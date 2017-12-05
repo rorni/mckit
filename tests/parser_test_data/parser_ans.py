@@ -3,7 +3,7 @@ ans1 = {
     'cells': {
         1: {
             'geometry': [1, 2, 'C', 'I', 3, 'I'],
-            ('IMP', 'N'): 1, 'MAT': 1, 'RHO': -2.0
+            'IMPN': 1, 'MAT': 1, 'RHO': -2.0
         },
         2: {
             'geometry': [1, 2, 'C', 3, 4, 'I', 'U', 'I'],
@@ -11,7 +11,7 @@ ans1 = {
         },
         3: {
             'geometry': [2, 2, '#', 'I', 1, 'C', 3, 'U', 'C', 'I'],
-            ('IMP', 'N'): 1, ('IMP', 'P'): 1
+            'IMPN': 1, 'IMPP': 1
         },
         4: {
             'reference': 1, 'RHO': -3.0
@@ -43,12 +43,12 @@ ans2 = {
     'cells': {
         1: {
             'geometry': [1, 'C', 2, 'I', 3, 'C', 'U'], 'MAT': 1, 'RHO': -0.5,
-            ('IMP', 'N'): 1
+            'IMPN': 1
         },
         2: {
             'geometry': [1, 2, 'C', 3, 4, 'I', 5, 6, 'C', 'U', 'I', 'U', 'I',
                          7, 'U'],
-            'MAT': 2, 'RHO': -1.0, 'U': 1, ('IMP', 'N'): 2, 'TRCL': 1
+            'MAT': 2, 'RHO': -1.0, 'U': 1, 'IMPN': 2, 'TRCL': 1
         },
         3: {'geometry': [8, 9, 'I', 10, 'C', 'I'], 'FILL': {'universe': 1}},
         4: {

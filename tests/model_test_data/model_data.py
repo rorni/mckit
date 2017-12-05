@@ -142,14 +142,14 @@ read_mcnp_ans = {
             },
             13: {
                 'geometry': [1, 2, 'C', 'U', 3, 4, 'C', 'U', 'I'],
-                ('IMP', 'N'): 1, ('IMP', 'P'): 1,
+                'IMPN': 1, 'IMPP': 1,
                 'TRCL': {'translation': [7, 3, 1], 'rotation': [30, 60, 90,
                                                                 120, 30, 90,
                                                                  90, 90, 0],
                          'indegrees': True}
             },
             14: {
-                'geometry': [1, 2, 'C', 'I', 'C', 3, 4, 'C', 'U', 'C', 'U'], ('IMP', 'N'): 1, ('IMP', 'P'): 1
+                'geometry': [1, 2, 'C', 'I', 'C', 3, 4, 'C', 'U', 'C', 'U'], 'IMPN': 1, 'IMPP': 1
             },
             15: {'reference': 2, 'TRCL': 1}
         },

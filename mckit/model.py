@@ -167,8 +167,9 @@ class Model:
         """
         if uname not in self._universes.keys():
             cells = []
-            for cell_name in self.universes[uname].keys():
-                cells.append(self._produce_cell(cell_name))
+            for name, cell in self.cells.items():
+                if cell.get('U', 0) == uname:
+                    cells.append(self._produce_cell(name))
             self._universes[uname] = Universe(cells, name=uname, title=title)
         return self._universes[uname]
 
@@ -455,8 +456,7 @@ class MCPrinter:
         self.surf_acc = surf_acc
         self.mat_acc = mat_acc
         self.tr_acc = tr_acc
-        self.option_list = [('IMP', 'N'), ('IMP', 'P'), ('IMP', 'E'),
-                            'U', 'TRCL', 'FILL']
+        self.option_list = ['IMPN', 'IMPP', 'IMPE', 'U', 'TRCL', 'FILL']
 
     def print(self, model, filename):
         """Prints model to file.
@@ -649,8 +649,8 @@ class MCPrinter:
             if key not in cell_obj.keys():
                 continue
             item = cell_obj[key]
-            if isinstance(key, tuple):
-                card.append(':'.join(key) + '=' +
+            if key[:3] == 'IMP':
+                card.append(key[:3] + ':' + key[3] + '=' +
                             ('{0:.' + '{0}'.format(places) + 'g}').format(item))
             elif key == 'TRCL':
                 if isinstance(item, int):

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import sys
+import hashlib
 
 
 class Universe:
@@ -17,8 +19,10 @@ class Universe:
         
     Methods
     -------
-    get_volumes(region, cell_names)
-        Calculates volumes of cells.
+    get_box_volumes(box, accuracy, pool_size, names)
+        Calculates volumes of cells inside the box.
+    get_mesh_volumes(mesh, accuracy, pool_size)
+        Calculates volumes of cells inside mesh voxels.
     get_concentrations()
         Calculates concentrations of materials in voxels.
     populate()
@@ -26,34 +30,53 @@ class Universe:
     transform(tr)
         Applies transformation tr to this universe. Returns a new universe.
     """
-    def __init__(self, cells, name=0, description=''):
+    def __init__(self, cells, name=0, title=''):
         self.cells = tuple(cells)
         self.name = name
-        self.description = description
+        self.description = title
 
-    def get_volumes(self, region, accuracy=0.1, pool_size=20000):
+    def get_mesh_volumes(self, mesh, accuracy=0.1, pool_size=20000):
         """Calculates volumes of cells that intersect the box or mesh voxels.
 
         Monte Carlo method of calculations is used.
 
         Parameters
         ----------
-        region : Box or RectMesh
-            Region of calculations. If it is RectMesh instance, then volumes of
-            cells in every voxel are returned.
+        mesh : RectMesh
+            Mesh of calculations. Volumes of cells in every voxel are returned.
         accuracy : float
             Average linear density of random points (distance between two
             points). Given in cm. Default - 0.1 cm.
         pool_size : int
             The number of points generated at one iteration.
-
+        
         Returns
         -------
-        volumes : dict
-            Volumes of cells. The key is the index of cell.
+        volumes : array[dict]
+            Volumes of cells in every voxel. Array has the same shape as mesh.
+            Every element of the array is a dictionary of cell_number -> 
+            cell_volume_in_voxel pairs.
         """
+        mesh_shape = mesh.shape()
+        volumes = np.empty(shape=mesh_shape, dtype=dict)
+        candidates = []
+        for i, c in enumerate(self.cells):
+            s = c.test_box(mesh)
+            if s == +1 or s == 0:
+                candidates.append(i)
+        for i in range(mesh_shape[0]):
+            for j in range(mesh_shape[1]):
+                for k in range(mesh_shape[2]):
+                    volumes[i, j, k] = self.get_box_volumes(
+                        mesh.get_voxel(i, j, k),
+                        accuracy=accuracy,
+                        pool_size=pool_size,
+                        names=candidates
+                    )
+        return volumes
 
-    def _get_box_volumes(self, box, accuracy=0.1, pool_size=20000):
+    def get_box_volumes(self, box, accuracy=0.1, pool_size=100000, names=None,
+                        verbose=False):
         """Calculates volumes of cells that intersect the box.
 
         Monte Carlo method of calculations is used.
@@ -67,6 +90,9 @@ class Universe:
             points). Given in cm. Default - 0.1 cm.
         pool_size : int
             The number of points generated at one iteration.
+        names : list
+            List of names of cells to be checked. If None, all cells are 
+            checked.
 
         Returns
         -------
@@ -77,7 +103,9 @@ class Universe:
         base_volume = box.volume()
         # First find cells that might intersect box.
         candidates = []
-        for i, c in enumerate(self.cells):
+        checking_cells = names if names else list(range(len(self.cells)))
+        for i in checking_cells:
+            c = self.cells[i]
             s = c.test_box(box)
             if s == +1:  # Box lies entirely inside cell c.
                 return {i: base_volume}
@@ -86,12 +114,27 @@ class Universe:
                 volumes[i] = 0
         # Calculate volumes.
         n_points = max(int(np.ceil(base_volume / accuracy**3)), pool_size)
+        if verbose:
+            print("Total number of points: {0}".format(n_points))
+            print("Tolerance: {0:.5f} cm".format(
+                  np.power(base_volume / n_points, 1 / 3)))
+            print("The number of cell candidates: {0}".format(len(candidates)))
         n_repeat = int(np.ceil(n_points // pool_size))
         for i in range(n_repeat):
-            points = box.random_points(pool_size)
+            box.generate_random_points(pool_size)
             for name in candidates:
-                cell_result = self.cells[name].test_point(points)
+                cell_result = self.cells[name].test_point(box)
                 volumes[name] += np.count_nonzero(cell_result == +1)
+            if verbose:
+                sys.stdout.write('\r')
+                sys.stdout.write(
+                    "iteration = {0} / {1}\t ({2:.1f}%)".format(
+                        i + 1, n_repeat, (i + 1) * 100 / n_repeat
+                    )
+                )
+                sys.stdout.flush()
+        if verbose:
+            print("\nDone")
         for k in volumes.keys():
             volumes[k] *= base_volume / n_points
         return volumes
@@ -131,6 +174,18 @@ class Universe:
         return Universe(new_cells)
 
     def transform(self, tr):
+        """Applies transformation tr to this universe. 
+        
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+            
+        Returns
+        -------
+        universe : Universe
+            New transformed universe.
+        """
         tr_cells = []
         for cell in self.cells:
             tr_cells.append(cell.transform(tr))

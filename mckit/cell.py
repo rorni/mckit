@@ -119,6 +119,9 @@ class Cell(dict):
         for op in self._expression:
             if isinstance(op, Surface):
                 stack.append(getattr(op, method_name)(arg))
+                if method_name == 'test_point' and stack[-1].shape == (8,):
+                    print(stack[-1], arg.get_random_points().shape)
+                    print(type(op))
             elif op == 'C':
                 stack.append(_complement(stack.pop()))
             elif op == 'I':

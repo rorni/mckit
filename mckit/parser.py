@@ -325,7 +325,7 @@ def p_cell_float_option(p):
                          | VOL float
     """
     if len(p) == 5:
-        p[0] = {(p[1], par): p[4] for par in p[3]}
+        p[0] = {p[1] + par: p[4] for par in p[3]}
     else:
         p[0] = {p[1]: p[2]}
 

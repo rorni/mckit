@@ -6,6 +6,7 @@ import numpy as np
 from scipy.optimize import fmin_slsqp
 
 from .constants import *
+from .fmesh import Box
 
 
 def create_surface(kind, *params, **options):
@@ -120,6 +121,12 @@ class Surface(ABC):
     test_box(box)
         Checks whether this surface crosses the box.
     """
+    def __init__(self):
+        self._last_box = None
+        self._box_result = None
+        self._last_result = None
+        self._last_generation = None
+
     def __hash__(self):
         return id(self)
 
@@ -131,7 +138,7 @@ class Surface(ABC):
 
         Parameters
         ----------
-        p : array_like[float]
+        p : array_like[float] or Box
             Coordinates of point(s) to be checked. If it is the only one point,
             then p.shape=(3,). If it is an array of points, then
             p.shape=(num_points, 3).
@@ -145,7 +152,18 @@ class Surface(ABC):
             Individual point - single value, array of points - array of
             ints of shape (num_points,) is returned.
         """
-        return np.sign(self._func(p)).astype(int)
+        if isinstance(p, Box):
+            sign = self.test_box(p)
+            if sign != 0:
+                return sign
+            if p.get_generation() == self._last_generation:
+                return self._last_result
+            self._last_generation = p.get_generation()
+            p = p.get_random_points()
+        else:
+            return np.sign(self._func(p)).astype(int)
+        self._last_result = np.sign(self._func(p)).astype(int)
+        return self._last_result
 
     def test_box(self, box):
         """Checks whether this surface crosses the region.
@@ -168,19 +186,25 @@ class Surface(ABC):
                the box
             -1 if every point inside the box has negative sense.
         """
-        corners = box.corners()
-        senses = self.test_point(corners)
-        sign = np.sign(np.max(senses) + np.min(senses))
-        if sign != 0:
-            bounds = box.bounds()
-            for start_pt in corners:
-                end_pt = fmin_slsqp(self._func, start_pt, fprime=self._grad,
-                                    f_ieqcons=box.f_ieqcons(),
-                                    fprime_ieqcons=box.fprime_ieqcons(),
-                                    args=(sign,), bounds=bounds, disp=0)
-                if self.test_point(end_pt) * sign < 0:
-                    return 0
-        return sign
+        if self._last_box != box:
+            corners = box.corners()
+            senses = self.test_point(corners)
+            sign = np.sign(np.max(senses) + np.min(senses))
+            if sign != 0:
+                bounds = box.bounds()
+                for start_pt in corners:
+                    end_pt = fmin_slsqp(
+                        self._func, start_pt, fprime=self._grad,
+                        f_ieqcons=box.f_ieqcons(),
+                        fprime_ieqcons=box.fprime_ieqcons(),
+                        args=(sign,), bounds=bounds, disp=0
+                    )
+                    if self.test_point(end_pt) * sign < 0:
+                        sign = 0
+            self._last_box = box
+            self._box_result = sign
+            self._last_generation = None
+        return self._box_result
 
     @abstractmethod
     def transform(self, tr):
@@ -275,7 +299,10 @@ class Plane(Surface):
         return np.sign(np.max(senses) + np.min(senses))
 
     def _func(self, x, sign=+1):
-        return sign * (np.dot(x, self._v) + self._k)
+        p = sign * (np.dot(x, self._v) + self._k)
+        if p.shape == (8,) and x.shape != (8, 3):
+            print(x.shape)
+        return p
 
     def _grad(self, x, sign=+1):
         return self._v
