@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import numpy as np
 
 from .surface import Surface
@@ -83,7 +82,7 @@ class Cell(dict):
         """
         return self._geometry_test(p, 'test_point')
 
-    def calculate_volume(self, box, accuracy=1, pool_size=100):
+    def calculate_volume(self, box, geometry=None, accuracy=1, pool_size=100):
         """Calculates volume of the cell inside the box.
         
         Parameters
@@ -93,19 +92,22 @@ class Cell(dict):
         accuracy : float
             accuracy
         """
-        sense = self.test_box(box)
+        if geometry is None:
+            geometry = self._expression.copy()
+        sense, new_geom = self._test_box(box, geometry.copy())
         if sense == +1:
-            return box.volume()
+            volume = box.volume()
         elif box.volume() <= accuracy**3:
             points = box.generate_random_points(pool_size)
             cell_result = self.test_point(points)
-            return np.count_nonzero(cell_result == +1) / pool_size * box.volume()
+            volume = np.count_nonzero(cell_result == +1) / pool_size * box.volume()
         elif sense == 0:
             box1, box2 = box.split()
-            return self.calculate_volume(box1, accuracy=accuracy) + \
-                   self.calculate_volume(box2, accuracy=accuracy)
+            volume = self.calculate_volume(box1, accuracy=accuracy, geometry=new_geom.copy()) + \
+                     self.calculate_volume(box2, accuracy=accuracy, geometry=new_geom.copy())
         else:
-            return 0
+            volume = 0
+        return volume
 
     def test_box(self, box):
         """Checks whether this cell intersects with the box.
@@ -151,6 +153,32 @@ class Cell(dict):
             elif op == 'U':
                 stack.append(_union(stack.pop(), stack.pop()))
         return stack.pop()
+
+    def _test_box(self, box, geometry):
+        op = geometry.pop()
+        ng = []
+        if isinstance(op, Surface):
+            s = op.test_box(box)
+        elif op == 'C':
+            a, ng = self._test_box(box, geometry)
+            s = _complement(a)
+        elif op == 'I' or op == 'U':
+            a, ng1 = self._test_box(box, geometry)
+            b, ng2 = self._test_box(box, geometry)
+            if op == 'I':
+                s = _intersection(a, b)
+            elif op == 'U':
+                s = _union(a, b)
+            if s == 0:
+                ng.extend(ng1)
+                ng.extend(ng2)
+        else:
+            s = op
+        if s == 0:
+            ng.append(op)
+        else:
+            ng = [s]
+        return s, ng
 
     def transform(self, tr):
         """Applies transformation to this cell.

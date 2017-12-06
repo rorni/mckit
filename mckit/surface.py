@@ -122,8 +122,6 @@ class Surface(ABC):
         Checks whether this surface crosses the box.
     """
     def __init__(self):
-        self._last_result = None
-        self._last_generation = None
         self._box_results = {}
         self._box_stack = []
 
@@ -138,7 +136,7 @@ class Surface(ABC):
 
         Parameters
         ----------
-        p : array_like[float] or Box
+        p : array_like[float]
             Coordinates of point(s) to be checked. If it is the only one point,
             then p.shape=(3,). If it is an array of points, then
             p.shape=(num_points, 3).
@@ -152,18 +150,7 @@ class Surface(ABC):
             Individual point - single value, array of points - array of
             ints of shape (num_points,) is returned.
         """
-        if isinstance(p, Box):
-            sign = self.test_box(p)
-            if sign != 0:
-                return sign
-            if p.get_generation() == self._last_generation:
-                return self._last_result
-            self._last_generation = p.get_generation()
-            p = p.get_random_points()
-        else:
-            return np.sign(self._func(p)).astype(int)
-        self._last_result = np.sign(self._func(p)).astype(int)
-        return self._last_result
+        return np.sign(self._func(p)).astype(int)
 
     def test_box(self, box):
         """Checks whether this surface crosses the region.
@@ -208,7 +195,6 @@ class Surface(ABC):
                             sign = 0
             self._box_results[box] = sign
             self._box_stack.append(box)
-            self._last_generation = None
         return self._box_results[box]
 
     @abstractmethod
