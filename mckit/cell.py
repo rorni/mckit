@@ -82,7 +82,7 @@ class Cell(dict):
         """
         return self._geometry_test(p, 'test_point')
 
-    def calculate_volume(self, box, geometry=None, accuracy=1, pool_size=100):
+    def calculate_volume(self, box, geometry=None, accuracy=1, pool_size=10000):
         """Calculates volume of the cell inside the box.
         
         Parameters

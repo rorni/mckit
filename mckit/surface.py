@@ -173,29 +173,21 @@ class Surface(ABC):
                the box
             -1 if every point inside the box has negative sense.
         """
-        if box not in self._box_results.keys():
-            while self._box_stack and box.ancestor != self._box_stack[-1]:
-                b_out = self._box_stack.pop()
-                self._box_results.pop(b_out)
-            sign = self._box_results.get(box.ancestor, 0)
-            if sign == 0:
-                corners = box.corners()
-                senses = self.test_point(corners)
-                sign = np.sign(np.max(senses) + np.min(senses))
-                if sign != 0:
-                    bounds = box.bounds()
-                    for start_pt in corners:
-                        end_pt = fmin_slsqp(
-                            self._func, start_pt, fprime=self._grad,
-                            f_ieqcons=box.f_ieqcons(),
-                            fprime_ieqcons=box.fprime_ieqcons(),
-                            args=(sign,), bounds=bounds, disp=0
-                        )
-                        if self.test_point(end_pt) * sign < 0:
-                            sign = 0
-            self._box_results[box] = sign
-            self._box_stack.append(box)
-        return self._box_results[box]
+        corners = box.corners()
+        senses = self.test_point(corners)
+        sign = np.sign(np.max(senses) + np.min(senses))
+        if sign != 0:
+            bounds = box.bounds()
+            for start_pt in corners:
+                end_pt = fmin_slsqp(
+                    self._func, start_pt, fprime=self._grad,
+                    f_ieqcons=box.f_ieqcons(),
+                    fprime_ieqcons=box.fprime_ieqcons(),
+                    args=(sign,), bounds=bounds, disp=0
+                )
+                if self.test_point(end_pt) * sign < 0:
+                    sign = 0
+        return sign
 
     @abstractmethod
     def transform(self, tr):
