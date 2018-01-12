@@ -29,7 +29,8 @@ class Box:
     fprime_ieqcons(x, *arg) - gets derivatives of constraint function of the Box.
     generate_random_points(n) - generates n random points inside the box.
     volume() - gets volume of the box.
-    split(n) - splits the box into n boxes.
+    split(dim, ratio) - splits the box into two ones along dim direction.
+    test_point(p) - tests whether point lies inside the box.
     """
     def __init__(self, base, ex, ey, ez, ancestor=None):
         self.base = np.array(base)
@@ -61,29 +62,73 @@ class Box:
     #           np.all(np.equal(self.ey, other.ey)) and \
     #           np.all(np.equal(self.ez, other.ez))
 
-    def split(self):
-        """Splits the box two boxes.
+    def test_point(self, p):
+        """Checks if point(s) p lies inside the box.
+
+        Parameters
+        ----------
+        p : array_like[float]
+            Coordinates of point(s) to be checked. If it is the only one point,
+            then p.shape=(3,). If it is an array of points, then
+            p.shape=(num_points, 3).
+
+        Returns
+        -------
+        result : bool or numpy.ndarray[bool]
+            If the point lies inside the box, then True value is returned.
+            If the point lies outside of the box False is returned.
+            Individual point - single value, array of points - array of
+            bools of shape (num_points,) is returned.
+        """
+        p1 = p - self.base
+        # ex, ey and ez are not normalized!
+        mat = np.hstack((self.ex, self.ey, self.ez)) / self._scale
+        proj = np.dot(p1, mat) / self._scale
+        axis = 1 if len(p.shape) == 2 else 0
+        return np.all(proj >= 0, axis=axis) * np.all(proj <= 1, axis=axis)
+
+    def split(self, dim=None, ratio=0.5):
+        """Splits the box two smaller ones along dim direction.
+        
+        Parameters
+        ----------
+        dim : int
+            Dimension along which splitting must take place. 0 - ex, 1 - ey, 
+            2 - ez. If not specified, then the box will be split along the 
+            longest side.
+        ratio : float
+            The ratio of two new boxes volumes difference. If < 0.5 the first
+            box will be smaller.
+                
+        Returns
+        -------
+        box1, box2 : Box
+            Resulting boxes. box1 contains parent box base point.
+        """
+        if dim is None:
+            dim = np.argmax(self._scale)
+        size1 = np.ones((3,))
+        size1[dim] *= ratio
+        size2 = np.ones((3,))
+        size2[dim] *= 1 - ratio
+        offset = np.zeros((3,))
+        offset[dim] = ratio
+        new_base = self.base + offset[0] * self.ex + offset[1] * self.ey + \
+                               offset[2] * self.ez
+        box1 = Box(self.base, size1[0] * self.ex, size1[1] * self.ey,
+                   size1[2] * self.ez, ancestor=self)
+        box2 = Box(new_base, size2[0] * self.ex, size2[1] * self.ey,
+                   size2[2] * self.ez, ancestor=self)
+        return box1, box2
+
+    def corners(self):
+        """Gets coordinates of all corners in global coordinate system.
         
         Returns
         -------
-        boxes : list
-            List of the resulting boxes.
+        corners : np.ndarray[8, 3]
+            Coordinates of box's corners. Every row corresponds to one corner.
         """
-        i = np.argmax(self._scale)
-        m = np.ones((3,))
-        m[i] *= 0.5
-        offset = np.zeros((3,))
-        offset[i] = 0.5
-        new_base = self.base + offset[0] * self.ex + offset[1] * self.ey + \
-                                offset[2] * self.ez
-        return Box(self.base, m[0] * self.ex, m[1] * self.ey, m[2] * self.ez,
-                   ancestor=self), \
-               Box(new_base, m[0] * self.ex, m[1] * self.ey, m[2] * self.ez,
-                   ancestor=self)
-
-
-    def corners(self):
-        """Gets coordinates of all corners in global coordinate system."""
         corners = np.zeros((8, 3))
         multipliers = product([0, 1], [0, 1], [0, 1])
         for i, (x, y, z) in enumerate(multipliers):
