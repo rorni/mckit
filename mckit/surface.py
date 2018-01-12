@@ -120,6 +120,8 @@ class Surface(ABC):
         Applies transformation tr to this surface.
     test_box(box)
         Checks whether this surface crosses the box.
+    projection(p)
+        Gets projection of point p on the surface.
     """
     def __init__(self):
         self._box_results = {}
@@ -188,6 +190,25 @@ class Surface(ABC):
                 if self.test_point(end_pt) * sign < 0:
                     sign = 0
         return sign
+
+    @abstractmethod
+    def projection(self, p):
+        """Gets projection of point(s) p on the surface.
+        
+        Finds a projection of point (or points) p on this surface. In case 
+        the surface is not Plane instance only the projection closest to point
+        p is found.
+        
+        Parameters
+        ----------
+        p : array_like[float]
+            Coordinates of point(s).
+
+        Returns
+        -------
+        proj : array_like
+            Projected points.
+        """
 
     @abstractmethod
     def transform(self, tr):
@@ -281,6 +302,11 @@ class Plane(Surface):
         # Returns 0 if both +1 and -1 values present.
         return np.sign(np.max(senses) + np.min(senses))
 
+    def projection(self, p):
+        shape = (p.shape[0], 1) if len(p.shape) == 2 else (1,)
+        d = np.reshape(np.dot(p, self._v) + self._k, shape)
+        return p - np.multiply(d, self._v)
+
     def _func(self, x, sign=+1):
         p = sign * (np.dot(x, self._v) + self._k)
         if p.shape == (8,) and x.shape != (8, 3):
@@ -313,6 +339,11 @@ class Sphere(Surface):
         self._center = np.array(center)
         self._radius = radius
         self.options = options
+
+    def projection(self, p):
+        n = p - self._center
+        n /= np.linalg.norm(n)
+        return self._center + self._radius * n
 
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr)
@@ -352,6 +383,13 @@ class Cylinder(Surface):
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._radius = radius
         self.options = options
+
+    def projection(self, p):
+        shape = (p.shape[0], 1) if len(p.shape) == 2 else (1,)
+        d = np.reshape(np.dot(p - self._pt, self._axis), shape)
+        b = self._pt + np.multiply(d, self._axis)
+        a = p - b
+        return b + self._radius * a / np.linalg.norm(a)
 
     def transform(self, tr):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr)
@@ -393,6 +431,9 @@ class Cone(Surface):
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._t2 = ta**2
         self.options = options
+
+    def projection(self, p):
+        raise NotImplementedError
 
     def transform(self, tr):
         return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr)
@@ -438,6 +479,9 @@ class GQuadratic(Surface):
         self._v = v
         self._k = k
         self.options = options
+
+    def projection(self, p):
+        raise NotImplementedError
 
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr)
@@ -492,6 +536,9 @@ class Torus(Surface):
             self._spec_pts.append(self._center + offset * self._axis)
             self._spec_pts.append(self._center - offset * self._axis)
         self.options = options
+
+    def projection(self, p):
+        raise NotImplementedError
 
     def test_box(self, box):
         # TODO: implement test_box
