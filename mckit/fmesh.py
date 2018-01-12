@@ -39,9 +39,9 @@ class Box:
         self.ez = np.array(ez)
         self._tr = Transformation(translation=self.base,
                                   rotation=np.concatenate((ex, ey, ez)))
-        self._scale = np.array([np.linalg.norm(self.ex),
-                                np.linalg.norm(self.ey),
-                                np.linalg.norm(self.ez)])
+        self.scale = np.array([np.linalg.norm(self.ex),
+                               np.linalg.norm(self.ey),
+                               np.linalg.norm(self.ez)])
 
         self._hash_value = hash(
             hashlib.sha256(self.base).hexdigest() +
@@ -82,8 +82,8 @@ class Box:
         """
         p1 = p - self.base
         # ex, ey and ez are not normalized!
-        mat = np.hstack((self.ex, self.ey, self.ez)) / self._scale
-        proj = np.dot(p1, mat) / self._scale
+        mat = np.hstack((self.ex, self.ey, self.ez)) / self.scale
+        proj = np.dot(p1, mat) / self.scale
         axis = 1 if len(p.shape) == 2 else 0
         return np.all(proj >= 0, axis=axis) * np.all(proj <= 1, axis=axis)
 
@@ -106,7 +106,7 @@ class Box:
             Resulting boxes. box1 contains parent box base point.
         """
         if dim is None:
-            dim = np.argmax(self._scale)
+            dim = np.argmax(self.scale)
         size1 = np.ones((3,))
         size1[dim] *= ratio
         size2 = np.ones((3,))
@@ -144,7 +144,7 @@ class Box:
 
     def generate_random_points(self, n):
         """Generates n random points inside the box."""
-        points = np.random.random((n, 3)) * self._scale
+        points = np.random.random((n, 3)) * self.scale
         self._points = self._tr.apply2point(points)
         self._points_generation += 1
         return self._points
@@ -159,7 +159,7 @@ class Box:
 
     def volume(self):
         """Gets volume of the box."""
-        return np.multiply.reduce(self._scale)
+        return np.multiply.reduce(self.scale)
 
     def f_ieqcons(self):
         """Gets constraint function of the Box.

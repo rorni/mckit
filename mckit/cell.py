@@ -3,6 +3,8 @@
 import numpy as np
 
 from .surface import Surface
+from .constants import EX, EY, EZ
+from .fmesh import Box
 
 
 class Cell(dict):
@@ -18,6 +20,8 @@ class Cell(dict):
 
     Methods
     -------
+    bounding_box()
+        Gets bounding box for this cell.
     get_surfaces()
         Returns a set of surfaces that bound this cell.
     populate()
@@ -32,6 +36,62 @@ class Cell(dict):
     def __init__(self, geometry_expr, **options):
         dict.__init__(self, options)
         self._expression = geometry_expr.copy()
+
+    def bounding_box(self, ex=EX, ey=EY, ez=EZ, max_dim=1e+4, tol=1.0,
+                     adjust=False):
+        """Gets bounding box for this cell.
+        
+        Parameters
+        ----------
+        ex, ey, ez : array_like
+            Basis vectors for initial bounding box.
+        max_dim : float
+            Initial dimension of bounding box.
+        tol : float
+            Absolute tolerance, when the process of box reduction has to be 
+            stopped.
+        adjust : bool
+            Specifies whether orientation of bounding box has to be corrected.
+        
+        Returns
+        -------
+        box : Box
+            The box that bounds this cell.
+        """
+        base = -0.5 * max_dim * (ex + ey + ez)
+        box = Box(base, ex, ey, ez)
+        if self.test_box(box) != 0:
+            raise ValueError("Initial box size is too small.")
+        for dim in range(3):
+            # adjust upper bound
+            mlt = 1
+            ratio = 0.5
+            while (1 - ratio) * box.scale[dim] > tol:
+                box1, box2 = box.split(dim, ratio)
+                t2 = self.test_box(box2)
+                if t2 == -1:
+                    box = box1
+                    ratio = 0.5 * mlt
+                else:
+                    ratio = 0.5 * (1 + ratio)
+                    mlt = (3 * ratio - 1) / ratio
+            # adjust lower bound
+            mlt = 1
+            ratio = 0.5
+            while ratio * box.scale[dim] > tol:
+                box1, box2 = box.split(dim, ratio)
+                t1 = self.test_box(box1)
+                if t1 == -1:
+                    box = box2
+                    ratio = 0.5 * mlt
+                else:
+                    ratio = 0.5 * ratio
+                    mlt = 0.5 * ratio / (1 - ratio)
+
+        if adjust:
+            # TODO: add correction of box orientation.
+            pass
+        return box
 
     def get_surfaces(self):
         """Gets a set of surfaces that bound this cell.
@@ -123,7 +183,7 @@ class Cell(dict):
             Test result. It equals one of the following values:
             +1 if the box lies entirely inside the cell.
              0 if the box (probably) intersects the cell.
-            -1 if the box lies outside the region.
+            -1 if the box lies outside the cell.
         """
         return self._geometry_test(box, 'test_box')
 
