@@ -5,10 +5,11 @@ import os
 
 import numpy as np
 
+from .fmesh import Box
 
 __all__ = [
     'AVOGADRO',
-    'EX', 'EY', 'EZ',
+    'EX', 'EY', 'EZ', 'GLOBAL_BOX',
     'ORIGIN', 'IDENTITY_ROTATION',
     'ANGLE_TOLERANCE', 'RESOLUTION', 'RELATIVE_DENSITY_TOLERANCE',
     'CHARGE_TO_NAME', 'NAME_TO_CHARGE', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
@@ -45,6 +46,11 @@ CHARGE_TO_NAME = {}
 NAME_TO_CHARGE = {}
 NATURAL_ABUNDANCE = {}
 ISOTOPE_MASS = {}
+
+# Global box
+max_dim = 1.e+4
+GLOBAL_BOX = Box(-0.5 * max_dim * (EX + EY + EZ), EX * max_dim,
+                 EY * max_dim, EZ * max_dim)
 
 path = os.path.dirname(sys.modules[__name__].__file__)
 

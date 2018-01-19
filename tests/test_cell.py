@@ -19,6 +19,10 @@ class TestCell(unittest.TestCase):
                 for k, v in opt.items():
                     self.assertAlmostEqual(v, c[k])
 
+    def test_bounding_box(self):
+        # TODO: implement it
+        pass
+
     def test_test_point(self):
         for i, (geom, points, ans) in enumerate(cell_test_point_cases):
             with self.subTest(i=i):

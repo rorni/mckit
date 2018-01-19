@@ -6,6 +6,7 @@ import hashlib
 import numpy as np
 
 from .transformation import Transformation
+from .constants import GLOBAL_BOX
 
 
 class Box:
@@ -23,14 +24,24 @@ class Box:
 
     Methods
     -------
-    bounds() - gets bounds in global coordinate system.
-    corners() - gets coordinates of all corners in global CS.
-    f_ieqcons(x, *arg) - gets constraint function of the Box.
-    fprime_ieqcons(x, *arg) - gets derivatives of constraint function of the Box.
-    generate_random_points(n) - generates n random points inside the box.
-    volume() - gets volume of the box.
-    split(dim, ratio) - splits the box into two ones along dim direction.
-    test_point(p) - tests whether point lies inside the box.
+    bounds()
+        Gets bounds in global coordinate system.
+    corners()
+        Gets coordinates of all corners in global CS.
+    f_ieqcons(x, *arg)
+        Gets constraint function of the Box.
+    fprime_ieqcons(x, *arg) 
+        Gets derivatives of constraint function of the Box.
+    generate_random_points(n) 
+        Generates n random points inside the box.
+    get_outer_boxes(global_box)
+        Gets a list of outer boxes. 
+    volume()
+        Gets volume of the box.
+    split(dim, ratio)
+        Splits the box into two ones along dim direction.
+    test_point(p)
+        Tests whether point lies inside the box.
     """
     def __init__(self, base, ex, ey, ez, ancestor=None):
         self.base = np.array(base)
@@ -61,6 +72,33 @@ class Box:
     #           np.all(np.equal(self.ex, other.ex)) and \
     #           np.all(np.equal(self.ey, other.ey)) and \
     #           np.all(np.equal(self.ez, other.ez))
+
+    def get_outer_boxes(self, global_box=GLOBAL_BOX):
+        """Gets a list of outer boxes.
+        
+        Parameters
+        ----------
+        global_box : Box
+            Global box which limits the space under consideration.
+            
+        Returns
+        -------
+        boxes : list[Box]
+            A list of outer boxes.
+        """
+        boxes = []
+        for i in range(3):
+            ratio = (self.base[i] - global_box.base[i]) / global_box.scale[i]
+            box1, box2 = global_box.split(dim=i, ratio=ratio)
+            boxes.append(box1)
+            global_box = box2
+        div_pt = self.base + self.ex + self.ey + self.ez
+        for i in range(3):
+            ratio = div_pt[i] / global_box.scale[i]
+            box1, box2 = global_box.split(dim=i, ratio=ratio)
+            boxes.append(box2)
+            global_box = box1
+        return boxes
 
     def test_point(self, p):
         """Checks if point(s) p lies inside the box.

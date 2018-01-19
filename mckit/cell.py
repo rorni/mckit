@@ -3,7 +3,7 @@
 import numpy as np
 
 from .surface import Surface
-from .constants import EX, EY, EZ
+from .constants import EX, EY, EZ, GLOBAL_BOX
 from .fmesh import Box
 
 
@@ -26,6 +26,8 @@ class Cell(dict):
         Returns a set of surfaces that bound this cell.
     populate()
         Fills this cell by universe.
+    simplify(split)
+        Simplifies cell description.
     test_point(p)
         Tests whether point(s) p belong to this cell (lies inside it).
     test_box(box)
@@ -37,16 +39,36 @@ class Cell(dict):
         dict.__init__(self, options)
         self._expression = geometry_expr.copy()
 
-    def bounding_box(self, ex=EX, ey=EY, ez=EZ, max_dim=1e+4, tol=1.0,
-                     adjust=False):
+    def simplify(self, global_box=GLOBAL_BOX, tol=1.0, split=False):
+        """Simplifies description of this cell.
+        
+        Parameters
+        ----------
+        global_box : Box
+            Global box where cell is considered.
+        tol : float
+            Absolute tolerance, when the process of box reduction has to be 
+            stopped.
+        split : bool
+            Indicate whether this cell should be split into simpler ones.
+            
+        Returns
+        -------
+        cell : Cell
+            The simplified version of cell.
+        """
+        bbox = self.bounding_box(box=global_box, tol=tol, adjust=True)
+        outer_boxes = bbox.get_outer_boxes(global_box=global_box)
+
+
+    def bounding_box(self, box=GLOBAL_BOX, tol=1.0, adjust=False):
         """Gets bounding box for this cell.
         
         Parameters
         ----------
-        ex, ey, ez : array_like
-            Basis vectors for initial bounding box.
-        max_dim : float
-            Initial dimension of bounding box.
+        box : Box
+            Initial box approach. If None, default box is centered around
+            origin and have dimensions 1.e+4 cm.
         tol : float
             Absolute tolerance, when the process of box reduction has to be 
             stopped.
@@ -58,8 +80,6 @@ class Cell(dict):
         box : Box
             The box that bounds this cell.
         """
-        base = -0.5 * max_dim * (ex + ey + ez)
-        box = Box(base, ex, ey, ez)
         if self.test_box(box) != 0:
             raise ValueError("Initial box size is too small.")
         for dim in range(3):
