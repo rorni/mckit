@@ -9,7 +9,7 @@ from .fmesh import Box
 
 __all__ = [
     'AVOGADRO',
-    'EX', 'EY', 'EZ', 'GLOBAL_BOX',
+    'EX', 'EY', 'EZ', 'GLOBAL_BOX', 'MIN_BOX_VOLUME',
     'ORIGIN', 'IDENTITY_ROTATION',
     'ANGLE_TOLERANCE', 'RESOLUTION', 'RELATIVE_DENSITY_TOLERANCE',
     'CHARGE_TO_NAME', 'NAME_TO_CHARGE', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
@@ -51,6 +51,7 @@ ISOTOPE_MASS = {}
 max_dim = 1.e+4
 GLOBAL_BOX = Box(-0.5 * max_dim * (EX + EY + EZ), EX * max_dim,
                  EY * max_dim, EZ * max_dim)
+MIN_BOX_VOLUME = 1.e-4 ** 3
 
 path = os.path.dirname(sys.modules[__name__].__file__)
 
