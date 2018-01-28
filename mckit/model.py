@@ -290,6 +290,7 @@ class Model:
                 tr_name = options['transform']
                 options = options.copy()
                 options['transform'] = self._get_transform_object(tr_name)
+            options['name'] = surf_no
             self._surfaces[surf_no] = create_surface(kind, *params, **options)
         return self._surfaces[surf_no]
 

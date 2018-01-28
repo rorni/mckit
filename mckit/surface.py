@@ -123,9 +123,10 @@ class Surface(ABC):
     projection(p)
         Gets projection of point p on the surface.
     """
-    def __init__(self):
+    def __init__(self, **options):
         self._box_results = {}
         self._box_stack = []
+        self.options = options
 
     def __hash__(self):
         return id(self)
@@ -282,16 +283,15 @@ class Plane(Surface):
                              Transformation instance.
     """
     def __init__(self, normal, offset, **options):
-        Surface.__init__(self)
         if 'transform' in options.keys():
             tr = options.pop('transform')
             v, k = tr.apply2plane(normal, offset)
         else:
             v = np.array(normal)
             k = offset
+        Surface.__init__(self, **options)
         self._v = v
         self._k = k
-        self.options = options
 
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr)
@@ -332,13 +332,12 @@ class Sphere(Surface):
                              created. Transformation instance.
     """
     def __init__(self, center, radius, **options):
-        Surface.__init__(self)
         if 'transform' in options.keys():
             tr = options.pop('transform')
             center = tr.apply2point(center)
+        Surface.__init__(self, **options)
         self._center = np.array(center)
         self._radius = radius
-        self.options = options
 
     def projection(self, p):
         n = p - self._center
@@ -374,15 +373,14 @@ class Cylinder(Surface):
                              created. Transformation instance.
     """
     def __init__(self, pt, axis, radius, **options):
-        Surface.__init__(self)
         if 'transform' in options.keys():
             tr = options.pop('transform')
             pt = tr.apply2point(pt)
             axis = tr.apply2vector(axis)
+        Surface.__init__(self, **options)
         self._pt = np.array(pt)
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._radius = radius
-        self.options = options
 
     def projection(self, p):
         shape = (p.shape[0], 1) if len(p.shape) == 2 else (1,)
@@ -422,15 +420,14 @@ class Cone(Surface):
                              created. Transformation instance.
     """
     def __init__(self, apex, axis, ta, **options):
-        Surface.__init__(self)
         if 'transform' in options.keys():
             tr = options.pop('transform')
             apex = tr.apply2point(apex)
             axis = tr.apply2vector(axis)
+        Surface.__init__(self, **options)
         self._apex = np.array(apex)
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._t2 = ta**2
-        self.options = options
 
     def projection(self, p):
         raise NotImplementedError
@@ -467,7 +464,6 @@ class GQuadratic(Surface):
                              created. Transformation instance.
     """
     def __init__(self, m, v, k, **options):
-        Surface.__init__(self)
         if 'transform' in options.keys():
             tr = options.pop('transform')
             m, v, k = tr.apply2gq(m, v, k)
@@ -475,10 +471,10 @@ class GQuadratic(Surface):
             m = np.array(m)
             v = np.array(v)
             k = k
+        Surface.__init__(self, **options)
         self._m = m
         self._v = v
         self._k = k
-        self.options = options
 
     def projection(self, p):
         raise NotImplementedError
@@ -516,7 +512,6 @@ class Torus(Surface):
                              created. Transformation instance.
     """
     def __init__(self, center, axis, R, a, b, **options):
-        Surface.__init__(self)
         if 'transform' in options.keys():
             tr = options.pop('transform')
             center = tr.apply2point(center)
@@ -524,6 +519,7 @@ class Torus(Surface):
         else:
             center = np.array(center)
             axis = np.array(axis)
+        Surface.__init__(self, **options)
         self._center = center
         self._axis = axis / np.linalg.norm(axis)
         self._R = R
@@ -535,7 +531,6 @@ class Torus(Surface):
             offset = a * np.sqrt(1 - (R / b)**2)
             self._spec_pts.append(self._center + offset * self._axis)
             self._spec_pts.append(self._center - offset * self._axis)
-        self.options = options
 
     def projection(self, p):
         raise NotImplementedError
