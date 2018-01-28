@@ -5,7 +5,6 @@ import os
 
 import numpy as np
 
-from .fmesh import Box
 
 __all__ = [
     'AVOGADRO',
@@ -48,11 +47,16 @@ NATURAL_ABUNDANCE = {}
 ISOTOPE_MASS = {}
 
 # Global box
-max_dim = 1.e+4
-GLOBAL_BOX = Box(-0.5 * max_dim * (EX + EY + EZ), EX * max_dim,
-                 EY * max_dim, EZ * max_dim)
+MAX_DIM = 1.e+4
 MIN_BOX_VOLUME = 1.e-4 ** 3
+GLOBAL_BOX = None
 
+from .fmesh import Box
+
+GLOBAL_BOX = Box(-0.5 * MAX_DIM * (EX + EY + EZ), EX * MAX_DIM,
+                 EY * MAX_DIM, EZ * MAX_DIM)
+
+# ------------------------------------------------------------------------------
 path = os.path.dirname(sys.modules[__name__].__file__)
 
 with open(path + '/data/isotopes.dat') as f:
