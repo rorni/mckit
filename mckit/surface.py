@@ -28,6 +28,7 @@ def create_surface(kind, *params, **options):
     surf : Surface
         New surface.
     """
+    kind = kind.upper()
     if kind[-1] == 'X':
         axis = EX
     elif kind[-1] == 'Y':
