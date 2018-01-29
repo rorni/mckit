@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from itertools import product
-import hashlib
 
 import numpy as np
 
@@ -28,12 +27,10 @@ class Box:
         Gets bounds in global coordinate system.
     corners()
         Gets coordinates of all corners in global CS.
-    f_ieqcons(x, *arg)
-        Gets constraint function of the Box.
-    fprime_ieqcons(x, *arg) 
-        Gets derivatives of constraint function of the Box.
-    generate_random_points(n) 
+    generate_random_points(n)
         Generates n random points inside the box.
+    get_random_points()
+        Gets already generated random points.
     get_outer_boxes(global_box)
         Gets a list of outer boxes. 
     volume()
@@ -42,6 +39,10 @@ class Box:
         Splits the box into two ones along dim direction.
     test_point(p)
         Tests whether point lies inside the box.
+    f_ieqcons(x, *arg)
+        Gets constraint function of the Box.
+    fprime_ieqcons(x, *arg)
+        Gets derivatives of constraint function of the Box.
     """
     def __init__(self, base, ex, ey, ez, ancestor=None):
         self.base = np.array(base)
@@ -53,25 +54,8 @@ class Box:
         self.scale = np.array([np.linalg.norm(self.ex),
                                np.linalg.norm(self.ey),
                                np.linalg.norm(self.ez)])
-
-        self._hash_value = hash(
-            hashlib.sha256(self.base).hexdigest() +
-            hashlib.sha256(self.ex).hexdigest() +
-            hashlib.sha256(self.ey).hexdigest() +
-            hashlib.sha256(self.ez).hexdigest()
-        )
-        self._points_generation = 0
         self._points = None
         self.ancestor = ancestor
-
-    def __hash__(self):
-        return self._hash_value
-
-    #def __eq__(self, other):
-    #    return np.all(np.equal(self.base, other.base)) and \
-    #           np.all(np.equal(self.ex, other.ex)) and \
-    #           np.all(np.equal(self.ey, other.ey)) and \
-    #           np.all(np.equal(self.ez, other.ez))
 
     def get_outer_boxes(self, global_box=GLOBAL_BOX):
         """Gets a list of outer boxes.
@@ -118,10 +102,11 @@ class Box:
             Individual point - single value, array of points - array of
             bools of shape (num_points,) is returned.
         """
+        p = np.array(p)
         p1 = p - self.base
         # ex, ey and ez are not normalized!
-        mat = np.hstack((self.ex, self.ey, self.ez)) / self.scale
-        proj = np.dot(p1, mat) / self.scale
+        mat = np.vstack((self.ex, self.ey, self.ez)) / self.scale
+        proj = np.dot(p1, mat.transpose()) / self.scale
         axis = 1 if len(p.shape) == 2 else 0
         return np.all(proj >= 0, axis=axis) * np.all(proj <= 1, axis=axis)
 
@@ -184,16 +169,11 @@ class Box:
         """Generates n random points inside the box."""
         points = np.random.random((n, 3)) * self.scale
         self._points = self._tr.apply2point(points)
-        self._points_generation += 1
         return self._points
 
     def get_random_points(self):
         """Gets already generated random points."""
         return self._points
-
-    def get_generation(self):
-        """Gets the last point generation number."""
-        return self._points_generation
 
     def volume(self):
         """Gets volume of the box."""
