@@ -19,7 +19,6 @@ class TestBox(unittest.TestCase):
                     if isinstance(bd['points'][j], bool):
                         self.assertEqual(ans, bd['points'][j])
                     else:
-                        print(ans)
                         self.assertListEqual(list(ans), bd['points'][j])
 
     def test_split(self):

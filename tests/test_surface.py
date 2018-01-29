@@ -11,6 +11,7 @@ from tests.surface_test_data import surface_create_data
 from tests.surface_test_data import surface_test_point_data
 from tests.surface_test_data import surface_test_box_data
 from tests.surface_test_data import surfobj_create_data
+from tests.surface_test_data import surface_test_projection_data
 
 
 trs = [
@@ -99,6 +100,19 @@ class TestSurfaceMethods(unittest.TestCase):
                     surf = TClass(*params)
                     result = surf.test_box(surface_test_box_data.box)
                     self.assertEqual(result, ans)
+
+    def test_projection(self):
+        for class_name, test_cases in surface_test_projection_data.data.items():
+            TClass = class_apply[class_name]
+            for i, params in enumerate(test_cases):
+                surf = TClass(*params['data'])
+                for j, p in enumerate(params['ans']):
+                    msg = class_name + ' case {0}, point {1}'.format(i, j)
+                    with self.subTest(msg=msg):
+                        result = surf.projection(np.array(
+                            surface_test_projection_data.points[j]
+                        ))
+                        np.testing.assert_array_almost_equal(result, p)
 
 
 class TestSurfaceCreation(unittest.TestCase):

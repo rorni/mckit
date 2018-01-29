@@ -309,8 +309,6 @@ class Plane(Surface):
 
     def _func(self, x, sign=+1):
         p = sign * (np.dot(x, self._v) + self._k)
-        if p.shape == (8,) and x.shape != (8, 3):
-            print(x.shape)
         return p
 
     def _grad(self, x, sign=+1):
