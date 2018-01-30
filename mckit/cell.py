@@ -380,9 +380,7 @@ class GeometryTerm:
         test_result : bool
             True, if this term is a superset of other one.
         """
-        ps = self.positive.issubset(other.positive)
-        ns = self.negative.issubset(other.negative)
-        return ps and ns
+        return other.is_subset(self)
 
     def is_subset(self, other):
         """Checks whether this term is a subset of other.
@@ -397,6 +395,10 @@ class GeometryTerm:
         test_result : bool
             True, if this term is a subset of other one.
         """
+        if self.is_empty():
+            return True
+        if other.is_empty():
+            return False
         ps = self.positive.issuperset(other.positive)
         ns = self.negative.issuperset(other.negative)
         return ps and ns
@@ -427,6 +429,9 @@ class GeometryTerm:
         simple_terms : list[GeometryTerm]
             List of simple variants of this term. Optional.
         """
+        if self.is_empty():
+            return (-1, [GeometryTerm(order=self.order)]) if return_simple else -1
+
         pos = {}
         neg = {}
         for s in self.positive:
@@ -443,17 +448,19 @@ class GeometryTerm:
 
         # Then take minimum element - this corresponds to the intersection
         # operation. See _intersection function below.
-        result = min(min(pos.keys()), min(neg.keys()))
+        result = min(list(pos.keys()) + list(neg.keys()))
         if return_simple:
+            pos_set = pos.get(result, set())
+            neg_set = neg.get(result, set())
             if result == 0:
-                new_term = [GeometryTerm(positive=pos[0], negative=neg[0],
+                new_term = [GeometryTerm(positive=pos_set, negative=neg_set,
                                          order=self.order)]
             elif result == -1:
                 new_term = []
-                for s in pos[-1]:
+                for s in pos_set:
                     new_term.append(GeometryTerm(positive={s},
                                                  order=self.order))
-                for s in neg[-1]:
+                for s in neg_set:
                     new_term.append(GeometryTerm(negative={s},
                                                  order=self.order))
             else:
