@@ -505,6 +505,10 @@ class AdditiveGeometry:
         Simplifies this geometry.
     complexity()
         Gets the complexity of the additive geometry description.
+    contains(other)
+        Checks if this geometry contains other as a subset.
+    equivalent(other)
+        Checks if this geometry description is equivalent to the other one.
     """
     def __init__(self, *terms):
         self.terms = []
@@ -512,11 +516,55 @@ class AdditiveGeometry:
         for i in range(n):
             if terms[i].is_empty():
                 continue
-            for j in range(n):
-                if i != j and terms[i].is_subset(terms[j]):
+            for t in (self.terms + list(terms[i+1:])):
+                if terms[i].is_subset(t):
                     break
             else:
                 self.terms.append(terms[i])
+
+    def contains(self, other):
+        """Checks if this geometry contains other as a subset.
+
+        This is, say, a naive method of testing. It does not take into account
+        the real surface shape. It is based only on surface names. In order to
+        clarify if this geometry really contains the other, use simplify method.
+        This geometry is believed to contain the other if every other term is
+        a subset of some term of this geometry.
+
+        Parameters
+        ----------
+        other : AdditiveGeometry
+            Other geometry.
+
+        Returns
+        -------
+        result : bool
+            True if other geometry is a subset of this one. False otherwise.
+        """
+        for t in other.terms:
+            for t0 in self.terms:
+                if t.is_subset(t0):
+                    break
+            else:
+                return False
+        return True
+
+    def equivalent(self, other):
+        """Checks if this geometry description is equivalent to the other one.
+
+        Parameters
+        ----------
+        other : AdditiveGeometry
+            Other Geometry.
+
+        Returns
+        -------
+        result : bool
+            True if this geometry description is equivalent to the other.
+            Equivalent means that the descriptions of geometries consist from
+            the same terms.
+        """
+        return self.contains(other) and other.contains(self)
 
     def union(self, other):
         """Gets a union of this geometry with other.
