@@ -647,13 +647,16 @@ class AdditiveGeometry:
             res, t_geoms = t.test_box(box, return_simple=True)
             if res not in terms.keys():
                 terms[res] = []
-            terms.append(t_geoms)
+            terms[res].append(t_geoms)
 
         result = max(terms.keys())
+        #print('=>', result, terms)
         if result == +1:
-            simple_geoms = [AdditiveGeometry(*ts) for ts in product(*terms[1])]
+            simple_geoms = [AdditiveGeometry(ts[0]) for ts in terms[1]]
+        elif result == -1:
+            simple_geoms = [AdditiveGeometry(*ts) for ts in product(*terms[-1])]
         else:
-            simple_geoms = [AdditiveGeometry(*terms[result])]
+            simple_geoms = [AdditiveGeometry(*[ts[0] for ts in terms[result]])]
         return result, simple_geoms
 
     def simplify(self, box, split_disjoint=False, min_volume=MIN_BOX_VOLUME):

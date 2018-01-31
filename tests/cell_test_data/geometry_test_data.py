@@ -11,7 +11,7 @@ surface_data = {
     10: ('px', [5]),
     11: ('px', [-1.5]),
     12: ('px', [1.6]),
-    13: ('py', [3.5])
+    13: ('py', [3.6])
 }
 
 terms = [
@@ -38,6 +38,145 @@ ag_create = [
      {'positive': {5, 8}, 'negative': {3, 9}}],
     [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
      {'positive': {12, 8}, 'negative': {9, 7, 10}}]
+]
+
+ag_box_data = [
+    (
+    {'base': [0, 0, -1], 'ex': [1.5, 0, 0], 'ey': [0, 1.5, 0], 'ez': [0, 0, 2]},
+    [(+1, [[{}]]), (+1, [[{}]]), (0, [[{'negative': {2}}]]), (+1, [[{}]]),
+     (+1, [[{}]])]
+    ),
+    (
+    {'base': [2.5, 0, -1], 'ex': [3, 0, 0], 'ey': [0, 2.5, 0], 'ez': [0, 0, 4]},
+    [(0, [[{'negative': {3, 9}}]]),
+     (0, [[{'negative': {3, 9}}, {'negative': {7, 9}}]]),
+     (0, [[{'negative': {7}}]]),
+     (0, [[{'negative': {3, 9}}, {'negative': {7}}, {'negative': {6}}]]),
+     (0, [[{'negative': {3, 9}}, {'negative': {7, 9, 10}}]])]
+    )
+]
+
+ag_intersection2 = [
+    [
+        [{}], [{}], [{}], [{}], [{}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
+         {'positive': {5, 8}, 'negative': {7, 3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}}]
+    ],
+    [
+        [{'positive': {5, 8, 11}, 'negative': {3, 9, 13}}],
+        [{'positive': {5, 8, 11}, 'negative': {3, 9, 13}}],
+        [{'positive': {5, 8, 11}, 'negative': {2, 3, 9, 13}},
+         {'positive': {5, 8, 11}, 'negative': {7, 3, 9, 13}}],
+        [{'positive': {5, 8, 11}, 'negative': {3, 9, 13}}],
+        [{'positive': {5, 8, 11}, 'negative': {3, 9, 13}}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {2, 3, 9}}],
+        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
+         {'positive': {8}, 'negative': {2, 3, 7, 9}}],
+        [{'negative': {2, 3}}],
+        [{'negative': {2, 3, 7}}, {'negative': {2, 3, 6}},
+         {'positive': {5, 8}, 'negative': {2, 3, 9}}],
+        [{'negative': {2, 3}}]
+    ],
+    [
+        [{'positive': {5, 8, 12}, 'negative': {3, 7, 9, 10}}],
+        [{'positive': {8, 12}, 'negative': {7, 9, 10}}],
+        [{'positive': {12, 8}, 'negative': {9, 7, 10}}],
+        [{'positive': {12, 8}, 'negative': {9, 7, 10}}],
+        [{'positive': {12, 8}, 'negative': {9, 7, 10}}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {3, 7, 9}}],
+        [{'positive': {8}, 'negative': {7, 9}}],
+        [{'positive': {8}, 'negative': {7, 9}}],
+        [{'positive': {8}, 'negative': {7, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 7, 9}},
+         {'positive': {8}, 'negative': {2, 3, 7, 9}},
+         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {3, 7, 9}}],
+        [{'positive': {8}, 'negative': {7, 9}}],
+        [{'negative': {7}}],
+        [{'negative': {7}}],
+        [{'positive': {5, 8}, 'negative': {3, 7, 9}}, {'negative': {2, 3, 7}},
+         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {3, 6, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 6, 9}},
+         {'positive': {8}, 'negative': {7, 6, 9}}],
+        [{'negative': {2, 3, 6}}, {'negative': {6, 7}}],
+        [{'negative': {6}}],
+        [{'positive': {5, 8}, 'negative': {3, 6, 9}}, {'negative': {2, 3, 6}},
+         {'positive': {12, 8}, 'negative': {9, 7, 6, 10}}]
+    ]
+]
+
+ag_intersection1 = [
+    [
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
+         {'positive': {5, 8}, 'negative': {3, 7, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}},
+         {'positive': {8}, 'negative': {7, 9}}],
+        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
+         {'positive': {8}, 'negative': {7, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}},
+         {'positive': {8}, 'negative': {7, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}},
+         {'positive': {8}, 'negative': {2, 3, 7, 9}},
+         {'positive': {12, 8}, 'negative': {7, 9, 10}}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
+         {'positive': {5, 8}, 'negative': {3, 7, 9}}],
+        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
+         {'positive': {8}, 'negative': {7, 9}}],
+        [{'negative': {2, 3}}, {'negative': {7}}],
+        [{'negative': {2, 3, 6}}, {'negative': {7}},
+         {'positive': {5, 8}, 'negative': {2, 3, 9}}],
+        [{'negative': {2, 3}}, {'positive': {5, 8}, 'negative': {3, 7, 9}},
+         {'positive': {12, 8}, 'negative': {7, 9, 10}}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}},
+         {'positive': {8}, 'negative': {7, 9}}],
+        [{'negative': {2, 3, 6}}, {'negative': {7}},
+         {'positive': {5, 8}, 'negative': {2, 3, 9}}],
+        [{'negative': {7}}, {'negative': {6}},
+         {'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}},
+         {'negative': {2, 3, 6}}, {'negative': {2, 3, 7}},
+         {'positive': {12, 8}, 'negative': {7, 9, 10}}]
+    ],
+    [
+        [{'positive': {5, 8}, 'negative': {3, 9}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}},
+         {'positive': {8}, 'negative': {2, 3, 7, 9}},
+         {'positive': {12, 8}, 'negative': {7, 9, 10}}],
+        [{'negative': {2, 3}}, {'positive': {5, 8}, 'negative': {3, 7, 9}},
+         {'positive': {12, 8}, 'negative': {7, 9, 10}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}},
+         {'negative': {2, 3, 6}}, {'negative': {2, 3, 7}},
+         {'positive': {12, 8}, 'negative': {7, 9, 10}}],
+        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
+         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
+    ]
 ]
 
 ag_union2 = [

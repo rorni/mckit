@@ -156,7 +156,22 @@ class TestAdditiveGeometry(unittest.TestCase):
                     self.assertEqual(u.equivalent(ans_geom), True)
 
     def test_intersection(self):
-        raise NotImplementedError
+        for i, ag1 in enumerate(self.additives):
+            for j, ag2 in enumerate(self.additives):
+                with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
+                    u = ag1.intersection(ag2)
+                    ans = [produce_term(a) for a in
+                           geometry_test_data.ag_intersection1[i][j]]
+                    ans_geom = AdditiveGeometry(*ans)
+                    self.assertEqual(u.equivalent(ans_geom), True)
+        for i, ag1 in enumerate(self.additives):
+            for j, t in enumerate(terms):
+                with self.subTest(msg='term i={0}, j={1}'.format(i, j)):
+                    u = ag1.intersection(t)
+                    ans = [produce_term(a) for a in
+                           geometry_test_data.ag_intersection2[j][i]]
+                    ans_geom = AdditiveGeometry(*ans)
+                    self.assertEqual(u.equivalent(ans_geom), True)
 
     def test_complement(self):
         for i, ag in enumerate(self.additives):
@@ -167,7 +182,35 @@ class TestAdditiveGeometry(unittest.TestCase):
                 self.assertEqual(c.equivalent(ans_geom), True)
 
     def test_box(self):
-        raise NotImplementedError
+        box_data = geometry_test_data.ag_box_data
+        for box_param, ans_array in box_data:
+            box = Box(box_param['base'], box_param['ex'], box_param['ey'],
+                      box_param['ez'])
+            for i, t in enumerate(self.additives):
+                with self.subTest(msg='result only case={0}'.format(i)):
+                    r = t.test_box(box)
+                    self.assertEqual(r, ans_array[i][0])
+        def printg(ag):
+            out = []
+            for t in ag.terms:
+                tl = {}
+                if len(t.negative) > 0:
+                    tl['negative'] = {s.options['name'] for s in t.negative}
+                if len(t.positive) > 0:
+                    tl['positive'] = {s.options['name'] for s in t.positive}
+                out.append(tl)
+            print(out)
+        for box_param, ans_array in box_data:
+            box = Box(box_param['base'], box_param['ex'], box_param['ey'],
+                      box_param['ez'])
+            for i, t in enumerate(self.additives):
+                with self.subTest(msg='result and simple case={0}'.format(i)):
+                    r, s = t.test_box(box, return_simple=True)
+                    printg(s[0])
+                    self.assertEqual(r, ans_array[i][0])
+                    ans = [produce_term(a) for a in ans_array[i][1][0]]
+                    ans_geom = AdditiveGeometry(*ans)
+                    self.assertEqual(s[0].equivalent(ans_geom), True)
 
     def test_simplify(self):
         raise NotImplementedError
