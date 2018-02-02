@@ -27,9 +27,11 @@ class Cell(dict):
         Gets bounding box for this cell.
     get_surfaces()
         Returns a set of surfaces that bound this cell.
-    populate()
+    intersection(other)
+        Returns an intersection of this cell with the other.
+    populate(universe)
         Fills this cell by universe.
-    simplify(split)
+    simplify(box, split_disjoint, min_volume)
         Simplifies cell description.
     test_point(p)
         Tests whether point(s) p belong to this cell (lies inside it).
@@ -37,32 +39,75 @@ class Cell(dict):
         Checks whether this cell intersects with the box.
     transform(tr)
         Applies transformation tr to this cell.
+    union(other)
+        Returns an union of this cell with the other.
     """
     def __init__(self, geometry_expr, **options):
         dict.__init__(self, options)
-        self._expression = geometry_expr.copy()
+        if isinstance(geometry_expr, AdditiveGeometry):
+            self._geometry = geometry_expr
+        else:
+            self._geometry = AdditiveGeometry(geometry_expr)
 
-    def simplify(self, global_box=GLOBAL_BOX, tol=1.0, split=False):
-        """Simplifies description of this cell.
-        
+    def intersection(self, other):
+        """Gets an intersection if this cell with the other.
+
+        Other cell is a geometry that bounds this one. The resulting cell
+        inherits all options of this one (the caller).
+
         Parameters
         ----------
-        global_box : Box
-            Global box where cell is considered.
-        tol : float
-            Absolute tolerance, when the process of box reduction has to be 
-            stopped.
-        split : bool
-            Indicate whether this cell should be split into simpler ones.
-            
+        other : Cell
+            Other cell.
+
         Returns
         -------
         cell : Cell
-            The simplified version of cell.
+            The result.
         """
-        bbox = self.bounding_box(box=global_box, tol=tol, adjust=True)
-        outer_boxes = bbox.get_outer_boxes(global_box=global_box)
+        geometry = self._geometry.intersection(other._geometry)
+        return Cell(geometry, **self)
 
+    def union(self, other):
+        """Gets an union if this cell with the other.
+
+        The resulting cell inherits all options of this one (the caller).
+
+        Parameters
+        ----------
+        other : Cell
+            Other cell.
+
+        Returns
+        -------
+        cell : Cell
+            The result.
+        """
+        geometry = self._geometry.union(other._geometry)
+        return Cell(geometry, **self)
+
+    def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
+                 min_volume=MIN_BOX_VOLUME):
+        """Simplifies description of this cell.
+
+        Parameters
+        ----------
+        box : Box
+            Global box where cell is considered. Default: GLOBAL_BOX.
+        split_disjoint : bool
+            Indicate whether this cell should be split if it consists of two
+            or more disjoint parts. Default: False - no split.
+        min_volume : float
+            Minimal volume, achieving which the process of box splitting is
+            stopped and result is returned.
+
+        Returns
+        -------
+        simple_cell : Cell or list[Cell]
+            The simplified version of cell. If splitting take place, then list
+            of simple cells is returned.
+        """
+        raise NotImplementedError
 
     def bounding_box(self, box=GLOBAL_BOX, tol=1.0, adjust=False):
         """Gets bounding box for this cell.
@@ -113,7 +158,7 @@ class Cell(dict):
 
         if adjust:
             # TODO: add correction of box orientation.
-            pass
+            raise NotImplementedError
         return box
 
     def get_surfaces(self):
@@ -124,25 +169,40 @@ class Cell(dict):
         surfaces : set
             Surfaces that bound this cell.
         """
-        surfaces = set()
-        for op in self._expression:
-            if isinstance(op, Surface):
-                surfaces.add(op)
-        return surfaces
+        return self._geometry.get_surfaces()
 
-    def populate(self):
+    def populate(self, universe=None):
         """Fills this cell by filling universe.
 
         If this cell doesn't contain fill options, the cell itself is returned
         as list of length 1. Otherwise a list of cells from filling universe
         bounded by cell being filled is returned.
 
+        Parameters
+        ----------
+        universe : Universe
+            Universe which cells fill this one. If None, universe from 'FILL'
+            option will be used. If no such universe, the cell itself will be
+            returned.
+
         Returns
         -------
-        cells : list
+        cells : list[Cell]
             Resulting cells.
         """
-        raise NotImplemented
+        if universe is None:
+            if 'FILL' in self.keys():
+                universe = self['FILL']
+            else:
+                return [self]
+        cells = []
+        for c in universe.cells:
+            new_cell = c.intersection(self)  # because properties like MAT, etc
+                                             # must be as in filling cell.
+            if 'U' in self.keys():
+                new_cell['U'] = self['U']    # except universe.
+            cells.append(new_cell)
+        return cells
 
     def test_point(self, p):
         """Tests whether point(s) p belong to this cell.
@@ -163,7 +223,7 @@ class Cell(dict):
             Individual point - single value, array of points - array of
             ints of shape (num_points,) is returned.
         """
-        return self._geometry_test(p, 'test_point')
+        return self._geometry.test_point(p)
 
     def calculate_volume(self, box, geometry=None, accuracy=1, pool_size=10000):
         """Calculates volume of the cell inside the box.
@@ -208,60 +268,7 @@ class Cell(dict):
              0 if the box (probably) intersects the cell.
             -1 if the box lies outside the cell.
         """
-        return self._geometry_test(box, 'test_box')
-
-    def _geometry_test(self, arg, method_name):
-        """Performs geometry test.
-
-        Parameters
-        ----------
-        arg : array_like
-            Objects which should be tested.
-        method_name : str
-            The name of Surface's method that must be invoked.
-
-        Returns
-        -------
-        test_results : np.ndarray
-            Test results.
-        """
-        stack = []
-        for op in self._expression:
-            if isinstance(op, Surface):
-                stack.append(getattr(op, method_name)(arg))
-            elif op == 'C':
-                stack.append(_complement(stack.pop()))
-            elif op == 'I':
-                stack.append(_intersection(stack.pop(), stack.pop()))
-            elif op == 'U':
-                stack.append(_union(stack.pop(), stack.pop()))
-        return stack.pop()
-
-    def _test_box(self, box, geometry):
-        op = geometry.pop()
-        ng = []
-        if isinstance(op, Surface):
-            s = op.test_box(box)
-        elif op == 'C':
-            a, ng = self._test_box(box, geometry)
-            s = _complement(a)
-        elif op == 'I' or op == 'U':
-            a, ng1 = self._test_box(box, geometry)
-            b, ng2 = self._test_box(box, geometry)
-            if op == 'I':
-                s = _intersection(a, b)
-            elif op == 'U':
-                s = _union(a, b)
-            if s == 0:
-                ng.extend(ng1)
-                ng.extend(ng2)
-        else:
-            s = op
-        if s == 0:
-            ng.append(op)
-        else:
-            ng = [s]
-        return s, ng
+        return self._geometry.test_box(box)
 
     def transform(self, tr):
         """Applies transformation to this cell.
@@ -276,13 +283,8 @@ class Cell(dict):
         cell : Cell
             The result of this cell transformation.
         """
-        new_expr = []
-        for op in self._expression:
-            if isinstance(op, Surface):
-                new_expr.append(op.transform(tr))
-            else:
-                new_expr.append(op)
-        return Cell(new_expr, **self)
+        geometry = self._geometry.transform(tr)
+        return Cell(geometry, **self)
 
 
 class GeometryTerm:
@@ -308,6 +310,8 @@ class GeometryTerm:
         Gets an intersection of this term with other.
     complement()
         Gets complement to this term.
+    get_surfaces()
+        Gets a set of surfaces from which the term consists of.
     is_superset(other)
         Checks whether this term is a superset of other.
     is_subset(other)
@@ -318,6 +322,10 @@ class GeometryTerm:
         Gets the complexity of term description.
     test_box(box)
         Checks whether this term intersects with the box.
+    test_point(p)
+        Checks whether point p belongs to geometry described by the term.
+    transform(tr)
+        Applies transformation tr to this term.
 
     Attributes
     ----------
@@ -341,6 +349,13 @@ class GeometryTerm:
             self.positive.update(positive)
         elif negative and not positive:
             self.negative.update(negative)
+
+    def get_surfaces(self):
+        """Gets a set of surfaces this term consists of."""
+        surfaces = set()
+        surfaces.update(self.positive)
+        surfaces.update(self.negative)
+        return surfaces
 
     def intersection(self, other):
         """Gets an intersection of this term with other.
@@ -476,6 +491,29 @@ class GeometryTerm:
         else:
             return result
 
+    def test_point(self, p):
+        """Tests whether point(s) p belong to this term geometry.
+
+        Parameters
+        ----------
+        p : array_like[float]
+            Coordinates of point(s) to be checked. If it is the only one point,
+            then p.shape=(3,). If it is an array of points, then
+            p.shape=(num_points, 3).
+
+        Returns
+        -------
+        result : int or numpy.ndarray[int]
+            If the point lies inside geometry, then +1 value is returned.
+            If point lies on the boundary, 0 is returned.
+            If point lies outside of the geometry, -1 is returned.
+            Individual point - single value, array of points - array of
+            ints of shape (num_points,) is returned.
+        """
+        pos_test = [s.test_point(p) for s in self.positive]
+        neg_test = [_complement(s.test_point(p)) for s in self.negative]
+        return reduce(_intersection, pos_test + neg_test)
+
     def complexity(self):
         """Gets complexity of term description.
 
@@ -488,6 +526,24 @@ class GeometryTerm:
             Geometry complexity.
         """
         return len(self.positive) + len(self.negative)
+
+    def transform(self, tr):
+        """Applies transformation to this term.
+
+        Parameters
+        ----------
+        tr : Transform
+            Transformation to be applied.
+
+        Returns
+        -------
+        term : GeometryTerm
+            The result of this term transformation.
+        """
+        positive = {s.transform(tr) for s in self.positive}
+        negative = {s.transform(tr) for s in self.negative}
+        return GeometryTerm(positive=positive, negative=negative,
+                            order=self.order, mandatory=self.mandatory)
 
 
 class AdditiveGeometry:
@@ -516,6 +572,12 @@ class AdditiveGeometry:
         Checks if this geometry contains other as a subset.
     equivalent(other)
         Checks if this geometry description is equivalent to the other one.
+    get_surfaces()
+        Gets a set of surfaces this geometry consists of.
+    test_point(p)
+        Tests if point p belongs to this geometry.
+    transform(tr)
+        Transforms this geometry.
     """
     def __init__(self, *terms):
         self.terms = []
@@ -541,6 +603,13 @@ class AdditiveGeometry:
                                   t.positive}
             out.append(str(tl))
         return '[' + ', '.join(out) + ']'
+
+    def get_surfaces(self):
+        """Gets a set of surfaces this geometry consists of."""
+        surfaces = set()
+        for t in self.terms:
+            surfaces.update(t.get_surfaces())
+        return surfaces
 
     def contains(self, other):
         """Checks if this geometry contains other as a subset.
@@ -670,7 +739,7 @@ class AdditiveGeometry:
             terms[res].append(t_geoms)
 
         result = max(terms.keys())
-        #print('=>', result, terms)
+        # print('=>', result, terms)
         if result == +1:
             simple_geoms = [AdditiveGeometry(ts[0]) for ts in terms[1]]
         elif result == -1:
@@ -678,6 +747,44 @@ class AdditiveGeometry:
         else:
             simple_geoms = [AdditiveGeometry(*[ts[0] for ts in terms[result]])]
         return result, simple_geoms
+
+    def test_point(self, p):
+        """Tests whether point(s) p belong to this geometry.
+
+        Parameters
+        ----------
+        p : array_like[float]
+            Coordinates of point(s) to be checked. If it is the only one point,
+            then p.shape=(3,). If it is an array of points, then
+            p.shape=(num_points, 3).
+
+        Returns
+        -------
+        result : int or numpy.ndarray[int]
+            If the point lies inside geometry, then +1 value is returned.
+            If point lies on the boundary, 0 is returned.
+            If point lies outside of the geometry, -1 is returned.
+            Individual point - single value, array of points - array of
+            ints of shape (num_points,) is returned.
+        """
+        test_term = [t.test_point(p) for t in self.tests]
+        return reduce(_union, test_term)
+
+    def transform(self, tr):
+        """Applies transformation to this geometry.
+
+        Parameters
+        ----------
+        tr : Transform
+            Transformation to be applied.
+
+        Returns
+        -------
+        geometry : AdditiveGeometry
+            The result of this geometry transformation.
+        """
+        terms = [t.transform(tr) for t in self.terms]
+        return AdditiveGeometry(*terms)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
                  min_volume=MIN_BOX_VOLUME):
