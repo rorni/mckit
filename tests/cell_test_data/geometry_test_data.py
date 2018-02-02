@@ -29,6 +29,27 @@ additives = [
     [0, 1, 2], [1, 2, 4, 5], [3, 6], [6, 7, 1], [1, 2, 3, 4]
 ]
 
+ag_polish_data = [
+    (
+        [2], [{'positive': {2}}]
+    ),
+    (
+        [2, 'C'], [{'negative': {2}}]
+    ),
+    (
+        [2, 'C', 3, 'C', 'I', 5, 'I'], [{'positive': {5}, 'negative': {2, 3}}]
+    ),
+    (
+        [2, 'C', 3, 'C', 'I', 7, 'U'], [{'positive': {7}}, {'negative': {2, 3}}]
+    ),
+    (
+        [2, 3, 'U', 5, 'I'], [{'positive': {2, 5}}, {'positive': {3, 5}}]
+    ),
+    (
+        [2, 3, 'C', 'I', 'C'], [{'negative': {2}}, {'positive': {3}}]
+    )
+]
+
 ag_create = [
     [{'positive': {5, 8}, 'negative': {3, 9}}],
     [{'positive': {5, 8}, 'negative': {3, 9}},
@@ -38,6 +59,16 @@ ag_create = [
      {'positive': {5, 8}, 'negative': {3, 9}}],
     [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
      {'positive': {12, 8}, 'negative': {9, 7, 10}}]
+]
+
+ag_simplify = [
+    [{'positive': {5, 8}, 'negative': {3, 9}}],
+    [{'positive': {5, 8}, 'negative': {3, 9}},
+     {'positive': {8}, 'negative': {7, 9}}],
+    [{'negative': {2}}, {'negative': {7}}],
+    [{'negative': {7}}, {'positive': {5, 8}, 'negative': {3, 9}}],
+    [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2}},
+     {'positive': {8}, 'negative': {9, 7, 10}}]
 ]
 
 ag_box_data = [

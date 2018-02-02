@@ -299,6 +299,8 @@ class GeometryTerm:
     order : int
         A position in the list of terms of AdditiveGeometry instance. It is
         used for internal purposes.
+    mandatory : bool
+        Indicate whether this term is necessary for geometry. Default: True.
 
     Methods
     -------
@@ -326,10 +328,12 @@ class GeometryTerm:
     order : int
         Position in the terms list.
     """
-    def __init__(self, positive=None, negative=None, order=None):
+    def __init__(self, positive=None, negative=None, order=None,
+                 mandatory=True):
         self.positive = set()
         self.negative = set()
         self.order = order
+        self.mandatory = mandatory
         if positive and negative and not positive.intersection(negative):
             self.positive.update(positive)
             self.negative.update(negative)
@@ -355,7 +359,8 @@ class GeometryTerm:
             return GeometryTerm(order=self.order)
         return GeometryTerm(positive=self.positive.union(other.positive),
                             negative=self.negative.union(other.negative),
-                            order=self.order)
+                            order=self.order,
+                            mandatory=self.mandatory or other.mandatory)
 
     def complement(self):
         """Gets a complement to this term.
@@ -459,10 +464,12 @@ class GeometryTerm:
                 new_term = []
                 for s in pos_set:
                     new_term.append(GeometryTerm(positive={s},
-                                                 order=self.order))
+                                                 order=self.order,
+                                                 mandatory=False))
                 for s in neg_set:
                     new_term.append(GeometryTerm(negative={s},
-                                                 order=self.order))
+                                                 order=self.order,
+                                                 mandatory=False))
             else:
                 new_term = [GeometryTerm(order=self.order)]
             return result, new_term
@@ -521,6 +528,19 @@ class AdditiveGeometry:
                     break
             else:
                 self.terms.append(terms[i])
+
+    def __str__(self):
+        out = []
+        for t in self.terms:
+            tl = {}
+            if len(t.negative) > 0:
+                tl['negative'] = {s.options['name'] for s in
+                                  t.negative}
+            if len(t.positive) > 0:
+                tl['positive'] = {s.options['name'] for s in
+                                  t.positive}
+            out.append(str(tl))
+        return '[' + ', '.join(out) + ']'
 
     def contains(self, other):
         """Checks if this geometry contains other as a subset.
@@ -659,7 +679,8 @@ class AdditiveGeometry:
             simple_geoms = [AdditiveGeometry(*[ts[0] for ts in terms[result]])]
         return result, simple_geoms
 
-    def simplify(self, box, split_disjoint=False, min_volume=MIN_BOX_VOLUME):
+    def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
+                 min_volume=MIN_BOX_VOLUME):
         """Simplifies this geometry by removing unnecessary surfaces.
 
         The simplification procedure goes in the following way.
@@ -680,26 +701,52 @@ class AdditiveGeometry:
         simple : AdditiveGeometry or list[AdditiveGeometry]
             Simple form of this geometry.
         """
+        for i, t in enumerate(self.terms):
+            t.order = i
+        simple_geoms = self._simplify(box, split_disjoint, min_volume)
+        # remove not mandatory terms
+        simplest = []
+        for sg in simple_geoms:
+            terms = [t for t in sg.terms if t.mandatory]
+            simplest.append(AdditiveGeometry(*terms))
+        # TODO: implement choosing of the simplest geometry representation
+        # TODO: implement splitting of disjoint cells.
+        return simplest
+
+    def _simplify(self, box, split_disjoint, min_volume):
         result, simple_geoms = self.test_box(box, return_simple=True)
-        if result == -1:
+        if result == -1 or box.volume() <= min_volume:
             return simple_geoms
 
         # This is the case result == 0 or 1.
         simple = []
+        # comple = []  It is not used for now. It is intended to count
+        # complexities of geometries for their selection.
         for geom in simple_geoms:
-            if geom.complexity() == 1 or box.volume() <= min_volume:
+            c = geom.complexity()
+            if c <= 1:
                 simple.append(geom)
+                # comple.append(c)
                 continue
             # If geometry is too complex and box is too large -> we split box.
             box1, box2 = box.split()
-            simp_geoms1 = geom.simplify(box1, split_disjoint=split_disjoint,
+            simp_geoms1 = geom._simplify(box1, split_disjoint=split_disjoint,
                                         min_volume=min_volume)
-            simp_geoms2 = geom.simplify(box2, split_disjoint=split_disjoint,
+            simp_geoms2 = geom._simplify(box2, split_disjoint=split_disjoint,
                                         min_volume=min_volume)
             # Now merge results
             for adg1, adg2 in product(simp_geoms1, simp_geoms2):
-                simple.append(adg1.merge_geometries(adg2))
-        return simple
+                ag = adg1.merge_geometries(adg2)
+                for a in simple:
+                    if ag.equivalent(a):
+                        break
+                else:
+                    c = ag.complexity()
+                    if c > 0:
+                        simple.append(ag)
+                        # comple.append(c)
+        # simple_sort = [simple[i] for i in np.argsort(comple)[:15]]
+        return simple #_sort
 
     def merge_geometries(self, other):
         """Merges descriptions of two geometries.
@@ -714,9 +761,6 @@ class AdditiveGeometry:
         new_geom : AdditiveGeometry
             New merged geometry.
         """
-        # TODO: consider simplification of terms that occur only from -1 terms.
-        # TODO: When merging at last they should be avoided if they have not
-        # TODO: took part in merging procedure.
         self_t = {t.order: t for t in self.terms}
         other_t = {t.order: t for t in other.terms}
         for k, t in other_t.items():
@@ -763,8 +807,6 @@ class AdditiveGeometry:
                 g2 = operands.pop()
                 operands.append(g1.union(g2))
         a_geom = operands.pop()
-        if isinstance(a_geom, GeometryTerm):
-            a_geom = AdditiveGeometry(a_geom)
         return a_geom
 
 

@@ -190,30 +190,27 @@ class TestAdditiveGeometry(unittest.TestCase):
                 with self.subTest(msg='result only case={0}'.format(i)):
                     r = t.test_box(box)
                     self.assertEqual(r, ans_array[i][0])
-        def printg(ag):
-            out = []
-            for t in ag.terms:
-                tl = {}
-                if len(t.negative) > 0:
-                    tl['negative'] = {s.options['name'] for s in t.negative}
-                if len(t.positive) > 0:
-                    tl['positive'] = {s.options['name'] for s in t.positive}
-                out.append(tl)
-            print(out)
         for box_param, ans_array in box_data:
             box = Box(box_param['base'], box_param['ex'], box_param['ey'],
                       box_param['ez'])
             for i, t in enumerate(self.additives):
                 with self.subTest(msg='result and simple case={0}'.format(i)):
                     r, s = t.test_box(box, return_simple=True)
-                    printg(s[0])
                     self.assertEqual(r, ans_array[i][0])
                     ans = [produce_term(a) for a in ans_array[i][1][0]]
                     ans_geom = AdditiveGeometry(*ans)
                     self.assertEqual(s[0].equivalent(ans_geom), True)
 
     def test_simplify(self):
-        raise NotImplementedError
+        for i, ag in enumerate(self.additives):
+            with self.subTest(i=i):
+                s = ag.simplify(min_volume=0.1, box=Box([-10, -10, -10], [26, 0, 0], [0, 20, 0], [0, 0, 20]))
+                # print(i, len(s))
+                # for ss in s:
+                #     print(str(ss))
+                ans = [produce_term(a) for a in geometry_test_data.ag_simplify[i]]
+                ans_geom = AdditiveGeometry(*ans)
+                self.assertEqual(ans_geom.equivalent(s[0]), True)
 
     def test_complexity(self):
         for i, ag in enumerate(self.additives):
@@ -221,11 +218,23 @@ class TestAdditiveGeometry(unittest.TestCase):
                 c = ag.complexity()
                 self.assertEqual(c, geometry_test_data.ag_complexity_ans[i])
 
-    def test_merge_geometries(self):
-        raise NotImplementedError
+    # def test_merge_geometries(self):
+    #     raise NotImplementedError
 
     def test_from_polish_notation(self):
-        raise NotImplementedError
+        for i, (pol_data, ans_data) in enumerate(geometry_test_data.ag_polish_data):
+            pol_geom = []
+            for x in pol_data:
+                if isinstance(x, int):
+                    pol_geom.append(surfaces[x])
+                else:
+                    pol_geom.append(x)
+            with self.subTest(i=i):
+                ans = [produce_term(a) for a in ans_data]
+                ans_geom = AdditiveGeometry(*ans)
+                ag = AdditiveGeometry.from_polish_notation(pol_geom)
+                # print(str(ag))
+                self.assertEqual(ag.equivalent(ans_geom), True)
 
 
 if __name__ == '__main__':
