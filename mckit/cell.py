@@ -53,7 +53,7 @@ class AdditiveGeometry:
         for i in range(n):
             if terms[i].is_empty():
                 continue
-            for t in (self.terms + list(terms[i+1:])):
+            for t in (list(self.terms) + list(terms[i+1:])):
                 if terms[i].is_subset(t):
                     break
             else:
@@ -140,7 +140,7 @@ class AdditiveGeometry:
         """
         if isinstance(other, GeometryTerm):
             other = AdditiveGeometry(other)
-        return AdditiveGeometry(*(self.terms + other.terms))
+        return AdditiveGeometry(*(self.terms | other.terms))
 
     def intersection(self, other):
         """Gets an intersection of this geometry with other.
@@ -211,11 +211,11 @@ class AdditiveGeometry:
         result = max(terms.keys())
         # print('=>', result, terms)
         if result == +1:
-            simple_geoms = {AdditiveGeometry(ts[0]) for ts in terms[1]}
+            simple_geoms = {AdditiveGeometry(ts.pop()) for ts in terms[1]}
         elif result == -1:
             simple_geoms = {AdditiveGeometry(*ts) for ts in product(*terms[-1])}
         else:
-            simple_geoms = {AdditiveGeometry(*[ts[0] for ts in terms[result]])}
+            simple_geoms = {AdditiveGeometry(*[ts.pop() for ts in terms[result]])}
         return result, simple_geoms
 
     def test_point(self, p):
@@ -237,7 +237,7 @@ class AdditiveGeometry:
             Individual point - single value, array of points - array of
             ints of shape (num_points,) is returned.
         """
-        test_term = [t.test_point(p) for t in self.tests]
+        test_term = [t.test_point(p) for t in self.terms]
         return reduce(_union, test_term)
 
     def transform(self, tr):
@@ -373,7 +373,7 @@ class AdditiveGeometry:
             # adjust upper bound
             mlt = 1
             ratio = 0.5
-            while (1 - ratio) * box.scale[dim] > tol:
+            while (1 - ratio) * box.scale[dim] > tol * 0.1:
                 box1, box2 = box.split(dim, ratio)
                 t2 = self.test_box(box2)
                 if t2 == -1:
@@ -385,7 +385,7 @@ class AdditiveGeometry:
             # adjust lower bound
             mlt = 1
             ratio = 0.5
-            while ratio * box.scale[dim] > tol:
+            while ratio * box.scale[dim] > tol * 0.44:
                 box1, box2 = box.split(dim, ratio)
                 t1 = self.test_box(box1)
                 if t1 == -1:
@@ -469,7 +469,7 @@ class Cell(dict, AdditiveGeometry):
     def __init__(self, geometry, **options):
         if isinstance(geometry, list):
             geometry = AdditiveGeometry.from_polish_notation(geometry)
-        AdditiveGeometry.__init__(*geometry.terms)
+        AdditiveGeometry.__init__(self, *geometry.terms)
         dict.__init__(self, options)
 
     def intersection(self, other):
@@ -670,9 +670,9 @@ class GeometryTerm:
     def __str__(self):
         entities = []
         for s in self.positive:
-            entities.append(s.options['name'])
+            entities.append(str(s.options['name']))
         for s in self.negative:
-            entities.append('-' + s.options['name'])
+            entities.append('-' + str(s.options['name']))
         return ' '.join(entities)
 
     def get_surfaces(self):
@@ -775,7 +775,7 @@ class GeometryTerm:
             List of simple variants of this term. Optional.
         """
         if self.is_empty():
-            return (-1, [GeometryTerm(order=self.order)]) if return_simple else -1
+            return (-1, {GeometryTerm(order=self.order)}) if return_simple else -1
 
         pos = {}
         neg = {}
