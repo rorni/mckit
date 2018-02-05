@@ -371,29 +371,25 @@ class AdditiveGeometry:
             raise ValueError("Initial box size is too small.")
         for dim in range(3):
             # adjust upper bound
-            mlt = 1
-            ratio = 0.5
-            while (1 - ratio) * box.scale[dim] > tol * 0.1:
+            lower = 0
+            while (box.scale[dim] - lower) > tol:
+                ratio = 0.5 * (lower + box.scale[dim]) / box.scale[dim]
                 box1, box2 = box.split(dim, ratio)
                 t2 = self.test_box(box2)
                 if t2 == -1:
                     box = box1
-                    ratio = 0.5 * mlt
                 else:
-                    ratio = 0.5 * (1 + ratio)
-                    mlt = (3 * ratio - 1) / ratio
+                    lower = box1.scale[dim]
             # adjust lower bound
-            mlt = 1
-            ratio = 0.5
-            while ratio * box.scale[dim] > tol * 0.44:
+            upper = 0
+            while (box.scale[dim] - upper) > tol:
+                ratio = 0.5 * (box.scale[dim] - upper) / box.scale[dim]
                 box1, box2 = box.split(dim, ratio)
                 t1 = self.test_box(box1)
                 if t1 == -1:
                     box = box2
-                    ratio = 0.5 * mlt
                 else:
-                    ratio = 0.5 * ratio
-                    mlt = 0.5 * ratio / (1 - ratio)
+                    upper = box2.scale[dim]
 
         if adjust:
             # TODO: add correction of box orientation.
