@@ -295,7 +295,7 @@ class Plane(Surface):
         self._k = k
 
     def transform(self, tr):
-        return Plane(self._v, self._k, transform=tr)
+        return Plane(self._v, self._k, transform=tr, **self.options)
 
     def test_box(self, box):
         # Test sense of all region vertices.
@@ -344,7 +344,7 @@ class Sphere(Surface):
         return self._center + self._radius * n
 
     def transform(self, tr):
-        return Sphere(self._center, self._radius, transform=tr)
+        return Sphere(self._center, self._radius, transform=tr, **self.options)
 
     def _func(self, x, sign=+1):
         dist = x - self._center
@@ -389,7 +389,8 @@ class Cylinder(Surface):
         return b + self._radius * a / np.linalg.norm(a)
 
     def transform(self, tr):
-        return Cylinder(self._pt, self._axis, self._radius, transform=tr)
+        return Cylinder(self._pt, self._axis, self._radius, transform=tr,
+                        **self.options)
 
     def _func(self, x, sign=+1):
         a = x - self._pt
@@ -432,7 +433,8 @@ class Cone(Surface):
         raise NotImplementedError
 
     def transform(self, tr):
-        return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr)
+        return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr,
+                    **self.options)
 
     def _func(self, x, sign=+1):
         a = x - self._apex
@@ -479,7 +481,8 @@ class GQuadratic(Surface):
         raise NotImplementedError
 
     def transform(self, tr):
-        return GQuadratic(self._m, self._v, self._k, transform=tr)
+        return GQuadratic(self._m, self._v, self._k, transform=tr,
+                          **self.options)
 
     def _func(self, x, sign=+1):
         # TODO: Check mclight project for possible performance improvement.
@@ -549,7 +552,7 @@ class Torus(Surface):
 
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b,
-                     transform=tr)
+                     transform=tr, **self.options)
 
     def _func(self, x, sign=+1):
         p = x - self._center
