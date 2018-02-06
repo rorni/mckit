@@ -16,8 +16,9 @@ class GeometryNode:
 
     Parameters
     ----------
-    operation : function
-        An operation to be applied to args. It can be _intersection or _union.
+    operation : str
+        An operation identifier to be applied to args. It can be 'U' for union
+        and 'I' for intersection.
     positive : set
         A set of surfaces that have positive sense with respect to the part
         of space described by GeometryNode.
@@ -27,12 +28,16 @@ class GeometryNode:
     mandatory : bool
         Indicate if this term is mandatory. Important in union operations.
     """
+    _operations = (_intersection, _union)
+    _operation_code = {'I': 0, 'U': 1, 0: 0, 1: 1}
+
     def __init__(self, operation, positive=set(), negative=set(),
-                 mandatory=True):
-        self.operation = operation
+                 mandatory=True, order=None):
+        self._opc = self._operation_code[operation]
         self.positive = set()
         self.negative = set()
         self.mandatory = mandatory
+        self.order = order
 
         pos_new = {p for p in self.positive if isinstance(p, Surface) or
                    not p.is_empty()}
@@ -54,20 +59,25 @@ class GeometryNode:
             self.negative.update(negative)
         # calculate hash value
         pos = reduce(xor, [hash(s) for s in self.positive], 0)
-        neg = reduce(xor, [~hash(s) for s in self.negative], 0)
-        self._hash_value = xor(xor(pos, neg), id(operation))
+        neg = reduce(xor, [~hash(s) for s in self.negative], ~0)
+        op_hash = 0 if self._opc == 0 else ~0
+        self._hash_value = xor(xor(pos, neg), op_hash)
 
     def __hash__(self):
         return self._hash_value
 
     def __eq__(self, other):
-        return self.operation == other.operation and \
+        return other.is_of_type(self._opc) and \
                self.positive == other.positive and \
                self.negative == other.negative
 
     def is_empty(self):
         """Checks if this geometry is an empty set."""
         return len(self.positive) + len(self.negative) == 0
+
+    def is_of_type(self, opc):
+        """Checks if the geometry node has the same type of operation."""
+        return self._opc == opc
 
     def test_box(self, box, return_simple=False):
         """Checks if the geometry intersects the box.
@@ -94,22 +104,51 @@ class GeometryNode:
         if not return_simple:
             pos = [a.test_box(box) for a in self.positive]
             neg = [-1 * a.test_box(box) for a in self.negative]
-            return reduce(self.operation, pos + neg)
+            return reduce(self._operations[self._opc], pos + neg)
 
         pos = {}
         neg = {}
-        for s in self.positive:
-            res = s.test_box(box)
+        for g in self.positive:
+            if isinstance(g, Surface):
+                res = g.test_box(box)
+                simp = g
+            else:
+                res, simp = g.test_box(box, return_simple=True)
             if res not in pos.keys():
                 pos[res] = set()
-            pos[res].add(s)
-        for s in self.negative:
-            res = -1 * s.test_box(box)
-            #      ^ -1 means take complement to the every entity in the set.
+            pos[res].add(simp)
+        for g in self.negative:
+            if isinstance(g, Surface):
+                res = g.test_box(box)
+                simp = g
+            else:
+                res, simp = g.test_box(box, return_simple=True)
+            res *= -1
             if res not in neg.keys():
                 neg[res] = set()
-            neg[res].add(s)
-
+            neg[res].add(simp)
+        # Now calculate the result
+        result = reduce(self._operations[self._opc], list(pos.keys()) + list(neg.keys()))
+        pos_set = pos.get(result, set())
+        neg_set = neg.get(result, set())
+        if result == 0:
+            simp_geom = {GeometryNode(self._opc, positive=pos_set,
+                                      negative=neg_set,
+                                      order=self.order)}
+        elif result == -1 and self._opc == 0 or result == +1 and self._opc == 1:
+            simp_geom = set()
+            for g in pos_set:
+                simp_geom.add(GeometryNode(self._opc, positive={g},
+                                           order=self.order))
+            for g in neg_set:
+                simp_geom.add(GeometryNode(self._opc, negative={g},
+                                           order=self.order))
+        else:
+            for g in pos_set | neg_set:
+                g.mandatory = False
+            simp_geom = {GeometryNode(self._opc, positive=pos_set,
+                                      negative=neg_set, order=self.order)}
+        return result, simp_geom
 
     def test_point(self, p):
         """Tests whether point(s) p belong to this geometry.
@@ -132,7 +171,7 @@ class GeometryNode:
         """
         pos = [a.test_point(p) for a in self.positive]
         neg = [-1 * a.test_point(p) for a in self.negative]
-        return reduce(self.operation, pos + neg)
+        return reduce(self._operations[self._opc], pos + neg)
 
     def transform(self, tr):
         """Transforms this geometry.
@@ -149,8 +188,8 @@ class GeometryNode:
         """
         pos = {a.transform(tr) for a in self.positive}
         neg = {a.transform(tr) for a in self.negative}
-        return GeometryNode(self.operation, positive=pos, negative=neg,
-                            mandatory=self.mandatory)
+        return GeometryNode(self._operations[self._opc], positive=pos,
+                            negative=neg, mandatory=self.mandatory)
 
     def get_surfaces(self):
         """Gets all surfaces that describes the geometry.
@@ -178,355 +217,7 @@ class GeometryNode:
                 comp += arg.complexity()
         return comp
 
-    def bounding_box(self, box=GLOBAL_BOX, tol=1):
-        raise NotImplementedError
-
-    def volume(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME,
-               rand_points_num=1000):
-        raise NotImplementedError
-
-    def simplify(self, box, min_volume):
-        raise NotImplementedError
-
-
-class AdditiveGeometry:
-    """A geometry that is described by a union of GeometryTerm's.
-
-    Parameters
-    ----------
-    terms : list[GeometryTerm]
-        A list of terms this geometry consists from.
-
-    Methods
-    -------
-    bounding_box()
-        Gets bounding box for this cell.
-    complement()
-        Gets a complement to this geometry.
-    complexity()
-        Gets the complexity of the additive geometry description.
-    contains(other)
-        Checks if this geometry contains other as a subset.
-    get_simplest(other):
-        Gets geometry with the simplest description.
-    get_surfaces()
-        Returns a set of surfaces that bound this cell.
-    intersection(other)
-        Gets an intersection of this geometry with other.
-    simplify(box)
-        Simplifies this geometry.
-    test_box(box)
-        Checks if this geometry intersects the box.
-    test_point(p)
-        Tests if point p belongs to this geometry.
-    transform(tr)
-        Transforms this geometry.
-    union(other)
-        Gets a union of this geometry with other.
-    volume()
-    """
-    def __init__(self, *terms):
-        self.terms = set()
-        n = len(terms)
-        for i in range(n):
-            if terms[i].is_empty():
-                continue
-            for t in (list(self.terms) + list(terms[i+1:])):
-                if terms[i].is_subset(t):
-                    break
-            else:
-                self.terms.add(terms[i])
-        # calculate hash value
-        self._hash_value = reduce(xor, [hash(t) for t in self.terms], 0)
-
-    def __hash__(self):
-        return self._hash_value
-
-    def __eq__(self, other):
-        return self.terms == other.terms
-
-    def __str__(self):
-        return ':'.join([str(t) for t in self.terms])
-
-    def get_simplest(self, other):
-        """Gets geometry with the simplest description.
-
-        The geometry is assumed to be simplest if it has the shortest
-        description, i.e. the lowest complexity.
-
-        Parameters
-        ----------
-        other : AdditiveGeometry
-            Other geometry for comparison.
-
-        Returns
-        -------
-        simplest : AdditiveGeometry
-            The simplest geometry.
-        """
-        if self.complexity() < other.complexity():
-            return self
-        else:
-            return other
-
-    def get_surfaces(self):
-        """Gets a set of surfaces this geometry consists of."""
-        surfaces = set()
-        for t in self.terms:
-            surfaces.update(t.get_surfaces())
-        return surfaces
-
-    def contains(self, other):
-        """Checks if this geometry contains other as a subset.
-
-        This is, say, a naive method of testing. It does not take into account
-        the real surface shape. It is based only on surface names. In order to
-        clarify if this geometry really contains the other, use simplify method.
-        This geometry is believed to contain the other if every other term is
-        a subset of some term of this geometry.
-
-        Parameters
-        ----------
-        other : AdditiveGeometry
-            Other geometry.
-
-        Returns
-        -------
-        result : bool
-            True if other geometry is a subset of this one. False otherwise.
-        """
-        for t in other.terms:
-            for t0 in self.terms:
-                if t.is_subset(t0):
-                    break
-            else:
-                return False
-        return True
-
-    def union(self, other):
-        """Gets a union of this geometry with other.
-
-        Parameters
-        ----------
-        other : AdditiveGeometry or GeometryTerm
-            Other geometry for union.
-
-        Returns
-        -------
-        result : AdditiveGeometry
-            The result of union.
-        """
-        if isinstance(other, GeometryTerm):
-            other = AdditiveGeometry(other)
-        return AdditiveGeometry(*(self.terms | other.terms))
-
-    def intersection(self, other):
-        """Gets an intersection of this geometry with other.
-
-        Parameters
-        ----------
-        other : AdditiveGeometry or GeometryTerm
-            Other geometry for intersection.
-
-        Returns
-        -------
-        result : AdditiveGeometry
-            The result of intersection.
-        """
-        if isinstance(other, GeometryTerm):
-            other = AdditiveGeometry(other)
-        terms = [a.intersection(b) for a, b in product(self.terms, other.terms)]
-        return AdditiveGeometry(*terms)
-
-    def complement(self):
-        """Gets complement to this set.
-
-        Returns
-        -------
-        result : AdditiveGeometry
-            The result of complement.
-        """
-        unions = []
-        for t in self.terms:
-            pos_t = [GeometryTerm(positive={a}) for a in t.negative] + \
-                    [GeometryTerm(negative={a}) for a in t.positive]
-            unions.append(AdditiveGeometry(*pos_t))
-        return reduce(AdditiveGeometry.intersection, unions)
-
-    def test_box(self, box, return_simple=False):
-        """Checks if the geometry intersects the box.
-
-        Parameters
-        ----------
-        box : Box
-            Box for checking.
-        return_simple : bool
-            Indicate whether to return simpler form of the geometry. Unimportant
-            surfaces for judging this box (and all contained boxes, of course)
-            are removed then.
-
-        Returns
-        -------
-        result : int
-            Test result. It equals one of the following values:
-            +1 if the box lies entirely inside the cell.
-             0 if the box (probably) intersects the cell.
-            -1 if the box lies outside the cell.
-        simple_geoms : set[AdditiveGeometry]
-            List of simple variants of this geometry. Optional.
-        """
-        if not return_simple:
-            # max - gets a union of terms. See _union function below.
-            return np.amax([t.test_box(box) for t in self.terms])
-
-        terms = {}  # test_result -> list of terms that lead to this result.
-        for t in self.terms:
-            res, t_geoms = t.test_box(box, return_simple=True)
-            if res not in terms.keys():
-                terms[res] = []
-            terms[res].append(t_geoms)
-
-        result = max(terms.keys())
-        # print('=>', result, terms)
-        if result == +1:
-            simple_geoms = {AdditiveGeometry(ts.pop()) for ts in terms[1]}
-        elif result == -1:
-            simple_geoms = {AdditiveGeometry(*ts) for ts in product(*terms[-1])}
-        else:
-            simple_geoms = {AdditiveGeometry(*[ts.pop() for ts in terms[result]])}
-        return result, simple_geoms
-
-    def test_point(self, p):
-        """Tests whether point(s) p belong to this geometry.
-
-        Parameters
-        ----------
-        p : array_like[float]
-            Coordinates of point(s) to be checked. If it is the only one point,
-            then p.shape=(3,). If it is an array of points, then
-            p.shape=(num_points, 3).
-
-        Returns
-        -------
-        result : int or numpy.ndarray[int]
-            If the point lies inside geometry, then +1 value is returned.
-            If point lies on the boundary, 0 is returned.
-            If point lies outside of the geometry, -1 is returned.
-            Individual point - single value, array of points - array of
-            ints of shape (num_points,) is returned.
-        """
-        test_term = [t.test_point(p) for t in self.terms]
-        return reduce(_union, test_term)
-
-    def transform(self, tr):
-        """Applies transformation to this geometry.
-
-        Parameters
-        ----------
-        tr : Transform
-            Transformation to be applied.
-
-        Returns
-        -------
-        geometry : AdditiveGeometry
-            The result of this geometry transformation.
-        """
-        terms = [t.transform(tr) for t in self.terms]
-        return AdditiveGeometry(*terms)
-
-    def _simplify(self, box, split_disjoint, min_volume):
-        result, simple_geoms = self.test_box(box, return_simple=True)
-        if result == -1 or box.volume() <= min_volume:
-            return simple_geoms
-
-        # This is the case result == 0 or 1.
-        simple = set()
-        # comple = []  It is not used for now. It is intended to count
-        # complexities of geometries for their selection.
-        for geom in simple_geoms:
-            c = geom.complexity()
-            if c <= 1:
-                simple.add(geom)
-                # comple.append(c)
-                continue
-            # If geometry is too complex and box is too large -> we split box.
-            box1, box2 = box.split()
-            simple_geoms1 = geom._simplify(box1, split_disjoint=split_disjoint,
-                                           min_volume=min_volume)
-            simple_geoms2 = geom._simplify(box2, split_disjoint=split_disjoint,
-                                           min_volume=min_volume)
-            # Now merge results
-            for adg1, adg2 in product(simple_geoms1, simple_geoms2):
-                ag = adg1.merge_geometries(adg2)
-                c = ag.complexity()
-                if c > 0:
-                    simple.add(ag)
-                    # comple.append(c)
-        # simple_sort = [simple[i] for i in np.argsort(comple)[:15]]
-        return simple #_sort
-
-    def merge_geometries(self, other):
-        """Merges descriptions of two geometries.
-
-        Parameters
-        ----------
-        other : AdditiveGeometry
-            Other geometry.
-
-        Returns
-        -------
-        new_geom : AdditiveGeometry
-            New merged geometry.
-        """
-        self_t = {t.order: t for t in self.terms}
-        other_t = {t.order: t for t in other.terms}
-        for k, t in other_t.items():
-            if k not in self_t.keys():
-                self_t[k] = t
-            else:
-                self_t[k] = self_t[k].intersection(t)
-        return AdditiveGeometry(*self_t.values())
-
-    def complexity(self):
-        """Gets complexity of geometry description."""
-        complexity = 0
-        for t in self.terms:
-            complexity += t.complexity()
-        return complexity
-
-    @staticmethod
-    def from_polish_notation(polish):
-        """Creates AdditiveGeometry instance from reversed Polish notation.
-
-        Parameters
-        ----------
-        polish : list
-            List of surfaces and operations written in reversed Polish Notation.
-
-        Returns
-        -------
-        a_geom : AdditiveGeometry
-            The geometry represented by AdditiveGeometry instance.
-        """
-        operands = []
-        for op in polish:
-            if isinstance(op, Surface):
-                operands.append(AdditiveGeometry(GeometryTerm(positive={op})))
-            elif op == 'C':
-                g = operands.pop()
-                operands.append(g.complement())
-            elif op == 'I':
-                g1 = operands.pop()
-                g2 = operands.pop()
-                operands.append(g1.intersection(g2))
-            elif op == 'U':
-                g1 = operands.pop()
-                g2 = operands.pop()
-                operands.append(g1.union(g2))
-        a_geom = operands.pop()
-        return a_geom
-
-    def bounding_box(self, box=GLOBAL_BOX, tol=1.0, adjust=False):
+    def bounding_box(self, box=GLOBAL_BOX, tol=1.0):
         """Gets bounding box for this cell.
 
         Parameters
@@ -537,8 +228,6 @@ class AdditiveGeometry:
         tol : float
             Absolute tolerance, when the process of box reduction has to be
             stopped.
-        adjust : bool
-            Specifies whether orientation of bounding box has to be corrected.
 
         Returns
         -------
@@ -568,10 +257,6 @@ class AdditiveGeometry:
                     box = box2
                 else:
                     upper = box2.scale[dim]
-
-        if adjust:
-            # TODO: add correction of box orientation.
-            raise NotImplementedError
         return box
 
     def volume(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME,
@@ -615,8 +300,166 @@ class AdditiveGeometry:
                 vol = box.volume() * inside / rand_points_num
         return vol
 
+    def simplify(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME):
+        """Finds simpler geometry representation.
 
-class Cell(dict, AdditiveGeometry):
+        Parameters
+        ----------
+        box : Box
+            Initial box for which simpler representation is being found.
+        min_volume : float
+            Minimal box volume, when splitting precess should stopped.
+
+        Returns
+        -------
+        result : set[GeometryNode]
+            A set of simpler geometries.
+        """
+        result, simple_geoms = self.test_box(box, return_simple=True)
+        if result != 0 or box.volume() <= min_volume:
+            return simple_geoms
+
+        # This is the case result == 0.
+        simple = set()
+        # comple = []  It is not used for now. It is intended to count
+        # complexities of geometries for their selection.
+        for geom in simple_geoms:
+            c = geom.complexity()
+            if c <= 1:
+                simple.add(geom)
+                # comple.append(c)
+                continue
+            # If geometry is too complex and box is too large -> we split box.
+            box1, box2 = box.split()
+            simple_geoms1 = geom.simplify(box1, min_volume=min_volume)
+            simple_geoms2 = geom.simplify(box2, min_volume=min_volume)
+            # Now merge results
+            for adg1, adg2 in product(simple_geoms1, simple_geoms2):
+                ag = adg1.merge_geometries(adg2)
+                c = ag.complexity()
+                if c > 0:
+                    simple.add(ag)
+                    # comple.append(c)
+        # simple_sort = [simple[i] for i in np.argsort(comple)[:15]]
+        return simple  # _sort
+
+    def merge_nodes(self, other):
+        """Merges descriptions of two geometries.
+
+        Parameters
+        ----------
+        other : AdditiveGeometry
+            Other geometry.
+
+        Returns
+        -------
+        new_geom : AdditiveGeometry
+            New merged geometry.
+        """
+        pos = self._merge_node_sets(self.positive, other.positive)
+        neg = self._merge_node_sets(self.negative, other.negative)
+        return GeometryNode(self._opc, positive=pos, negative=neg,
+                            mandatory=self.mandatory or other.mandatory,
+                            order=self.order)
+
+    @staticmethod
+    def _merge_node_sets(a, b):
+        a_dict = {t.order: t for t in a}
+        b_dict = {t.order: t for t in b}
+        for k, v in a_dict.items():
+            if k not in b_dict.keys():
+                b_dict[k] = v
+            else:
+                if isinstance(v, GeometryNode):
+                    b_dict[k] = b_dict[k].merge_nodes(v)
+                else:
+                    b_dict[k].mandatory |= v
+        return set(b_dict.values())
+
+    def intersection(self, other):
+        """Gets an intersection of geometries.
+
+        Parameters
+        ----------
+        other : GeometryNode
+            Other geometry.
+
+        Returns
+        -------
+        result : GeometryNode
+            A resulting intersection.
+        """
+        return GeometryNode('I', positive={self, other})
+
+    def union(self, other):
+        """Gets an union of geometries.
+
+        Parameters
+        ----------
+        other : GeometryNode
+            Other geometry.
+
+        Returns
+        -------
+        result : GeometryNode
+            A resulting union.
+        """
+        return GeometryNode('U', positive={self, other})
+
+    def complement(self, go_deep=False):
+        """Gets a complement of the geometry.
+
+        Parameters
+        ----------
+        go_deep : bool
+            Indicate to propagate complement operation deeper.
+
+        Returns
+        -------
+        result : GeometryNode
+            A resulting complement.
+        """
+        opc = (self._opc + 1) % 2
+        pos = self.negative
+        neg = self.positive
+
+        return GeometryNode(opc, positive=pos, negative=neg,
+                            mandatory=self.mandatory, order=self.order)
+
+    @staticmethod
+    def from_polish_notation(polish):
+        """Creates AdditiveGeometry instance from reversed Polish notation.
+
+        Parameters
+        ----------
+        polish : list
+            List of surfaces and operations written in reversed Polish Notation.
+
+        Returns
+        -------
+        a_geom : GeometryNode
+            The geometry represented by AdditiveGeometry instance.
+        """
+        operands = []
+        for op in polish:
+            if isinstance(op, Surface):
+                operands.append(op)
+            elif op == 'C':
+                g = operands.pop()
+                operands.append(g.complement())
+            elif op == 'I':
+                g1 = operands.pop()
+                g2 = operands.pop()
+                operands.append(g1.intersection(g2))
+            elif op == 'U':
+                g1 = operands.pop()
+                g2 = operands.pop()
+                operands.append(g1.union(g2))
+        a_geom = operands.pop()
+        return a_geom
+
+
+class Cell(dict, GeometryNode):
     """Represents MCNP's cell.
 
     Parameters
@@ -765,282 +608,6 @@ class Cell(dict, AdditiveGeometry):
         """
         geometry = AdditiveGeometry.transform(self, tr)
         return Cell(geometry, **self)
-
-
-class GeometryTerm:
-    """Geometry that is represented only by intersection of surfaces.
-
-    Parameters
-    ----------
-    positive : set
-        A set of surfaces that have positive sense with respect to the part
-        of space described by GeometryTerm.
-    negative : set
-        A set of surfaces that have negative sense with respect to the part of
-        space described by GeometryTerm.
-    order : int
-        A position in the list of terms of AdditiveGeometry instance. It is
-        used for internal purposes.
-    mandatory : bool
-        Indicate whether this term is necessary for geometry. Default: True.
-
-    Methods
-    -------
-    intersection(other)
-        Gets an intersection of this term with other.
-    complement()
-        Gets complement to this term.
-    get_surfaces()
-        Gets a set of surfaces from which the term consists of.
-    is_superset(other)
-        Checks whether this term is a superset of other.
-    is_subset(other)
-        Checks whether this term is a subset of other.
-    is_empty()
-        Checks whether this term is an empty set.
-    complexity()
-        Gets the complexity of term description.
-    test_box(box)
-        Checks whether this term intersects with the box.
-    test_point(p)
-        Checks whether point p belongs to geometry described by the term.
-    transform(tr)
-        Applies transformation tr to this term.
-
-    Attributes
-    ----------
-    positive : set[Surface]
-        A set of surfaces that have positive sense.
-    negative : set[Surface]
-        A set of surfaces that have negative sense.
-    order : int
-        Position in the terms list.
-    """
-    def __init__(self, positive=None, negative=None, order=None,
-                 mandatory=True):
-        self.positive = set()
-        self.negative = set()
-        self.order = order
-        self.mandatory = mandatory
-        if positive and negative and not positive.intersection(negative):
-            self.positive.update(positive)
-            self.negative.update(negative)
-        elif positive and not negative:
-            self.positive.update(positive)
-        elif negative and not positive:
-            self.negative.update(negative)
-        # calculate hash value
-        pos = reduce(xor, [hash(s) for s in self.positive], 0)
-        neg = reduce(xor, [~hash(s) for s in self.negative], 0)
-        self._hash_value = xor(pos, neg)
-
-    def __hash__(self):
-        return self._hash_value
-
-    def __eq__(self, other):
-        r = self.positive == other.positive and self.negative == other.negative
-        return r
-
-    def __str__(self):
-        entities = []
-        for s in self.positive:
-            entities.append(str(s.options['name']))
-        for s in self.negative:
-            entities.append('-' + str(s.options['name']))
-        return ' '.join(entities)
-
-    def get_surfaces(self):
-        """Gets a set of surfaces this term consists of."""
-        surfaces = set()
-        surfaces.update(self.positive)
-        surfaces.update(self.negative)
-        return surfaces
-
-    def intersection(self, other):
-        """Gets an intersection of this term with other.
-
-        Parameters
-        ----------
-        other : GeometryTerm
-            Other geometry term.
-
-        Returns
-        -------
-        result : GeometryTerm
-            New resulting term.
-        """
-        if self.is_empty() or other.is_empty():
-            return GeometryTerm(order=self.order)
-        return GeometryTerm(positive=self.positive.union(other.positive),
-                            negative=self.negative.union(other.negative),
-                            order=self.order,
-                            mandatory=self.mandatory or other.mandatory)
-
-    def complement(self):
-        """Gets a complement to this term.
-
-        Returns
-        -------
-        comp : GeometryTerm
-            A complement.
-        """
-        return GeometryTerm(positive=self.negative, negative=self.positive)
-
-    def is_superset(self, other):
-        """Checks whether this term is a superset of other.
-
-        Parameters
-        ----------
-        other : GeometryTerm
-            Other term.
-
-        Returns
-        -------
-        test_result : bool
-            True, if this term is a superset of other one.
-        """
-        return other.is_subset(self)
-
-    def is_subset(self, other):
-        """Checks whether this term is a subset of other.
-
-        Parameters
-        ----------
-        other : GeometryTerm
-            Other term.
-
-        Returns
-        -------
-        test_result : bool
-            True, if this term is a subset of other one.
-        """
-        if self.is_empty():
-            return True
-        if other.is_empty():
-            return False
-        ps = self.positive.issuperset(other.positive)
-        ns = self.negative.issuperset(other.negative)
-        return ps and ns
-
-    def is_empty(self):
-        """Checks if this set is empty."""
-        return len(self.positive) == 0 and len(self.negative) == 0
-
-    def test_box(self, box, return_simple=False):
-        """Checks if this cell intersects with the box.
-
-        Parameters
-        ----------
-        box : Box
-            Box for checking.
-        return_simple : bool
-            Indicate whether to return simpler form of the term. Unimportant
-            surfaces for judging this box (and all contained boxes, of course)
-            are removed then.
-
-        Returns
-        -------
-        result : int
-            Test result. It equals one of the following values:
-            +1 if the box lies entirely inside the cell.
-             0 if the box (probably) intersects the cell.
-            -1 if the box lies outside the cell.
-        simple_terms : set[GeometryTerm]
-            List of simple variants of this term. Optional.
-        """
-        if self.is_empty():
-            return (-1, {GeometryTerm(order=self.order)}) if return_simple else -1
-
-        pos = {}
-        neg = {}
-        for s in self.positive:
-            res = s.test_box(box)
-            if res not in pos.keys():
-                pos[res] = set()
-            pos[res].add(s)
-        for s in self.negative:
-            res = -1 * s.test_box(box)
-            #      ^ -1 means take complement to the every entity in the set.
-            if res not in neg.keys():
-                neg[res] = set()
-            neg[res].add(s)
-
-        # Then take minimum element - this corresponds to the intersection
-        # operation. See _intersection function below.
-        result = min(list(pos.keys()) + list(neg.keys()))
-        if return_simple:
-            pos_set = pos.get(result, set())
-            neg_set = neg.get(result, set())
-            if result == 0:
-                new_term = {GeometryTerm(positive=pos_set, negative=neg_set,
-                                         order=self.order)}
-            elif result == -1:
-                new_term = set()
-                for s in pos_set:
-                    new_term.add(GeometryTerm(positive={s}, order=self.order,
-                                              mandatory=False))
-                for s in neg_set:
-                    new_term.add(GeometryTerm(negative={s}, order=self.order,
-                                              mandatory=False))
-            else:
-                new_term = {GeometryTerm(order=self.order)}
-            return result, new_term
-        else:
-            return result
-
-    def test_point(self, p):
-        """Tests whether point(s) p belong to this term geometry.
-
-        Parameters
-        ----------
-        p : array_like[float]
-            Coordinates of point(s) to be checked. If it is the only one point,
-            then p.shape=(3,). If it is an array of points, then
-            p.shape=(num_points, 3).
-
-        Returns
-        -------
-        result : int or numpy.ndarray[int]
-            If the point lies inside geometry, then +1 value is returned.
-            If point lies on the boundary, 0 is returned.
-            If point lies outside of the geometry, -1 is returned.
-            Individual point - single value, array of points - array of
-            ints of shape (num_points,) is returned.
-        """
-        pos_test = [s.test_point(p) for s in self.positive]
-        neg_test = [_complement(s.test_point(p)) for s in self.negative]
-        return reduce(_intersection, pos_test + neg_test)
-
-    def complexity(self):
-        """Gets complexity of term description.
-
-        The complexity is the number of surfaces that are needed to describe
-        the geometry of this term. If it is 0 - geometry is an empty set.
-
-        Returns
-        -------
-        result : int
-            Geometry complexity.
-        """
-        return len(self.positive) + len(self.negative)
-
-    def transform(self, tr):
-        """Applies transformation to this term.
-
-        Parameters
-        ----------
-        tr : Transform
-            Transformation to be applied.
-
-        Returns
-        -------
-        term : GeometryTerm
-            The result of this term transformation.
-        """
-        positive = {s.transform(tr) for s in self.positive}
-        negative = {s.transform(tr) for s in self.negative}
-        return GeometryTerm(positive=positive, negative=negative,
-                            order=self.order, mandatory=self.mandatory)
 
 
 def _complement(arg):
