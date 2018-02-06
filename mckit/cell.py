@@ -11,6 +11,184 @@ from .constants import EX, EY, EZ, GLOBAL_BOX, MIN_BOX_VOLUME
 from .fmesh import Box
 
 
+class GeometryNode:
+    """Describes elementary operation.
+
+    Parameters
+    ----------
+    operation : function
+        An operation to be applied to args. It can be _intersection or _union.
+    positive : set
+        A set of surfaces that have positive sense with respect to the part
+        of space described by GeometryNode.
+    negative : set
+        A set of surfaces that have negative sense with respect to the part of
+        space described by GeometryNode.
+    mandatory : bool
+        Indicate if this term is mandatory. Important in union operations.
+    """
+    def __init__(self, operation, positive=set(), negative=set(),
+                 mandatory=True):
+        self.operation = operation
+        self.positive = set()
+        self.negative = set()
+        self.mandatory = mandatory
+
+        pos_new = {p for p in self.positive if isinstance(p, Surface) or
+                   not p.is_empty()}
+        neg_new = {p for p in self.negative if isinstance(p, Surface) or
+                   not p.is_empty()}
+        if operation == _intersection and (len(pos_new) < len(positive) or
+                                           len(neg_new) < len(negative)):
+            positive = set()
+            negative = set()
+        else:
+            positive = pos_new
+            negative = neg_new
+
+        if positive and negative and not positive.intersection(negative):
+            self.positive.update(positive)
+            self.negative.update(negative)
+        else:
+            self.positive.update(positive)
+            self.negative.update(negative)
+        # calculate hash value
+        pos = reduce(xor, [hash(s) for s in self.positive], 0)
+        neg = reduce(xor, [~hash(s) for s in self.negative], 0)
+        self._hash_value = xor(xor(pos, neg), id(operation))
+
+    def __hash__(self):
+        return self._hash_value
+
+    def __eq__(self, other):
+        return self.operation == other.operation and \
+               self.positive == other.positive and \
+               self.negative == other.negative
+
+    def is_empty(self):
+        """Checks if this geometry is an empty set."""
+        return len(self.positive) + len(self.negative) == 0
+
+    def test_box(self, box, return_simple=False):
+        """Checks if the geometry intersects the box.
+
+        Parameters
+        ----------
+        box : Box
+            Box for checking.
+        return_simple : bool
+            Indicate whether to return simpler form of the geometry. Unimportant
+            surfaces for judging this box (and all contained boxes, of course)
+            are removed then.
+
+        Returns
+        -------
+        result : int
+            Test result. It equals one of the following values:
+            +1 if the box lies entirely inside the cell.
+             0 if the box (probably) intersects the cell.
+            -1 if the box lies outside the cell.
+        simple_geoms : set[AdditiveGeometry]
+            List of simple variants of this geometry. Optional.
+        """
+        if not return_simple:
+            pos = [a.test_box(box) for a in self.positive]
+            neg = [-1 * a.test_box(box) for a in self.negative]
+            return reduce(self.operation, pos + neg)
+
+        pos = {}
+        neg = {}
+        for s in self.positive:
+            res = s.test_box(box)
+            if res not in pos.keys():
+                pos[res] = set()
+            pos[res].add(s)
+        for s in self.negative:
+            res = -1 * s.test_box(box)
+            #      ^ -1 means take complement to the every entity in the set.
+            if res not in neg.keys():
+                neg[res] = set()
+            neg[res].add(s)
+
+
+    def test_point(self, p):
+        """Tests whether point(s) p belong to this geometry.
+
+        Parameters
+        ----------
+        p : array_like[float]
+            Coordinates of point(s) to be checked. If it is the only one point,
+            then p.shape=(3,). If it is an array of points, then
+            p.shape=(num_points, 3).
+
+        Returns
+        -------
+        result : int or numpy.ndarray[int]
+            If the point lies inside geometry, then +1 value is returned.
+            If point lies on the boundary, 0 is returned.
+            If point lies outside of the geometry, -1 is returned.
+            Individual point - single value, array of points - array of
+            ints of shape (num_points,) is returned.
+        """
+        pos = [a.test_point(p) for a in self.positive]
+        neg = [-1 * a.test_point(p) for a in self.negative]
+        return reduce(self.operation, pos + neg)
+
+    def transform(self, tr):
+        """Transforms this geometry.
+
+        Parameters
+        ----------
+        tr : Transform
+            Transformation object.
+
+        Returns
+        -------
+        geom : GeometryNode
+            Transformed geometry.
+        """
+        pos = {a.transform(tr) for a in self.positive}
+        neg = {a.transform(tr) for a in self.negative}
+        return GeometryNode(self.operation, positive=pos, negative=neg,
+                            mandatory=self.mandatory)
+
+    def get_surfaces(self):
+        """Gets all surfaces that describes the geometry.
+
+        Returns
+        -------
+        surfaces : set[Surface]
+            A set of surfaces that take part in geometry description.
+        """
+        surfaces = set()
+        for arg in self.positive.union(self.negative):
+            if isinstance(arg, Surface):
+                surfaces.add(arg)
+            else:
+                surfaces.update(arg.get_surfaces())
+        return surfaces
+
+    def complexity(self):
+        """Gets complexity of calculations."""
+        comp = 0
+        for arg in self.positive.union(self.negative):
+            if isinstance(arg, Surface):
+                comp += 1
+            else:
+                comp += arg.complexity()
+        return comp
+
+    def bounding_box(self, box=GLOBAL_BOX, tol=1):
+        raise NotImplementedError
+
+    def volume(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME,
+               rand_points_num=1000):
+        raise NotImplementedError
+
+    def simplify(self, box, min_volume):
+        raise NotImplementedError
+
+
 class AdditiveGeometry:
     """A geometry that is described by a union of GeometryTerm's.
 
