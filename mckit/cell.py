@@ -11,6 +11,77 @@ from .constants import EX, EY, EZ, GLOBAL_BOX, MIN_BOX_VOLUME
 from .fmesh import Box
 
 
+def _complement(arg):
+    """Finds complement to the given set.
+
+    | C | -1 |  0 | +1 |
+    +---+----+----+----+
+    |   | +1 |  0 | -1 |
+    +---+----+----+----+
+
+    Parameters
+    ----------
+    arg : int or np.ndarray[int]
+        Argument for complement operation.
+
+    Returns
+    -------
+    result : int or np.ndarray[int]
+        The result of operation.
+    """
+    return -1 * arg
+
+
+def _intersection(arg1, arg2):
+    """Finds intersection.
+
+    |  I | -1 |  0 | +1 |
+    +----+----+----+----+
+    | -1 | -1 | -1 | -1 |
+    +----+----+----+----+
+    |  0 | -1 |  0 |  0 |
+    +----+----+----+----+
+    | +1 | -1 |  0 | +1 |
+    +----+----+----+----+
+
+    Parameters
+    ----------
+    arg1, arg2 : int, np.ndarray[int]
+        Operands.
+
+    Returns
+    -------
+    result : int or np.ndarray[int]
+        The result of operation.
+    """
+    return np.minimum(arg1, arg2)
+
+
+def _union(arg1, arg2):
+    """Finds union.
+
+    |  U | -1 |  0 | +1 |
+    +----+----+----+----+
+    | -1 | -1 |  0 | +1 |
+    +----+----+----+----+
+    |  0 |  0 |  0 | +1 |
+    +----+----+----+----+
+    | +1 | +1 | +1 | +1 |
+    +----+----+----+----+
+
+    Parameters
+    ----------
+    arg1, arg2 : int, np.ndarray[int]
+        Operands.
+
+    Returns
+    -------
+    result : int or np.ndarray[int]
+        The result of operation.
+    """
+    return np.maximum(arg1, arg2)
+
+
 class GeometryNode:
     """Describes elementary operation.
 
@@ -70,6 +141,80 @@ class GeometryNode:
         return other.is_of_type(self._opc) and \
                self.positive == other.positive and \
                self.negative == other.negative
+
+    def __str__(self):
+        sep = ' ' if self._opc == 0 else ':'
+        toks = []
+        for s in self.positive:
+            if isinstance(s, GeometryNode):
+                toks.append(str(s))
+            else:
+                toks.append(str(s.options['name']))
+        for s in self.negative:
+            if isinstance(s, GeometryNode):
+                toks.append('#(' + str(s) + ')')
+            else:
+                toks.append('-' + str(s.options['name']))
+        if self._opc == 1:
+            toks = '(' + toks + ')'
+        return sep.join(toks)
+
+    def propagate_complement(self):
+        new_neg = set()
+        for g in self.negative:
+            if isinstance(g, GeometryNode):
+                self.positive.add(g.complement())
+            else:
+                new_neg.add(g)
+        for g in self.positive:
+            if isinstance(g, GeometryNode):
+                g.propagate_complement()
+
+    def clean(self, del_unnecessary=False):
+        """Cleans geometry description.
+
+        Parameters
+        ----------
+        del_unnecessary : bool
+            Indicate to delete nodes which are not mandatory.
+
+        Returns
+        -------
+        cleaned : GeometryNode
+            Cleaned geometry.
+        """
+        pos_cleaned = set()
+        neg_cleaned = set()
+        for g in self.positive:
+            if not g.mandatory and del_unnecessary:
+                continue
+            if isinstance(g, GeometryNode):
+                if g.is_empty():
+                    continue
+                gc = g.clean(del_unnecessary)
+                if gc.is_of_type(self._opc):
+                    pos_cleaned.update(gc.positive)
+                    neg_cleaned.update(gc.negative)
+                else:
+                    pos_cleaned.add(gc)
+            else:
+                pos_cleaned.add(g)
+        for g in self.negative:
+            if not g.mandatory and del_unnecessary:
+                continue
+            if isinstance(g, GeometryNode):
+                if g.is_empty():
+                    continue
+                gc = g.clean(del_unnecessary)
+                if gc.is_of_type(self._opc):
+                    pos_cleaned.update(gc.positive)
+                    neg_cleaned.update(gc.negative)
+                else:
+                    neg_cleaned.add(gc)
+            else:
+                neg_cleaned.add(g)
+        return GeometryNode(self._opc, positive=pos_cleaned,
+                            negative=neg_cleaned, mandatory=self.mandatory)
 
     def is_empty(self):
         """Checks if this geometry is an empty set."""
@@ -406,7 +551,7 @@ class GeometryNode:
         """
         return GeometryNode('U', positive={self, other})
 
-    def complement(self, go_deep=False):
+    def complement(self):
         """Gets a complement of the geometry.
 
         Parameters
@@ -422,7 +567,6 @@ class GeometryNode:
         opc = (self._opc + 1) % 2
         pos = self.negative
         neg = self.positive
-
         return GeometryNode(opc, positive=pos, negative=neg,
                             mandatory=self.mandatory, order=self.order)
 
@@ -444,19 +588,30 @@ class GeometryNode:
         for op in polish:
             if isinstance(op, Surface):
                 operands.append(op)
+                operands.append(0)
             elif op == 'C':
-                g = operands.pop()
-                operands.append(g.complement())
-            elif op == 'I':
-                g1 = operands.pop()
-                g2 = operands.pop()
-                operands.append(g1.intersection(g2))
-            elif op == 'U':
-                g1 = operands.pop()
-                g2 = operands.pop()
-                operands.append(g1.union(g2))
+                sign = operands.pop()
+                operands.append((sign + 1) % 2)
+            else:
+                args = [set(), set()]
+                for i in range(2):
+                    sign = operands.pop()
+                    args[sign].add(operands.pop())
+                geom = GeometryNode(op, positive=args[0], negative=args[1])
+                operands.append(geom)
+                operands.append(0)
         a_geom = operands.pop()
         return a_geom
+
+    def _give_orders(self, start=1):
+        """Give order values to all nodes."""
+        for g in self.positive | self.negative:
+            if isinstance(g, Surface):
+                g.order = start
+                start += 1
+            else:
+                start = g._give_orders(start)
+        return start
 
 
 class Cell(dict, GeometryNode):
@@ -485,8 +640,9 @@ class Cell(dict, GeometryNode):
     """
     def __init__(self, geometry, **options):
         if isinstance(geometry, list):
-            geometry = AdditiveGeometry.from_polish_notation(geometry)
-        AdditiveGeometry.__init__(self, *geometry.terms)
+            geometry = GeometryNode.from_polish_notation(geometry)
+        GeometryNode.__init__(self, geometry._opc, positive=geometry.positive,
+                              negative=geometry.negative)
         dict.__init__(self, options)
 
     def intersection(self, other):
@@ -505,7 +661,7 @@ class Cell(dict, GeometryNode):
         cell : Cell
             The result.
         """
-        geometry = AdditiveGeometry.intersection(self, other)
+        geometry = GeometryNode.intersection(self, other)
         return Cell(geometry, **self)
 
     def union(self, other):
@@ -523,7 +679,7 @@ class Cell(dict, GeometryNode):
         cell : Cell
             The result.
         """
-        geometry = AdditiveGeometry.union(self, other)
+        geometry = GeometryNode.union(self, other)
         return Cell(geometry, **self)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
@@ -548,9 +704,8 @@ class Cell(dict, GeometryNode):
         simple_cell : Cell
             Simplified version of this cell.
         """
-        for i, t in enumerate(self.terms):
-            t.order = i
-        simple_geoms = self._simplify(box, split_disjoint, min_volume)
+        self._give_orders()
+        simple_geoms = super(Cell, self).simplify(box, min_volume)
         # remove not mandatory terms
         geometries = set()
         for sg in simple_geoms:
@@ -606,77 +761,5 @@ class Cell(dict, GeometryNode):
         cell : Cell
             The result of this cell transformation.
         """
-        geometry = AdditiveGeometry.transform(self, tr)
+        geometry = GeometryNode.transform(self, tr)
         return Cell(geometry, **self)
-
-
-def _complement(arg):
-    """Finds complement to the given set.
-
-    | C | -1 |  0 | +1 |
-    +---+----+----+----+
-    |   | +1 |  0 | -1 |
-    +---+----+----+----+
-
-    Parameters
-    ----------
-    arg : int or np.ndarray[int]
-        Argument for complement operation.
-
-    Returns
-    -------
-    result : int or np.ndarray[int]
-        The result of operation.
-    """
-    return -1 * arg
-
-
-def _intersection(arg1, arg2):
-    """Finds intersection.
-
-    |  I | -1 |  0 | +1 |
-    +----+----+----+----+
-    | -1 | -1 | -1 | -1 |
-    +----+----+----+----+
-    |  0 | -1 |  0 |  0 |
-    +----+----+----+----+
-    | +1 | -1 |  0 | +1 |
-    +----+----+----+----+
-
-    Parameters
-    ----------
-    arg1, arg2 : int, np.ndarray[int]
-        Operands.
-
-    Returns
-    -------
-    result : int or np.ndarray[int]
-        The result of operation.
-    """
-    return np.minimum(arg1, arg2)
-
-
-def _union(arg1, arg2):
-    """Finds union.
-
-    |  U | -1 |  0 | +1 |
-    +----+----+----+----+
-    | -1 | -1 |  0 | +1 |
-    +----+----+----+----+
-    |  0 |  0 |  0 | +1 |
-    +----+----+----+----+
-    | +1 | +1 | +1 | +1 |
-    +----+----+----+----+
-
-    Parameters
-    ----------
-    arg1, arg2 : int, np.ndarray[int]
-        Operands.
-
-    Returns
-    -------
-    result : int or np.ndarray[int]
-        The result of operation.
-    """
-    return np.maximum(arg1, arg2)
-
