@@ -81,6 +81,16 @@ class TestGeometryNode(unittest.TestCase):
                         print(test, ' =====> ', ans)
                     self.assertEqual(ans, test)
 
+    def test_test_point(self):
+        for i, g in enumerate(geoms):
+            for j, p in enumerate(node_points):
+                with self.subTest(msg='geom={0}, point={1}'.format(i, j)):
+                    t = g.test_point(p)
+                    self.assertEqual(t, node_test_point_ans[i][j])
+            t = g.test_point(np.array(node_points))
+            self.assertListEqual(list(t), node_test_point_ans[i])
+
+
 # class TestCell(unittest.TestCase):
 #     def test_creation(self):
 #         for i, (pol_data, ans_data) in enumerate(ag_polish_data):
