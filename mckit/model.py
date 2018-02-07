@@ -195,6 +195,8 @@ class Model:
                     geometry[i] = s.transform(tr)
             if 'FILL' in options.keys():
                 options['FILL'] = universe.transform(tr)
+        options['name'] = cell_name
+        print(cell_name)
         return Cell(geometry, **options)
 
     def _produce_cell_geometry(self, cell_name):

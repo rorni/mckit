@@ -1,517 +1,143 @@
 surface_data = {
-    1: ('so', [1]),
-    2: ('so', [2]),
-    3: ('so', [3]),
-    4: ('py', [1]),
-    5: ('py', [-1]),
-    6: ('c/z', [5, 0, 1]),
-    7: ('c/z', [5, 0, 2]),
-    8: ('pz', [-2]),
-    9: ('pz', [2]),
-    10: ('px', [5]),
-    11: ('px', [-1.5]),
-    12: ('px', [1.6]),
-    13: ('py', [3.6])
+    1: ('sx', [4, 2]),
+    2: ('cx', [2]),
+    3: ('px', [-3]),
+    4: ('sx', [-3, 1]),
+    5: ('px', [4]),
+    6: ('sx', [4, 1]),
+    7: ('cx', [3]),
+    8: ('cx', [1]),
+    9: ('px', [-5]),
+    10: ('px', [8]),
 }
 
-term_data = [
-    {'positive': {6}, 'negative': {6, 7}},  # Empty set
-    {'positive': {5, 8}, 'negative': {3, 9}},
-    {'positive': {5, 8, 11}, 'negative': {3, 9, 13}},
-    {'negative': {2, 3}},
-    {'positive': {12, 8}, 'negative': {9, 7, 10}},
-    {'positive': {8}, 'negative': {7, 9}},
-    {'negative': {7}},
-    {'negative': {6}}
+polish_geoms = [
+    [2, 'C', 3, 'I', 1, 'I', 5, 'C', 'I', 4, 'C', 'U'],
+    [6, 'C', 1, 'C', 'I'],
+    [6, 'C', 1, 'C', 'U'],
+    [6, 1, 'I', 2, 'C', 'I', 5, 'C', 'I', 3, 'I', 4, 'C', 9, 'I', 'U', 3, 'C',
+     4, 'C', 'I', 'U', 7, 'C', 'I', 10, 'C', 'I', 4, 'C', 10, 'C', 'I', 'U'],
+    [5, 'C', 3, 'I', 2, 'C', 'I', 1, 'C', 'U'],
+    [3, 8, 'C', 'I', 5, 'C', 'I', 4, 'C', 'U', 1, 'C', 'U', 2, 'C', 'I']
 ]
 
-additive_data = [
-    [0, 1, 2], [1, 2, 4, 5], [3, 6], [6, 7, 1], [1, 2, 3, 4]
+create_geom = [
+    ('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}),
+    ('I', {'negative': [1, 6]}),
+    ('U', {'negative': [1, 6]}),
+    ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]}),
+    ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]}),
+    ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})
 ]
 
-cell_kwargs = {'U': 5, 'IMP:N': 1, 'DEN': -4.3}
-
-ag_polish_data = [
-    (
-        [2], [{'positive': {2}}]
-    ),
-    (
-        [2, 'C'], [{'negative': {2}}]
-    ),
-    (
-        [2, 'C', 3, 'C', 'I', 5, 'I'], [{'positive': {5}, 'negative': {2, 3}}]
-    ),
-    (
-        [2, 'C', 3, 'C', 'I', 7, 'U'], [{'positive': {7}}, {'negative': {2, 3}}]
-    ),
-    (
-        [2, 3, 'U', 5, 'I'], [{'positive': {2, 5}}, {'positive': {3, 5}}]
-    ),
-    (
-        [2, 3, 'C', 'I', 'C'], [{'negative': {2}}, {'positive': {3}}]
-    )
+simple_geoms = [
+    [2, 'C', 3, 'I', 1, 'I', 5, 'C', 'I', 4, 'C', 'U'],
+    [6, 'C'],
+    [1, 'C'],
+    [2, 'C', 3, 'I', 1, 'I', 5, 'C', 'I', 4, 'C', 'U'],
+    [5, 'C', 3, 'I', 2, 'C', 'I', 1, 'C', 'U'],
+    [3, 8, 'C', 'I', 5, 'C', 'I', 4, 'C', 'U', 1, 'C', 'U']
 ]
 
-ag_create = [
-    [{'positive': {5, 8}, 'negative': {3, 9}}],
-    [{'positive': {5, 8}, 'negative': {3, 9}},
-     {'positive': {8}, 'negative': {7, 9}}],
-    [{'negative': {2, 3}}, {'negative': {7}}],
-    [{'negative': {7}}, {'negative': {6}},
-     {'positive': {5, 8}, 'negative': {3, 9}}],
-    [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-     {'positive': {12, 8}, 'negative': {9, 7, 10}}]
+complement_geom = [
+    ('I', {'negative': [('I', {'positive': [
+        ('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})],
+                               'negative': [5]})], 'positive': [4]}),
+    ('U', {'positive': [1, 6]}),
+    ('I', {'positive': [1, 6]}),
+    ('I', {'negative': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3,4]})]})], 'negative': [7]})], 'negative': [10]})]}),
+    ('I', {'negative': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'positive': [1]}),
+    ('U', {'negative': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'positive': [2]})
 ]
 
-ag_simplify = [
-    [{'positive': {5, 8}, 'negative': {3, 9}}],
-    [{'positive': {5, 8}, 'negative': {3, 9}},
-     {'positive': {8}, 'negative': {7, 9}}],
-    [{'negative': {2}}, {'negative': {7}}],
-    [{'negative': {7}}, {'positive': {5, 8}, 'negative': {3, 9}}],
-    [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2}},
-     {'positive': {8}, 'negative': {9, 7, 10}}]
-]
-
-ag_test_points = [
-    [-2.5, 0, 0], [-1, 1, 0], [-1, 4, 0], [0, -1.5, 0], [0, 0, -2.5],
-    [0, 0, 1.5], [0.5, -0.5, 0], [1, 1, 0], [2.5, 0, 0], [4, 1, 1.5],
-    [4, 1, 3], [4, 1, -10], [5.5, -0.5, 0], [5.5, 0.5, -1.5], [5.5, 0.5, -3],
-    [5.5, 0.5, 10]
-]
-
-ag_test_point_ans = [
-    [1, 1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1],
-    [1, 1, -1, -1, -1, 1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1],
-    [-1, 1, -1, 1, -1, 1, 1, 1, -1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, -1, 1, -1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1]
-]
-
-ag_bounding_box = [
-    [[-3, 3], [-1, 3], [-2, 2]],
-    [[-3, 7], [-2, 3], [-2, 2]],
-    [[-2, 7], [-2, 2], [None, None]],
-    [[-3, 7], [-2, 3], [None, None]],
-    [[-3, 5], [-2, 3], [-2, 2]]
-]
-
-ag_volume = [
-    (
-        {'base': [0, 0, 0], 'ex': [2, 0, 0], 'ey': [0, 2, 0], 'ez': [0, 0, 2]},
-        [7.90, 7.90, 4.1888, 7.90, 7.90]
-    ),
-    (
-        {'base': [5, 0, 0], 'ex': [-2, 0, 0], 'ey': [0, 3, 0], 'ez': [0, 0, 2]},
-        [0, 6.2832, 6.2832, 6.2832, 6.2832]
-    ),
-    (
-        {'base': [0, 0, 0], 'ex': [5, 0, 0], 'ey': [0, 4, 0], 'ez': [0, 0, 3]},
-        [12.0428, 18.3260, 13.6136, 21.4676, 18.3260]
-    )
-]
-
-ag_box_data = [
-    (
-    {'base': [0, 0, -1], 'ex': [1.5, 0, 0], 'ey': [0, 1.5, 0], 'ez': [0, 0, 2]},
-    [(+1, [[{}]]), (+1, [[{}]]), (0, [[{'negative': {2}}]]), (+1, [[{}]]),
-     (+1, [[{}]])]
-    ),
-    (
-    {'base': [2.5, 0, -1], 'ex': [3, 0, 0], 'ey': [0, 2.5, 0], 'ez': [0, 0, 4]},
-    [(0, [[{'negative': {3, 9}}]]),
-     (0, [[{'negative': {3, 9}}, {'negative': {7, 9}}]]),
-     (0, [[{'negative': {7}}]]),
-     (0, [[{'negative': {3, 9}}, {'negative': {7}}, {'negative': {6}}]]),
-     (0, [[{'negative': {3, 9}}, {'negative': {7, 9, 10}}]])]
-    )
-]
-
-ag_intersection2 = [
+intersection_geom = [
     [
-        [{}], [{}], [{}], [{}], [{}]
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('I', {'negative': [1, 6]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'negative': [1, 6]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
-         {'positive': {5, 8}, 'negative': {7, 3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}]
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('I', {'negative': [1, 6]})]}),
+        ('I', {'positive': [('I', {'negative': [1, 6]}), ('U', {'negative': [1, 6]})]}),
+        ('I', {'positive': [('I', {'negative': [1, 6]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('I', {'positive': [('I', {'negative': [1, 6]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('I', {'positive': [('I', {'negative': [1, 6]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8, 11}, 'negative': {3, 9, 13}}],
-        [{'positive': {5, 8, 11}, 'negative': {3, 9, 13}}],
-        [{'positive': {5, 8, 11}, 'negative': {2, 3, 9, 13}},
-         {'positive': {5, 8, 11}, 'negative': {7, 3, 9, 13}}],
-        [{'positive': {5, 8, 11}, 'negative': {3, 9, 13}}],
-        [{'positive': {5, 8, 11}, 'negative': {3, 9, 13}}]
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'negative': [1, 6]})]}),
+        ('I', {'positive': [('I', {'negative': [1, 6]}), ('U', {'negative': [1, 6]})]}),
+        ('I', {'positive': [('U', {'negative': [1, 6]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('I', {'positive': [('U', {'negative': [1, 6]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('I', {'positive': [('U', {'negative': [1, 6]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8}, 'negative': {2, 3, 9}}],
-        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
-         {'positive': {8}, 'negative': {2, 3, 7, 9}}],
-        [{'negative': {2, 3}}],
-        [{'negative': {2, 3, 7}}, {'negative': {2, 3, 6}},
-         {'positive': {5, 8}, 'negative': {2, 3, 9}}],
-        [{'negative': {2, 3}}]
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('I', {'positive': [('I', {'negative': [1, 6]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('I', {'positive': [('U', {'negative': [1, 6]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8, 12}, 'negative': {3, 7, 9, 10}}],
-        [{'positive': {8, 12}, 'negative': {7, 9, 10}}],
-        [{'positive': {12, 8}, 'negative': {9, 7, 10}}],
-        [{'positive': {12, 8}, 'negative': {9, 7, 10}}],
-        [{'positive': {12, 8}, 'negative': {9, 7, 10}}]
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('I', {'positive': [('I', {'negative': [1, 6]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('I', {'positive': [('U', {'negative': [1, 6]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8}, 'negative': {3, 7, 9}}],
-        [{'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 7, 9}},
-         {'positive': {8}, 'negative': {2, 3, 7, 9}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 7, 9}}],
-        [{'positive': {8}, 'negative': {7, 9}}],
-        [{'negative': {7}}],
-        [{'negative': {7}}],
-        [{'positive': {5, 8}, 'negative': {3, 7, 9}}, {'negative': {2, 3, 7}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 6, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 6, 9}},
-         {'positive': {8}, 'negative': {7, 6, 9}}],
-        [{'negative': {2, 3, 6}}, {'negative': {6, 7}}],
-        [{'negative': {6}}],
-        [{'positive': {5, 8}, 'negative': {3, 6, 9}}, {'negative': {2, 3, 6}},
-         {'positive': {12, 8}, 'negative': {9, 7, 6, 10}}]
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]}),
+        ('I', {'positive': [('I', {'negative': [1, 6]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]}),
+        ('I', {'positive': [('U', {'negative': [1, 6]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [4, 3]})]})], 'negative': [7]})], 'negative': [10]})]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]}),
+        ('I', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ]
 ]
 
-ag_intersection1 = [
+union_geom = [
     [
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
-         {'positive': {5, 8}, 'negative': {3, 7, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}]
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('I', {'negative': [1, 6]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'negative': [1, 6]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {2, 3, 7, 9}},
-         {'positive': {12, 8}, 'negative': {7, 9, 10}}]
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('I', {'negative': [1, 6]})]}),
+        ('U', {'positive': [('I', {'negative': [1, 6]}), ('U', {'negative': [1, 6]})]}),
+        ('U', {'positive': [('I', {'negative': [1, 6]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('U', {'positive': [('I', {'negative': [1, 6]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('U', {'positive': [('I', {'negative': [1, 6]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
-         {'positive': {5, 8}, 'negative': {3, 7, 9}}],
-        [{'positive': {5, 8}, 'negative': {2, 3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {2, 3, 6}}, {'negative': {7}},
-         {'positive': {5, 8}, 'negative': {2, 3, 9}}],
-        [{'negative': {2, 3}}, {'positive': {5, 8}, 'negative': {3, 7, 9}},
-         {'positive': {12, 8}, 'negative': {7, 9, 10}}]
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'negative': [1, 6]})]}),
+        ('U', {'positive': [('I', {'negative': [1, 6]}), ('U', {'negative': [1, 6]})]}),
+        ('U', {'positive': [('U', {'negative': [1, 6]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('U', {'positive': [('U', {'negative': [1, 6]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('U', {'positive': [('U', {'negative': [1, 6]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'negative': {2, 3, 6}}, {'negative': {7}},
-         {'positive': {5, 8}, 'negative': {2, 3, 9}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'negative': {2, 3, 6}}, {'negative': {2, 3, 7}},
-         {'positive': {12, 8}, 'negative': {7, 9, 10}}]
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('U', {'positive': [('I', {'negative': [1, 6]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('U', {'positive': [('U', {'negative': [1, 6]}), ('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ],
     [
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {2, 3, 7, 9}},
-         {'positive': {12, 8}, 'negative': {7, 9, 10}}],
-        [{'negative': {2, 3}}, {'positive': {5, 8}, 'negative': {3, 7, 9}},
-         {'positive': {12, 8}, 'negative': {7, 9, 10}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'negative': {2, 3, 6}}, {'negative': {2, 3, 7}},
-         {'positive': {12, 8}, 'negative': {7, 9, 10}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('U', {'positive': [('I', {'negative': [1, 6]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('U', {'positive': [('U', {'negative': [1, 6]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]}), ('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
+    ],
+    [
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [1, ('I', {'positive': [3], 'negative': [2]})]})], 'negative': [5]})], 'negative': [4]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]}),
+        ('U', {'positive': [('I', {'negative': [1, 6]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]}),
+        ('U', {'positive': [('U', {'negative': [1, 6]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'negative': [4, 10]}), ('I', {'positive': [('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [('I', {'positive': [1, 6]})], 'negative': [2]})], 'negative': [5]}), 3]}), ('I', {'positive': [9], 'negative': [4]})]}), ('I', {'negative': [3, 4]})]})], 'negative': [7]})], 'negative': [10]})]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]}),
+        ('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [5]})], 'negative': [2]})], 'negative': [1]}), ('I', {'positive': [('U', {'positive': [('U', {'positive': [('I', {'positive': [('I', {'positive': [3], 'negative': [8]})], 'negative': [5]})], 'negative': [4]})], 'negative': [1]})], 'negative': [2]})]})
     ]
-]
-
-ag_union2 = [
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}}, ],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'negative': {2, 3}}, {'negative': {7}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'negative': {2, 3}}, {'negative': {7}},
-         {'positive': {5, 8, 11}, 'negative': {3, 9, 13}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}, {'negative': {2, 3}}],
-        [{'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {7}}, {'negative': {6}}, {'negative': {2, 3}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {8}, 'negative': {7, 9}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {7}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {7}}],
-        [{'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'negative': {7}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {6}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}, {'negative': {6}}],
-        [{'negative': {2, 3}}, {'negative': {7}}, {'negative': {6}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}, {'negative': {6}}]
-    ]
-]
-
-ag_union1 = [
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}},
-         {'negative': {2, 3}}, {'negative': {7}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'negative': {7}}, {'negative': {6}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {8}, 'negative': {7, 9}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'negative': {2, 3}}, {'negative': {7}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {2, 3}}, {'negative': {7}}],
-        [{'negative': {2, 3}}, {'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'negative': {2, 3}}, {'negative': {7}},
-         {'positive': {5, 8}, 'negative': {3, 9}}]
-    ],
-    [
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'negative': {2, 3}}, {'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}}]
-    ],
-    [
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}},
-         {'positive': {8}, 'negative': {7, 9}}, {'negative': {2, 3}}],
-        [{'negative': {2, 3}}, {'negative': {7}},
-         {'positive': {5, 8}, 'negative': {3, 9}}],
-        [{'negative': {7}}, {'negative': {6}},
-         {'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}}],
-        [{'positive': {5, 8}, 'negative': {3, 9}}, {'negative': {2, 3}},
-         {'positive': {12, 8}, 'negative': {9, 7, 10}}]
-    ]
-]
-
-ag_contains = [
-    [True,  False, False, False, False],
-    [True,  True,  False, False, False],
-    [False, False, True,  False, False],
-    [True,  True,  False, True,  False],
-    [True,  False, False, False, True ]
-]
-
-ag_equiv = [
-    [True, False, False, False, False],
-    [False, True, False, False, False],
-    [False, False, True, False, False],
-    [False, False, False, True, False],
-    [False, False, False, False, True]
-]
-
-ag_complement = [
-    [{'positive': {3}}, {'positive': {9}}, {'negative': {5}}, {'negative': {8}}],
-    [{'positive': {9}}, {'negative': {8}}, {'positive': {3, 7}},
-     {'positive': {7}, 'negative': {5}}],
-    [{'positive': {2, 7}}, {'positive': {3, 7}}],
-    [{'positive': {7, 6}, 'negative': {5}},
-     {'positive': {7, 6}, 'negative': {8}}, {'positive': {7, 6, 3}},
-     {'positive': {7, 6, 9}}],
-    [{'positive': {2}, 'negative': {5, 12}},
-     {'positive': {2, 7}, 'negative': {5}},
-     {'positive': {2, 10}, 'negative': {5}}, {'positive': {2}, 'negative': {8}},
-     {'positive': {3}, 'negative': {8}}, {'positive': {3}, 'negative': {12}},
-     {'positive': {3, 7}}, {'positive': {3, 9}}, {'positive': {3, 10}},
-     {'positive': {2, 9}}]
-]
-
-term_box_data = [
-    ({'base': [0, 0, -1], 'ex': [1.5, 0, 0], 'ey': [0, 1.5, 0], 'ez': [0, 0, 2]},
-     [(-1, [{}]), (1, [{}]), (1, [{}]), (0, [{'negative': {2}}]),
-      (-1, [{'negative': {7}}, {'positive': {12}}]),
-      (-1, [{'negative': {7}}]), (-1, [{'negative': {7}}]),
-      (-1, [{'negative': {6}}])]),
-    ({'base': [2.5, 0, -1], 'ex': [3, 0, 0], 'ey': [0, 2.5, 0], 'ez': [0, 0, 4]},
-     [(-1, [{}]), (0, [{'negative': {3, 9}}]), (0, [{'negative': {3, 9}}]),
-      (-1, [{'negative': {2}}]), (0, [{'negative': {7, 9, 10}}]),
-      (0, [{'negative': {7, 9}}]), (0, [{'negative': {7}}]),
-      (0, [{'negative': {6}}])])
-]
-
-term_intersection_ans = [
-    [{}, {}, {}, {}, {}, {}, {}],
-    [{}, {'positive': {5, 8, 11}, 'negative': {3, 9, 13}},
-     {'positive': {5, 8}, 'negative': {2, 3, 9}},
-     {'positive': {5, 8, 12}, 'negative': {3, 7, 9, 10}},
-     {'positive': {5, 8}, 'negative': {3, 7, 9}},
-     {'positive': {5, 8}, 'negative': {3, 7, 9}},
-     {'positive': {5, 8}, 'negative': {3, 6, 9}}],
-    [{}, {'positive': {5, 8, 11}, 'negative': {3, 9, 13}},
-     {'positive': {5, 8, 11}, 'negative': {2, 3, 9, 13}},
-     {'positive': {5, 8, 11, 12}, 'negative': {3, 7, 9, 10, 13}},
-     {'positive': {5, 8, 11}, 'negative': {3, 7, 9, 13}},
-     {'positive': {5, 8, 11}, 'negative': {3, 7, 9, 13}},
-     {'positive': {5, 8, 11}, 'negative': {3, 6, 9, 13}}],
-    [{}, {'positive': {5, 8}, 'negative': {2, 3, 9}},
-     {'positive': {5, 8, 11}, 'negative': {2, 3, 9, 13}},
-     {'positive': {8, 12}, 'negative': {2, 3, 9, 7, 10}},
-     {'positive': {8}, 'negative': {2, 3, 7, 9}}, {'negative': {2, 3, 7}},
-     {'negative': {2, 3, 6}}],
-    [{}, {'positive': {5, 8, 12}, 'negative': {3, 7, 9, 10}},
-     {'positive': {5, 8, 11, 12}, 'negative': {3, 7, 9, 10, 13}},
-     {'positive': {8, 12}, 'negative': {2, 3, 9, 7, 10}},
-     {'positive': {8, 12}, 'negative': {9, 7, 10}},
-     {'positive': {8, 12}, 'negative': {9, 7, 10}},
-     {'positive': {8, 12}, 'negative': {9, 6, 7, 10}}],
-    [{}, {'positive': {5, 8}, 'negative': {3, 7, 9}},
-     {'positive': {5, 8, 11}, 'negative': {3, 7, 9, 13}},
-     {'positive': {8}, 'negative': {2, 3, 7, 9}},
-     {'positive': {12, 8}, 'negative': {7, 9, 10}},
-     {'positive': {8}, 'negative': {7, 9}},
-     {'positive': {8}, 'negative': {6, 7, 9}}],
-    [{}, {'positive': {5, 8}, 'negative': {3, 7, 9}},
-     {'positive': {5, 8, 11}, 'negative': {3, 7, 9, 13}},
-     {'negative': {2, 3, 7}},
-     {'positive': {8, 12}, 'negative': {9, 7, 10}},
-     {'positive': {8}, 'negative': {7, 9}},
-     {'negative': {6, 7}}],
-    [{}, {'positive': {5, 8}, 'negative': {3, 6, 9}},
-     {'positive': {5, 8, 11}, 'negative': {3, 6, 9, 13}},
-     {'negative': {2, 3, 6}},
-     {'positive': {8, 12}, 'negative': {9, 6, 7, 10}},
-     {'positive': {8}, 'negative': {6, 7, 9}},
-     {'negative': {7, 6}}]
-]
-
-term_complexity_ans = [0, 4, 6, 2, 5, 3, 1, 1]
-ag_complexity_ans = [4, 7, 3, 6, 11]
-
-is_subset_ans = [
-    [True,  True,  True,  True,  True,  True,  True,  True],
-    [False, True, False, False, False, False, False, False],
-    [False, True,  True, False, False, False, False, False],
-    [False, False, False, True, False, False, False, False],
-    [False, False, False, False, True,  True,  True, False],
-    [False, False, False, False, False, True,  True, False],
-    [False, False, False, False, False, False, True, False],
-    [False, False, False, False, False, False, False, True]
-]
-
-is_empty_ans = [True, False, False, False, False, False, False, False]
-
-term_complement_ans = [
-    {},  # Empty set
-    {'negative': {5, 8}, 'positive': {3, 9}},
-    {'negative': {5, 8, 11}, 'positive': {3, 9, 13}},
-    {'positive': {2, 3}},
-    {'negative': {12, 8}, 'positive': {9, 7, 10}},
-    {'negative': {8}, 'positive': {7, 9}},
-    {'positive': {7}}, {'positive': {6}}
 ]
 
 cell_complement_cases = [
