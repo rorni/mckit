@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from itertools import product
 from functools import reduce
+from itertools import product
 from operator import xor
-from copy import deepcopy
 
 import numpy as np
 
-from .surface import Surface
-from .constants import EX, EY, EZ, GLOBAL_BOX, MIN_BOX_VOLUME
+from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
 from .fmesh import Box
+from .surface import Surface
 
 
 def _complement(arg):
@@ -151,20 +150,14 @@ class GeometryNode:
     def __str__(self):
         if self._opc == self._COMPLEMENT:
             arg = self._args
-            if isinstance(arg, Surface):
-                text = '-{0}'.format(arg.options['name'])
-            else:
-                text = '#({0})'.format(str(arg))
+            text = '-{0}'.format(arg.options['name'])
         elif self._opc == self._IDENTITY:
             arg = self._args
-            if isinstance(arg, Surface):
-                text = str(arg.options['name'])
-            else:
-                text = str(arg)
+            text = str(arg.options['name'])
         elif self._opc == self._INTERSECTION:
             text = ' '.join([str(a) for a in self._args])
         elif self._opc == self._UNION:
-            text = '(' + ':'.join([str(a) for a in self._args])
+            text = '(' + ':'.join([str(a) for a in self._args]) + ')'
         return text
 
     def get_simplest(self, other):
@@ -208,16 +201,20 @@ class GeometryNode:
                     args.remove(o)
 
         if len(args) == 1:
-            a = self._args.pop()
+            a = args.pop()
             opc = a._opc
-            args = a._args
+            args = a._args if isinstance(a._args, set) else {a._args}
 
         return GeometryNode(opc, *args, mandatory=self._mandatory,
                             node_id=self._id)
 
     def is_empty(self):
         """Checks if this geometry is an empty set."""
-        return len(self._args) == 0
+        if self._args is None or isinstance(self._args, set) and len(self._args) == 0:
+            return True
+        else:
+            return False
+        #return len(self._args) == 0
 
     def is_of_type(self, opc):
         """Checks if the geometry node has the same type of operation."""
@@ -570,7 +567,7 @@ class GeometryNode:
                 arg1 = operands.pop()
                 arg2 = operands.pop()
                 operands.append(GeometryNode(op, arg1, arg2))
-        return operands.pop()
+        return operands.pop().clean()
 
     def _set_node_ids(self, start=1):
         """Give order values to all nodes."""
@@ -609,7 +606,7 @@ class Cell(dict, GeometryNode):
     def __init__(self, geometry, **options):
         if isinstance(geometry, list):
             geometry = GeometryNode.from_polish_notation(geometry)
-        args = {self._args} if isinstance(self._args, Surface) else self._args
+        args = {geometry._args} if isinstance(geometry._args, Surface) else geometry._args
         GeometryNode.__init__(self, geometry._opc, *args)
         dict.__init__(self, options)
 
