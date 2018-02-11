@@ -3,6 +3,7 @@
 from itertools import product
 from functools import reduce
 from operator import xor
+from copy import deepcopy
 
 import numpy as np
 
@@ -30,6 +31,11 @@ def _complement(arg):
         The result of operation.
     """
     return -1 * arg
+
+
+def _identity(arg):
+    """Identity operation. Returns argument."""
+    return arg
 
 
 def _intersection(arg1, arg2):
@@ -97,71 +103,68 @@ class GeometryNode:
         A set of surfaces that have negative sense with respect to the part of
         space described by GeometryNode.
     mandatory : bool
-        Indicate if this term is mandatory. Important in union operations.
+        Indicate if this term is _mandatory. Important in union operations.
     """
-    _operations = (_intersection, _union)
-    _operation_code = {'I': 0, 'U': 1, 0: 0, 1: 1}
+    _operations = (_intersection, _complement, _union, _identity)
+    _operation_code = {'I': 0, 'U': 2, 'C': 1, 'E': 3}
+    _INTERSECTION = 0
+    _COMPLEMENT = 1
+    _UNION = 2
+    _IDENTITY = 3
 
-    def __init__(self, operation, positive=set(), negative=set(),
-                 mandatory=True, order=None):
-        self._opc = self._operation_code[operation]
-        self.positive = set()
-        self.negative = set()
-        self.mandatory = mandatory
-        self.order = order
-        # print('pos', positive, 'neg', negative)
-        pos_new = {p for p in positive if isinstance(p, Surface) or
-                   not p.is_empty()}
-        neg_new = {p for p in negative if isinstance(p, Surface) or
-                   not p.is_empty()}
-        if operation == _intersection and (len(pos_new) < len(positive) or
-                                           len(neg_new) < len(negative)):
-            positive = set()
-            negative = set()
-            print('empty')
+    def __init__(self, operation, *args, mandatory=True, node_id=None):
+        if isinstance(operation, int) and 0 <= operation <= 3:
+            self._opc = operation
         else:
-            positive = pos_new
-            negative = neg_new
+            self._opc = self._operation_code[operation]
 
-        if positive and negative and not positive.intersection(negative):
-            self.positive.update(positive)
-            self.negative.update(negative)
+        if self._opc == self._COMPLEMENT or self._opc == self._IDENTITY:
+            if len(args) > 1:
+                raise ValueError('Incorrect number of parameters.')
+            self._args = args[0]
         else:
-            self.positive.update(positive)
-            self.negative.update(negative)
+            self._args = set(args)
+
+        self._mandatory = mandatory
+        self._id = node_id
         # calculate hash value
         self._calculate_hash()
 
     def _calculate_hash(self):
-        pos = reduce(xor, [hash(s) for s in self.positive], 0)
-        neg = reduce(xor, [~hash(s) for s in self.negative], ~0)
-        op_hash = 0 if self._opc == 0 else ~0
-        self._hash_value = xor(xor(pos, neg), op_hash)
+        if self._opc == self._COMPLEMENT or self._opc == self._IDENTITY:
+            arg_hash = hash(self._args)
+        else:
+            arg_hash = reduce(xor, [hash(s) for s in self._args], 0)
+        op_hash = self._opc
+        self._hash_value = xor(arg_hash, op_hash)
+
+    def _invert_opc(self):
+        return (self._opc + 2) % 4
 
     def __hash__(self):
         return self._hash_value
 
     def __eq__(self, other):
-        return isinstance(other, GeometryNode) and other.is_of_type(self._opc) and \
-               self.positive == other.positive and \
-               self.negative == other.negative
+        return isinstance(other, GeometryNode) and \
+               other.is_of_type(self._opc) and self._args == other._args
 
     def __str__(self):
-        sep = ' ' if self._opc == 0 else ':'
-        toks = []
-        for s in self.positive:
-            if isinstance(s, GeometryNode):
-                toks.append(str(s))
+        if self._opc == self._COMPLEMENT:
+            arg = self._args
+            if isinstance(arg, Surface):
+                text = '-{0}'.format(arg.options['name'])
             else:
-                toks.append(str(s.options['name']))
-        for s in self.negative:
-            if isinstance(s, GeometryNode):
-                toks.append('#(' + str(s) + ')')
+                text = '#({0})'.format(str(arg))
+        elif self._opc == self._IDENTITY:
+            arg = self._args
+            if isinstance(arg, Surface):
+                text = str(arg.options['name'])
             else:
-                toks.append('-' + str(s.options['name']))
-        text = sep.join(toks)
-        if self._opc == 1:
-            text = '(' + text + ')'
+                text = str(arg)
+        elif self._opc == self._INTERSECTION:
+            text = ' '.join([str(a) for a in self._args])
+        elif self._opc == self._UNION:
+            text = '(' + ':'.join([str(a) for a in self._args])
         return text
 
     def get_simplest(self, other):
@@ -170,68 +173,51 @@ class GeometryNode:
         else:
             return other
 
-    def propagate_complement(self):
-        new_neg = set()
-        for g in self.negative:
-            if isinstance(g, GeometryNode):
-                self.positive.add(g.complement())
-            else:
-                new_neg.add(g)
-        for g in self.positive:
-            if isinstance(g, GeometryNode):
-                g.propagate_complement()
-        self._calculate_hash()
-
     def clean(self, del_unnecessary=False):
         """Cleans geometry description.
 
         Parameters
         ----------
         del_unnecessary : bool
-            Indicate to delete nodes which are not mandatory.
+            Indicate to delete nodes which are not _mandatory.
 
         Returns
         -------
         cleaned : GeometryNode
             Cleaned geometry.
         """
-        pos_cleaned = set()
-        neg_cleaned = set()
-        for g in self.positive:
-            if not getattr(g, 'mandatory', True) and del_unnecessary:
-                continue
-            if isinstance(g, GeometryNode):
-                if g.is_empty():
-                    continue
-                g.clean(del_unnecessary)
-                if g.is_of_type(self._opc):
-                    pos_cleaned.update(g.positive)
-                    neg_cleaned.update(g.negative)
+        if isinstance(self._args, Surface):
+            return self
+        args = set()
+        opc = self._opc
+        for a in self._args:
+            ca = a.clean(del_unnecessary)
+            if (a._mandatory or not del_unnecessary) and not ca.is_empty():
+                if ca.is_of_type(opc):
+                    args.update(ca._args)
                 else:
-                    pos_cleaned.add(g)
+                    args.add(ca)
+
+        comp_set = {a.complement() for a in args}
+        overlap = comp_set.intersection(args)
+        if len(overlap) > 0:
+            if opc == self._INTERSECTION:
+                args = set()
             else:
-                pos_cleaned.add(g)
-        for g in self.negative:
-            if not getattr(g, 'mandatory', True) and del_unnecessary:
-                continue
-            if isinstance(g, GeometryNode):
-                if g.is_empty():
-                    continue
-                g.clean(del_unnecessary)
-                if g.is_of_type(self._opc):
-                    pos_cleaned.update(g.positive)
-                    neg_cleaned.update(g.negative)
-                else:
-                    neg_cleaned.add(g)
-            else:
-                neg_cleaned.add(g)
-        self.positive = pos_cleaned
-        self.negative = neg_cleaned
-        self._calculate_hash()
+                for o in overlap:
+                    args.remove(o)
+
+        if len(args) == 1:
+            a = self._args.pop()
+            opc = a._opc
+            args = a._args
+
+        return GeometryNode(opc, *args, mandatory=self._mandatory,
+                            node_id=self._id)
 
     def is_empty(self):
         """Checks if this geometry is an empty set."""
-        return len(self.positive) + len(self.negative) == 0
+        return len(self._args) == 0
 
     def is_of_type(self, opc):
         """Checks if the geometry node has the same type of operation."""
@@ -260,52 +246,34 @@ class GeometryNode:
             List of simple variants of this geometry. Optional.
         """
         if not return_simple:
-            pos = [a.test_box(box) for a in self.positive]
-            neg = [-1 * a.test_box(box) for a in self.negative]
-            return reduce(self._operations[self._opc], pos + neg)
+            if isinstance(self._args, Surface):
+                return self._operations[self._opc](self._args.test_box(box))
+            else:
+                tests = [a.test_box(box) for a in self._args]
+                return reduce(self._operations[self._opc], tests)
 
-        pos = {}
-        neg = {}
-        for g in self.positive:
-            if isinstance(g, Surface):
-                res = g.test_box(box)
-                simp = {g}
-            else:
-                res, simp = g.test_box(box, return_simple=True)
-            if res not in pos.keys():
-                pos[res] = set()
-            pos[res].update(simp)
-        for g in self.negative:
-            if isinstance(g, Surface):
-                res = g.test_box(box)
-                simp = {g}
-            else:
-                res, simp = g.test_box(box, return_simple=True)
-            res *= -1
-            if res not in neg.keys():
-                neg[res] = set()
-            neg[res].update(simp)
+        if isinstance(self._args, Surface):
+            return self._args.test_box(box), {self}
+
+        ans = {}
+        for g in self._args:
+            res, simp = g.test_box(box, return_simple=True)
+            if res not in ans.keys():
+                ans[res] = set()
+            ans[res].update(simp)
         # Now calculate the result
-        result = reduce(self._operations[self._opc], list(pos.keys()) + list(neg.keys()))
-        pos_set = pos.get(result, set())
-        neg_set = neg.get(result, set())
+        result = reduce(self._operations[self._opc], ans.keys())
+        ans_set = ans.get(result, set())
         if result == 0:
-            simp_geom = {GeometryNode(self._opc, positive=pos_set,
-                                      negative=neg_set,
-                                      order=self.order)}
+            simp_geom = {GeometryNode(self._opc, *ans_set, node_id=self._id)}
         elif result == -1 and self._opc == 0 or result == +1 and self._opc == 1:
             simp_geom = set()
-            for g in pos_set:
-                simp_geom.add(GeometryNode(self._opc, positive={g},
-                                           order=self.order))
-            for g in neg_set:
-                simp_geom.add(GeometryNode(self._opc, negative={g},
-                                           order=self.order))
+            for g in ans_set:
+                simp_geom.add(GeometryNode(self._opc, g, node_id=self._id))
         else:
-            for g in pos_set | neg_set:
-                g.mandatory = False
-            simp_geom = {GeometryNode(self._opc, positive=pos_set,
-                                      negative=neg_set, order=self.order)}
+            for g in ans_set:
+                g._mandatory = False
+            simp_geom = {GeometryNode(self._opc, *ans_set, node_id=self._id)}
         return result, simp_geom
 
     def test_point(self, p):
@@ -327,9 +295,12 @@ class GeometryNode:
             Individual point - single value, array of points - array of
             ints of shape (num_points,) is returned.
         """
-        pos = [a.test_point(p) for a in self.positive]
-        neg = [-1 * a.test_point(p) for a in self.negative]
-        return reduce(self._operations[self._opc], pos + neg)
+        if isinstance(self._args, Surface):
+            r = self._operations[self._opc](self._args.test_point(p))
+        else:
+            tests = [a.test_point(p) for a in self._args]
+            r = reduce(self._operations[self._opc], tests)
+        return r
 
     def transform(self, tr):
         """Transforms this geometry.
@@ -344,10 +315,12 @@ class GeometryNode:
         geom : GeometryNode
             Transformed geometry.
         """
-        pos = {a.transform(tr) for a in self.positive}
-        neg = {a.transform(tr) for a in self.negative}
-        return GeometryNode(self._operations[self._opc], positive=pos,
-                            negative=neg, mandatory=self.mandatory)
+        if isinstance(self._args, Surface):
+            args = [self._args.transform(tr)]
+        else:
+            args = [a.transform(tr) for a in self._args]
+        return GeometryNode(self._opc, *args, mandatory=self._mandatory,
+                            node_id=self._id)
 
     def get_surfaces(self):
         """Gets all surfaces that describes the geometry.
@@ -358,7 +331,7 @@ class GeometryNode:
             A set of surfaces that take part in geometry description.
         """
         surfaces = set()
-        for arg in self.positive.union(self.negative):
+        for arg in self._args:
             if isinstance(arg, Surface):
                 surfaces.add(arg)
             else:
@@ -367,13 +340,10 @@ class GeometryNode:
 
     def complexity(self):
         """Gets complexity of calculations."""
-        comp = 0
-        for arg in self.positive.union(self.negative):
-            if isinstance(arg, Surface):
-                comp += 1
-            else:
-                comp += arg.complexity()
-        return comp
+        if isinstance(self._args, Surface):
+            return 1
+        else:
+            return sum(map(GeometryNode.complexity, self._args))
 
     def bounding_box(self, box=GLOBAL_BOX, tol=1.0):
         """Gets bounding box for this cell.
@@ -473,6 +443,7 @@ class GeometryNode:
         result : set[GeometryNode]
             A set of simpler geometries.
         """
+        # TODO: review algorithm
         result, simple_geoms = self.test_box(box, return_simple=True)
         if result != 0 or box.volume() <= min_volume:
             return simple_geoms
@@ -514,25 +485,20 @@ class GeometryNode:
         new_geom : AdditiveGeometry
             New merged geometry.
         """
-        pos = self._merge_node_sets(self.positive, other.positive)
-        neg = self._merge_node_sets(self.negative, other.negative)
-        return GeometryNode(self._opc, positive=pos, negative=neg,
-                            mandatory=self.mandatory or other.mandatory,
-                            order=self.order)
-
-    @staticmethod
-    def _merge_node_sets(a, b):
-        a_dict = {t.order: t for t in a}
-        b_dict = {t.order: t for t in b}
-        for k, v in a_dict.items():
-            if k not in b_dict.keys():
-                b_dict[k] = v
-            else:
-                if isinstance(v, GeometryNode):
-                    b_dict[k] = b_dict[k].merge_nodes(v)
+        # TODO: review algorithm
+        if self._opc == self._COMPLEMENT or self._opc == self._IDENTITY:
+            args = [self._args]
+        else:
+            s_dict = {t._id: t for t in self._args}
+            o_dict = {t._id: t for t in other._args}
+            for k, v in o_dict.items():
+                if k not in s_dict.keys():
+                    s_dict[k] = v
                 else:
-                    b_dict[k].mandatory = getattr(b_dict[k], 'mandatory', True) or getattr(v, 'mandatory', True)
-        return set(b_dict.values())
+                    s_dict[k] = s_dict[k].merge_nodes(v)
+            args = s_dict.values()
+        m = self._mandatory or other._mandatory
+        return GeometryNode(self._opc, *args, mandatory=m, node_id=self._id)
 
     def intersection(self, other):
         """Gets an intersection of geometries.
@@ -547,7 +513,7 @@ class GeometryNode:
         result : GeometryNode
             A resulting intersection.
         """
-        return GeometryNode('I', positive={self, other})
+        return GeometryNode('I', *(self._args | other._args))
 
     def union(self, other):
         """Gets an union of geometries.
@@ -562,26 +528,23 @@ class GeometryNode:
         result : GeometryNode
             A resulting union.
         """
-        return GeometryNode('U', positive={self, other})
+        return GeometryNode('U', *(self._args | other._args))
 
     def complement(self):
         """Gets a complement of the geometry.
-
-        Parameters
-        ----------
-        go_deep : bool
-            Indicate to propagate complement operation deeper.
 
         Returns
         -------
         result : GeometryNode
             A resulting complement.
         """
-        opc = (self._opc + 1) % 2
-        pos = self.negative
-        neg = self.positive
-        return GeometryNode(opc, positive=pos, negative=neg,
-                            mandatory=self.mandatory, order=self.order)
+        opc = self._invert_opc()
+        if isinstance(self._args, set):
+            args = [a.complement() for a in self._args]
+        else:
+            args = [self._args]
+        return GeometryNode(opc, *args, mandatory=self._mandatory,
+                            node_id=self._id)
 
     @staticmethod
     def from_polish_notation(polish):
@@ -600,31 +563,22 @@ class GeometryNode:
         operands = []
         for op in polish:
             if isinstance(op, Surface):
-                operands.append(op)
-                operands.append(0)
+                operands.append(GeometryNode('E', op))
             elif op == 'C':
-                sign = operands.pop()
-                operands.append((sign + 1) % 2)
+                operands.append(operands.pop().complement())
             else:
-                args = [set(), set()]
-                for i in range(2):
-                    sign = operands.pop()
-                    args[sign].add(operands.pop())
-                geom = GeometryNode(op, positive=args[0], negative=args[1])
-                operands.append(geom)
-                operands.append(0)
-        operands.pop()
-        a_geom = operands.pop()
-        return a_geom
+                arg1 = operands.pop()
+                arg2 = operands.pop()
+                operands.append(GeometryNode(op, arg1, arg2))
+        return operands.pop()
 
-    def _give_orders(self, start=1):
+    def _set_node_ids(self, start=1):
         """Give order values to all nodes."""
-        for g in self.positive | self.negative:
-            if isinstance(g, Surface):
-                g.order = start
-                start += 1
-            else:
-                start = g._give_orders(start)
+        self._id = start
+        start += 1
+        if isinstance(self._args, set):
+            for g in self._args:
+                start = g._set_node_ids(start)
         return start
 
 
@@ -655,8 +609,8 @@ class Cell(dict, GeometryNode):
     def __init__(self, geometry, **options):
         if isinstance(geometry, list):
             geometry = GeometryNode.from_polish_notation(geometry)
-        GeometryNode.__init__(self, geometry._opc, positive=geometry.positive,
-                              negative=geometry.negative)
+        args = {self._args} if isinstance(self._args, Surface) else self._args
+        GeometryNode.__init__(self, geometry._opc, *args)
         dict.__init__(self, options)
 
     def __str__(self):
@@ -723,16 +677,14 @@ class Cell(dict, GeometryNode):
         simple_cell : Cell
             Simplified version of this cell.
         """
-        self._give_orders()
+        self._set_node_ids()
         simple_geoms = super(Cell, self).simplify(box, min_volume)
         for i, g in enumerate(simple_geoms):
             print(i, ' -> ', g)
 
         geometries = set()
         for sg in simple_geoms:
-            #sg.propagate_complement()
-            #sg.clean(del_unnecessary=False)
-            geometries.add(sg)
+            geometries.add(sg.clean(del_unnecessary=False))
         simplest = reduce(GeometryNode.get_simplest, geometries)
         # TODO: implement splitting of disjoint cells.
         return Cell(simplest, **self)
