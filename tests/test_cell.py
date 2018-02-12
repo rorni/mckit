@@ -22,21 +22,14 @@ def setUpModule():
         geoms.append(create_node(g[0], g[1]))
 
 def create_node(kind, args):
-    pos = set()
-    neg = set()
-    for g in args.get('positive', []):
+    new_args = []
+    for g in args:
         if isinstance(g, tuple):
             g = create_node(g[0], g[1])
         else:
             g = surfaces[g]
-        pos.add(g)
-    for g in args.get('negative', []):
-        if isinstance(g, tuple):
-            g = create_node(g[0], g[1])
-        else:
-            g = surfaces[g]
-        neg.add(g)
-    return GeometryNode(kind, positive=pos, negative=neg)
+        new_args.append(g)
+    return GeometryNode(kind, *new_args)
 
 
 class TestGeometryNode(unittest.TestCase):
@@ -62,7 +55,7 @@ class TestGeometryNode(unittest.TestCase):
     def test_intersection(self):
         for i, case in enumerate(intersection_geom):
             for j, g in enumerate(case):
-                ans = create_node(g[0], g[1])
+                ans = create_node(g[0], g[1]).clean()
                 with self.subTest(msg='i={0}, j={1}'.format(i, j)):
                     ind = j if j < i else j + 1
                     test = geoms[i].intersection(geoms[ind])
@@ -73,7 +66,7 @@ class TestGeometryNode(unittest.TestCase):
     def test_union(self):
         for i, case in enumerate(union_geom):
             for j, g in enumerate(case):
-                ans = create_node(g[0], g[1])
+                ans = create_node(g[0], g[1]).clean()
                 with self.subTest(msg='i={0}, j={1}'.format(i, j)):
                     ind = j if j < i else j + 1
                     test = geoms[i].union(geoms[ind])
@@ -89,6 +82,12 @@ class TestGeometryNode(unittest.TestCase):
                     self.assertEqual(t, node_test_point_ans[i][j])
             t = g.test_point(np.array(node_points))
             self.assertListEqual(list(t), node_test_point_ans[i])
+
+    def test_complexity(self):
+        raise NotADirectoryError
+
+    def test_test_box(self):
+        raise NotImplementedError
 
 
 # class TestCell(unittest.TestCase):

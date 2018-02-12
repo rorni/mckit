@@ -510,7 +510,7 @@ class GeometryNode:
         result : GeometryNode
             A resulting intersection.
         """
-        return GeometryNode('I', *(self._args | other._args))
+        return GeometryNode('I', self, other).clean()
 
     def union(self, other):
         """Gets an union of geometries.
@@ -525,7 +525,7 @@ class GeometryNode:
         result : GeometryNode
             A resulting union.
         """
-        return GeometryNode('U', *(self._args | other._args))
+        return GeometryNode('U', self, other).clean()
 
     def complement(self):
         """Gets a complement of the geometry.
