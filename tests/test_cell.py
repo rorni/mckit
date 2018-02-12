@@ -84,11 +84,29 @@ class TestGeometryNode(unittest.TestCase):
             self.assertListEqual(list(t), node_test_point_ans[i])
 
     def test_complexity(self):
-        raise NotADirectoryError
+        for i, g in enumerate(geoms):
+            with self.subTest(i=i):
+                c = g.complexity()
+                self.assertEqual(c, node_complexity_data[i])
 
     def test_test_box(self):
-        raise NotImplementedError
-
+        for i, b_data in enumerate(node_boxes_data):
+            box = Box(b_data['base'], b_data['ex'], b_data['ey'], b_data['ez'])
+            for j, g in enumerate(geoms):
+                with self.subTest(msg='box {0}, geom {1}, only result'.format(i, j)):
+                    r = g.test_box(box, return_simple=False)
+                    self.assertEqual(r, node_box_ans[i][j][0])
+                with self.subTest(msg='box {0}, geom {1}, result+geom'.format(i, j)):
+                    r, sg = g.test_box(box, return_simple=True)
+                    ans = set()
+                    for a in node_box_ans[i][j][1]:
+                        ans.add(create_node(a[0], a[1]))
+                    if sg != ans:
+                        print(len(sg))
+                        print(i, ' ', j, '=', list(sg)[0], ' ===> ', list(ans)[0])
+                        print(i, ' ', j, '=', list(sg)[1], ' ===> ', list(ans)[1])
+                    self.assertEqual(r, node_box_ans[i][j][0])
+                    self.assertEqual(sg, ans)
 
 # class TestCell(unittest.TestCase):
 #     def test_creation(self):

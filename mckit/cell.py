@@ -250,27 +250,29 @@ class GeometryNode:
                 return reduce(self._operations[self._opc], tests)
 
         if isinstance(self._args, Surface):
-            return self._args.test_box(box), {self}
+            return self._operations[self._opc](self._args.test_box(box)), {self}
 
         ans = {}
         for g in self._args:
             res, simp = g.test_box(box, return_simple=True)
             if res not in ans.keys():
-                ans[res] = set()
-            ans[res].update(simp)
+                ans[res] = []
+            ans[res].append(simp)
         # Now calculate the result
         result = reduce(self._operations[self._opc], ans.keys())
-        ans_set = ans.get(result, set())
+        ans_set = list(map(set, product(*ans[result])))
         if result == 0:
-            simp_geom = {GeometryNode(self._opc, *ans_set, node_id=self._id)}
-        elif result == -1 and self._opc == 0 or result == +1 and self._opc == 1:
+            simp_geom = {GeometryNode(self._opc, *a, node_id=self._id) for a in ans_set}
+        elif result == -1 and self._opc == self._INTERSECTION or \
+                result == +1 and self._opc == self._UNION:
             simp_geom = set()
-            for g in ans_set:
+            for g in reduce(set.union, ans_set):
                 simp_geom.add(GeometryNode(self._opc, g, node_id=self._id))
         else:
-            for g in ans_set:
-                g._mandatory = False
-            simp_geom = {GeometryNode(self._opc, *ans_set, node_id=self._id)}
+            for a in ans_set:
+                for g in a:
+                    g._mandatory = False
+            simp_geom = {GeometryNode(self._opc, *a, node_id=self._id) for a in ans_set}
         return result, simp_geom
 
     def test_point(self, p):
