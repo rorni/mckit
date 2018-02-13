@@ -633,7 +633,9 @@ class Cell(dict, GeometryNode):
         cell : Cell
             The result.
         """
-        geometry = GeometryNode.intersection(self, other)
+        self_geom = GeometryNode(self._opc, *self._args)
+        other_geom = GeometryNode(other._opc, *other._args)
+        geometry = GeometryNode.intersection(self_geom, other_geom)
         return Cell(geometry, **self)
 
     def union(self, other):
@@ -651,7 +653,9 @@ class Cell(dict, GeometryNode):
         cell : Cell
             The result.
         """
-        geometry = GeometryNode.union(self, other)
+        self_geom = GeometryNode(self._opc, *self._args)
+        other_geom = GeometryNode(other._opc, *other._args)
+        geometry = GeometryNode.union(self_geom, other_geom)
         return Cell(geometry, **self)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,

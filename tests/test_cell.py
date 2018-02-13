@@ -21,6 +21,7 @@ def setUpModule():
     for g in create_geom:
         geoms.append(create_node(g[0], g[1]))
 
+
 def create_node(kind, args):
     new_args = []
     for g in args:
@@ -135,50 +136,56 @@ class TestGeometryNode(unittest.TestCase):
                     v_ans = node_volume[i][j]
                     self.assertAlmostEqual(v, v_ans, delta=v_ans * 0.001)
 
-# class TestCell(unittest.TestCase):
-#     def test_creation(self):
-#         for i, (pol_data, ans_data) in enumerate(ag_polish_data):
-#             pol_geom = []
-#             for x in pol_data:
-#                 if isinstance(x, int):
-#                     pol_geom.append(surfaces[x])
-#                 else:
-#                     pol_geom.append(x)
-#             with self.subTest(msg="polish #{0}".format(i)):
-#                 ans = [produce_term(a) for a in ans_data]
-#                 ans_geom = AdditiveGeometry(*ans)
-#                 cell = Cell(pol_geom)
-#                 # print(str(ag))
-#                 self.assertEqual(cell, ans_geom)
-#         for i, ag in enumerate(additives):
-#             with self.subTest(msg="additive geom #{0}".format(i)):
-#                 cell = Cell(ag)
-#                 self.assertEqual(cell, ag)
-#
-#     def test_intersection(self):
-#         for i, ag1 in enumerate(additives):
-#             c1 = Cell(ag1, **cell_kwargs)
-#             for j, ag2 in enumerate(additives):
-#                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
-#                     c2 = Cell(ag2)
-#                     u = c1.intersection(c2)
-#                     ans = [produce_term(a) for a in ag_intersection1[i][j]]
-#                     ans_geom = AdditiveGeometry(*ans)
-#                     self.assertEqual(u, ans_geom)
-#                     self.assertDictEqual(u, c1)
-#
-#     def test_union(self):
-#         for i, ag1 in enumerate(additives):
-#             c1 = Cell(ag1, **cell_kwargs)
-#             for j, ag2 in enumerate(additives):
-#                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
-#                     c2 = Cell(ag2)
-#                     u = c1.union(c2)
-#                     ans = [produce_term(a) for a in ag_union1[i][j]]
-#                     ans_geom = AdditiveGeometry(*ans)
-#                     self.assertEqual(u, ans_geom)
-#                     self.assertDictEqual(u, c1)
-#
+
+class TestCell(unittest.TestCase):
+    def test_creation(self):
+        for i, pol_data in enumerate(polish_geoms):
+            pol_geom = []
+            for x in pol_data:
+                if isinstance(x, int):
+                    pol_geom.append(surfaces[x])
+                else:
+                    pol_geom.append(x)
+            with self.subTest(msg="polish #{0}".format(i)):
+                ans = geoms[i]
+                cell = Cell(pol_geom)
+                # print(str(ag))
+                self.assertEqual(cell, ans)
+        for i, ag in enumerate(geoms):
+            with self.subTest(msg="additive geom #{0}".format(i)):
+                cell = Cell(ag)
+                self.assertEqual(cell, ag)
+
+    def test_intersection(self):
+        for i, ag1 in enumerate(geoms):
+            c1 = Cell(ag1, **cell_kwargs)
+            for j, ag2 in enumerate(geoms):
+                if i == j:
+                    continue
+                ind = j-1 if j > i else j
+                g = intersection_geom[i][ind]
+                ans = create_node(g[0], g[1]).clean()
+                with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
+                    c2 = Cell(ag2)
+                    u = c1.intersection(c2)
+                    self.assertEqual(u, ans)
+                    self.assertDictEqual(u, c1)
+
+    def test_union(self):
+        for i, ag1 in enumerate(geoms):
+            c1 = Cell(ag1, **cell_kwargs)
+            for j, ag2 in enumerate(geoms):
+                if i == j:
+                    continue
+                ind = j-1 if j > i else j
+                g = union_geom[i][ind]
+                ans = create_node(g[0], g[1]).clean()
+                with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
+                    c2 = Cell(ag2)
+                    u = c1.union(c2)
+                    self.assertEqual(u, ans)
+                    self.assertDictEqual(u, c1)
+
 #     def test_populate(self):
 #         for i, ag_out in enumerate(additives):
 #             c_out = Cell(ag_out, name='Outer', U=4)
@@ -225,17 +232,22 @@ class TestGeometryNode(unittest.TestCase):
 #                 self.assertSetEqual(cell.terms, ans_geom.terms)
 #
 #     # @unittest.skip
-#     def test_simplify(self):
-#         for i, ag in enumerate(additives):
-#             cell = Cell(ag)
-#             with self.subTest(i=i):
-#                 s = cell.simplify(min_volume=0.1, box=Box([-10, -10, -10], [26, 0, 0], [0, 20, 0], [0, 0, 20]))
-#                 # print(i, len(s))
-#                 # for ss in s:
-#                 #     print(str(ss))
-#                 ans = [produce_term(a) for a in ag_simplify[i]]
-#                 ans_geom = AdditiveGeometry(*ans)
-#                 self.assertEqual(ans_geom == s, True)
+    def test_simplify(self):
+        for i, ag in enumerate(geoms):
+            cell = Cell(ag)
+            pol_geom = []
+            for x in simple_geoms[i]:
+                if isinstance(x, int):
+                    pol_geom.append(surfaces[x])
+                else:
+                    pol_geom.append(x)
+            with self.subTest(i=i):
+                s = cell.simplify(min_volume=0.1, box=Box([-10, -10, -10], [26, 0, 0], [0, 20, 0], [0, 0, 20]))
+                # print(i, len(s))
+                # for ss in s:
+                #     print(str(ss))
+                ans = Cell(pol_geom)
+                self.assertEqual(ans, s)
 
 
 class TestOperations(unittest.TestCase):
