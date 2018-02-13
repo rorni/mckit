@@ -108,6 +108,33 @@ class TestGeometryNode(unittest.TestCase):
                     self.assertEqual(r, node_box_ans[i][j][0])
                     self.assertEqual(sg, ans)
 
+    def test_bounding_box(self):
+        base = [-10, -10, -10]
+        dims = [30, 30, 30]
+        gb = Box(base, [dims[0], 0, 0], [0, dims[1], 0], [0, 0, dims[2]])
+        tol = 0.2
+        for i, (ag, limits) in enumerate(zip(geoms, node_bounding_box)):
+            with self.subTest(i=i):
+                bb = ag.bounding_box(box=gb, tol=tol)
+                for j in range(3):
+                    if limits[j][0] is None:
+                        limits[j][0] = base[j]
+                    if limits[j][1] is None:
+                        limits[j][1] = base[j] + dims[j]
+                    self.assertLessEqual(bb.base[j], limits[j][0])
+                    self.assertGreaterEqual(bb.base[j], limits[j][0] - tol)
+                    self.assertGreaterEqual(bb.base[j] + bb.scale[j], limits[j][1])
+                    self.assertLessEqual(bb.base[j] + bb.scale[j], limits[j][1] + tol)
+
+    def test_volume(self):
+        for i, b_data in enumerate(node_boxes_data):
+            box = Box(b_data['base'], b_data['ex'], b_data['ey'], b_data['ez'])
+            for j, g in enumerate(geoms):
+                with self.subTest(msg='box {0}, geom {1}'.format(i, j)):
+                    v = g.volume(box, min_volume=1.e-3)
+                    v_ans = node_volume[i][j]
+                    self.assertAlmostEqual(v, v_ans, delta=v_ans * 0.001)
+
 # class TestCell(unittest.TestCase):
 #     def test_creation(self):
 #         for i, (pol_data, ans_data) in enumerate(ag_polish_data):
