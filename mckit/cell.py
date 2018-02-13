@@ -180,33 +180,49 @@ class GeometryNode:
             Cleaned geometry.
         """
         if isinstance(self._args, Surface):
-            return self
+            return {self}
         args = set()
         opc = self._opc
+        arg_candidates = {True: [], False: []}
         for a in self._args:
             ca = a.clean(del_unnecessary)
-            if (a._mandatory or not del_unnecessary) and not ca.is_empty():
-                if ca.is_of_type(opc):
-                    args.update(ca._args)
+            if ca:
+                arg_candidates[a._mandatory].append(ca)
+        if del_unnecessary and len(arg_candidates[True]) > 0:
+            args = product(*arg_candidates[True])
+        elif not del_unnecessary:
+            args = [reduce(set.union, arg_candidates[True] + arg_candidates[False])]
+        else:
+            args = product(*arg_candidates[False])
+
+        geometries = set()
+        for arg_set in args:
+            new_args = set()
+            for ca in arg_set:
+                if not ca.is_empty():
+                    if ca.is_of_type(opc):
+                        new_args.update(ca._args)
+                    else:
+                        new_args.add(ca)
+
+            comp_set = {a.complement() for a in new_args}
+            overlap = comp_set.intersection(new_args)
+            if len(overlap) > 0:
+                if opc == self._INTERSECTION:
+                    new_args = set()
                 else:
-                    args.add(ca)
+                    for o in overlap:
+                        new_args.remove(o)
 
-        comp_set = {a.complement() for a in args}
-        overlap = comp_set.intersection(args)
-        if len(overlap) > 0:
-            if opc == self._INTERSECTION:
-                args = set()
-            else:
-                for o in overlap:
-                    args.remove(o)
-
-        if len(args) == 1:
-            a = args.pop()
-            opc = a._opc
-            args = a._args if isinstance(a._args, set) else {a._args}
-
-        return GeometryNode(opc, *args, mandatory=self._mandatory,
-                            node_id=self._id)
+            if len(new_args) == 1:
+                a = new_args.pop()
+                opc = a._opc
+                new_args = a._args if isinstance(a._args, set) else {a._args}
+            geometries.add(GeometryNode(opc, *new_args,
+                                        mandatory=self._mandatory,
+                                        node_id=self._id)
+                           )
+        return geometries
 
     def is_empty(self):
         """Checks if this geometry is an empty set."""
@@ -569,7 +585,7 @@ class GeometryNode:
                 arg1 = operands.pop()
                 arg2 = operands.pop()
                 operands.append(GeometryNode(op, arg1, arg2))
-        return operands.pop().clean()
+        return operands.pop().clean().pop()
 
     def _set_node_ids(self, start=1):
         """Give order values to all nodes."""
@@ -687,7 +703,7 @@ class Cell(dict, GeometryNode):
 
         geometries = set()
         for sg in simple_geoms:
-            geometries.add(sg.clean(del_unnecessary=False))
+            geometries.update(sg.clean(del_unnecessary=True))
         simplest = reduce(GeometryNode.get_simplest, geometries)
         # TODO: implement splitting of disjoint cells.
         return Cell(simplest, **self)
