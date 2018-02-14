@@ -9,6 +9,7 @@ import numpy as np
 from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
 from .fmesh import Box
 from .surface import Surface
+from .model import MCPrinter
 
 
 def _complement(arg):
@@ -148,6 +149,11 @@ class GeometryNode:
                other.is_of_type(self._opc) and self._args == other._args
 
     def __str__(self):
+        text = self.str_tokens()
+        #text = text + '/{0}'.format(self._mandatory)
+        return ''.join(text)
+
+    def str_tokens(self):
         if self._opc == self._COMPLEMENT:
             arg = self._args
             text = '-{0}'.format(arg.options['name'])
@@ -155,10 +161,17 @@ class GeometryNode:
             arg = self._args
             text = str(arg.options['name'])
         elif self._opc == self._INTERSECTION:
-            text = ' '.join([str(a) for a in self._args])
+            text = []
+            for s in self._args:
+                text.append(s)
+                text.append(' ')
+            text.pop()
         elif self._opc == self._UNION:
-            text = '(' + ':'.join([str(a) for a in self._args]) + ')'
-        #text = text + '/{0}'.format(self._mandatory)
+            text = ['(']
+            for s in self._args:
+                text.append(s)
+                text.append(':')
+            text[-1] = ')'
         return text
 
     def get_simplest(self, other):
@@ -224,58 +237,12 @@ class GeometryNode:
         geometries = {GeometryNode(self._opc, *args, mandatory=self._mandatory, node_id=self._id) for args in arg_sets}
         return geometries
 
-        # opc = self._opc
-        # arg_candidates = {True: [], False: []}
-        # for a in self._args:
-        #     ca = a.clean(del_unnecessary)
-        #     if ca:
-        #         arg_candidates[a._mandatory].append(ca)
-        # if del_unnecessary and len(arg_candidates[True]) > 0:
-        #     args = product(*arg_candidates[True])
-        # elif not del_unnecessary:
-        #     args = [reduce(set.union, arg_candidates[True] + arg_candidates[False])]
-        # else:
-        #     args = [{a} for a in reduce(set.union, arg_candidates[False])]
-        #
-        # geometries = set()
-        # for arg_set in args:
-        #     new_opc = opc
-        #     new_args = set()
-        #     for ca in arg_set:
-        #         if not ca.is_empty():
-        #             if ca.is_of_type(opc):
-        #                 new_args.update(ca._args)
-        #             else:
-        #                 new_args.add(ca)
-        #
-        #     comp_set = {a.complement() for a in new_args}
-        #     overlap = comp_set.intersection(new_args)
-        #     if len(overlap) > 0:
-        #         if opc == self._INTERSECTION:
-        #             new_args = set()
-        #         else:
-        #             for o in overlap:
-        #                 new_args.remove(o)
-        #
-        #     if len(new_args) == 1:
-        #         a = new_args.pop()
-        #         new_opc = a._opc
-        #         new_args = a._args if isinstance(a._args, set) else {a._args}
-        #     elif len(new_args) == 0:
-        #         continue
-        #     geometries.add(GeometryNode(new_opc, *new_args,
-        #                                 mandatory=self._mandatory,
-        #                                 node_id=self._id)
-        #                    )
-        # return geometries
-
     def is_empty(self):
         """Checks if this geometry is an empty set."""
         if self._args is None or isinstance(self._args, set) and len(self._args) == 0:
             return True
         else:
             return False
-        #return len(self._args) == 0
 
     def is_of_type(self, opc):
         """Checks if the geometry node has the same type of operation."""
@@ -390,12 +357,11 @@ class GeometryNode:
         surfaces : set[Surface]
             A set of surfaces that take part in geometry description.
         """
+        if isinstance(self._args, Surface):
+            return {self._args}
         surfaces = set()
         for arg in self._args:
-            if isinstance(arg, Surface):
-                surfaces.add(arg)
-            else:
-                surfaces.update(arg.get_surfaces())
+            surfaces.update(arg.get_surfaces())
         return surfaces
 
     def complexity(self):
@@ -678,8 +644,14 @@ class Cell(dict, GeometryNode):
 
     def __str__(self):
         text = [str(self['name'])]
+        if 'MAT' in self.keys():
+            text.append(str(self['MAT']['name']))
+            text.append(str(self['MAT'].density()))
+        else:
+            text.append('0')
         text.append(GeometryNode.__str__(self))
-        return ' '.join(text)
+        text.append(MCPrinter.print_cell_options(self, 5))
+        return MCPrinter.print_card(text)
 
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
@@ -746,13 +718,11 @@ class Cell(dict, GeometryNode):
         """
         self._set_node_ids()
         simple_geoms = super(Cell, self).simplify(box, min_volume)
-        for i, g in enumerate(simple_geoms):
-            print(i, ' -> ', g)
 
         geometries = set()
         for sg in simple_geoms:
             #for g in sg.delete_unnecessary():
-             geometries.add(sg.clean())
+            geometries.add(sg.clean())
         #print(len(geometries))
         simplest = reduce(GeometryNode.get_simplest, geometries)
         # TODO: implement splitting of disjoint cells.

@@ -109,6 +109,7 @@ class TestGeometryNode(unittest.TestCase):
                     self.assertEqual(r, node_box_ans[i][j][0])
                     self.assertEqual(sg, ans)
 
+    @unittest.skip
     def test_bounding_box(self):
         base = [-10, -10, -10]
         dims = [30, 30, 30]
@@ -127,6 +128,7 @@ class TestGeometryNode(unittest.TestCase):
                     self.assertGreaterEqual(bb.base[j] + bb.scale[j], limits[j][1])
                     self.assertLessEqual(bb.base[j] + bb.scale[j], limits[j][1] + tol)
 
+    @unittest.skip
     def test_volume(self):
         for i, b_data in enumerate(node_boxes_data):
             box = Box(b_data['base'], b_data['ex'], b_data['ey'], b_data['ez'])
@@ -135,6 +137,13 @@ class TestGeometryNode(unittest.TestCase):
                     v = g.volume(box, min_volume=1.e-3)
                     v_ans = node_volume[i][j]
                     self.assertAlmostEqual(v, v_ans, delta=v_ans * 0.001)
+
+    def test_get_surface(self):
+        for i, g in enumerate(geoms):
+            ans = {surfaces[a] for a in node_get_surfaces[i]}
+            with self.subTest(i=i):
+                surfs = g.get_surfaces()
+                self.assertSetEqual(ans, surfs)
 
 
 class TestCell(unittest.TestCase):
@@ -231,7 +240,7 @@ class TestCell(unittest.TestCase):
 #                 print(str(cell), '->', str(ans_geom), '->', len(cell.terms), '->', len(ans_geom.terms))
 #                 self.assertSetEqual(cell.terms, ans_geom.terms)
 #
-#     # @unittest.skip
+    @unittest.skip
     def test_simplify(self):
         for i, ag in enumerate(geoms):
             cell = Cell(ag)

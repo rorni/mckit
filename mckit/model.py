@@ -196,7 +196,9 @@ class Model:
             if 'FILL' in options.keys():
                 options['FILL'] = universe.transform(tr)
         options['name'] = cell_name
-        print(cell_name)
+        if 'MAT' in options:
+            options['MAT'] = self._get_material_object(options['MAT'], options['RHO'])
+        #print(cell_name)
         return Cell(geometry, **options)
 
     def _produce_cell_geometry(self, cell_name):
@@ -273,7 +275,7 @@ class Model:
                 mat_params['atomic'] = self.data['M'][comp_no]['atomic']
             if 'wgt' in self.data['M'][comp_no].keys():
                 mat_params['wgt'] = self.data['M'][comp_no]['wgt']
-            mat = Material(**mat_params)
+            mat = Material(name=comp_no, **mat_params)
             self._densities[comp_no].insert(i, density)
             if density > 0:
                 self._densities[comp_no].insert(-i, mat.density())
@@ -647,7 +649,12 @@ class MCPrinter:
         else:
             card.extend(['LIKE', str(cell_obj['reference']), 'BUT'])
 
+        card += self.print_cell_options(cell_obj, places)
+        return card
+
+    def print_cell_options(self, cell_obj, places):
         # Cell options
+        card = []
         for key in self.option_list:
             if key not in cell_obj.keys():
                 continue
