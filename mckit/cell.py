@@ -247,7 +247,7 @@ class GeometryNode:
         """Checks if the geometry node has the same type of operation."""
         return self._opc == opc
 
-    def test_box(self, box, return_simple=False):
+    def test_box(self, box, return_simple=False, trim_size=5):
         """Checks if the geometry intersects the box.
 
         Parameters
@@ -258,6 +258,9 @@ class GeometryNode:
             Indicate whether to return simpler form of the geometry. Unimportant
             surfaces for judging this box (and all contained boxes, of course)
             are removed then.
+        trim_size : int
+            Max size of set to return. It is used to prevent unlimited growth
+            of the variant set.
 
         Returns
         -------
@@ -282,7 +285,6 @@ class GeometryNode:
         ans = {}
         for g in self._args:
             res, simp = g.test_box(box, return_simple=True)
-            simp = self.trim_geometry(simp, max_num=5)
             if res not in ans.keys():
                 ans[res] = []
             ans[res].append(simp)
@@ -301,7 +303,7 @@ class GeometryNode:
                 for g in a:
                     g._mandatory = False
             simp_geom = {GeometryNode(self._opc, *a, node_id=self._id) for a in ans_set}
-        return result, self.trim_geometry(simp_geom, max_num=5)
+        return result, self.trim_geometry(simp_geom, max_num=trim_size)
 
     def test_point(self, p):
         """Tests whether point(s) p belong to this geometry.
@@ -454,7 +456,7 @@ class GeometryNode:
                 vol = box.volume() * inside / rand_points_num
         return vol
 
-    def simplify(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME):
+    def simplify(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME, trim_size=5):
         """Finds simpler geometry representation.
 
         Parameters
@@ -463,6 +465,9 @@ class GeometryNode:
             Initial box for which simpler representation is being found.
         min_volume : float
             Minimal box volume, when splitting precess should stopped.
+        trim_size : int
+            Max size of set to return. It is used to prevent unlimited growth
+            of the variant set.
 
         Returns
         -------
@@ -473,16 +478,12 @@ class GeometryNode:
         result, simple_geoms = self.test_box(box, return_simple=True)
         if result != 0 or box.volume() <= min_volume:
             return simple_geoms
-        simple_geoms = self.trim_geometry(simple_geoms, max_num=5)
         # This is the case result == 0.
         simple = set()
-        # comple = []  It is not used for now. It is intended to count
-        # complexities of geometries for their selection.
         for geom in simple_geoms:
             c = geom.complexity()
             if c <= 1:
                 simple.add(geom)
-                # comple.append(c)
                 continue
             # If geometry is too complex and box is too large -> we split box.
             box1, box2 = box.split()
@@ -494,18 +495,14 @@ class GeometryNode:
             elif not simple_geoms2 and simple_geoms1:
                 simple.update(simple_geoms1)
             else:
-                simple_geoms1 = self.trim_geometry(simple_geoms1, max_num=5)
-                simple_geoms2 = self.trim_geometry(simple_geoms2, max_num=5)
                 for adg1, adg2 in product(simple_geoms1, simple_geoms2):
                     ag = adg1.merge_nodes(adg2)
                     simple.add(ag)
-                    # comple.append(c)
-        # simple_sort = [simple[i] for i in np.argsort(comple)[:15]]
-        return simple  # _sort
+        return self.trim_geometry(simple, max_num=trim_size)
 
     @staticmethod
     def trim_geometry(geometries, max_num=100):
-        max_num = 1
+        """Limits the number of geometry variants. Best max_num are taken."""
         if len(geometries) <= max_num:
             return geometries
         new_geoms = list(geometries)
@@ -710,7 +707,7 @@ class Cell(dict, GeometryNode):
         return Cell(geometry, **self)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
-                 min_volume=MIN_BOX_VOLUME):
+                 min_volume=MIN_BOX_VOLUME, trim_size=5):
         """Simplifies this cell by removing unnecessary surfaces.
 
         The simplification procedure goes in the following way.
@@ -725,6 +722,9 @@ class Cell(dict, GeometryNode):
         min_volume : float
             The smallest value of box's volume when the process of box splitting
             must be stopped.
+        trim_size : int
+            Max size of set to return. It is used to prevent unlimited growth
+            of the variant set.
 
         Returns
         -------
@@ -732,7 +732,8 @@ class Cell(dict, GeometryNode):
             Simplified version of this cell.
         """
         self._set_node_ids()
-        simple_geoms = super(Cell, self).simplify(box, min_volume)
+        simple_geoms = super(Cell, self).simplify(box, min_volume=min_volume,
+                                                  trim_size=trim_size)
 
         geometries = set()
         for sg in simple_geoms:
