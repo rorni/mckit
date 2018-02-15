@@ -282,6 +282,7 @@ class GeometryNode:
         ans = {}
         for g in self._args:
             res, simp = g.test_box(box, return_simple=True)
+            simp = self.trim_geometry(simp, max_num=5)
             if res not in ans.keys():
                 ans[res] = []
             ans[res].append(simp)
@@ -300,7 +301,7 @@ class GeometryNode:
                 for g in a:
                     g._mandatory = False
             simp_geom = {GeometryNode(self._opc, *a, node_id=self._id) for a in ans_set}
-        return result, simp_geom
+        return result, self.trim_geometry(simp_geom, max_num=5)
 
     def test_point(self, p):
         """Tests whether point(s) p belong to this geometry.
@@ -472,7 +473,7 @@ class GeometryNode:
         result, simple_geoms = self.test_box(box, return_simple=True)
         if result != 0 or box.volume() <= min_volume:
             return simple_geoms
-
+        simple_geoms = self.trim_geometry(simple_geoms, max_num=5)
         # This is the case result == 0.
         simple = set()
         # comple = []  It is not used for now. It is intended to count
@@ -493,12 +494,25 @@ class GeometryNode:
             elif not simple_geoms2 and simple_geoms1:
                 simple.update(simple_geoms1)
             else:
+                simple_geoms1 = self.trim_geometry(simple_geoms1, max_num=5)
+                simple_geoms2 = self.trim_geometry(simple_geoms2, max_num=5)
                 for adg1, adg2 in product(simple_geoms1, simple_geoms2):
                     ag = adg1.merge_nodes(adg2)
                     simple.add(ag)
                     # comple.append(c)
         # simple_sort = [simple[i] for i in np.argsort(comple)[:15]]
         return simple  # _sort
+
+    @staticmethod
+    def trim_geometry(geometries, max_num=100):
+        max_num = 1
+        if len(geometries) <= max_num:
+            return geometries
+        new_geoms = list(geometries)
+        complexities = [g.complexity() for g in geometries]
+        indices = np.argsort(complexities)
+        return set([new_geoms[i] for i in indices[:max_num]])
+
 
     def merge_nodes(self, other):
         """Merges descriptions of two geometries.
