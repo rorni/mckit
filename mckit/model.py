@@ -196,9 +196,9 @@ class Model:
             if 'FILL' in options.keys():
                 options['FILL'] = universe.transform(tr)
         options['name'] = cell_name
-        if 'MAT' in options:
-            options['MAT'] = self._get_material_object(options['MAT'], options['RHO'])
-        #print(cell_name)
+        # if 'MAT' in options:
+        #     options['MAT'] = self._get_material_object(options['MAT'], options['RHO'])
+        # print(cell_name)
         return Cell(geometry, **options)
 
     def _produce_cell_geometry(self, cell_name):

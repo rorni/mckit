@@ -9,7 +9,6 @@ import numpy as np
 from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
 from .fmesh import Box
 from .surface import Surface
-from .model import MCPrinter
 
 
 def _complement(arg):
@@ -156,20 +155,20 @@ class GeometryNode:
     def str_tokens(self):
         if self._opc == self._COMPLEMENT:
             arg = self._args
-            text = '-{0}'.format(arg.options['name'])
+            text = ['-{0}'.format(arg.options['name'])]
         elif self._opc == self._IDENTITY:
             arg = self._args
-            text = str(arg.options['name'])
+            text = [str(arg.options['name'])]
         elif self._opc == self._INTERSECTION:
             text = []
             for s in self._args:
-                text.append(s)
+                text += s.str_tokens()
                 text.append(' ')
             text.pop()
         elif self._opc == self._UNION:
             text = ['(']
             for s in self._args:
-                text.append(s)
+                text += s.str_tokens()
                 text.append(':')
             text[-1] = ')'
         return text
@@ -643,14 +642,16 @@ class Cell(dict, GeometryNode):
         dict.__init__(self, options)
 
     def __str__(self):
+        from .model import MCPrinter
         text = [str(self['name'])]
         if 'MAT' in self.keys():
-            text.append(str(self['MAT']['name']))
-            text.append(str(self['MAT'].density()))
+            text.append(str(self['MAT']))
+            text.append(str(self['RHO']))
         else:
             text.append('0')
-        text.append(GeometryNode.__str__(self))
-        text.append(MCPrinter.print_cell_options(self, 5))
+        text += GeometryNode.str_tokens(self)
+        printer = MCPrinter()
+        text += printer.print_cell_options(self, 5)
         return MCPrinter.print_card(text)
 
     def intersection(self, other):
