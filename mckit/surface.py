@@ -115,6 +115,8 @@ class Surface(ABC):
 
     Methods
     -------
+    equals(other, box, tol)
+        Checks if this surface and surf are equal inside the box.
     test_point(p)
         Checks the sense of point p with respect to this surface.
     transform(tr)
@@ -134,6 +136,28 @@ class Surface(ABC):
 
     def __eq__(self, other):
         return id(self) == id(other)
+
+    @abstractmethod
+    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        """Checks if this surface equals other one inside the box.
+
+        Parameters
+        ----------
+        other : Surface
+            Other surface.
+        box : Box
+            A box inside which surfaces are considered.
+        tol : float
+            Relative tolerance with respect to the origin of global coordinate
+            system.
+
+        Returns
+        -------
+        result : int
+            The result of comparison. +1, if surfaces are equal, -1, if they
+            are equal, but direction of normals is opposite. 0 - if they are
+            not equal.
+        """
 
     def test_point(self, p):
         """Checks the sense of point(s) p.
@@ -294,6 +318,20 @@ class Plane(Surface):
         self._v = v
         self._k = k
 
+    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        if not isinstance(other, Plane):
+            return 0
+        corners = box.corners()
+        proj_self = self.projection(corners)
+        proj_other = self.projection(corners)
+        delta = np.linalg.norm(proj_other - proj_self, axis=1)
+        abs_norm = np.linalg.norm(proj_self, axis=1)
+        check = delta / abs_norm
+        if np.nanmax(check) < tol:
+            return int(np.sign(np.dot(self._v, other._v)))
+        else:
+            return 0
+
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr, **self.options)
 
@@ -338,6 +376,17 @@ class Sphere(Surface):
         self._center = np.array(center)
         self._radius = radius
 
+    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        if not isinstance(other, Sphere):
+            return 0
+        delta_center = np.linalg.norm(self._center - other._center)
+        delta_radius = np.linalg.norm(self._radius - other._radius)
+        check = (delta_center + delta_radius) / np.linalg.norm(self._center)
+        if check < tol:
+            return +1
+        else:
+            return 0
+
     def projection(self, p):
         n = p - self._center
         n /= np.linalg.norm(n)
@@ -380,6 +429,10 @@ class Cylinder(Surface):
         self._pt = np.array(pt)
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._radius = radius
+
+    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        # TODO: add comparison
+        return 0
 
     def projection(self, p):
         shape = (p.shape[0], 1) if len(p.shape) == 2 else (1,)
@@ -429,6 +482,10 @@ class Cone(Surface):
         self._axis = np.array(axis) / np.linalg.norm(axis)
         self._t2 = ta**2
 
+    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        # TODO: add comparison
+        return 0
+
     def projection(self, p):
         raise NotImplementedError
 
@@ -476,6 +533,10 @@ class GQuadratic(Surface):
         self._m = m
         self._v = v
         self._k = k
+
+    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        # TODO: add comparison
+        return 0
 
     def projection(self, p):
         raise NotImplementedError
@@ -533,6 +594,10 @@ class Torus(Surface):
             offset = a * np.sqrt(1 - (R / b)**2)
             self._spec_pts.append(self._center + offset * self._axis)
             self._spec_pts.append(self._center - offset * self._axis)
+
+    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        # TODO: add comparison
+        return 0
 
     def projection(self, p):
         raise NotImplementedError
