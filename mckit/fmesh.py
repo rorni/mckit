@@ -4,8 +4,8 @@ from itertools import product
 
 import numpy as np
 
-from .transformation import Transformation
 from .constants import GLOBAL_BOX
+from .transformation import Transformation
 
 
 class Box:
@@ -43,6 +43,8 @@ class Box:
         Gets constraint function of the Box.
     fprime_ieqcons(x, *arg)
         Gets derivatives of constraint function of the Box.
+    test_surface(surf)
+        Checks the sense of surface surf with respect to the box.
     """
     def __init__(self, base, ex, ey, ez, ancestor=None):
         self.base = np.array(base)
@@ -56,6 +58,7 @@ class Box:
                                np.linalg.norm(self.ez)])
         self._points = None
         self.ancestor = ancestor
+        self._test_surface_cache = {}
 
     def get_outer_boxes(self, global_box=GLOBAL_BOX):
         """Gets a list of outer boxes.
@@ -83,6 +86,33 @@ class Box:
             boxes.append(box2)
             global_box = box1
         return boxes
+
+    def test_surface(self, surface):
+        """Checks whether the surface crosses the box.
+
+        Box defines a rectangular cuboid. This method checks if the surface
+        crosses the box, i.e. there is two points belonging to this box which
+        have different sense with respect to this surface.
+
+        Parameters
+        ----------
+        surface : Surface
+            Describes the surface to be checked.
+
+        Returns
+        -------
+        result : int
+            Test result. It equals one of the following values:
+            +1 if every point inside the box has positive sense.
+             0 if there are both points with positive and negative sense inside
+               the box
+            -1 if every point inside the box has negative sense.
+        """
+        if surface in self._test_surface_cache.keys():
+            return self._test_surface_cache[surface]
+        sign = surface.test_box(self)
+        self._test_surface_cache[surface] = sign
+        return sign
 
     def test_point(self, p):
         """Checks if point(s) p lies inside the box.
