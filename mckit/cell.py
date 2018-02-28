@@ -247,7 +247,7 @@ class GeometryNode:
         """Checks if the geometry node has the same type of operation."""
         return self._opc == opc
 
-    def test_box(self, box, return_simple=False, trim_size=5):
+    def test_box(self, box, return_simple=False, trim_size=1):
         """Checks if the geometry intersects the box.
 
         Parameters
@@ -276,7 +276,7 @@ class GeometryNode:
             if isinstance(self._args, Surface):
                 return self._operations[self._opc](self._args.test_box(box))
             else:
-                tests = [a.test_box(box) for a in self._args]
+                tests = [a.test_box(box, trim_size=trim_size) for a in self._args]
                 return reduce(self._operations[self._opc], tests)
 
         if isinstance(self._args, Surface):
@@ -284,7 +284,7 @@ class GeometryNode:
 
         ans = {}
         for g in self._args:
-            res, simp = g.test_box(box, return_simple=True)
+            res, simp = g.test_box(box, return_simple=True, trim_size=trim_size)
             if res not in ans.keys():
                 ans[res] = []
             ans[res].append(simp)
@@ -456,7 +456,7 @@ class GeometryNode:
                 vol = box.volume() * inside / rand_points_num
         return vol
 
-    def simplify(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME, trim_size=5):
+    def simplify(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME, trim_size=1):
         """Finds simpler geometry representation.
 
         Parameters
@@ -475,7 +475,7 @@ class GeometryNode:
             A set of simpler geometries.
         """
         # TODO: review algorithm
-        result, simple_geoms = self.test_box(box, return_simple=True)
+        result, simple_geoms = self.test_box(box, return_simple=True, trim_size=trim_size)
         if result != 0 or box.volume() <= min_volume:
             return simple_geoms
         # This is the case result == 0.
@@ -487,8 +487,8 @@ class GeometryNode:
                 continue
             # If geometry is too complex and box is too large -> we split box.
             box1, box2 = box.split()
-            simple_geoms1 = geom.simplify(box1, min_volume=min_volume)
-            simple_geoms2 = geom.simplify(box2, min_volume=min_volume)
+            simple_geoms1 = geom.simplify(box1, min_volume=min_volume, trim_size=trim_size)
+            simple_geoms2 = geom.simplify(box2, min_volume=min_volume, trim_size=trim_size)
             # Now merge results
             if not simple_geoms1 and simple_geoms2:
                 simple.update(simple_geoms2)
@@ -707,7 +707,7 @@ class Cell(dict, GeometryNode):
         return Cell(geometry, **self)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
-                 min_volume=MIN_BOX_VOLUME, trim_size=5):
+                 min_volume=MIN_BOX_VOLUME, trim_size=1):
         """Simplifies this cell by removing unnecessary surfaces.
 
         The simplification procedure goes in the following way.
