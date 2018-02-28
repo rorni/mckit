@@ -4,8 +4,8 @@ from itertools import product
 
 import numpy as np
 
-from .transformation import Transformation
 from .constants import GLOBAL_BOX
+from .transformation import Transformation
 
 
 class Box:
@@ -20,6 +20,8 @@ class Box:
         orthogonal. For now it is user's responsibility to ensure the
         orthogonality. The length of basis vectors denote corresponding
         dimensions of the box.
+    resolved : dict
+        Dictionary of surface test_box results, if results are +1 or -1.
 
     Methods
     -------
@@ -43,8 +45,10 @@ class Box:
         Gets constraint function of the Box.
     fprime_ieqcons(x, *arg)
         Gets derivatives of constraint function of the Box.
+    test_surface(surf)
+        Checks the sense of surface surf with respect to the box.
     """
-    def __init__(self, base, ex, ey, ez, ancestor=None):
+    def __init__(self, base, ex, ey, ez, resolved={}):
         self.base = np.array(base)
         self.ex = np.array(ex)
         self.ey = np.array(ey)
@@ -55,7 +59,8 @@ class Box:
                                np.linalg.norm(self.ey),
                                np.linalg.norm(self.ez)])
         self._points = None
-        self.ancestor = ancestor
+        self._resolved = resolved.copy()
+        self._unresolved = {}
 
     def get_outer_boxes(self, global_box=GLOBAL_BOX):
         """Gets a list of outer boxes.
@@ -83,6 +88,39 @@ class Box:
             boxes.append(box2)
             global_box = box1
         return boxes
+
+    def test_surface(self, surface):
+        """Checks whether the surface crosses the box.
+
+        Box defines a rectangular cuboid. This method checks if the surface
+        crosses the box, i.e. there is two points belonging to this box which
+        have different sense with respect to this surface.
+
+        Parameters
+        ----------
+        surface : Surface
+            Describes the surface to be checked.
+
+        Returns
+        -------
+        result : int
+            Test result. It equals one of the following values:
+            +1 if every point inside the box has positive sense.
+             0 if there are both points with positive and negative sense inside
+               the box
+            -1 if every point inside the box has negative sense.
+        """
+        if surface in self._resolved.keys():
+            return self._resolved[surface]
+        elif surface in self._unresolved.keys():
+            return self._unresolved[surface]
+
+        sign = surface.test_box(self)
+        if sign == 0:
+            self._unresolved[surface] = sign
+        else:
+            self._resolved[surface] = sign
+        return sign
 
     def test_point(self, p):
         """Checks if point(s) p lies inside the box.
@@ -139,9 +177,9 @@ class Box:
         new_base = self.base + offset[0] * self.ex + offset[1] * self.ey + \
                                offset[2] * self.ez
         box1 = Box(self.base, size1[0] * self.ex, size1[1] * self.ey,
-                   size1[2] * self.ez, ancestor=self)
+                   size1[2] * self.ez, resolved=self._resolved)
         box2 = Box(new_base, size2[0] * self.ex, size2[1] * self.ey,
-                   size2[2] * self.ez, ancestor=self)
+                   size2[2] * self.ez, resolved=self._resolved)
         return box1, box2
 
     def corners(self):
