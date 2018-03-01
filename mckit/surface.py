@@ -110,6 +110,40 @@ def create_surface(kind, *params, **options):
             raise NotImplementedError
 
 
+def create_replace_dictionary(surfaces, unique=None, box=GLOBAL_BOX, tol=1.e-10):
+    """Creates surface replace dictionary for equal surfaces removing.
+
+    Parameters
+    ----------
+    surfaces : set[Surface]
+        A set of surfaces to be checked.
+    unique: set[Surface]
+        A set of surfaces that are assumed to be unique. If not None, than
+        'surfaces' are checked for coincidence with one of them.
+    box : Box
+        A box, which is used for comparison.
+    tol : float
+        Tolerance
+
+    Returns
+    -------
+    replace : dict
+        A replace dictionary. surface -> (replace_surface, sense). Sense is +1
+        if surfaces have the same direction of normals. -1 otherwise.
+    """
+    replace = {}
+    uniq_surfs = set() if unique is None else unique
+    for s in surfaces:
+        for us in uniq_surfs:
+            t = s.equals(us, box=box, tol=tol)
+            if t != 0:
+                replace[s] = (us, t)
+                break
+        else:
+            uniq_surfs.add(s)
+    return replace
+
+
 class Surface(ABC):
     """Base class for all surface classes.
 
@@ -323,7 +357,7 @@ class Plane(Surface):
             return 0
         corners = box.corners()
         proj_self = self.projection(corners)
-        proj_other = self.projection(corners)
+        proj_other = other.projection(corners)
         delta = np.linalg.norm(proj_other - proj_self, axis=1)
         abs_norm = np.linalg.norm(proj_self, axis=1)
         check = delta / abs_norm

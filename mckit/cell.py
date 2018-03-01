@@ -179,6 +179,23 @@ class GeometryNode:
         else:
             return other
 
+    def replace_surfaces(self, replace_dict):
+        """Replaces surface objects according to dictionary of replacements
+
+        Parameters
+        ----------
+        replace_dict : dict
+            Dictionary of replacements.
+        """
+        if isinstance(self._args, Surface) and self._args in replace_dict.keys():
+            new_surf, sense = replace_dict[self._args]
+            self._args = new_surf
+            if sense == -1:
+                self._opc = self._invert_opc()
+        else:
+            for a in self._args:
+                a.replace_surfaces(replace_dict)
+
     def clean(self):
         """Cleans geometry description.
 
@@ -274,13 +291,13 @@ class GeometryNode:
         """
         if not return_simple:
             if isinstance(self._args, Surface):
-                return self._operations[self._opc](self._args.test_box(box))
+                return self._operations[self._opc](box.test_surface(self._args))
             else:
                 tests = [a.test_box(box, trim_size=trim_size) for a in self._args]
                 return reduce(self._operations[self._opc], tests)
 
         if isinstance(self._args, Surface):
-            return self._operations[self._opc](self._args.test_box(box)), {self}
+            return self._operations[self._opc](box.test_surface(self._args)), {self}
 
         ans = {}
         for g in self._args:
@@ -476,10 +493,13 @@ class GeometryNode:
         """
         # TODO: review algorithm
         result, simple_geoms = self.test_box(box, return_simple=True, trim_size=trim_size)
-        if result != 0 or box.volume() <= min_volume:
-            return simple_geoms
+        if result != 0: # or box.volume() <= min_volume:
+            return result, simple_geoms
+        if box.volume() <= min_volume:
+            return -1, set()
         # This is the case result == 0.
         simple = set()
+        res = -1
         for geom in simple_geoms:
             c = geom.complexity()
             if c <= 1:
@@ -487,8 +507,8 @@ class GeometryNode:
                 continue
             # If geometry is too complex and box is too large -> we split box.
             box1, box2 = box.split()
-            simple_geoms1 = geom.simplify(box1, min_volume=min_volume, trim_size=trim_size)
-            simple_geoms2 = geom.simplify(box2, min_volume=min_volume, trim_size=trim_size)
+            res1, simple_geoms1 = geom.simplify(box1, min_volume=min_volume, trim_size=trim_size)
+            res2, simple_geoms2 = geom.simplify(box2, min_volume=min_volume, trim_size=trim_size)
             # Now merge results
             if not simple_geoms1 and simple_geoms2:
                 simple.update(simple_geoms2)
@@ -498,7 +518,8 @@ class GeometryNode:
                 for adg1, adg2 in product(simple_geoms1, simple_geoms2):
                     ag = adg1.merge_nodes(adg2)
                     simple.add(ag)
-        return self.trim_geometry(simple, max_num=trim_size)
+            res = _union(res1, res2)
+        return res, self.trim_geometry(simple, max_num=trim_size)
 
     @staticmethod
     def trim_geometry(geometries, max_num=100):
@@ -509,7 +530,6 @@ class GeometryNode:
         complexities = [g.complexity() for g in geometries]
         indices = np.argsort(complexities)
         return set([new_geoms[i] for i in indices[:max_num]])
-
 
     def merge_nodes(self, other):
         """Merges descriptions of two geometries.
@@ -732,9 +752,10 @@ class Cell(dict, GeometryNode):
             Simplified version of this cell.
         """
         self._set_node_ids()
-        simple_geoms = super(Cell, self).simplify(box, min_volume=min_volume,
+        result, simple_geoms = super(Cell, self).simplify(box, min_volume=min_volume,
                                                   trim_size=trim_size)
-
+        if result == -1:
+            return None
         geometries = set()
         for sg in simple_geoms:
             #for g in sg.delete_unnecessary():

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
 import sys
-import hashlib
+
+import numpy as np
 
 
 class Universe:
@@ -170,3 +170,17 @@ class Universe:
         for cell in self.cells:
             tr_cells.append(cell.transform(tr))
         return Universe(tr_cells)
+
+    def get_surfaces(self):
+        """Gets all surfaces that discribe this universe.
+
+        Returns
+        -------
+        surfaces : set[Surface]
+            A set of all contained surfaces.
+        """
+        surfaces = set()
+        for c in self.cells:
+            cs = c.get_surfaces()
+            surfaces.update(cs)
+        return surfaces
