@@ -123,9 +123,14 @@ class GeometryNode:
             self._args = args[0]
         else:
             self._args = set(args)
+            self._order_args = list(self._args)
+            for s in self._args:
+                if isinstance(s, list):
+                    print(s)
 
         self._mandatory = mandatory
         self._id = node_id
+        self._stat = {-1: set(), +1: set()}
         # calculate hash value
         self._calculate_hash()
 
@@ -255,7 +260,7 @@ class GeometryNode:
 
     def is_empty(self):
         """Checks if this geometry is an empty set."""
-        if self._args is None or isinstance(self._args, set) and len(self._args) == 0:
+        if self._args is None or isinstance(self._args, list) and len(self._args) == 0:
             return True
         else:
             return False
@@ -264,20 +269,15 @@ class GeometryNode:
         """Checks if the geometry node has the same type of operation."""
         return self._opc == opc
 
-    def test_box(self, box, return_simple=False, trim_size=1):
+    def test_box(self, box, collect_stat=False):
         """Checks if the geometry intersects the box.
 
         Parameters
         ----------
         box : Box
             Box for checking.
-        return_simple : bool
-            Indicate whether to return simpler form of the geometry. Unimportant
-            surfaces for judging this box (and all contained boxes, of course)
-            are removed then.
-        trim_size : int
-            Max size of set to return. It is used to prevent unlimited growth
-            of the variant set.
+        collect_stat : bool
+            Indicate whether to collect statistics about testing results.
 
         Returns
         -------
@@ -286,41 +286,17 @@ class GeometryNode:
             +1 if the box lies entirely inside the cell.
              0 if the box (probably) intersects the cell.
             -1 if the box lies outside the cell.
-        simple_geoms : set[AdditiveGeometry]
-            List of simple variants of this geometry. Optional.
         """
-        if not return_simple:
-            if isinstance(self._args, Surface):
-                return self._operations[self._opc](box.test_surface(self._args))
-            else:
-                tests = [a.test_box(box, trim_size=trim_size) for a in self._args]
-                return reduce(self._operations[self._opc], tests)
-
         if isinstance(self._args, Surface):
-            return self._operations[self._opc](box.test_surface(self._args)), {self}
-
-        ans = {}
-        for g in self._args:
-            res, simp = g.test_box(box, return_simple=True, trim_size=trim_size)
-            if res not in ans.keys():
-                ans[res] = []
-            ans[res].append(simp)
-        # Now calculate the result
-        result = reduce(self._operations[self._opc], ans.keys())
-        ans_set = list(map(set, product(*ans[result])))
-        if result == 0:
-            simp_geom = {GeometryNode(self._opc, *a, node_id=self._id) for a in ans_set}
-        elif result == -1 and self._opc == self._INTERSECTION or \
-                result == +1 and self._opc == self._UNION:
-            simp_geom = set()
-            for g in reduce(set.union, ans_set):
-                simp_geom.add(GeometryNode(self._opc, g, node_id=self._id))
+            result = self._operations[self._opc](box.test_surface(self._args))
+            if collect_stat and result == 0 and box.has_last_unresolved():
+                result = +1
         else:
-            for a in ans_set:
-                for g in a:
-                    g._mandatory = False
-            simp_geom = {GeometryNode(self._opc, *a, node_id=self._id) for a in ans_set}
-        return result, self.trim_geometry(simp_geom, max_num=trim_size)
+            tests = [a.test_box(box, collect_stat=True) for a in self._order_args]
+            result = reduce(self._operations[self._opc], tests)
+            if collect_stat and result != 0:
+                self._stat[result].add(tuple(tests))
+        return result
 
     def test_point(self, p):
         """Tests whether point(s) p belong to this geometry.
@@ -473,7 +449,7 @@ class GeometryNode:
                 vol = box.volume() * inside / rand_points_num
         return vol
 
-    def simplify(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME, trim_size=1):
+    def collect(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME):
         """Finds simpler geometry representation.
 
         Parameters
@@ -482,9 +458,6 @@ class GeometryNode:
             Initial box for which simpler representation is being found.
         min_volume : float
             Minimal box volume, when splitting precess should stopped.
-        trim_size : int
-            Max size of set to return. It is used to prevent unlimited growth
-            of the variant set.
 
         Returns
         -------
@@ -492,34 +465,70 @@ class GeometryNode:
             A set of simpler geometries.
         """
         # TODO: review algorithm
-        result, simple_geoms = self.test_box(box, return_simple=True, trim_size=trim_size)
-        if result != 0: # or box.volume() <= min_volume:
-            return result, simple_geoms
+        result = self.test_box(box, collect_stat=True)
+        if result != 0:
+            return result
         if box.volume() <= min_volume:
-            return -1, set()
+            return -1
         # This is the case result == 0.
-        simple = set()
-        res = -1
-        for geom in simple_geoms:
-            c = geom.complexity()
-            if c <= 1:
-                simple.add(geom)
-                continue
-            # If geometry is too complex and box is too large -> we split box.
-            box1, box2 = box.split()
-            res1, simple_geoms1 = geom.simplify(box1, min_volume=min_volume, trim_size=trim_size)
-            res2, simple_geoms2 = geom.simplify(box2, min_volume=min_volume, trim_size=trim_size)
-            # Now merge results
-            if not simple_geoms1 and simple_geoms2:
-                simple.update(simple_geoms2)
-            elif not simple_geoms2 and simple_geoms1:
-                simple.update(simple_geoms1)
-            else:
-                for adg1, adg2 in product(simple_geoms1, simple_geoms2):
-                    ag = adg1.merge_nodes(adg2)
-                    simple.add(ag)
-            res = _union(res1, res2)
-        return res, self.trim_geometry(simple, max_num=trim_size)
+        # If geometry is too complex and box is too large -> we split box.
+        box1, box2 = box.split()
+        res1 = self.collect(box1, min_volume=min_volume)
+        res2 = self.collect(box2, min_volume=min_volume)
+        res = _union(res1, res2)
+        return res
+
+    def get_simplest(self):
+        node_cases = []
+        complexities = []
+        if self._opc == self._INTERSECTION:
+            val = -1
+        elif self._opc == self._UNION:
+            val = +1
+        else:
+            return {self}
+        arg_results = np.array(list(self._stat[val]))
+        cases = self.find_coverages(arg_results, value=val)
+        for c in cases:
+            c.sort()
+        final_cases = set(tuple(c) for c in cases)
+        if len(final_cases) == 0:
+            print(self)
+            print(cases)
+        unique = reduce(set.union, map(set, final_cases))
+        node_variants = {i: self._order_args[i].get_simplest() for i in unique}
+        for indices in final_cases:
+            variants = [node_variants[i] for i in indices]
+            for args in product(*variants):
+                node = GeometryNode(self._opc, *args)
+                node_cases.append(node)
+                complexities.append(node.complexity())
+        sort_ind = np.argsort(complexities)
+        final_nodes = []
+        min_complexity = complexities[sort_ind[0]]
+        for i in sort_ind:
+            final_nodes.append(node_cases[i])
+            if complexities[i] > min_complexity:
+                break
+        return final_nodes
+
+    @staticmethod
+    def find_coverages(results, value=+1):
+        n = results.shape[1]
+        cnt = np.count_nonzero(results == value, axis=1)
+        i = np.argmin(cnt)
+        cases = []
+        for j in range(n):
+            if results[i][j] == value:
+                reminder = np.compress(results[:, j] != value, results, axis=0)
+                if reminder.shape[0] == 0:
+                    sub_cases = [[j]]
+                else:
+                    sub_cases = GeometryNode.find_coverages(reminder, value=value)
+                    for s in sub_cases:
+                        s.append(j)
+                cases.extend(sub_cases)
+        return cases
 
     @staticmethod
     def trim_geometry(geometries, max_num=100):
@@ -752,18 +761,13 @@ class Cell(dict, GeometryNode):
             Simplified version of this cell.
         """
         self._set_node_ids()
-        result, simple_geoms = super(Cell, self).simplify(box, min_volume=min_volume,
-                                                  trim_size=trim_size)
+        print('Collect stage...')
+        result = self.collect(box=box, min_volume=min_volume)
         if result == -1:
             return None
-        geometries = set()
-        for sg in simple_geoms:
-            #for g in sg.delete_unnecessary():
-            geometries.add(sg.clean())
-        #print(len(geometries))
-        simplest = reduce(GeometryNode.get_simplest, geometries)
-        # TODO: implement splitting of disjoint cells.
-        return Cell(simplest, **self)
+        print('finding optimal solution...')
+        variants = self.get_simplest()
+        return Cell(variants[0], **self)
 
     def populate(self, universe=None):
         """Fills this cell by filling universe.

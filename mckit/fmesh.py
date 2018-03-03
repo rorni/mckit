@@ -62,6 +62,9 @@ class Box:
         self._resolved = resolved.copy()
         self._unresolved = {}
 
+    def has_last_unresolved(self):
+        return len(list(self._unresolved.keys())) == 1
+
     def get_outer_boxes(self, global_box=GLOBAL_BOX):
         """Gets a list of outer boxes.
         
