@@ -48,7 +48,7 @@ class Box:
     test_surface(surf)
         Checks the sense of surface surf with respect to the box.
     """
-    def __init__(self, base, ex, ey, ez, resolved={}):
+    def __init__(self, base, ex, ey, ez, resolved={}, unresolved=set(), node_cache={}):
         self.base = np.array(base)
         self.ex = np.array(ex)
         self.ey = np.array(ey)
@@ -60,10 +60,23 @@ class Box:
                                np.linalg.norm(self.ez)])
         self._points = None
         self._resolved = resolved.copy()
-        self._unresolved = {}
+        self._unresolved = set()
+        for s in unresolved:
+            sign = s.test_box(self)
+            if sign == 0:
+                self._unresolved.add(s)
+            else:
+                self._resolved[s] = sign
+        self._node_cache = node_cache.copy()
+        self._reduce_flag = False
+
+    def reset_cache(self):
+        self._resolved = {}
+        self._unresolved = set()
+        self._node_cache = {}
 
     def has_last_unresolved(self):
-        return len(list(self._unresolved.keys())) == 1
+        return len(self._unresolved) == 1
 
     def get_outer_boxes(self, global_box=GLOBAL_BOX):
         """Gets a list of outer boxes.
@@ -115,14 +128,15 @@ class Box:
         """
         if surface in self._resolved.keys():
             return self._resolved[surface]
-        elif surface in self._unresolved.keys():
-            return self._unresolved[surface]
+        elif surface in self._unresolved:
+            return 0
 
-        sign = surface.test_box(self)
-        if sign == 0:
-            self._unresolved[surface] = sign
-        else:
-            self._resolved[surface] = sign
+    def test_node(self, node, collect_stat=False):
+        if node._id in self._node_cache.keys():
+            return self._node_cache[node._id]
+        sign = node.test_box(self, collect_stat=collect_stat)
+        if sign != 0 and not self._reduce_flag:
+            self._node_cache[node._id] = sign
         return sign
 
     def test_point(self, p):
@@ -180,9 +194,9 @@ class Box:
         new_base = self.base + offset[0] * self.ex + offset[1] * self.ey + \
                                offset[2] * self.ez
         box1 = Box(self.base, size1[0] * self.ex, size1[1] * self.ey,
-                   size1[2] * self.ez, resolved=self._resolved)
+                   size1[2] * self.ez, resolved=self._resolved, unresolved=self._unresolved, node_cache=self._node_cache)
         box2 = Box(new_base, size2[0] * self.ex, size2[1] * self.ey,
-                   size2[2] * self.ez, resolved=self._resolved)
+                   size2[2] * self.ez, resolved=self._resolved, unresolved=self._unresolved, node_cache=self._node_cache)
         return box1, box2
 
     def corners(self):

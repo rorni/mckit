@@ -178,11 +178,11 @@ class GeometryNode:
             text[-1] = ')'
         return text
 
-    def get_simplest(self, other):
-        if self.complexity() < other.complexity():
-            return self
-        else:
-            return other
+    #def get_simplest(self, other):
+    #    if self.complexity() < other.complexity():
+    #        return self
+    #    else:
+    #        return other
 
     def replace_surfaces(self, replace_dict):
         """Replaces surface objects according to dictionary of replacements
@@ -291,8 +291,9 @@ class GeometryNode:
             result = self._operations[self._opc](box.test_surface(self._args))
             if collect_stat and result == 0 and box.has_last_unresolved():
                 result = +1
+                box._reduce_flag = True
         else:
-            tests = [a.test_box(box, collect_stat=True) for a in self._order_args]
+            tests = [box.test_node(a, collect_stat=collect_stat) for a in self._order_args]
             result = reduce(self._operations[self._opc], tests)
             if collect_stat and result != 0:
                 self._stat[result].add(tuple(tests))
@@ -470,6 +471,8 @@ class GeometryNode:
             return result
         if box.volume() <= min_volume:
             return -1
+        if box._reduce_flag:
+            print('PANIC!!!')
         # This is the case result == 0.
         # If geometry is too complex and box is too large -> we split box.
         box1, box2 = box.split()
@@ -478,16 +481,18 @@ class GeometryNode:
         res = _union(res1, res2)
         return res
 
-    def get_simplest(self):
+    def get_simplest(self, trim_size=0):
         node_cases = []
         complexities = []
         if self._opc == self._INTERSECTION:
             val = -1
+            drop_index = self.drop_list(+1)
         elif self._opc == self._UNION:
             val = +1
+            drop_index = self.drop_list(-1)
         else:
             return {self}
-        arg_results = np.array(list(self._stat[val]))
+        arg_results = np.delete(np.array(list(self._stat[val])), drop_index, axis=1)
         cases = self.find_coverages(arg_results, value=val)
         for c in cases:
             c.sort()
@@ -496,11 +501,11 @@ class GeometryNode:
             print(self)
             print(cases)
         unique = reduce(set.union, map(set, final_cases))
-        node_variants = {i: self._order_args[i].get_simplest() for i in unique}
+        node_variants = {i: self._order_args[i].get_simplest(trim_size) for i in unique}
         for indices in final_cases:
             variants = [node_variants[i] for i in indices]
             for args in product(*variants):
-                node = GeometryNode(self._opc, *args)
+                node = GeometryNode(self._opc, *args).clean()
                 node_cases.append(node)
                 complexities.append(node.complexity())
         sort_ind = np.argsort(complexities)
@@ -508,9 +513,19 @@ class GeometryNode:
         min_complexity = complexities[sort_ind[0]]
         for i in sort_ind:
             final_nodes.append(node_cases[i])
-            if complexities[i] > min_complexity:
+            if complexities[i] > min_complexity + trim_size:
                 break
         return final_nodes
+
+    def drop_list(self, value=+1):
+        drop_index = []
+        for i, a in enumerate(self._order_args):
+            arg_stat = list(a._stat.keys())
+            if len(arg_stat) == 1 and arg_stat[0] == value:
+                drop_index.append(i)
+        for i in reversed(drop_index):
+            self._order_args.pop(i)
+        return drop_index
 
     @staticmethod
     def find_coverages(results, value=+1):
@@ -539,34 +554,6 @@ class GeometryNode:
         complexities = [g.complexity() for g in geometries]
         indices = np.argsort(complexities)
         return set([new_geoms[i] for i in indices[:max_num]])
-
-    def merge_nodes(self, other):
-        """Merges descriptions of two geometries.
-
-        Parameters
-        ----------
-        other : AdditiveGeometry
-            Other geometry.
-
-        Returns
-        -------
-        new_geom : AdditiveGeometry
-            New merged geometry.
-        """
-        # TODO: review algorithm
-        if self._opc == self._COMPLEMENT or self._opc == self._IDENTITY:
-            args = [self._args]
-        else:
-            s_dict = {t._id: t for t in self._args}
-            o_dict = {t._id: t for t in other._args}
-            for k, v in o_dict.items():
-                if k not in s_dict.keys():
-                    s_dict[k] = v
-                else:
-                    s_dict[k] = s_dict[k].merge_nodes(v)
-            args = s_dict.values()
-        m = self._mandatory or other._mandatory
-        return GeometryNode(self._opc, *args, mandatory=m, node_id=self._id)
 
     def intersection(self, other):
         """Gets an intersection of geometries.
@@ -762,11 +749,14 @@ class Cell(dict, GeometryNode):
         """
         self._set_node_ids()
         print('Collect stage...')
+        box.reset_cache()
+        box._unresolved = self.get_surfaces()
         result = self.collect(box=box, min_volume=min_volume)
         if result == -1:
             return None
+        # print(result)
         print('finding optimal solution...')
-        variants = self.get_simplest()
+        variants = self.get_simplest(trim_size)
         return Cell(variants[0], **self)
 
     def populate(self, universe=None):
