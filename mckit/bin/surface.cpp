@@ -10,14 +10,14 @@ uint64_t Surface :: hash() { return id; }
 
 bool Surface :: eq(const Surface& other) { return id == other.id; }
 
-Surface :: number = 0;
+unsigned long Surface :: number = 0;
 
 int * Surface :: test_points(const double* points, int npt) {
     int * result = new int[npt];
-    int * x;
+    const double * x;
     for (int i = 0; i < npt; ++i) {
         x = points + DIM * i;
-        result[i] = signbit(func(x));
+        result[i] = std::signbit(func(x)) ? -1 : +1;
     }
     return result;
 }
@@ -40,13 +40,13 @@ int Plane :: test_box(const Box& box) {
     return result;
 }
 
-double Plane :: func(const double * x, int sign=1) {
-    int result {k};
+double Plane :: func(const double * x, int sign) {
+    double result {k};
     for (int i = 0; i < DIM; ++i ) result += x[i] * v[i];
     return sign * result;
 }
 
-double * Plane :: grad(const double * x, int sign=1) {
+double * Plane :: grad(const double * x, int sign) {
     double * result = new double[DIM];
     for (int i = 0; i < DIM; ++i) result[i] = v[i];
     return result;

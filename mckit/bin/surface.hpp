@@ -1,6 +1,9 @@
 #include <cstdint>
 #include "box.hpp"
 
+#ifndef __SURFACE
+#define __SURFACE
+
 #define DIM 3
 
 class Surface {
@@ -24,12 +27,14 @@ class Surface {
 class Plane: public Surface {
     public:
         Plane(const double* normal, double offset, int name);
-        bool equals(const Surface& other, const Box& box, double tol=1.e-10);
-        double  func(const double* x, int sign=1);
-        double* grad(const double* x, int sign=1);
+        bool equals(const Surface& other, const Box& box, double tol);
+        double  func(const double* x, int sign);
+        double* grad(const double* x, int sign);
         double* projection(const double* points, int npt);
         int  test_box(const Box& box);    
     private:
         double v[DIM];
         double k;
 };
+
+#endif
