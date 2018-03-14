@@ -18,17 +18,18 @@
 typedef struct Box Box;
 
 struct Box {
-    double center[NDIM];
-    double ex[NDIM];
-    double ey[NDIM];
-    double ez[NDIM];
-    double dims[NDIM];
-    double lb[NDIM];
-    double ub[NDIM];
-    double corners[NCOR][NDIM];
+    double center[NDIM];    // center of the box
+    double ex[NDIM];        // 
+    double ey[NDIM];        // basis vectors. Shows directions of box's edges
+    double ez[NDIM];        //
+    double dims[NDIM];      // Dimensions of the box.
+    double lb[NDIM];        // lower bounds
+    double ub[NDIM];        // upper bounds
+    double corners[NCOR][NDIM];  // corners
     double volume;
     gsl_rng * rng;
 };
+
 
 int box_init( 
     Box * box,
