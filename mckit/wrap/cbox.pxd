@@ -2,13 +2,13 @@ cdef extern from "box.h":
     ctypedef struct Box:
         pass
     
-    int box_create(Box * box, const double * center, 
-                   const double * ex, 
-                   const double * ey, 
-                   const double * ez,
-                   double xdim, double ydim, double zdim)
+    int box_init(Box * box, const double * center, 
+                 const double * ex, 
+                 const double * ey, 
+                 const double * ez,
+                 double xdim, double ydim, double zdim)
                    
-    void box_destroy(Box * box)
+    void box_dispose(Box * box)
     
     void box_generate_random_points(Box * box, double * points, int npts)
 
