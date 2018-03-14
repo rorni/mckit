@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include "gsl/gsl_cblas.h"
-#include "gsl/gsl_rng.h"
 #include "box.h"
 
 static double perm[NCOR][NDIM] = {
@@ -15,7 +14,7 @@ static double perm[NCOR][NDIM] = {
 };
 
 
-int box_create(
+int box_init(
     Box * box,    
     const double * center, 
     const double * ex, 
@@ -26,10 +25,8 @@ int box_create(
     double zdim
 ) 
 {
-    // Initialize box, if caller has not initialized it yet.
-    if (box == NULL) {
-        box = (Box*) malloc(sizeof(Box));
-        if (!box) return BOX_FAILURE;
+    if (!box || !center || !ex || !ey || !ez) {
+        return BOX_FAILURE;
     }
     
     int i, j;
@@ -42,23 +39,10 @@ int box_create(
     box->volume = xdim * ydim * zdim;
     
     // basis vectors.
-    if (!ex || !ey || !ez) {
-        // if some of ex, ey or ez is not specified, than box edges are parallel
-        // to coordinate axes.
-        for (i = 0; i < NDIM; ++i) {
-            box->ex[i] = 0;
-            box->ey[i] = 0;
-            box->ez[i] = 0;
-        }
-        box->ex[0] = 1;
-        box->ey[1] = 1;
-        box->ez[2] = 1;
-    } else {
-        for (i = 0; i < NDIM; ++i) {
-            box->ex[i] = ex[i];
-            box->ey[i] = ey[i];
-            box->ez[i] = ez[i];
-        }
+    for (i = 0; i < NDIM; ++i) {
+        box->ex[i] = ex[i];
+        box->ey[i] = ey[i];
+        box->ez[i] = ez[i];
     }
     
     // Finding coordinates of box's corners
@@ -80,28 +64,24 @@ int box_create(
     }
     
     box->rng = NULL;
-    
+        
     return BOX_SUCCESS;
 }
 
 
-void box_destroy(Box * box) {
-    if (box != NULL) {
-        if (box->rng != NULL) gsl_rng_free((gsl_rng*) box->rng);
-        free(box);
-    }
+void box_dispose(Box * box) {
+    if (box != NULL && box->rng != NULL) gsl_rng_free((gsl_rng*) box->rng);
 }
 
 
-void box_generate_random_points(
+int box_generate_random_points(
     Box * box, 
     double * points,
     int npts
 ) 
 {
     if (box->rng == NULL) box->rng = gsl_rng_alloc(gsl_rng_taus);
-    
-    gsl_rng * rng = (gsl_rng*) box->rng;    
+    if (box->rng == NULL) return BOX_FAILURE;    
     int i;
     double x, y, z;
     
@@ -117,6 +97,7 @@ void box_generate_random_points(
         cblas_daxpy(NDIM, y, box->ey, 1, points + i * NDIM, 1);
         cblas_daxpy(NDIM, z, box->ez, 1, points + i * NDIM, 1);
     }
+    return BOX_SUCCESS;
 }
 
 
@@ -198,7 +179,7 @@ void box_ieqcons(
 {
     Box * box = (Box*) f_data;
     
-    const double* basis[NDIM] = {box->ex, box->ey, box->ez};
+    const double * basis[NDIM] = {box->ex, box->ey, box->ez};
     double  point[NDIM];
     int i, j, mult;
     

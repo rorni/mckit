@@ -1,16 +1,18 @@
-#ifndef __BOX
-#define __BOX
+#ifndef __BOX_H
+#define __BOX_H
 
 #define NDIM 3
 #define NCOR 8
 
-#define BOX_SUCCESS 0
-#define BOX_FAILURE 1
+#define BOX_SUCCESS  0
+#define BOX_FAILURE -1
 
 #define BOX_SPLIT_X 0
 #define BOX_SPLIT_Y 1
 #define BOX_SPLIT_Z 2
 #define BOX_SPLIT_AUTODIR -1
+
+#include "gsl/gsl_rng.h"
 
 
 typedef struct Box Box;
@@ -25,10 +27,10 @@ struct Box {
     double ub[NDIM];
     double corners[NCOR][NDIM];
     double volume;
-    void * rng;
+    gsl_rng * rng;
 };
 
-int box_create( 
+int box_init( 
     Box * box,
     const double * center, 
     const double * ex, 
@@ -39,7 +41,7 @@ int box_create(
     double zdim
 );
 
-void box_destroy(Box * box);
+void box_dispose(Box * box);
 
 void box_generate_random_points(
     Box * box, 
