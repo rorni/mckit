@@ -44,7 +44,7 @@ int box_init(
 
 void box_dispose(Box * box);
 
-void box_generate_random_points(
+int box_generate_random_points(
     Box * box, 
     double * points,
     int npts

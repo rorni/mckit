@@ -1,4 +1,4 @@
-cdef extern from "box.h":
+cdef extern from "../src/box.h":
     ctypedef struct Box:
         pass
     

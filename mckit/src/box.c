@@ -29,7 +29,7 @@ int box_init(
         return BOX_FAILURE;
     }
     
-    int i, j;
+    int i;
     for (i = 0; i < NDIM; ++i) box->center[i] = center[i];
     
     box->dims[0] = xdim;
@@ -85,12 +85,12 @@ int box_generate_random_points(
     int i;
     double x, y, z;
     
-    gsl_rng_set(rng, 0);
+    gsl_rng_set(box->rng, 0);
     
     for (i = 0; i < npts; ++i) {
-        x = (gsl_rng_uniform(rng) - 0.5) * box->dims[0];
-        y = (gsl_rng_uniform(rng) - 0.5) * box->dims[1];
-        z = (gsl_rng_uniform(rng) - 0.5) * box->dims[2];
+        x = (gsl_rng_uniform(box->rng) - 0.5) * box->dims[0];
+        y = (gsl_rng_uniform(box->rng) - 0.5) * box->dims[1];
+        z = (gsl_rng_uniform(box->rng) - 0.5) * box->dims[2];
         
         cblas_dcopy(NDIM, box->center, 1, points + i * NDIM, 1);
         cblas_daxpy(NDIM, x, box->ex, 1, points + i * NDIM, 1);
@@ -156,11 +156,11 @@ int box_split(
     
     // create new boxes.
     int status;
-    status = box_create(box1, center1, box->ex, box->ey, box->ez, 
+    status = box_init(box1, center1, box->ex, box->ey, box->ez, 
                         dims1[0], dims1[1], dims1[2]);
     if (status == BOX_FAILURE) return BOX_FAILURE;
 
-    status = box_create(box2, center2, box->ex, box->ey, box->ez, 
+    status = box_init(box2, center2, box->ex, box->ey, box->ez, 
                         dims2[0], dims2[1], dims2[2]);
     if (status == BOX_FAILURE) return BOX_FAILURE;
     
