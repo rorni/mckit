@@ -10,7 +10,7 @@ cdef extern from "../src/box.h":
                    
     void box_dispose(Box * box)
     
-    void box_generate_random_points(Box * box, double * points, int npts)
+    int box_generate_random_points(Box * box, double * points, int npts)
 
     void box_test_points(const Box * box, const double * points, 
                          int npts, int * result)

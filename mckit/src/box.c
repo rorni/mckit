@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "gsl/gsl_cblas.h"
+#include "mkl.h"
 #include "box.h"
 
 static double perm[NCOR][NDIM] = {
@@ -70,7 +70,7 @@ int box_init(
 
 
 void box_dispose(Box * box) {
-    if (box != NULL && box->rng != NULL) gsl_rng_free((gsl_rng*) box->rng);
+    if (box != NULL && box->rng != NULL) vslDeleteStream(&box->rng);
 }
 
 
@@ -80,22 +80,24 @@ int box_generate_random_points(
     int npts
 ) 
 {
-    if (box->rng == NULL) box->rng = gsl_rng_alloc(gsl_rng_taus);
+    if (box->rng == NULL) vslNewStream(&box->rng, VSL_BRNG_MT19937, 777);
     if (box->rng == NULL) return BOX_FAILURE;    
-    int i;
-    double x, y, z;
+    int i, status;
+    double d[NDIM];
     
-    gsl_rng_set(box->rng, 0);
+    for (i = 0; i < NDIM; ++i) {
+        cblas_dscal(npts * NDIM, box->dims[i], points + i, NDIM);
+    }
     
     for (i = 0; i < npts; ++i) {
-        x = (gsl_rng_uniform(box->rng) - 0.5) * box->dims[0];
-        y = (gsl_rng_uniform(box->rng) - 0.5) * box->dims[1];
-        z = (gsl_rng_uniform(box->rng) - 0.5) * box->dims[2];
-        
+        status = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, 
+                              box->rng, NDIM, d, -0.5, 0.5);
+        if (status != VSL_STATUS_OK) return BOX_FAILURE;
+    
         cblas_dcopy(NDIM, box->center, 1, points + i * NDIM, 1);
-        cblas_daxpy(NDIM, x, box->ex, 1, points + i * NDIM, 1);
-        cblas_daxpy(NDIM, y, box->ey, 1, points + i * NDIM, 1);
-        cblas_daxpy(NDIM, z, box->ez, 1, points + i * NDIM, 1);
+        cblas_daxpy(NDIM, d[0] * box->dims[0], box->ex, 1, points + i * NDIM, 1);
+        cblas_daxpy(NDIM, d[1] * box->dims[1], box->ey, 1, points + i * NDIM, 1);
+        cblas_daxpy(NDIM, d[2] * box->dims[2], box->ez, 1, points + i * NDIM, 1);
     }
     return BOX_SUCCESS;
 }
@@ -115,9 +117,9 @@ void box_test_points(
     for (i = 0; i < npts; ++i) {
         cblas_dcopy(NDIM, points + i * NDIM, 1, delta, 1);
         cblas_daxpy(NDIM, -1, box->center, 1, delta, 1);
-        x = cblas_ddot(NDIM, delta, 1, box->ex, 1);
-        y = cblas_ddot(NDIM, delta, 1, box->ey, 1);
-        z = cblas_ddot(NDIM, delta, 1, box->ez, 1);
+        x = cblas_ddot(NDIM, delta, 1, box->ex, 1) / box->dims[0];
+        y = cblas_ddot(NDIM, delta, 1, box->ey, 1) / box->dims[1];
+        z = cblas_ddot(NDIM, delta, 1, box->ez, 1) / box->dims[2];
         if (x > -0.5 && x < 0.5 && y > -0.5 && y < 0.5 && z > -0.5 && z < 0.5) {
             result[i] = 1;
         } else {

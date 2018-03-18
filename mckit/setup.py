@@ -2,16 +2,16 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
 import numpy as np
-import os
+import sys
 
-gsl_inc = os.path.expandvars("$GSL_INC")
-gsl_lib = os.path.expandvars("$GSL_LIB")
+mkl_inc = sys.prefix + '\\Library\\include'
+mkl_lib = sys.prefix + '\\Library\\lib'
 
 extensions = [
    Extension("box", ["wrap/box.pyx", "src/box.c"],
-       include_dirs = [gsl_inc, np.get_include()],
-       libraries = ['libgslcblas'],
-       library_dirs = [gsl_lib]
+       include_dirs = [np.get_include(), mkl_inc],
+       libraries = ['mkl_intel_lp64_dll', 'mkl_core_dll', 'mkl_sequential_dll'],
+       library_dirs = [mkl_lib],
    )
 ]
 

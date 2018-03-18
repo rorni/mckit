@@ -1,8 +1,7 @@
 #ifndef __BOX_H
 #define __BOX_H
 
-#define NDIM 3
-#define NCOR 8
+#include "common.h"
 
 #define BOX_SUCCESS  0
 #define BOX_FAILURE -1
@@ -12,7 +11,7 @@
 #define BOX_SPLIT_Z 2
 #define BOX_SPLIT_AUTODIR -1
 
-#include "gsl/gsl_rng.h"
+#include "mkl_vsl.h"
 
 
 typedef struct Box Box;
@@ -27,7 +26,7 @@ struct Box {
     double ub[NDIM];        // upper bounds
     double corners[NCOR][NDIM];  // corners
     double volume;
-    gsl_rng * rng;
+    VSLStreamStatePtr rng;
 };
 
 
