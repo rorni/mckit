@@ -4,50 +4,6 @@
 #include "mkl.h"
 #include "surface.h"
 
-typedef struct PlaneData PlaneData;
-typedef struct SphereData SphereData;
-typedef struct CylinderData CylinderData;
-typedef struct ConeData ConeData;
-typedef struct TorusData TorusData;
-typedef struct GQData GQData;
-
-struct PlaneData {
-    double norm[NDIM];
-    double offset;
-};
-
-struct SphereData {
-    double center[NDIM];
-    double radius;
-};
-
-struct CylinderData {
-    double point[NDIM];
-    double axis[NDIM];
-    double radius;
-};
-
-struct ConeData {
-    double apex[NDIM];
-    double axis[NDIM];
-    double ta;
-};
-
-struct TorusData {
-    double center[NDIM];
-    double axis[NDIM];
-    double radius;
-    double a;
-    double b;
-    double * specpts;
-};
-
-struct GQData {
-    double m[NDIM * NDIM];
-    double v[NDIM];
-    double k;
-};
-
 double plane_func(
     unsigned int n,
     const double * x,
@@ -55,7 +11,7 @@ double plane_func(
     void * f_data
 )
 {
-    PlaneData * data = (PlaneData *) f_data;
+    Plane * data = (Plane *) f_data;
     if (grad != NULL) {
         cblas_dcopy(NDIM, data->norm, 1, grad, 1);
     }
@@ -69,7 +25,7 @@ double sphere_func(
     void * f_data
 )
 {
-    SphereData * data = (SphereData *) f_data;
+    Sphere * data = (Sphere *) f_data;
     if (grad != NULL) {
         cblas_dcopy(NDIM, x, 1, grad, 1);
         cblas_daxpy(NDIM, -1, data->center, 1, grad, 1);
@@ -88,7 +44,7 @@ double cylinder_func(
     void * f_data
 )
 {
-    CylinderData * data = (CylinderData *) f_data;
+    Cylinder * data = (Cylinder *) f_data;
     double a[NDIM];
     cblas_dcopy(NDIM, x, 1, a, 1);
     cblas_daxpy(NDIM, -1, data->point, 1, a, 1);
@@ -108,7 +64,7 @@ double cone_func(
     void * f_data
 )
 {
-    ConeData * data = (ConeData *) f_data;
+    Cone * data = (Cone *) f_data;
     double a[NDIM];
     cblas_dcopy(NDIM, x, 1, a, 1);
     cblas_daxpy(NDIM, -1, data->apex, 1, a, 1);
@@ -128,7 +84,7 @@ double gq_func(
     void * f_data
 )
 {
-    GQData * data = (GQData *) f_data;
+    GQuadratic * data = (GQuadratic *) f_data;
     if (grad != NULL) {
         cblas_dcopy(NDIM, data->v, 1, grad, 1);
         cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 2, data->m, 1, x, 1, 1, grad, 1);       
@@ -146,7 +102,7 @@ double torus_func(
     void * f_data
 )
 {
-    TorusData * data = (TorusData *) f_data;
+    Torus * data = (Torus *) f_data;
     double p[NDIM];
     cblas_dcopy(NDIM, x, 1, p, 1);
     cblas_daxpy(NDIM, -1, data->center, 1, p, 1);
@@ -174,39 +130,35 @@ double surface_func(
     double fval;
     switch (surf->type) {
         PLANE:
-            fval = plane_func(n, x, grad, surf->data);
+            fval = plane_func(n, x, grad, f_data);
             break;
         SPHERE:
-            fval = sphere_func(n, x, grad, surf->data);
+            fval = sphere_func(n, x, grad, f_data);
             break;
         CYLINDER:
-            fval = cylinder_func(n, x, grad, surf->data);
+            fval = cylinder_func(n, x, grad, f_data);
             break;
         CONE:
-            fval = cone_func(n, x, grad, surf->data);
+            fval = cone_func(n, x, grad, f_data);
             break;
         TORUS:
-            fval = torus_func(n, x, grad, surf->data);
+            fval = torus_func(n, x, grad, f_data);
             break;
         GQUADRATIC:
-            fval = gq_func(n, x, grad, surf->data);
+            fval = gq_func(n, x, grad, f_data);
             break;
     }
     return fval;
 }
 
-inline void surface_init(
-    Surface * surf, 
-    unsigned int name,
-    enum Modifier modifier
-)
+inline void surface_init(Surface * surf, unsigned int name, enum Modifier mod)
 {
     surf->name = name;
-    surf->modifier = modifier;
+    surf->modifier = mod;
 }
 
 int plane_init(
-    Surface * surf,
+    Plane * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * norm,
@@ -214,19 +166,17 @@ int plane_init(
 )
 {
     int i;
-    surface_init(surf, name, modifier);
+    surface_init((Surface *) surf, name, modifier);
     surf->type = PLANE;
-    surf->data = malloc(sizeof(PlaneData));
-    if (surf->data == NULL) return SURFACE_FAILURE;
-    surf->data->offset = offset;
+    surf->offset = offset;
     for (i = 0; i < NDIM; ++i) {
-        surf->data->norm[i] = norm[i];
+        surf->norm[i] = norm[i];
     }
     return SURFACE_SUCCESS;
 }
 
 int sphere_init(
-    Surface * surf,
+    Sphere * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * center,
@@ -234,19 +184,17 @@ int sphere_init(
 )
 {
     int i;
-    surface_init(surf, name, modifier);
+    surface_init((Surface *) surf, name, modifier);
     surf->type = SPHERE;
-    surf->data = malloc(sizeof(SphereData)); 
-    if (surf->data == NULL) return SURFACE_FAILURE;
-    surf->data->radius = radius;
+    surf->radius = radius;
     for (i = 0; i < NDIM; ++i) {
-        surf->data->center[i] = center[i];
+        surf->center[i] = center[i];
     }
     return SURFACE_SUCCESS;
 }
 
 int cylinder_init(
-    Surface * surf,
+    Cylinder * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * point,
@@ -255,20 +203,18 @@ int cylinder_init(
 )
 {
     int i;
-    surface_init(surf, name, modifier);
+    surface_init((Cylinder *) surf, name, modifier);
     surf->type = CYLINDER;
-    surf->data = malloc(sizeof(CylinderData));
-    if (surf->data == NULL) return SURFACE_FAILURE;
-    surf->data->radius = radius;
+    surf->radius = radius;
     for (i = 0; i < NDIM; ++i) {
-        surf->data->point[i] = point[i];
-        surf->data->axis[i] = axis[i];
+        surf->point[i] = point[i];
+        surf->axis[i] = axis[i];
     }
     return SURFACE_SUCCESS;
 }
 
 int cone_init(
-    Surface * surf,
+    Cone * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * apex,
@@ -277,20 +223,18 @@ int cone_init(
 )
 {
     int i;
-    surface_init(surf, name, modifier);
+    surface_init((Surface *) surf, name, modifier);
     surf->type = CONE;
-    surf->data = malloc(sizeof(ConeData));    
-    if (surf->data == NULL) return SURFACE_FAILURE;
-    surf->data->ta = ta;
+    surf->ta = ta;
     for (i = 0; i < NDIM; ++i) {
-        surf->data->apex[i] = apex[i];
-        surf->data->axis[i] = axis[i];
+        surf->apex[i] = apex[i];
+        surf->axis[i] = axis[i];
     }
     return SURFACE_SUCCESS;
 }
 
 int torus_init(
-    Surface * surf,
+    Torus * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * center,
@@ -301,31 +245,29 @@ int torus_init(
 )
 {
     int i;
-    surface_init(surf, name, modifier);
+    surface_init((Surface *) surf, name, modifier);
     surf->type = TORUS;
-    surf->data = malloc(sizeof(TorusData));    
-    if (surf->data == NULL) return SURFACE_FAILURE;
-    surf->data->radius = radius;
-    surf->data->a = a;
-    surf->data->b = b;
+    surf->radius = radius;
+    surf->a = a;
+    surf->b = b;
     for (i = 0; i < NDIM; ++i) {
-        surf->data->center[i] = center[i];
-        surf->data->axis[i] = axis[i];
+        surf->center[i] = center[i];
+        surf->axis[i] = axis[i];
     }
-    if (surf->data->b > surf->data->radius) {
+    if (surf->b > surf->radius) {
         double offset = a * sqrt(1 - pow(radius / b, 2));
-        surf->data->specpts = (double *) malloc(2 * NDIM * sizeof(double));
-        if (surf->data->specpts == NULL) return SURFACE_FAILURE;
-        cblas_dcopy(NDIM, center, 1, surf->data->specpts, 1);
-        cblas_dcopy(NDIM, center, 1, surf->data->specpts + NDIM, 1);
-        cblas_daxpy(NDIM, offset, axis, 1, surf->data->specpts, 1);
-        cblas_daxpy(NDIM, -offset, axis, 1, surf->data->specpts + NDIM, 1);
+        surf->specpts = (double *) malloc(2 * NDIM * sizeof(double));
+        if (surf->specpts == NULL) return SURFACE_FAILURE;
+        cblas_dcopy(NDIM, center, 1, surf->specpts, 1);
+        cblas_dcopy(NDIM, center, 1, surf->specpts + NDIM, 1);
+        cblas_daxpy(NDIM, offset, axis, 1, surf->specpts, 1);
+        cblas_daxpy(NDIM, -offset, axis, 1, surf->specpts + NDIM, 1);
     }
     return SURFACE_SUCCESS;
 }
 
 int gq_init(
-    Surface * surf,
+    GQuadratic * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * m,
@@ -334,23 +276,23 @@ int gq_init(
 )
 {
     int i, j;
-    surface_init(surf, name, modifier);
+    surface_init((Surface *) surf, name, modifier);
     surf->type = GQUADRATIC;
-    surf->data = malloc(sizeof(GQData));    
-    if (surf->data == NULL) return SURFACE_FAILURE;
-    surf->data->k = k;
+    surf->k = k;
     for (i = 0; i < NDIM; ++i) {
-        surf->data->v[i] = v[i];
-        for (j = 0; j < NDIM; ++j) surf->data->m[i][j] = m[i][j];
+        surf->v[i] = v[i];
+        for (j = 0; j < NDIM; ++j) surf->m[i][j] = m[i][j];
     }
     return SURFACE_SUCCESS;
 }
 
 void surface_dispose(Surface * surf) {
-    if (surf->type == TORUS && surf->data->specpts != NULL) {
-        free(surf->data->specpts);
-    }
-    free(surf->data);
+    if (surf->type == TORUS) torus_dispose((Torus *) surf);
+}
+
+void torus_dispose(Torus * surf) 
+{
+    if (surf->specpts != NULL) free(surf->specpts);    
 }
 
 void surface_test_points(
@@ -384,9 +326,9 @@ int surface_test_box(
     int sign = (int) copysign(1, mins + maxs);
     
     if (sign != 0 && surface->type != PLANE) {
-        if (spec->type == TORUS && surf->data->specpts != NULL) {
+        if (spec->type == TORUS && surf->specpts != NULL) {
             int test_res[2];
-            box_test_points(box, surf->data->specpts, 2, test_res);
+            box_test_points(box, surf->specpts, 2, test_res);
             if (test_res[0] == 1 || test_res[1] == 1) return 0;
         }
         

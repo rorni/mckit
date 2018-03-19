@@ -7,20 +7,70 @@
 #define SURFACE_SUCCESS  0
 #define SURFACE_FAILURE -1
 
-typedef struct Surface Surface;
+typedef struct Surface      Surface;
+typedef struct Plane        Plane;
+typedef struct Sphere       Sphere;
+typedef struct Cylinder     Cylinder;
+typedef struct Cone         Cone;
+typedef struct Torus        Torus;
+typedef struct GQuadratic   GQuadratic;
 
 enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC};
 enum Modifier {ORDINARY, REFLECTIVE, WHITE};
 
 struct Surface {
     unsigned int name;
-    enum SurfType type;
     enum Modifier modifier;
-    void * data;
+    enum SurfType type;
 };
 
+struct Plane {
+    Surface base;
+    double norm[NDIM];
+    double offset;
+};
+
+struct Sphere {
+    Surface base;
+    double center[NDIM];
+    double radius;
+};
+
+struct Cylinder {
+    Surface base;
+    double point[NDIM];
+    double axis[NDIM];
+    double radius;
+};
+
+struct Cone {
+    Surface base;
+    double apex[NDIM];
+    double axis[NDIM];
+    double ta;
+};
+
+struct Torus {
+    Surface base;
+    double center[NDIM];
+    double axis[NDIM];
+    double radius;
+    double a;
+    double b;
+    double * specpts;
+};
+
+struct GQuadratic {
+    Surface base;
+    double m[NDIM * NDIM];
+    double v[NDIM];
+    double k;
+};
+
+// Methods //
+
 int plane_init(
-    Surface * surf,
+    Plane * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * norm,
@@ -28,7 +78,7 @@ int plane_init(
 );
 
 int sphere_init(
-    Surface * surf,
+    Sphere * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * center,
@@ -36,7 +86,7 @@ int sphere_init(
 );
 
 int cylinder_init(
-    Surface * surf,
+    Cylinder * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * point,
@@ -45,7 +95,7 @@ int cylinder_init(
 );
 
 int cone_init(
-    Surface * surf,
+    Cone * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * apex,
@@ -54,7 +104,7 @@ int cone_init(
 );
 
 int torus_init(
-    Surface * surf,
+    Torus * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * center,
@@ -65,7 +115,7 @@ int torus_init(
 );
 
 int gq_init(
-    Surface * surf,
+    GQuadratic * surf,
     unsigned int name,
     enum Modifier modifier,
     const double * m,
@@ -74,6 +124,8 @@ int gq_init(
 );
 
 void surface_dispose(Surface * surf);
+
+void torus_dispose(Torus * surf);
 
 void surface_test_points(
     const Surface * surf, 
