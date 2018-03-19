@@ -1,4 +1,25 @@
+#include <stdlib.h>
 #include "geometry.h"
+#include "surface.h"
+
+int node_init(Node * node, enum Operation opc, size_t n, void * args)
+{
+    if (opc == COMPLEMENT || opc == IDENTITY) {
+        if (n > 1) return NODE_FAILURE;
+        node->args = args;
+        node->n = 1;
+    } else {
+        node->n = n;
+        node->args = args;
+    }
+    node->opc = opc;
+    return NODE_SUCCESS;
+}
+
+int node_copy(const Node * src, Node * dst)
+{
+    
+}
 
 char geom_complement(char * arg) {
     return -1 * (*arg);

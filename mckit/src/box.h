@@ -43,6 +43,8 @@ int box_init(
 
 void box_dispose(Box * box);
 
+void box_copy(const Box * src, Box * dst);
+
 int box_generate_random_points(
     Box * box, 
     double * points,

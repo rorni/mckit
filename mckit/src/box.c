@@ -74,6 +74,12 @@ void box_dispose(Box * box) {
 }
 
 
+void box_copy(const Box * src, Box * dst) 
+{
+    box_init(dst, src->center, src->ex, src->ey, src-ez, 
+                  src->dims[0], src->dims[1], src->dims[2]);
+}
+
 int box_generate_random_points(
     Box * box, 
     double * points,
