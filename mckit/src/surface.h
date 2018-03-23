@@ -1,6 +1,7 @@
 #ifndef __SURFACE_H
 #define __SURFACE_H
 
+#include <stddef.h>
 #include "common.h"
 #include "box.h"
 
@@ -22,6 +23,7 @@ struct Surface {
     unsigned int name;
     enum Modifier modifier;
     enum SurfType type;
+    uint64_t hash;
 };
 
 struct Plane {

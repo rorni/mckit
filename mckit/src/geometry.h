@@ -3,18 +3,22 @@
 
 #include <stddef.h>
 #include "box.h"
+#include "container.h"
 
-#define NODE_SUCCESS  0
-#define NODE_FAILURE -1
+#define NODE_SUCCESS    0
+#define NODE_FAILURE   -1
+#define NODE_NO_MEMORY -2
 
 typedef struct Node Node;
 
-enum Operation {INTERSECTION=0, COMPLEMENT, UNION, IDENTITY};
+enum Operation {INTERSECTION=0, COMPLEMENT=1, UNION=2, IDENTITY=3};
 
 struct Node {
     Operation opc;
-    size_t alen;
-    void * args;
+    Set args;
+    Set stats;
+    uint64_t hash;
+    
     // other fields.
 };
 
@@ -34,6 +38,8 @@ int node_test_points(
 int node_bounding_box(const Node * node, Box * box, double tol);
 
 double node_volume(const Node * node, const Box * box, double min_vol);
+
+int node_compare(const Node * a, const Node * b);
 
 void node_clean(Node * node);
 
