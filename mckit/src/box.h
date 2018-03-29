@@ -1,6 +1,7 @@
 #ifndef __BOX_H
 #define __BOX_H
 
+#include <stdint.h>
 #include "common.h"
 
 #define BOX_SUCCESS  0
@@ -26,6 +27,7 @@ struct Box {
     double ub[NDIM];        // upper bounds
     double corners[NCOR][NDIM];  // corners
     double volume;
+    uint64_t subdiv;         // Box location.
     VSLStreamStatePtr rng;
 };
 
@@ -74,5 +76,12 @@ void box_ieqcons(
     double * grad,
     void * f_data
 );
+
+/* Compares two boxes. Returns
+ * +1 if in_box lies actually inside the out_box;
+ *  0 if in_box equals out_box;
+ * -1 if in_box lies outside of the out_box;
+ */
+int box_compare(const Box * out_box, const Box * in_box);
 
 #endif

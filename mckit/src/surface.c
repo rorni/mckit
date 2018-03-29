@@ -315,6 +315,11 @@ int surface_test_box(
     const Box * box
 )
 {
+    if (surf->last_box != NULL) {
+        int bc = box_compare(surf->last_box, box);
+        if (bc == 0 || bc > 0 && last_box_result != 0) return last_box_result; 
+    }
+    
     int corner_tests[NCOR];
     surface_test_points(surf, box->corners, NCOR, corner_tests);
     int mins = 1, maxs = -1, i;
@@ -354,6 +359,9 @@ int surface_test_box(
         }
         nlopt_destroy(opt);
     }
+    // Cash test result;
+    surf->last_box = box;
+    surf->last_box_result = sign;
     
     return sign;
 }

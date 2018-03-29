@@ -2,6 +2,8 @@
 #include "mkl.h"
 #include "box.h"
 
+#define BIT_LEN 64
+
 static double perm[NCOR][NDIM] = {
     {-1, -1, -1},
     {-1, -1,  1},
@@ -13,6 +15,15 @@ static double perm[NCOR][NDIM] = {
     { 1,  1,  1}
 };
 
+static inline char high_bit(uint64_t value) 
+{
+    char result = 0;
+    while (value != 0) {
+        value >>= 1;
+        ++result;
+    }
+    return result;
+}
 
 int box_init(
     Box * box,    
@@ -64,7 +75,8 @@ int box_init(
     }
     
     box->rng = NULL;
-        
+    box->subdiv = 0;
+    
     return BOX_SUCCESS;
 }
 
@@ -162,15 +174,21 @@ int box_split(
     cblas_daxpy(NDIM, -0.5 * dims2[dir], basis[dir], 1, center1, 1);
     cblas_daxpy(NDIM,  0.5 * dims1[dir], basis[dir], 1, center2, 1);
     
+    char hb = high_bit(box->subdiv);
+    uint64_t mask = (~0) >> (BIT_LEN - 1) << (hb - 1);
+    uint64_t start_bit = mask << 1;
     // create new boxes.
     int status;
     status = box_init(box1, center1, box->ex, box->ey, box->ez, 
-                        dims1[0], dims1[1], dims1[2]);
+                        dims1[0], dims1[1], dims1[2]);  
     if (status == BOX_FAILURE) return BOX_FAILURE;
-
+    
     status = box_init(box2, center2, box->ex, box->ey, box->ez, 
                         dims2[0], dims2[1], dims2[2]);
     if (status == BOX_FAILURE) return BOX_FAILURE;
+    
+    box1->subdiv = box->subdiv & (~mask) | start_bit;
+    box2->subdiv = box->subdiv | start_bit;
     
     return BOX_SUCCESS;
 }
@@ -204,4 +222,17 @@ void box_ieqcons(
             cblas_dscal(NDIM, mult, grad + i * NDIM, 1);
         }
     }  
+}
+
+int box_compare(const Box * out_box, const Box * in_box);
+{
+    uint64_t out = out_box->subdiv;
+    uint64_t in = in_box->subdiv;
+    if (out == in) return 0;
+    uint64_t mask = ~0;
+    char out_stop = high_bit(out);
+    mask >>= BIT_LEN + 1 - out_stop;
+    if (in & (~mask) == 0) return -1; // inner box actually is bigger one.
+    if (out ^ in & mask) == 0 return +1;    
+    return -1;
 }

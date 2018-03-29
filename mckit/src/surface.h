@@ -2,6 +2,7 @@
 #define __SURFACE_H
 
 #include <stddef.h>
+#include <stdint.h>
 #include "common.h"
 #include "box.h"
 
@@ -16,14 +17,19 @@ typedef struct Cone         Cone;
 typedef struct Torus        Torus;
 typedef struct GQuadratic   GQuadratic;
 
+typedef struct Modifier Modifier;
+typedef struct SurfType SurfType;
+
 enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC};
 enum Modifier {ORDINARY, REFLECTIVE, WHITE};
 
 struct Surface {
     unsigned int name;
-    enum Modifier modifier;
-    enum SurfType type;
+    Modifier modifier;
+    SurfType type;
     uint64_t hash;
+    const Box * last_box;
+    int last_box_result;
 };
 
 struct Plane {
@@ -74,7 +80,7 @@ struct GQuadratic {
 int plane_init(
     Plane * surf,
     unsigned int name,
-    enum Modifier modifier,
+    Modifier modifier,
     const double * norm,
     double offset
 );
@@ -82,7 +88,7 @@ int plane_init(
 int sphere_init(
     Sphere * surf,
     unsigned int name,
-    enum Modifier modifier,
+    Modifier modifier,
     const double * center,
     double radius
 );
@@ -90,7 +96,7 @@ int sphere_init(
 int cylinder_init(
     Cylinder * surf,
     unsigned int name,
-    enum Modifier modifier,
+    Modifier modifier,
     const double * point,
     const double * axis,
     double radius
@@ -99,7 +105,7 @@ int cylinder_init(
 int cone_init(
     Cone * surf,
     unsigned int name,
-    enum Modifier modifier,
+    Modifier modifier,
     const double * apex,
     const double * axis,
     double ta
@@ -108,7 +114,7 @@ int cone_init(
 int torus_init(
     Torus * surf,
     unsigned int name,
-    enum Modifier modifier,
+    Modifier modifier,
     const double * center,
     const double * axis,
     double radius,
@@ -119,7 +125,7 @@ int torus_init(
 int gq_init(
     GQuadratic * surf,
     unsigned int name,
-    enum Modifier modifier,
+    Modifier modifier,
     const double * m,
     const double * v,
     double k
