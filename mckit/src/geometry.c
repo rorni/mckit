@@ -13,6 +13,11 @@
 
 typedef struct StatUnit StatUnit;
 
+static uint64_t node_hash(Node * node);
+static Node ** extend_args(Operation opc, const void * args, size_t * n);
+
+static RBTree node_bag = {NULL, 0, (int (*)(const void *, const void *)) node_compare};
+
 struct StatUnit {
     char * arr;
     size_t len;
@@ -27,8 +32,60 @@ static stat_compare(const StatUnit * a, const StatUnit * b) {
     return 0;
 }
 
-static uint64_t node_hash(Node * node);
-static Node ** extend_args(Operation opc, const void * args, size_t * n);
+static Node * node_retrieve(Node * node) 
+{
+    Node * stored = rbtree_get(&node_bag, node);
+    if (stored == NULL) {
+        rbtree_add(&node_bag, node);
+    } else {
+        node_free(node);
+        node = stored;
+        node->ref_count++;
+    }
+    return node;
+}
+
+Node * node_create(Operation opc, size_t alen, const void * args)
+{
+    Node * node = malloc(sizeof(Node));
+    if (node != NULL) {
+        node->opc = opc;
+        node->alen = alen;
+        // TODO: add stats creation.
+        node->ref_count = 1;
+        if (is_final(opc)) node->args = args;
+        else if (is_composite(opc) {
+            size_t i;
+            node->args = (void *) malloc(alen * sizeof(Node*));
+            for (i = 0; i < alen; ++i) {
+                *(node->args + i) = args[i];
+                args[i]->ref_count++;
+            }
+        }
+        
+        node->hash = node_hash(node);
+        // Check if a such node already exists
+        node = node_retrieve(node);
+    }
+    return node;
+}
+
+void node_free(Node * node) 
+{
+    node->ref_count--;
+    if (node->ref_count == 0) {
+        rbtree_pop(&node_bag, node);
+        
+        size_t i;
+        for (i = 0; i < node->alen; ++i) node_free((Node*) (node->args + i));
+        if (node->args != NULL && node->alen > 1) free(node->args);
+        
+        // TODO: Add deletion of stats entities.
+        rbtree_free(node->stats);
+        
+        free(node);
+    }
+}
 
 Node * node_create(enum Operation opc, size_t n, const void * args)
 {
@@ -271,24 +328,17 @@ void node_get_simplest(Node * node)
 
 Node * node_complement(const Node * src)
 {
-    Node * dst = malloc(sizeof(Node));
-    if (dst == NULL) return NULL;
-    dst->opc = invert_opc(src->opc);
-    if (is_final(dst->opc)) dst->args = src->args;
-    else if (is_composite(dst->opc)) {
-        dst->args = set_create(node_compare);
-        if (dst->args == NULL) {
-            node_destroy(dst);
-            return NULL;
-        }
-        set_iter(src->args, -1);
-        Node * a;
-        while (a = set_next(src->args)) {
-            set_add(dst->args, node_complement(a));
+    Operation opc = invert_opc(src->opc);
+    void * args = NULL;
+    if (is_final(opc)) args = src->args;
+    else if (is_composite(opc)) {
+        args = (void*) malloc(src->alen * sizeof(Node*));
+        size_t i;
+        for (i = 0; i < src->alen; ++i) {
+            *(args + i) = node_complement((Node*) (src->args + i));
         }
     }
-    dst->hash = node_hash(dst);
-    return dst;
+    return node_create(opc, src->alen, args);
 }
 
 Node * node_intersection(const Node * a, const Node * b)
