@@ -15,12 +15,15 @@ typedef struct StatUnit StatUnit;
 
 static uint64_t node_hash(Node * node);
 static Node ** extend_args(Operation opc, const void * args, size_t * n);
+static Node ** clean_args(Operation opc, const void * args, size_t * n);
+static int is_complement(Node * a, Node * b);
 
 static RBTree node_bag = {NULL, 0, (int (*)(const void *, const void *)) node_compare};
 
 struct StatUnit {
     char * arr;
     size_t len;
+    double vol;
 }
 
 static stat_compare(const StatUnit * a, const StatUnit * b) {
@@ -51,15 +54,25 @@ Node * node_create(Operation opc, size_t alen, const void * args)
     if (node != NULL) {
         node->opc = opc;
         node->alen = alen;
-        // TODO: add stats creation.
+        
         node->ref_count = 1;
         if (is_final(opc)) node->args = args;
         else if (is_composite(opc) {
             size_t i;
-            node->args = (void *) malloc(alen * sizeof(Node*));
-            for (i = 0; i < alen; ++i) {
-                *(node->args + i) = args[i];
-                args[i]->ref_count++;
+            
+            Node ** cargs = clean_args(opc, args, &alen);
+            if (alen == 1) {
+                free(node);
+                node = cargs[0];
+                node->ref_count++;
+                return node;
+            } else {
+                node->args = (void *) malloc(alen * sizeof(Node*));
+                for (i = 0; i < alen; ++i) {
+                    *(node->args + i) = cargs[i];
+                    cargs[i]->ref_count++;
+                }
+                node->stats = rbtree_create(stat_compare);
             }
         }
         
@@ -75,79 +88,23 @@ void node_free(Node * node)
     node->ref_count--;
     if (node->ref_count == 0) {
         rbtree_pop(&node_bag, node);
-        
-        size_t i;
-        for (i = 0; i < node->alen; ++i) node_free((Node*) (node->args + i));
-        if (node->args != NULL && node->alen > 1) free(node->args);
-        
-        // TODO: Add deletion of stats entities.
-        rbtree_free(node->stats);
+                
+        if (is_composite(node->opc)) {
+            size_t i;
+            for (i = 0; i < node->alen; ++i) {
+                node_free((Node*) (node->args + i));
+            } 
+            free(node->args);
+            
+            StatUnit * a;
+            while (a = (StatUnit*) rbtree_pop(node->stats, NULL)) {
+                free(a->arr);
+                free(a);
+            }
+            rbtree_free(node->stats);
+        }
         
         free(node);
-    }
-}
-
-Node * node_create(enum Operation opc, size_t n, const void * args)
-{
-    Node * node = malloc(sizeof(Node));
-    if (node == NULL) return NULL;
-    
-    node->opc = opc;
-    if (is_final(opc)) node->args = args;
-    else if (is_composite(opc)) {
-        node->args = set_create(node_compare);
-        args = extend_args(opc, args, &n);
-        Node * a;
-        int i;
-        for (i = 0; i < n; ++i) {
-            if (args[i]->opc == EMPTY && opc == INTERSECTION || \
-                args[i]->opc == UNIVERSE && opc == UNION) {
-                
-                node->opc = args[i]->opc;
-                break;
-            } else if (args[i]->opc == EMPTY && opc == UNION || \
-                       args[i]->opc == UNIVERSE && opc == INTERSECTION) {
-                continue;
-            }
-            a = node_complement(args[i]);
-            if (set_contains(node->args, a) {
-                if (opc == INTERSECTION) {
-                    node->opc = EMPTY;
-                    node_destroy(a);
-                    break;
-                } else if (opc == UNION) {
-                    node_destroy(node_pop(node->args, a));
-                }
-            } else if (!set_contains(node->args, args[i]) {
-                set_add(node->args, node_copy(args[i]);
-            }
-            node_destroy(a);
-        }
-        free(args);
-    }
-    if (is_void(node->opc) && node->args != NULL) {
-        set_free(node->args, 1);
-    } 
-    if (is_composite(node->opc)) {
-        if (node->args->len == 0) {
-            set_free(node->args, 1);
-            node->opc = UNIVERSE;
-        } else if (node->args->len == 1) {
-            Node * a = set_at_index(node->args, 0);
-            set_free(node->args, 1); // REVISE DELETION!!!
-            free(node);
-            node = a;
-        }
-    }
-    node->hash = node_hash(node);
-    node->stats = map_create(stat_compare);
-    return node;
-}
-
-void node_destroy(Node * node)
-{
-    if (is_composite(node->opc)) {
-        
     }
 }
 
@@ -173,29 +130,13 @@ int node_compare(const Node * a, const Node * b)
     return c;
 }
 
-Node * node_copy(const Node * src)
-{
-    Node * dst = malloc(sizeof(Node));
-    if (dst == NULL) return NULL;
-    
-    dst->opc = src->opc;
-    dst->hash = src->hash;
-    dst->state = src->state;
-    
-    if (is_final(src->opc)) dst->args = src->args;
-    else {
-        dst->args = set_create(node_compare);
-        Node * a;
-        set_iter(src->args, -1);
-        while (a = set_next(src->args)) {
-            set_add(dst->args, node_copy(a));
-        }
-    }
-    return dst;
-}
-
 int node_test_box(Node * node, const Box * box, char collect)
 {
+    if (node->last_box != NULL) {
+        int bc = box_compare(node->last_box, box);
+        if (bc == 0 || bc > 0 && last_box_result != 0) return last_box_result; 
+    }
+    
     int result;
     if (is_final(node->opc)) {
         result = surface_test_box(node->args, box);
@@ -233,6 +174,9 @@ int node_test_box(Node * node, const Box * box, char collect)
             }
         } else free(sub);
     }
+    // Cash test result;
+    node->last_box = box;
+    node->last_box_result = result;
     return result;
 }
 
@@ -368,13 +312,16 @@ int node_complexity(const Node * node)
     return result;
 }
 
-void node_get_surfaces(const Node * node, Set * surfs)
+void node_get_surfaces(const Node * node, RBTree * surfs)
 {
-    if (is_final(node->opc)) set_add(surfs, node->args);
-    else {
+    if (is_final(node->opc)) rbtree_add(surfs, node->args);
+    else if (is_composite(node->opc)) {
         Node * a;
-        set_iter(node->args, -1);
-        while (a = set_next(node->args)) node_get_surfaces(a, surfs);
+        size_t i;
+        for (i = 0; i < node->alen; ++i) {
+            a = (Node *) (node->args + i);
+            node_get_surfaces(a, surfs);
+        }
     }
 }
 
@@ -383,36 +330,88 @@ void node_get_surfaces(const Node * node, Set * surfs)
 static uint64_t node_hash(Node * node) 
 {
     uint64_t result = 0;
-    if (node->opc == UNION || node->opc == IDENTITY) {
-        Surface * sur = set_at_index(node->args, 0);
+    if (is_final(node->opc)) {
+        Surface * sur = (Surface *) node->args;
         result = sur->hash;
-    } else {
-        set_iter(node->args, -1);
+    } else if (is_composite(node->opc)) {
+        size_t i;
         Node *a;
-        while (a = set_next(node->args)) result ^= a->hash;
+        for (i = 0; i < node->alen; ++i) {
+            a = (Node *) (node->args + i);
+            result ^= a->hash;
+        }
     }
-    if (node->opc == UNION || node->opc == COMPLEMENT) result = ~result;
+    if (node->opc == UNION || node->opc == COMPLEMENT || node->opc == UNIVERSE)
+        result = ~result;
     return result;
 }
 
 static Node ** extend_args(Operation opc, const void * args, size_t * n)
 {
     Node * result[], *a;
-    size_t i, nn = 0, j = 0;
+    size_t i, k, nn = 0, j = 0;
     for (i = 0; i < n; ++i) {
-        if (args[i]->opc == opc) nn += args[i]->args->len;
+        a = (Node*) args[i];
+        if (a->opc == opc) nn += a->alen;
         else nn += 1;
     }
     result = malloc(nn * sizeof(Node*));
     j = 0;
     for (i = 0; i < n; ++i) {
-        if (args[i]->opc == opc) {
-            set_iter(args[i]->args, -1);
-            while (a = set_next(args[i]->args)) result[j++] = a;
+        a = (Node*) args[i];
+        if (a->opc == opc) {
+            for (k = 0; k < a->alen; ++k) result[j++] = a->args + k;
         } else result[j++] = args[i];
     }
     *n = nn;
     return result;
+}
+
+static Node ** clean_args(Operation opc, const void * args, size_t * n)
+{
+    Node ** ext_args = extend_args(opc, args, n);
+    qsort(ext_args, n, sizeof(Node*), node_compare);
+    Node ** result = (Node**) malloc(n * sizeof(Node*));
+    size_t i, j, l, nn = 0;
+    for (i = 0, l = 0; i < n; ++i) {
+        if (is_empty(ext_args[i]) && opc == UNION || \
+            is_universe(ext_args[i]) && opc == INTERSECTION) continue;
+        else if (is_empty(ext_args[i]) && opc == INTERSECTION || \
+                 is_universe(ext_args[i]) && opc == UNION) {
+            result[0] = ext_args[i];
+            nn = 1;
+            break;
+        } else if (i < n-1 && node_compare(ext_args[i], ext_args[i+1] == 0)) {
+            continue;
+        }
+        for (j = i + 1; j < n; ++j) {
+            if (is_complement(ext_args[i], ext_args[j])) {
+                result[0] = node_create(EMPTY, 0, NULL);
+                result[0]->ref_count--;
+                nn = 1;
+                break;
+            }
+        }    
+        result[l++] = ext_args[i];
+        ++nn;
+    }
+    n = nn;
+    free(ext_args);
+    return result;
+}
+
+static int is_complement(Node * a, Node * b)
+{
+    if (~(a->hash) != b->hash) return 0;
+    if (a->opc != invert_opc(b->opc)) return 0;
+    if (is_composite(a->opc)) {
+        if (a->alen != b->alen) return 0;
+        size_t i;
+        for (i = 0; i < a->alen; ++i) {
+            if (!is_complement(a->args + i, b->args + i)) return 0;
+        }
+    }
+    return 1;
 }
 
 // Operation functions

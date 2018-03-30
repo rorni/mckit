@@ -27,6 +27,8 @@ struct Node {
     RBTree * stats;
     uint64_t hash;
     size_t ref_count;
+    const Box * last_box;
+    int last_box_result;
 };
 
 // Creates new node or returns pointer to the existing such node.
