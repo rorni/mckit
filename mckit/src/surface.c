@@ -316,7 +316,7 @@ int surface_test_box(
 )
 {
     if (surf->last_box != NULL) {
-        int bc = box_compare(surf->last_box, box);
+        int bc = box_compare(box, surf->last_box);
         if (bc == 0 || bc > 0 && last_box_result != 0) return last_box_result; 
     }
     

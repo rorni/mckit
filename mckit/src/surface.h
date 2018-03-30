@@ -28,7 +28,7 @@ struct Surface {
     Modifier modifier;
     SurfType type;
     uint64_t hash;
-    const Box * last_box;
+    uint64_t last_box;
     int last_box_result;
 };
 
