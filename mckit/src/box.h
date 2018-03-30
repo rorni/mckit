@@ -82,6 +82,6 @@ void box_ieqcons(
  *  0 if in_box equals out_box;
  * -1 if in_box lies outside of the out_box;
  */
-int box_compare(const Box * out_box, const Box * in_box);
+int box_is_in(const Box * in_box, uint64_t out_subdiv);
 
 #endif

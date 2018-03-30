@@ -224,9 +224,9 @@ void box_ieqcons(
     }  
 }
 
-int box_compare(const Box * out_box, const Box * in_box);
+int box_is_in(const Box * in_box, uint64_t out_subdiv)
 {
-    uint64_t out = out_box->subdiv;
+    uint64_t out = out_subdiv;
     uint64_t in = in_box->subdiv;
     if (out == in) return 0;
     uint64_t mask = ~0;
