@@ -133,7 +133,7 @@ int node_compare(const Node * a, const Node * b)
 int node_test_box(Node * node, const Box * box, char collect)
 {
     if (node->last_box != NULL) {
-        int bc = box_compare(node->last_box, box);
+        int bc = box_is_in(box, node->last_box);
         if (bc == 0 || bc > 0 && last_box_result != 0) return last_box_result; 
     }
     
@@ -175,7 +175,7 @@ int node_test_box(Node * node, const Box * box, char collect)
         } else free(sub);
     }
     // Cash test result;
-    node->last_box = box;
+    node->last_box = box->subdiv;
     node->last_box_result = result;
     return result;
 }

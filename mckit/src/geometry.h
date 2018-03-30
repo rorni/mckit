@@ -27,7 +27,7 @@ struct Node {
     RBTree * stats;
     uint64_t hash;
     size_t ref_count;
-    const Box * last_box;
+    uint64_t last_box;
     int last_box_result;
 };
 
