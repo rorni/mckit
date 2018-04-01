@@ -33,7 +33,7 @@ cdef class Box:
         PyMem_Free(self._cbox)
         
     def generate_random_points(self, int npts):
-        points = np.empty((npts, 3), dtype=np.float64)
+        points = np.empty((npts, 3), dtype=np.float)
         cdef np.ndarray[double, ndim=2, mode='c'] pts = points
         cbox.box_generate_random_points(self._cbox, &pts[0, 0], npts)
         return points
@@ -58,5 +58,10 @@ cdef class Box:
         return box1, box2
         
     def ieqcons(self, x, args):
-        pass
+        cdef np.ndarray[double, ndim=1, mode='c'] xx = np.array(x)
+        cdef double result
+        grad = np.empty((3,), dtype=np.float64)
+        cdef np.ndarray[double, ndim=1, mode='c'] gg = grad
+        cbox.box_ieqcons(6, &result, 3, &xx[0], &gg[0], self._cbox)
+        return result, grad
  

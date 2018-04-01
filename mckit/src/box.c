@@ -58,19 +58,19 @@ int box_init(
     
     // Finding coordinates of box's corners
     for (i = 0; i < NCOR; ++i) {
-        cblas_dcopy(NDIM, box->center, 1, box->corners[i], 1);
-        cblas_daxpy(NDIM, 0.5 * perm[i][0], box->ex, 1, box->corners[i], 1);
-        cblas_daxpy(NDIM, 0.5 * perm[i][1], box->ey, 1, box->corners[i], 1);
-        cblas_daxpy(NDIM, 0.5 * perm[i][2], box->ez, 1, box->corners[i], 1);
+        cblas_dcopy(NDIM, box->center, 1, box->corners + i * NDIM, 1);
+        cblas_daxpy(NDIM, 0.5 * perm[i][0], box->ex, 1, box->corners + i * NDIM, 1);
+        cblas_daxpy(NDIM, 0.5 * perm[i][1], box->ey, 1, box->corners + i * NDIM, 1);
+        cblas_daxpy(NDIM, 0.5 * perm[i][2], box->ez, 1, box->corners + i * NDIM, 1);
     }
     
     // Finding lower and upper bounds
-    cblas_dcopy(NDIM, box->corners[i], 1, box->lb, 1);
-    cblas_dcopy(NDIM, box->corners[i], 1, box->ub, 1);
+    cblas_dcopy(NDIM, box->corners, 1, box->lb, 1);
+    cblas_dcopy(NDIM, box->corners, 1, box->ub, 1);
     for (int i = 1; i < NCOR; ++i) {
         for (int j = 0; j < NDIM; ++j) {
-            if (box->corners[i][j] < box->lb[j]) box->lb[j] = box->corners[i][j];
-            if (box->corners[i][j] > box->ub[j]) box->ub[j] = box->corners[i][j];
+            if (box->corners[i * NDIM + j] < box->lb[j]) box->lb[j] = box->corners[i * NDIM + j];
+            if (box->corners[i * NDIM + j] > box->ub[j]) box->ub[j] = box->corners[i * NDIM + j];
         }
     }
     
@@ -88,7 +88,7 @@ void box_dispose(Box * box) {
 
 void box_copy(const Box * src, Box * dst) 
 {
-    box_init(dst, src->center, src->ex, src->ey, src-ez, 
+    box_init(dst, src->center, src->ex, src->ey, src->ez, 
                   src->dims[0], src->dims[1], src->dims[2]);
 }
 
@@ -156,7 +156,7 @@ int box_split(
 )
 {
     // Find splitting direction
-    if (dir == BOX_SPLIT_AUTODIR) dir = cblas_idamax(NDIM, box->dims, 1);
+    if (dir == BOX_SPLIT_AUTODIR) dir = (int) cblas_idamax(NDIM, box->dims, 1);
     
     double center1[NDIM], center2[NDIM], dims1[NDIM], dims2[NDIM];
     const double* basis[NDIM] = {box->ex, box->ey, box->ez};
@@ -175,7 +175,8 @@ int box_split(
     cblas_daxpy(NDIM,  0.5 * dims1[dir], basis[dir], 1, center2, 1);
     
     char hb = high_bit(box->subdiv);
-    uint64_t mask = (~0) >> (BIT_LEN - 1) << (hb - 1);
+    uint64_t ones = ~0;
+    uint64_t mask = (ones) >> (BIT_LEN - 1) << (hb - 1);
     uint64_t start_bit = mask << 1;
     // create new boxes.
     int status;
@@ -232,7 +233,7 @@ int box_is_in(const Box * in_box, uint64_t out_subdiv)
     uint64_t mask = ~0;
     char out_stop = high_bit(out);
     mask >>= BIT_LEN + 1 - out_stop;
-    if (in & (~mask) == 0) return -1; // inner box actually is bigger one.
-    if (out ^ in & mask) == 0 return +1;    
+    if ((in & (~mask)) == 0) return -1; // inner box actually is bigger one.
+    if (((out ^ in) & mask) == 0) return +1;    
     return -1;
 }

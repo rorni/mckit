@@ -17,16 +17,16 @@ typedef struct Cone         Cone;
 typedef struct Torus        Torus;
 typedef struct GQuadratic   GQuadratic;
 
-typedef struct Modifier Modifier;
-typedef struct SurfType SurfType;
+// typedef struct enum Modifier enum Modifier;
+//typedef struct enum SurfType enum SurfType;
 
 enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC};
 enum Modifier {ORDINARY, REFLECTIVE, WHITE};
 
 struct Surface {
     unsigned int name;
-    Modifier modifier;
-    SurfType type;
+    enum Modifier modifier;
+    enum SurfType type;
     uint64_t hash;
     uint64_t last_box;
     int last_box_result;
@@ -80,7 +80,7 @@ struct GQuadratic {
 int plane_init(
     Plane * surf,
     unsigned int name,
-    Modifier modifier,
+    int modifier,
     const double * norm,
     double offset
 );
@@ -88,7 +88,7 @@ int plane_init(
 int sphere_init(
     Sphere * surf,
     unsigned int name,
-    Modifier modifier,
+    int modifier,
     const double * center,
     double radius
 );
@@ -96,7 +96,7 @@ int sphere_init(
 int cylinder_init(
     Cylinder * surf,
     unsigned int name,
-    Modifier modifier,
+    int modifier,
     const double * point,
     const double * axis,
     double radius
@@ -105,7 +105,7 @@ int cylinder_init(
 int cone_init(
     Cone * surf,
     unsigned int name,
-    Modifier modifier,
+    int modifier,
     const double * apex,
     const double * axis,
     double ta
@@ -114,7 +114,7 @@ int cone_init(
 int torus_init(
     Torus * surf,
     unsigned int name,
-    Modifier modifier,
+    int modifier,
     const double * center,
     const double * axis,
     double radius,
@@ -125,7 +125,7 @@ int torus_init(
 int gq_init(
     GQuadratic * surf,
     unsigned int name,
-    Modifier modifier,
+    int modifier,
     const double * m,
     const double * v,
     double k
@@ -142,9 +142,6 @@ void surface_test_points(
     int * result
 );
 
-int surface_test_box(
-    const Surface * surf, 
-    const Box * box
-);
+int surface_test_box(Surface * surf, const Box * box);
 
 #endif

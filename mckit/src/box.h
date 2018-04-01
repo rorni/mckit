@@ -25,7 +25,7 @@ struct Box {
     double dims[NDIM];      // Dimensions of the box.
     double lb[NDIM];        // lower bounds
     double ub[NDIM];        // upper bounds
-    double corners[NCOR][NDIM];  // corners
+    double corners[NCOR * NDIM];  // corners
     double volume;
     uint64_t subdiv;         // Box location.
     VSLStreamStatePtr rng;
