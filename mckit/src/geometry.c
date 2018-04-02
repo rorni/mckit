@@ -14,8 +14,8 @@
 typedef struct StatUnit StatUnit;
 
 static uint64_t node_hash(Node * node);
-static Node ** extend_args(Operation opc, const void * args, size_t * n);
-static Node ** clean_args(Operation opc, const void * args, size_t * n);
+static Node ** extend_args(int opc, const void * args, size_t * n);
+static Node ** clean_args(int opc, const void * args, size_t * n);
 static int is_complement(Node * a, Node * b);
 
 static RBTree node_bag = {NULL, 0, (int (*)(const void *, const void *)) node_compare};
@@ -48,7 +48,7 @@ static Node * node_retrieve(Node * node)
     return node;
 }
 
-Node * node_create(Operation opc, size_t alen, const void * args)
+Node * node_create(int opc, size_t alen, const void * args)
 {
     Node * node = malloc(sizeof(Node));
     if (node != NULL) {

@@ -6,6 +6,21 @@ cdef extern from "../src/surface.h":
         
     ctypedef struct Plane:
         pass
+
+    ctypedef struct Sphere:
+        pass
+
+    ctypedef struct Cylinder:
+        pass
+
+    ctypedef struct Cone:
+        pass
+
+    ctypedef struct Torus:
+        pass
+
+    ctypedef struct GQuadratic:
+        pass
        
     int plane_init(Surface * surf, unsigned int name, \
         int modifier, const double * norm, double offset)

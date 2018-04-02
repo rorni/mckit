@@ -21,7 +21,7 @@ typedef enum Operation Operation;
 enum Operation {INTERSECTION=0, COMPLEMENT, EMPTY, UNION, IDENTITY, UNIVERSE};
 
 struct Node {
-    Operation opc;
+    int opc;
     void * args;
     size_t alen;
     RBTree * stats;
@@ -34,7 +34,7 @@ struct Node {
 // Creates new node or returns pointer to the existing such node.
 // 
 Node * node_create(
-    Operation opc,     // Operation code.
+    int opc,     // Operation code.
     size_t alen,       // Length of argument array.
     const void * args  // Argument array.
 );
