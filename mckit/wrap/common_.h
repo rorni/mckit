@@ -6,10 +6,10 @@
 
 #include "../src/common.h"
 
-static int
+int
 convert_to_dbl_vec(PyObject * obj, PyObject ** addr);
 
-static int
+int
 convert_to_dbl_vec_array(PyObject * obj, PyObject ** addr);
 
 #endif //WRAP_COMMON_H

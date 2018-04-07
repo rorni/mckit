@@ -1,30 +1,40 @@
-#include "box_.h"
-#include "numpy/arrayobject.h"
+#include <Python.h>
+#include <structmember.h>
+#include "../src/box.h"
 #include "common_.h"
+
+typedef struct {
+    PyObject ob_base;
+    Box box;
+} BoxObject;
+
+static extern PyMethodDef boxobj_methods[];
+static extern PyMemberDef boxobj_members[];
+
+static void boxobj_dealloc(BoxObject * self);
+
+PyTypeObject BoxType = {
+        PyVarObject_HEAD_INIT(NULL, 0),
+        .tp_name = "geometry.Box",
+        .tp_basicsize = sizeof(BoxObject),
+        .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+        .tp_doc = "Box objects",
+        .tp_new = PyType_GenericNew,
+        .tp_dealloc = (destructor) boxobj_dealloc,
+        .tp_init = (initproc) boxobj_init,
+        .tp_methods = boxobj_methods,
+        .tp_members = boxobj_members,
+};
 
 static void boxobj_dealloc(BoxObject * self)
 {
-    box_dispose(self->box);
-    free(self->box);
+    box_dispose(&self->box);
     Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
-static PyObject * 
-boxobj_new(PyTypeObject * type, PyObject * args, PyObject * kwds)
-{
-    BoxObject * self;
-    
-    self = (BoxObject *) type->tp_alloc(type, 0);
-    if (self != NULL) {
-        self->box = (Box *) malloc(sizeof(Box));
-        if (self->box == NULL) {
-            Py_DECREF(self);
-            return NULL;
-        }
-    }
-    
-    return (PyObject *) self;
-}
+static double EX[] = {1, 0, 0};
+static double EY[] = {0, 1, 0};
+static double EZ[] = {0, 0, 1};
 
 static int
 boxobj_init(BoxObject * self, PyObject * args, PyObject * kwds)
@@ -43,9 +53,9 @@ boxobj_init(BoxObject * self, PyObject * args, PyObject * kwds)
         return -1;
 
     cent = (double *) PyArray_DATA(pycent);
-    if (pyex == NULL) ex = {1, 0, 0}; else ex = (double *) PyArray_DATA(ex);
-    if (pyey == NULL) ey = {0, 1, 0}; else ey = (double *) PyArray_DATA(ey);
-    if (pyez == NULL) ez = {0, 0, 1}; else ez = (double *) PyArray_DATA(ez);
+    if (pyex == NULL) ex = EX; else ex = (double *) PyArray_DATA(ex);
+    if (pyey == NULL) ey = EY; else ey = (double *) PyArray_DATA(ey);
+    if (pyez == NULL) ez = EZ; else ez = (double *) PyArray_DATA(ez);
     box_dispose(&self->box);
     box_init(&self->box, cent, ex, ey, ez, xdim, ydim, zdim);
     
@@ -112,11 +122,26 @@ boxobj_test_points(BoxObject * self, PyObject * points)
 static PyObject *
 boxobj_split(BoxObject * self, PyObject * args, PyObject * kwds)
 {
-    char * dir;
+    char * dir = "auto";
     double ratio = 0.5;
+    int direct;
     static char kwlist[] = {"dir", "ratio", NULL};
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "|$sd", &dir, &ratio)) return NULL;
+
+    if (dir == "auto") direct = BOX_SPLIT_AUTODIR;
+    else if (dir == "x") direct = BOX_SPLIT_X;
+    else if (dir == "y") direct = BOX_SPLIT_Y;
+    else if (dir == "z") direct = BOX_SPLIT_Z;
+    else {
+        PyErr_SetString(PyExc_ValueError, "Unknown splitting direction.");
+        return NULL;
+    }
+
+    if (ratio <= 0 || ratio >= 1) {
+        PyErr_SetString(PyExc_ValueError, "Split ratio is out of range (0, 1).");
+        return NULL;
+    }
 
     BoxObject * box1 = boxobj_new(BoxType, NULL, NULL);
     BoxObject * box2 = boxobj_new(BoxType, NULL, NULL);
@@ -131,8 +156,17 @@ boxobj_split(BoxObject * self, PyObject * args, PyObject * kwds)
     return Py_BuildValue("(OO)", box1, box2);
 }
 
-static PyObject *
-boxobj_get_volume(BoxObject * self, void * closure)
-{
+static PyMethodDef boxobj_methods[] = {
+        {"copy", (PyCFunction) boxobj_copy, METH_NOARGS, "Makes a copy of the box."},
+        {"generate_random_points", (PyCFunction) boxobj_generate_random_points, METH_O,
+                                                         "Generate N random points inside the box."},
+        {"test_points", (PyCFunction) boxobj_test_points, METH_O, "Tests points if they are inside the box."},
+        {"split", (PyCFunctionWithKeywords) boxobj_split, METH_VARARGS | METH_KEYWORDS,
+                "Splits the box into two smaller."},
+        {NULL}
+};
 
-}
+static PyMemberDef boxobj_members[] = {
+        {"volume", T_DOUBLE, offsetof(Box, volume), READONLY, "Box's volume."},
+        {NULL}
+};
