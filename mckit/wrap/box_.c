@@ -1,12 +1,6 @@
-#include <Python.h>
-#include <structmember.h>
-#include "../src/box.h"
+#include "box_.h"
 #include "common_.h"
-
-typedef struct {
-    PyObject ob_base;
-    Box box;
-} BoxObject;
+#include <string.h>
 
 static extern PyMethodDef boxobj_methods[];
 static extern PyMemberDef boxobj_members[];
@@ -82,8 +76,12 @@ boxobj_copy(BoxObject * self)
 static PyObject *
 boxobj_generate_random_points(BoxObject * self, PyObject * npts)
 {
-    size_t n;
-    if (! PyArg_ParseTuple(args, "I", &n)) return -1;
+    if (! PyLong_CheckExact(npts)) {
+        PyErr_SetString(PyExc_ValueError, "Integer value is expected");
+        return NULL;
+    }
+    size_t n = PyLong_AsLong(npts);
+
     int dims[] = {n, NDIM};
     PyArrayObject * points = PyArray_EMPTY(2, dims, NPY_DOUBLE, 0);
     if (points == NULL) return NULL;
@@ -130,9 +128,9 @@ boxobj_split(BoxObject * self, PyObject * args, PyObject * kwds)
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "|$sd", &dir, &ratio)) return NULL;
 
     if (dir == "auto") direct = BOX_SPLIT_AUTODIR;
-    else if (dir == "x") direct = BOX_SPLIT_X;
-    else if (dir == "y") direct = BOX_SPLIT_Y;
-    else if (dir == "z") direct = BOX_SPLIT_Z;
+    else if (strcmp(dir, "x")) direct = BOX_SPLIT_X;
+    else if (strcmp(dir, "y")) direct = BOX_SPLIT_Y;
+    else if (strcmp(dir, "z")) direct = BOX_SPLIT_Z;
     else {
         PyErr_SetString(PyExc_ValueError, "Unknown splitting direction.");
         return NULL;

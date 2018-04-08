@@ -131,8 +131,6 @@ int gq_init(
     double k
 );
 
-void surface_dispose(Surface * surf);
-
 void torus_dispose(Torus * surf);
 
 void surface_test_points(

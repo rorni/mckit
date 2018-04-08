@@ -291,11 +291,7 @@ int gq_init(
     return SURFACE_SUCCESS;
 }
 
-void surface_dispose(Surface * surf) {
-    if (surf->type == TORUS) torus_dispose((Torus *) surf);
-}
-
-void torus_dispose(Torus * surf) 
+void torus_dispose(Torus * surf)
 {
     if (surf->specpts != NULL) free(surf->specpts);    
 }
