@@ -5,6 +5,11 @@
 #ifndef WRAP_SURFACE_H
 #define WRAP_SURFACE_H
 
+typedef struct {
+    PyObject ob_base;
+    Surface surf;
+} SurfaceObject;
+
 extern PyTypeObject SurfaceType;
 extern PyTypeObject PlaneType;
 extern PyTypeObject SphereType;

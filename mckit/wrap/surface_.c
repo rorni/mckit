@@ -14,11 +14,6 @@
 
 typedef struct {
     PyObject ob_base;
-    Surface surf;
-} SurfaceObject;
-
-typedef struct {
-    PyObject ob_base;
     Plane surf;
 } PlaneObject;
 
