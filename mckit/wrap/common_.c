@@ -1,6 +1,6 @@
 #include "common_.h"
 
-static int
+int
 convert_to_dbl_vec(PyObject * obj, PyObject ** addr)
 {
     *addr = PyArray_FROM_OTF(obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
@@ -13,7 +13,7 @@ convert_to_dbl_vec(PyObject * obj, PyObject ** addr)
     return 1;
 }
 
-static int
+int
 convert_to_dbl_vec_array(PyObject * obj, PyObject ** addr)
 {
     *addr = PyArray_FROM_OTF(obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);

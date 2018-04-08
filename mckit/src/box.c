@@ -95,7 +95,7 @@ void box_copy(const Box * src, Box * dst)
 int box_generate_random_points(
     Box * box, 
     double * points,
-    int npts
+    size_t npts
 ) 
 {
     if (box->rng == NULL) vslNewStream(&box->rng, VSL_BRNG_MT19937, 777);
@@ -124,7 +124,7 @@ int box_generate_random_points(
 void box_test_points(
     const Box * box, 
     const double * points, 
-    int npts,
+    size_t npts,
     int * result
 )
 {

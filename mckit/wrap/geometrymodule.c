@@ -49,7 +49,7 @@ PyInit_geometry(void)
     PyModule_AddObject(m, "Sphere", (PyObject *) &SphereType);
     PyModule_AddObject(m, "Cylinder", (PyObject *) &CylinderType);
     PyModule_AddObject(m, "Cone", (PyObject *) &ConeType);
-    PyModule_AddObject(m, "Torus", (PyOjbect *) &TorusType);
+    PyModule_AddObject(m, "Torus", (PyObject *) &TorusType);
     PyModule_AddObject(m, "GQuadratic", (PyObject *) &GQuadraticType);
 
     return m;

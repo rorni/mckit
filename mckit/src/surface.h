@@ -136,7 +136,7 @@ void torus_dispose(Torus * surf);
 void surface_test_points(
     const Surface * surf, 
     const double * points, 
-    int npts,
+    size_t npts,
     int * result
 );
 
