@@ -1,6 +1,9 @@
 #include <Python.h>
 #include <structmember.h>
 
+#define  PY_ARRAY_UNIQUE_SYMBOL GEOMETRYMODULE_ARRAY_API
+#include "numpy/arrayobject.h"
+
 #include "box_.h"
 #include "surface_.h"
 
@@ -31,6 +34,7 @@ PyInit_geometry(void)
     m = PyModule_Create(&geometry_module);
     if (m == NULL)
         return NULL;
+    import_array();
 
     Py_INCREF(&BoxType);
 
@@ -49,7 +53,7 @@ PyInit_geometry(void)
     PyModule_AddObject(m, "Sphere", (PyObject *) &SphereType);
     PyModule_AddObject(m, "Cylinder", (PyObject *) &CylinderType);
     PyModule_AddObject(m, "Cone", (PyObject *) &ConeType);
-    PyModule_AddObject(m, "Torus", (PyOjbect *) &TorusType);
+    PyModule_AddObject(m, "Torus", (PyObject *) &TorusType);
     PyModule_AddObject(m, "GQuadratic", (PyObject *) &GQuadraticType);
 
     return m;

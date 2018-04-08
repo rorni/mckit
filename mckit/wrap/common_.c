@@ -1,25 +1,30 @@
 #include "common_.h"
+#define  NO_IMPORT_ARRAY
+#define  PY_ARRAY_UNIQUE_SYMBOL GEOMETRYMODULE_ARRAY_API
+#include "numpy/arrayobject.h"
 
-static int
+#include "../src/common.h"
+
+int
 convert_to_dbl_vec(PyObject * obj, PyObject ** addr)
 {
-    *addr = PyArray_FROM_OTF(obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
-    if (*addr == NULL) return 0;
+    PyObject * arr = PyArray_FROM_OTF(obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+    if (arr == NULL) return 0;
 
-    if (PyArray_SIZE((PyArrayObject *) *addr) != NDIM) {
+    if (PyArray_SIZE((PyArrayObject *) arr) != NDIM) {
         PyErr_SetString(PyExc_ValueError, "Vector of length 3 is expected");
-        Py_DECREF(*addr);
+        Py_DECREF(arr);
     }
+    *addr = arr;
     return 1;
 }
 
-static int
+int
 convert_to_dbl_vec_array(PyObject * obj, PyObject ** addr)
 {
-    *addr = PyArray_FROM_OTF(obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
-    if (*addr == NULL) return 0;
+    PyObject * arr = PyArray_FROM_OTF(obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+    if (arr == NULL) return 0;
 
-    PyArrayObject * arr = (PyArrayObject *) *addr;
     int n = PyArray_NDIM(arr);
     if (n == 0 || n > 2) {
         PyErr_SetString(PyExc_ValueError, "Vector or matrix are expected");
@@ -32,8 +37,9 @@ convert_to_dbl_vec_array(PyObject * obj, PyObject ** addr)
         PyErr_SetString(PyExc_ValueError, "Shape (n, 3) is expected");
         goto error;
     }
+    *addr = arr;
     return 1;
   error:
-    Py_DECREF(*addr);
+    Py_DECREF(arr);
     return 0;
 }

@@ -50,13 +50,13 @@ void box_copy(const Box * src, Box * dst);
 int box_generate_random_points(
     Box * box, 
     double * points,
-    int npts
+    size_t npts
 );
 
 void box_test_points(
     const Box * box, 
     const double * points, 
-    int npts,
+    size_t npts,
     int * result
 );
 

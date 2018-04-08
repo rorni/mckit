@@ -2,7 +2,6 @@
 #define WRAP_BOX_H
 
 #include <Python.h>
-#include <structmember.h>
 #include "../src/box.h"
 
 extern PyTypeObject BoxType;
