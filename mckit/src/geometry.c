@@ -57,7 +57,7 @@ Node * node_create(int opc, size_t alen, const void * args)
         
         node->ref_count = 1;
         if (is_final(opc)) node->args = args;
-        else if (is_composite(opc) {
+        else if (is_composite(opc)) {
             size_t i;
             
             Node ** cargs = clean_args(opc, args, &alen);
@@ -218,7 +218,7 @@ int node_bounding_box(const Node * node, Box * box, double tol)
     Box box1, box2;
     for (dim = 0; dim < NDIM; ++dim) {
         lower = 0;
-        while (box->dims[dim] - lower) > tol {
+        while (box->dims[dim] - lower > tol) {
             ratio = 0.5 * (lower + box->dims[dim]) / box->dims[dim];
             box_split(box, &box1, &box2, dim, ratio);
             tl = node_test_box(node, &box2, 0);

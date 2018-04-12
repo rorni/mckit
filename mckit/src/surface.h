@@ -142,4 +142,6 @@ void surface_test_points(
 
 int surface_test_box(Surface * surf, const Box * box);
 
+int surface_compare(Surface * surf, Surface * other);
+
 #endif

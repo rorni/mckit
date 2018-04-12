@@ -160,6 +160,7 @@ inline void surface_init(Surface * surf, unsigned int name, int mod)
     surf->modifier = mod;
     surf->last_box = 0;
     surf->last_box_result = 0;
+    surf->hash = (uint64_t) surf;
 }
 
 int plane_init(
@@ -363,5 +364,10 @@ int surface_test_box(Surface * surf, const Box * box)
     surf->last_box_result = sign;
     
     return sign;
+}
+
+int surface_compare(Surface * surf, Surface * other)
+{
+    return surf->hash - other->hash;
 }
 

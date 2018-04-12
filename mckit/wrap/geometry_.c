@@ -4,10 +4,14 @@
 #include <Python.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include "geometry_.h"
 #include "surface_.h"
+#include "common_.h"
 #include "box_.h"
 #include "../src/geometry.h"
+#include "../src/rbtree.h"
+#include "../src/surface.h"
 
 typedef struct {
     PyObject ob_base;
@@ -126,6 +130,159 @@ nodeobj_test_box(NodeObject * self, PyObject * args, PyObject * kwds)
     int result = node_test_box(self->node, &box->box, collect);
     return Py_Build_Value("i", result);
 }
+
+static PyObject *
+nodeobj_test_points(NodeObject * self, PyObject * points)
+{
+    PyObject * pts;
+    if (! convert_to_dbl_vec_array(points, &pts)) return NULL;
+
+    npy_intp size = PyArray_SIZE((PyArrayObject *) pts);
+    size_t npts = size > NDIM ? PyArray_DIM((PyArrayObject *) pts, 0) : 1;
+    npy_intp dims[] = {npts};
+    PyObject * result = PyArray_EMPTY(1, dims, NPY_INT, 0);
+    if (result == NULL) {
+        Py_DECREF(pts);
+        return NULL;
+    }
+
+    node_test_points(self->node, (double *) PyArray_DATA(pts), npts, \
+                   (int *) PyArray_DATA(result));
+    Py_DECREF(pts);
+    return result;
+}
+
+static PyObject *
+nodeobj_complexity(NodeObject * self)
+{
+    int result = node_complexity(self->node);
+    return Py_BuildValue("i", result);
+}
+
+static PyObject *
+nodeobj_get_surfaces(NodeObject * self)
+{
+    RBTree * rbt = rbtree_create(surface_compare);
+    node_get_surfaces(self->node, rbt);
+    PyObject * set = PySet_New(NULL);
+    if (set != NULL) {
+        Surface * arr = rbtree_to_array(rbt);
+        int i, status;
+        PyObject * pysurf;
+        for (i = 0; i < rbt->len; ++i) {
+            pysurf = parent_pyobject(SurfaceObject, surf, arr + i);
+            status = PySet_Add(set, pysurf);
+        }
+        free(arr);
+    }
+    rbtree_free(rbt);
+    return set;
+}
+
+static PyObject *
+nodeobj_bounding_box(NodeObject * self, PyObject * args, PyObject * kwds)
+{
+    PyObject * pybox;
+    double tol;
+    if (! PyArg_ParseTuple(args, "Od", &pybox, tol)) return NULL;
+    if (! PyObject_TypeCheck(pybox, &BoxType)) {
+        PyErr_SetString(PyExc_ValueError, "Box instance is expected");
+        return NULL;
+    }
+    BoxObject * box = (BoxObject *) PyType_GenericNew(&BoxType, NULL, NULL);
+    if (box == NULL) return NULL;
+    box_copy(&((BoxObject *) pybox)->box, &box->box);
+    int status = node_bounding_box(self->node, &box->box, tol);
+    if (status != NODE_SUCCESS) {
+        Py_DECREF(box);
+        box = NULL;
+    }
+    return (PyObject *) box;
+}
+
+static PyObject *
+nodeobj_volume(NodeObject * self, PyObject * args, PyObject * kwds)
+{
+    PyObject * pybox;
+    double min_vol;
+    if (! PyArg_ParseTuple(args, "Od", &pybox, min_vol)) return NULL;
+    if (! PyObject_TypeCheck(pybox, &BoxType)) {
+        PyErr_SetString(PyExc_ValueError, "Box instance is expected");
+        return NULL;
+    }
+    double vol = node_volume(self->node, &((BoxObject *) pybox)->box, min_vol);
+    return Py_BuildValue("d", vol);
+}
+
+static PyObject *
+nodeobj_collect_statistics(NodeObject * self, PyObject * args, PyObject * kwds)
+{
+    PyObject * pybox;
+    double min_vol;
+    if (! PyArg_ParseTuple(args, "Od", &pybox, min_vol)) return NULL;
+    if (! PyObject_TypeCheck(pybox, &BoxType)) {
+        PyErr_SetString(PyExc_ValueError, "Box instance is expected");
+        return NULL;
+    }
+    node_collect_stat(self->node, &((BoxObject *) pybox)->box, min_vol);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+nodeobj_get_simplest(NodeObject * self, PyObject * args, PyObject * kwds)
+{
+    // void node_get_simplest(Node * node);
+    PyErr_SetString(PyExc_NotImplementedError, "Not Implemented");
+    return NULL;
+}
+
+static PyObject *
+nodeobj_complement(NodeObject * self)
+{
+    NodeObject * result = PyType_GenericNew(NodeType, NULL, NULL);
+    if (result != NULL)
+        result->node = node_complement(self->node);
+    return (PyObject *) result;
+}
+
+static PyObject *
+nodeobj_intersection(NodeObject * self, PyObject * other)
+{
+    if (! PyObject_TypeCheck(ohter, &NodeType)) {
+        PyErr_SetString(PyExc_TypeError, "Node instance is expected.");
+        return NULL;
+    }
+    NodeObject * result = PyType_GenericNew(NodeType, NULL, NULL);
+    if (result != NULL) result->node = node_intersection(self->node, ((NodeObject *) other)->node);
+    return (PyObject *) result;
+}
+
+static PyObject *
+nodeobj_union(NodeObject * self, PyObject * other)
+{
+    if (! PyObject_TypeCheck(ohter, &NodeType)) {
+        PyErr_SetString(PyExc_TypeError, "Node instance is expected.");
+        return NULL;
+    }
+    NodeObject * result = PyType_GenericNew(NodeType, NULL, NULL);
+    if (result != NULL) result->node = node_union(self->node, ((NodeObject *) other)->node);
+    return (PyObject *) result;
+}
+
+static PyMethodDef nodeobj_methods[] = {
+        {"union", (PyCFunction) nodeobj_union, METH_O, "Makes an union of two geometries."},
+        {"intersection", (PyCFunction) nodeobj_intersection, METH_O, "Makes an intersection of two geometries."},
+        {"complement", (PyCFunction) nodeobj_complement, METH_NOARGS, "Gets a geometry complement."},
+        {"test_box", (PyCFunctionWithKeywords) boxobj_split, METH_VARARGS | METH_KEYWORDS, "Tests box."},
+        {"test_points", (PyCFunction) nodeobj_test_points, METH_O, "Tests points' senses."},
+        {"complexity", (PyCFunction) nodeobj_complexity, METH_NOARGS, "Complexity of the node."},
+        {"get_surfaces", (PyCFunction) nodeobj_get_surfaces, METH_NOARGS, "Gets a set of unique surfaces."},
+        {"bounding_box", (PyCFunction) nodeobj_bounding_box, METH_VARARGS, "Gets bounding box of the geometry."},
+        {"volume", (PyCFunction) nodeobj_volume, METH_VARARGS, "Gets volume of the cell."},
+        {"collect_statistics", (PyCFunction) nodeobj_collect_statistics, METH_VARARGS, "Collects statistics."},
+        {"get_simplest", (PyCFunction) nodeobj_get_simplest, METH_VARARGS, "Gets the simplest form of the geometry"},
+        {NULL}
+};
 
 PyTypeObject NodeType = {
         PyObject_HEAD_INIT(NULL)
