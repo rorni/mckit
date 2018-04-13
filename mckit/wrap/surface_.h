@@ -5,6 +5,8 @@
 #ifndef WRAP_SURFACE_H
 #define WRAP_SURFACE_H
 
+#include "../src/surface.h"
+
 typedef struct {
     PyObject ob_base;
     Surface surf;

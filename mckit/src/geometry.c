@@ -24,13 +24,14 @@ struct StatUnit {
     char * arr;
     size_t len;
     double vol;
-}
+};
 
-static stat_compare(const StatUnit * a, const StatUnit * b) {
-    int i, n = a->len;
+static int stat_compare(const StatUnit * a, const StatUnit * b)
+{
+    size_t i, n = a->len;
     for (i = 0; i < n; ++i) {
-        if (a[i] < b[i]) return 1;
-        else if (a[i] > b[i]) return -1;
+        if (a->arr[i] < b->arr[i]) return 1;
+        else if (a->arr[i] > b->arr[i]) return -1;
     }
     return 0;
 }

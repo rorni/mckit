@@ -366,7 +366,7 @@ int surface_test_box(Surface * surf, const Box * box)
     return sign;
 }
 
-int surface_compare(Surface * surf, Surface * other)
+int surface_compare(const Surface * surf, const Surface * other)
 {
     return surf->hash - other->hash;
 }

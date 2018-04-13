@@ -2,6 +2,11 @@
 // Created by Roma on 08.04.2018.
 //
 #include <Python.h>
+
+#define  NO_IMPORT_ARRAY
+#define  PY_ARRAY_UNIQUE_SYMBOL GEOMETRYMODULE_ARRAY_API
+#include "numpy/arrayobject.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -62,7 +67,7 @@ static int
 nodeobj_init(NodeObject * self, PyObject * args, PyObject * kwds)
 {
     size_t len = PyTuple_Size(args);
-    void * arguments = NULL;
+    void ** arguments = NULL;
 
     int opc = get_operation_code(kwds);
     if (opc < 0) return -1;
@@ -77,9 +82,10 @@ nodeobj_init(NodeObject * self, PyObject * args, PyObject * kwds)
             PyErr_SetString(PyExc_ValueError, "Wrong operation type");
             return -1;
         }
+        arguments = (void**) malloc(len * sizeof(Node *));
         PyObject * arg = PyTuple_GetItem(args, 0);
-        if (PyObject_TypeCheck(arg, &SurfaceType)) arguments = ((SurfaceObject *) arg)->surf;
-        else if (PyObject_TypeCheck(arg, &NodeType)) arguments = ((NodeObject *) arg)->node;
+        if (PyObject_TypeCheck(arg, &SurfaceType)) arguments[0] = &((SurfaceObject *) arg)->surf;
+        else if (PyObject_TypeCheck(arg, &NodeType)) arguments[0] = ((NodeObject *) arg)->node;
         else {
             PyErr_SetString(PyExc_TypeError, "Node or Surface instance is expected");
             return -1;
@@ -89,12 +95,12 @@ nodeobj_init(NodeObject * self, PyObject * args, PyObject * kwds)
             PyErr_SetString(PyExc_ValueError, "Wrong operation type");
             return -1;
         }
-        arguments = malloc(len * sizeof(Node *));
+        arguments = (void**) malloc(len * sizeof(Node *));
         size_t i;
         PyObject * arg;
         for (i = 0; i < len; ++i) {
             arg = PyTuple_GetItem(args, i);
-            if (PyObject_TypeCheck(arg, &NodeType)) arguments[i] = ((NodeObject *) arg)->node;
+            if (PyObject_TypeCheck(arg, &NodeType)) arguments[i] = (void *) ((NodeObject *) arg)->node;
             else {
                 PyErr_SetString(PyExc_TypeError, "Node instance is expected");
                 free(arguments);
@@ -121,14 +127,14 @@ nodeobj_test_box(NodeObject * self, PyObject * args, PyObject * kwds)
     PyObject * pybox;
     char collect = 0;
     char * kwlist[] = {"", "collect", NULL};
-    if (! PyArg_ParseTuple(args, kwds, "O|i", kwlist, &pybox, &collect)) return NULL;
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O|i", kwlist, &pybox, &collect)) return NULL;
     if (! PyObject_TypeCheck(pybox, &BoxType)) {
         PyErr_SetString(PyExc_ValueError, "Box instance is expected");
         return NULL;
     }
     BoxObject * box = (BoxObject *) pybox;
     int result = node_test_box(self->node, &box->box, collect);
-    return Py_Build_Value("i", result);
+    return Py_BuildValue("i", result);
 }
 
 static PyObject *
@@ -239,7 +245,7 @@ nodeobj_get_simplest(NodeObject * self, PyObject * args, PyObject * kwds)
 static PyObject *
 nodeobj_complement(NodeObject * self)
 {
-    NodeObject * result = PyType_GenericNew(NodeType, NULL, NULL);
+    NodeObject * result = (NodeObject *) PyType_GenericNew(&NodeType, NULL, NULL);
     if (result != NULL)
         result->node = node_complement(self->node);
     return (PyObject *) result;
@@ -248,11 +254,11 @@ nodeobj_complement(NodeObject * self)
 static PyObject *
 nodeobj_intersection(NodeObject * self, PyObject * other)
 {
-    if (! PyObject_TypeCheck(ohter, &NodeType)) {
+    if (! PyObject_TypeCheck(other, &NodeType)) {
         PyErr_SetString(PyExc_TypeError, "Node instance is expected.");
         return NULL;
     }
-    NodeObject * result = PyType_GenericNew(NodeType, NULL, NULL);
+    NodeObject * result = (NodeObject *) PyType_GenericNew(&NodeType, NULL, NULL);
     if (result != NULL) result->node = node_intersection(self->node, ((NodeObject *) other)->node);
     return (PyObject *) result;
 }
@@ -260,11 +266,11 @@ nodeobj_intersection(NodeObject * self, PyObject * other)
 static PyObject *
 nodeobj_union(NodeObject * self, PyObject * other)
 {
-    if (! PyObject_TypeCheck(ohter, &NodeType)) {
+    if (! PyObject_TypeCheck(other, &NodeType)) {
         PyErr_SetString(PyExc_TypeError, "Node instance is expected.");
         return NULL;
     }
-    NodeObject * result = PyType_GenericNew(NodeType, NULL, NULL);
+    NodeObject * result = (NodeObject *) PyType_GenericNew(&NodeType, NULL, NULL);
     if (result != NULL) result->node = node_union(self->node, ((NodeObject *) other)->node);
     return (PyObject *) result;
 }
@@ -273,7 +279,7 @@ static PyMethodDef nodeobj_methods[] = {
         {"union", (PyCFunction) nodeobj_union, METH_O, "Makes an union of two geometries."},
         {"intersection", (PyCFunction) nodeobj_intersection, METH_O, "Makes an intersection of two geometries."},
         {"complement", (PyCFunction) nodeobj_complement, METH_NOARGS, "Gets a geometry complement."},
-        {"test_box", (PyCFunctionWithKeywords) boxobj_split, METH_VARARGS | METH_KEYWORDS, "Tests box."},
+        {"test_box", (PyCFunctionWithKeywords) nodeobj_test_box, METH_VARARGS | METH_KEYWORDS, "Tests box."},
         {"test_points", (PyCFunction) nodeobj_test_points, METH_O, "Tests points' senses."},
         {"complexity", (PyCFunction) nodeobj_complexity, METH_NOARGS, "Complexity of the node."},
         {"get_surfaces", (PyCFunction) nodeobj_get_surfaces, METH_NOARGS, "Gets a set of unique surfaces."},
