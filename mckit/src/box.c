@@ -4,6 +4,9 @@
 
 #define BIT_LEN 64
 
+/* Each row is delta to be added to center point to obtain specific corner.
+ * They must be multiplied by corresponding box's dimensions.
+ */
 static double perm[NCOR][NDIM] = {
     {-1, -1, -1},
     {-1, -1,  1},
@@ -15,6 +18,7 @@ static double perm[NCOR][NDIM] = {
     { 1,  1,  1}
 };
 
+// Finds the highest set bit.
 static inline char high_bit(uint64_t value) 
 {
     char result = 0;
@@ -75,7 +79,7 @@ int box_init(
     }
     
     box->rng = NULL;
-    box->subdiv = 0;
+    box->subdiv = 1;  // Means that it is the most outer box for now.
     
     return BOX_SUCCESS;
 }
@@ -86,18 +90,19 @@ void box_dispose(Box * box) {
 }
 
 
-void box_copy(const Box * src, Box * dst) 
+void box_copy(Box * dst, const Box * src)
 {
     box_init(dst, src->center, src->ex, src->ey, src->ez, 
                   src->dims[0], src->dims[1], src->dims[2]);
 }
 
 int box_generate_random_points(
-    Box * box, 
-    double * points,
-    size_t npts
+    Box * box,
+    size_t npts,
+    double * points
 ) 
 {
+    // If rng is not allocated yet, try to allocate. It will be used at future calls.
     if (box->rng == NULL) vslNewStream(&box->rng, VSL_BRNG_MT19937, 777);
     if (box->rng == NULL) return BOX_FAILURE;    
     int i, status;
@@ -106,7 +111,8 @@ int box_generate_random_points(
     for (i = 0; i < NDIM; ++i) {
         cblas_dscal(npts * NDIM, box->dims[i], points + i, NDIM);
     }
-    
+
+    // TODO: Try to implement generation of all points during one single call to rng.
     for (i = 0; i < npts; ++i) {
         status = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, 
                               box->rng, NDIM, d, -0.5, 0.5);
@@ -122,9 +128,9 @@ int box_generate_random_points(
 
 
 void box_test_points(
-    const Box * box, 
-    const double * points, 
+    const Box * box,
     size_t npts,
+    const double * points,
     int * result
 )
 {
@@ -170,10 +176,11 @@ int box_split(
     // find new centers.
     cblas_dcopy(NDIM, box->center, 1, center1, 1);
     cblas_dcopy(NDIM, box->center, 1, center2, 1);
-    
+
     cblas_daxpy(NDIM, -0.5 * dims2[dir], basis[dir], 1, center1, 1);
     cblas_daxpy(NDIM,  0.5 * dims1[dir], basis[dir], 1, center2, 1);
-    
+
+    // subdivision index.
     char hb = high_bit(box->subdiv);
     uint64_t ones = ~0;
     uint64_t mask = (ones) >> (BIT_LEN - 1) << (hb - 1);
