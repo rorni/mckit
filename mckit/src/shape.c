@@ -11,8 +11,28 @@
 
 #define geom_complement(arg) (-1 * (arg))
 
+static int zero_surfs = 0;
+
 char geom_intersection(char * args, size_t n, size_t inc);
 char geom_union(char * args, size_t n, size_t inc);
+
+typedef struct StatUnit StatUnit;
+
+struct StatUnit {
+    char * arr;
+    size_t len;
+    double vol;
+};
+
+static int stat_compare(const StatUnit * a, const StatUnit * b)
+{
+    size_t i, n = a->len;
+    for (i = 0; i < n; ++i) {
+        if (a->arr[i] < b->arr[i]) return 1;
+        else if (a->arr[i] > b->arr[i]) return -1;
+    }
+    return 0;
+}
 
 // Initializes shape struct
 int shape_init(
@@ -24,6 +44,7 @@ int shape_init(
 {
     shape->opc = opc;
     shape->alen = alen;
+    shape->stats = NULL;
     if (is_void(opc)) {
         shape->args = 0;
     } else if (is_final(opc)) {
@@ -62,14 +83,21 @@ int shape_test_box(
 
     int result;
     if (is_final(shape->opc)) {
+        char already = box->subdiv == ((Surface *) shape->args)->last_box;
         result = surface_test_box(shape->args, box);
         if (shape->opc == COMPLEMENT) result = geom_complement(result);
+        if (collect > 0 && result == 0 && !already) ++zero_surfs;
+        else if (collect < 0 && result == 0) {
+            if (zero_surfs == 1) result = 1;
+            else result = -1;
+        }
     } else if (shape->opc == UNIVERSE) {
         result = BOX_INSIDE_SHAPE;
     } else if (shape->opc == EMPTY) {
         result = BOX_OUTSIDE_SHAPE;
     } else {
-        char sub[shape->alen];
+        char * sub = malloc(shape->alen * sizeof(char));
+
         for (i = 0; i < shape->alen; ++i) {
             sub[i] = shape_test_box(shape->args[i], box, collect);
         }
@@ -80,22 +108,14 @@ int shape_test_box(
             result = geom_union(sub, shape->alen, 1);
         }
 
-        /* TODO: Review statistics collection
-        if (collect && result != 0) {
+        // TODO: Review statistics collection
+        if (collect != 0 && result != 0) {
             StatUnit * stat = (StatUnit *) malloc(sizeof(StatUnit));
             stat->arr = sub;
             stat->len = n;
-            double * vol = map_get(node->stats, stat);
-            if (vol == NULL) {
-                vol = (double *) malloc(sizeof(double));
-                *vol = box->volume;
-                map_add(node->stats, stat, vol);
-            } else {
-                *vol += box->volume;
-                free(sub);
-                free(stat);
-            }
-        } else free(sub); */
+            stat->vol = box->volume;
+            if (rbtree_add(shape->stats, stat) != RBT_OK) free(stat);
+        } else free(sub);
     }
     // Cash test result;
     shape->last_box = box->subdiv;
@@ -109,15 +129,18 @@ int shape_test_box(
 int shape_ultimate_test_box(
         Shape * shape,          // Pointer to shape
         const Box * box,        // box
-        double min_vol          // minimal volume until which splitting process goes.
+        double min_vol,         // minimal volume until which splitting process goes.
+        char collect            // Whether to collect statistics about results.
 )
 {
-    int result = shape_test_box(shape, box, 0);
+    if (box->volume <= min_vol || zero_surfs == 1) collect = -1;
+    else zero_surfs = 0;
+    int result = shape_test_box(shape, box, collect);
     if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
         Box box1, box2;
         box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);
-        int result1 = shape_ultimate_test_box(shape, box1, min_vol);
-        int result2 = shape_ultimate_test_box(shape, box2, min_vol);
+        int result1 = shape_ultimate_test_box(shape, box1, min_vol, collect);
+        int result2 = shape_ultimate_test_box(shape, box2, min_vol, collect);
         if (result1 != BOX_CAN_INTERSECT_SHAPE && result2 != BOX_CAN_INTERSECT_SHAPE)
             return result1;     // No matter what value (result1 or result2) is returned because they
                                 // will be equal.
@@ -198,7 +221,7 @@ double shape_volume(
         const Shape * shape,    // Shape
         const Box * box,        // Box from which the process of volume finding starts
         double min_vol          // Minimum volume - when volume of the box become smaller than min_vol the process
-        // of box splitting finishes.
+                                // of box splitting finishes.
 )
 {
     int result = shape_test_box(shape, box, 0);
@@ -214,6 +237,29 @@ double shape_volume(
         return 0.5 * box->volume;   // This is statistical decision. On average a half of the box belongs to the shape.
     }
 }
+
+// Resets collected statistics or initializes statistics storage
+void shape_reset_stat(Shape * shape)
+{
+    if (shape->stats == NULL) {
+        shape->stats = rbtree_create(stat_compare);
+    } else {
+        Shape * s;
+        while ((s = rbtree_pop(shape->stats, NULL)) != NULL) free(s);
+    }
+}
+
+// Collects statistics about shape.
+int shape_collect_statistics(
+        Shape * shape,          // Shape
+        const Box * box,        // Global box, where statistics is collected
+        double min_vol          // minimal volume, when splitting process stops.
+)
+{
+    shape_reset_stat(shape);
+    shape_ultimate_test_box(shape, box, min_vol, 1);
+}
+
 
 // Operation functions
 

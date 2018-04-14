@@ -60,7 +60,8 @@ int shape_test_box(
 int shape_ultimate_test_box(
         Shape * shape,          // Pointer to shape
         const Box * box,        // box
-        double min_vol          // minimal volume until which splitting process goes.
+        double min_vol,         // minimal volume until which splitting process goes.
+        char collect            // Whether to collect statistics about results.
 );
 
 // Tests whether points belong to this shape.
@@ -88,6 +89,17 @@ double shape_volume(
         const Box * box,        // Box from which the process of volume finding starts
         double min_vol          // Minimum volume - when volume of the box become smaller than min_vol the process
                                 // of box splitting finishes.
+);
+
+// Resets collected statistics or initializes statistics storage
+void shape_reset_stat(Shape * shape);
+
+// Collects statistics about shapes.
+int collect_statistics(
+        size_t n,               // The number of shapes
+        Shape * shapes,         // Array of shapes
+        const Box * box,        // Global box, where statistics is collected
+        double min_vol          // minimal volume, when splitting process stops.
 );
 
 #endif //MCKIT_SHAPE_H
