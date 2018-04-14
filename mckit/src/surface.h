@@ -17,19 +17,13 @@ typedef struct Cone         Cone;
 typedef struct Torus        Torus;
 typedef struct GQuadratic   GQuadratic;
 
-// typedef struct enum Modifier enum Modifier;
-//typedef struct enum SurfType enum SurfType;
-
 enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC};
-enum Modifier {ORDINARY, REFLECTIVE, WHITE};
 
+// surface common data
 struct Surface {
-    unsigned int name;
-    enum Modifier modifier;
-    enum SurfType type;
-    uint64_t hash;
-    uint64_t last_box;
-    int last_box_result;
+    char type;              // surface type
+    uint64_t last_box;      // subdivision code of last tested box
+    int last_box_result;    // last test_box result
 };
 
 struct Plane {
@@ -65,7 +59,8 @@ struct Torus {
     double radius;
     double a;
     double b;
-    double * specpts;
+    char degenerate;
+    double specpts[NDIM * 2];  // Special points, if present.
 };
 
 struct GQuadratic {
@@ -79,24 +74,18 @@ struct GQuadratic {
 
 int plane_init(
     Plane * surf,
-    unsigned int name,
-    int modifier,
     const double * norm,
     double offset
 );
 
 int sphere_init(
     Sphere * surf,
-    unsigned int name,
-    int modifier,
     const double * center,
     double radius
 );
 
 int cylinder_init(
     Cylinder * surf,
-    unsigned int name,
-    int modifier,
     const double * point,
     const double * axis,
     double radius
@@ -104,8 +93,6 @@ int cylinder_init(
 
 int cone_init(
     Cone * surf,
-    unsigned int name,
-    int modifier,
     const double * apex,
     const double * axis,
     double ta
@@ -113,8 +100,6 @@ int cone_init(
 
 int torus_init(
     Torus * surf,
-    unsigned int name,
-    int modifier,
     const double * center,
     const double * axis,
     double radius,
@@ -124,24 +109,21 @@ int torus_init(
 
 int gq_init(
     GQuadratic * surf,
-    unsigned int name,
-    int modifier,
     const double * m,
     const double * v,
     double k
 );
 
-void torus_dispose(Torus * surf);
-
+// Tests senses of points with respect to the surface.
 void surface_test_points(
-    const Surface * surf, 
-    const double * points, 
-    size_t npts,
-    int * result
+    const Surface * surf,   // Surface
+    size_t npts,            // The number of points to be tested
+    const double * points,  // Points to be tested
+    int * result            // The result - +1 if point has positive sense and -1 if negative.
 );
 
+// Tests if the surface intersects the box. 0 - surface intersects the box; +1 - box lies on the positive
+// side of surface; -1 - box lies on the negative side of surface.
 int surface_test_box(Surface * surf, const Box * box);
-
-int surface_compare(const Surface * surf, const Surface * other);
 
 #endif

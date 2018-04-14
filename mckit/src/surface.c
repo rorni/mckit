@@ -4,11 +4,19 @@
 #include "mkl.h"
 #include "surface.h"
 
+#define surface_INIT(surf) (surf)->last_box = 0; (surf)->last_box_result = 0;
+
+/*
+ *  In all sufr_func functions the first argument is space dimension. This argument introduced
+ *  for the purposes of compability with NLOPT library.
+ */
+
+// Calculates deviation of point x from the plane.
 double plane_func(
-    unsigned int n,
-    const double * x,
-    double * grad,
-    void * f_data
+    unsigned int n,     // Space dimension (must be NDIM)
+    const double * x,   // Point to be checked
+    double * grad,      // Gradient - calculated if not NULL
+    void * f_data       // Surface data - parameters of the function.
 )
 {
     Plane * data = (Plane *) f_data;
@@ -18,6 +26,7 @@ double plane_func(
     return cblas_ddot(NDIM, x, 1, data->norm, 1) + data->offset;
 }
 
+// Calculates deviation of point x from the sphere.
 double sphere_func(
     unsigned int n,
     const double * x,
@@ -119,11 +128,12 @@ double torus_func(
     return pow(pn / data->a, 2) + pow((sq - data->radius) / data->b, 2) - 1;
 }
 
+// Interface to all surface functions. Decides, which function to apply.
 double surface_func(
-    unsigned int n,
-    const double * x,
-    double * grad,
-    void * f_data
+    unsigned int n,     // Space dimension (NDIM)
+    const double * x,   // Point to be checked
+    double * grad,      // Gradient - calculated if not NULL (array of size NDIM)
+    void * f_data       // Surface data
 )
 {
     Surface * surf = (Surface *) f_data;
@@ -154,25 +164,14 @@ double surface_func(
     return fval;
 }
 
-inline void surface_init(Surface * surf, unsigned int name, int mod)
-{
-    surf->name = name;
-    surf->modifier = mod;
-    surf->last_box = 0;
-    surf->last_box_result = 0;
-    surf->hash = (uint64_t) surf;
-}
-
 int plane_init(
     Plane * surf,
-    unsigned int name,
-    int modifier,
     const double * norm,
     double offset
 )
 {
     int i;
-    surface_init((Surface *) surf, name, modifier);
+    surface_INIT((Surface *) surf)
     surf->base.type = PLANE;
     surf->offset = offset;
     for (i = 0; i < NDIM; ++i) {
@@ -183,14 +182,13 @@ int plane_init(
 
 int sphere_init(
     Sphere * surf,
-    unsigned int name,
-    int modifier,
     const double * center,
     double radius
 )
 {
+    if (radius <= 0) return SURFACE_FAILURE;
     int i;
-    surface_init((Surface *) surf, name, modifier);
+    surface_INIT((Surface *) surf);
     surf->base.type = SPHERE;
     surf->radius = radius;
     for (i = 0; i < NDIM; ++i) {
@@ -201,15 +199,14 @@ int sphere_init(
 
 int cylinder_init(
     Cylinder * surf,
-    unsigned int name,
-    int modifier,
     const double * point,
     const double * axis,
     double radius
 )
 {
+    if (radius <= 0) return SURFACE_FAILURE;
     int i;
-    surface_init((Surface *) surf, name, modifier);
+    surface_INIT((Surface *) surf);
     surf->base.type = CYLINDER;
     surf->radius = radius;
     for (i = 0; i < NDIM; ++i) {
@@ -221,15 +218,14 @@ int cylinder_init(
 
 int cone_init(
     Cone * surf,
-    unsigned int name,
-    int modifier,
     const double * apex,
     const double * axis,
     double ta
 )
 {
+    if (ta <= 0) return SURFACE_FAILURE;
     int i;
-    surface_init((Surface *) surf, name, modifier);
+    surface_INIT((Surface *) surf);
     surf->base.type = CONE;
     surf->ta = ta;
     for (i = 0; i < NDIM; ++i) {
@@ -241,8 +237,6 @@ int cone_init(
 
 int torus_init(
     Torus * surf,
-    unsigned int name,
-    int modifier,
     const double * center,
     const double * axis,
     double radius,
@@ -250,8 +244,9 @@ int torus_init(
     double b
 )
 {
+    if (radius <= 0 || a <= 0 || b <= 0) return SURFACE_FAILURE;
     int i;
-    surface_init((Surface *) surf, name, modifier);
+    surface_INIT((Surface *) surf);
     surf->base.type = TORUS;
     surf->radius = radius;
     surf->a = a;
@@ -261,28 +256,25 @@ int torus_init(
         surf->axis[i] = axis[i];
     }
     if (surf->b > surf->radius) {
+        surf->degenerate = 1;
         double offset = a * sqrt(1 - pow(radius / b, 2));
-        surf->specpts = (double *) malloc(2 * NDIM * sizeof(double));
-        if (surf->specpts == NULL) return SURFACE_FAILURE;
         cblas_dcopy(NDIM, center, 1, surf->specpts, 1);
         cblas_dcopy(NDIM, center, 1, surf->specpts + NDIM, 1);
         cblas_daxpy(NDIM, offset, axis, 1, surf->specpts, 1);
         cblas_daxpy(NDIM, -offset, axis, 1, surf->specpts + NDIM, 1);
-    }
+    } else surf->degenerate = 0;
     return SURFACE_SUCCESS;
 }
 
 int gq_init(
     GQuadratic * surf,
-    unsigned int name,
-    int modifier,
     const double * m,
     const double * v,
     double k
 )
 {
     int i, j;
-    surface_init((Surface *) surf, name, modifier);
+    surface_INIT((Surface *) surf);
     surf->base.type = GQUADRATIC;
     surf->k = k;
     for (i = 0; i < NDIM; ++i) {
@@ -292,15 +284,10 @@ int gq_init(
     return SURFACE_SUCCESS;
 }
 
-void torus_dispose(Torus * surf)
-{
-    if (surf->specpts != NULL) free(surf->specpts);    
-}
-
 void surface_test_points(
-    const Surface * surf, 
-    const double * points, 
+    const Surface * surf,
     size_t npts,
+    const double * points,
     int * result
 )
 {
@@ -316,10 +303,14 @@ int surface_test_box(Surface * surf, const Box * box)
 {
     if (surf->last_box != 0) {
         int bc = box_is_in(box, surf->last_box);
+        // if it is the box already tested (bc == 0) then returns cached result;
+        // if it is inner box - then returns cached result only if it is not 0. For inner box result may be different.
         if (bc == 0 || bc > 0 && surf->last_box_result != 0) 
             return surf->last_box_result; 
     }
-    
+
+    // First, test corner points of the box. If they have different senses,
+    // then surface definitely intersects the box.
     int corner_tests[NCOR];
     surface_test_points(surf, box->corners, NCOR, corner_tests);
     int mins = 1, maxs = -1, i;
@@ -328,15 +319,23 @@ int surface_test_box(Surface * surf, const Box * box)
         if (corner_tests[i] < mins) mins = corner_tests[i];
         if (corner_tests[i] > maxs) maxs = corner_tests[i];
     }
+    // sign == 0 only if both -1 and +1 present in corner_tests.
     int sign = (int) copysign(1, mins + maxs);
-    
+
+    // The test performed above is sufficient for the plane.
+    // But for other surfaces further tests must be done if sign != 0.
     if (sign != 0 && surf->type != PLANE) {
-        if (surf->type == TORUS && ((Torus*) surf)->specpts != NULL) {
+        // Additional tests for degenerate torus.
+        if (surf->type == TORUS && ((Torus*) surf)->degenerate) {
             int test_res[2];
             box_test_points(box, ((Torus*) surf)->specpts, 2, test_res);
             if (test_res[0] == 1 || test_res[1] == 1) return 0;
         }
-        
+
+        // General test. The purpose is to clarify if there is a point inside the box with
+        // positive sense if all corner results are negative; or a point with nefative sense
+        // exists inside the box if all corner results are negative. SLSQP optimization method
+        // is used.
         double x[NDIM], opt_val;
         nlopt_result opt_result;
         
@@ -350,12 +349,16 @@ int surface_test_box(Surface * surf, const Box * box)
     
         nlopt_add_inequality_mconstraint(opt, 6, box_ieqcons, (void*) box, NULL);
         nlopt_set_stopval(opt, 0);
-        nlopt_set_maxeval(opt, 1000);
-        
+        nlopt_set_maxeval(opt, 1000); // TODO: consider passing this parameter.
+
+        // Because the problem is nonlinear, the points, where gradient is 0 exist.
+        // To avoid such trap we start optimization from several points - box's corners.
         for (i = 0; i < NCOR; ++i) {
             cblas_dcopy(NDIM, box->corners + i * NDIM, 1, x, 1);
             opt_result = nlopt_optimize(opt, x, &opt_val);
-            if (sign * opt_val < 0) return 0;
+            if (sign * opt_val < 0) return 0;   // If sign and found opt_val have different signs - the surface
+                                                // definitely intersects the box. If we have not found such solution
+                                                // - for sure not intersects.
         }
         nlopt_destroy(opt);
     }
@@ -364,10 +367,5 @@ int surface_test_box(Surface * surf, const Box * box)
     surf->last_box_result = sign;
     
     return sign;
-}
-
-int surface_compare(const Surface * surf, const Surface * other)
-{
-    return surf->hash - other->hash;
 }
 
