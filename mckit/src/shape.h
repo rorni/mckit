@@ -71,7 +71,7 @@ int shape_test_points(
         const Shape * shape,    // test shape
         size_t npts,            // the number of points
         const double * points,  // array of points - NDIM * npts
-        int * result            // Result - +1 if point belongs to shape, -1
+        char * result           // Result - +1 if point belongs to shape, -1
                                 // otherwise. It must have length npts.
 );
 
@@ -95,11 +95,17 @@ double shape_volume(
 void shape_reset_stat(Shape * shape);
 
 // Collects statistics about shapes.
-int collect_statistics(
-        size_t n,               // The number of shapes
-        Shape * shapes,         // Array of shapes
+void shape_collect_statistics(
+        Shape * shape,          // Shape
         const Box * box,        // Global box, where statistics is collected
         double min_vol          // minimal volume, when splitting process stops.
+);
+
+// Gets statistics table
+char * shape_get_stat_table(
+        Shape * shape,          // Shape
+        size_t * nrows,         // number of rows
+        size_t * ncols          // number of columns
 );
 
 #endif //MCKIT_SHAPE_H

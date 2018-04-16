@@ -109,7 +109,7 @@ int box_generate_random_points(
     double d[NDIM];
     
     for (i = 0; i < NDIM; ++i) {
-        cblas_dscal(npts * NDIM, box->dims[i], points + i, NDIM);
+        cblas_dscal((int) npts * NDIM, box->dims[i], points + i, NDIM);
     }
 
     // TODO: Try to implement generation of all points during one single call to rng.

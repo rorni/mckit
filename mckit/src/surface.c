@@ -288,7 +288,7 @@ void surface_test_points(
     const Surface * surf,
     size_t npts,
     const double * points,
-    int * result
+    char * result
 )
 {
     int i;
@@ -311,8 +311,8 @@ int surface_test_box(Surface * surf, const Box * box)
 
     // First, test corner points of the box. If they have different senses,
     // then surface definitely intersects the box.
-    int corner_tests[NCOR];
-    surface_test_points(surf, box->corners, NCOR, corner_tests);
+    char corner_tests[NCOR];
+    surface_test_points(surf, NCOR, box->corners, corner_tests);
     int mins = 1, maxs = -1, i;
 
     for (i = 0; i < NCOR; ++i) {
@@ -328,7 +328,7 @@ int surface_test_box(Surface * surf, const Box * box)
         // Additional tests for degenerate torus.
         if (surf->type == TORUS && ((Torus*) surf)->degenerate) {
             int test_res[2];
-            box_test_points(box, ((Torus*) surf)->specpts, 2, test_res);
+            box_test_points(box, 2, ((Torus*) surf)->specpts, test_res);
             if (test_res[0] == 1 || test_res[1] == 1) return 0;
         }
 

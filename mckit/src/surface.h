@@ -119,7 +119,7 @@ void surface_test_points(
     const Surface * surf,   // Surface
     size_t npts,            // The number of points to be tested
     const double * points,  // Points to be tested
-    int * result            // The result - +1 if point has positive sense and -1 if negative.
+    char * result            // The result - +1 if point has positive sense and -1 if negative.
 );
 
 // Tests if the surface intersects the box. 0 - surface intersects the box; +1 - box lies on the positive

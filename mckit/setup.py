@@ -9,9 +9,7 @@ mkl_inc = sys.prefix + '\\Library\\include'
 mkl_lib = sys.prefix + '\\Library\\lib'
 
 extensions = [
-   Extension("geometry", ["wrap/geometrymodule.c", "wrap/common_.c", "wrap/surface_.c", "wrap/box_.c",
-                          "wrap/geometry_.c",
-                          "src/box.c", "src/surface.c", "src/geometry.c"],
+   Extension("geometry", ["src/geometrymodule.c", "src/box.c", "src/surface.c", "src/shape.c", "src/rbtree.c"],
        include_dirs = [np.get_include(), mkl_inc, nlopt_inc],
        libraries = ['mkl_intel_lp64_dll', 'mkl_core_dll', 
                     'mkl_sequential_dll', 'libnlopt-0'],

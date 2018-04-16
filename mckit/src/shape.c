@@ -2,7 +2,9 @@
 // Created by Roma on 14.04.2018.
 //
 
+#include <stdlib.h>
 #include "shape.h"
+#include "surface.h"
 
 #define is_final(opc) (opc == COMPLEMENT || opc == IDENTITY)
 #define is_void(opc)  (opc == EMPTY || opc == UNIVERSE)
@@ -39,7 +41,7 @@ int shape_init(
         Shape * shape,          // Pointer to struct to be initialized
         char opc,               // Operation code
         size_t alen,            // Length of arguments
-        const void * args       // Argument array.
+        const void ** args       // Argument array.
 )
 {
     shape->opc = opc;
@@ -48,12 +50,12 @@ int shape_init(
     if (is_void(opc)) {
         shape->args = 0;
     } else if (is_final(opc)) {
-        shape->args = args;
+        shape->args = *args;
     } else {
-        shape->args = malloc(alen * sizeof(Shape *));
+        shape->args = (void**) malloc(alen * sizeof(Shape *));
         if (shape->args == NULL) return SHAPE_FAILURE;
         size_t i;
-        for (i = 0; i < alen; ++i) shape->args[i] = args[i];
+        for (i = 0; i < alen; ++i) ((void**) shape->args)[i] = args[i];
     }
     return SHAPE_SUCCESS;
 }
@@ -98,8 +100,8 @@ int shape_test_box(
     } else {
         char * sub = malloc(shape->alen * sizeof(char));
 
-        for (i = 0; i < shape->alen; ++i) {
-            sub[i] = shape_test_box(shape->args[i], box, collect);
+        for (int i = 0; i < shape->alen; ++i) {
+            sub[i] = shape_test_box(((void **) shape->args)[i], box, collect);
         }
 
         if (shape->opc == INTERSECTION) {
@@ -112,7 +114,7 @@ int shape_test_box(
         if (collect != 0 && result != 0) {
             StatUnit * stat = (StatUnit *) malloc(sizeof(StatUnit));
             stat->arr = sub;
-            stat->len = n;
+            stat->len = shape->alen;
             stat->vol = box->volume;
             if (rbtree_add(shape->stats, stat) != RBT_OK) free(stat);
         } else free(sub);
@@ -139,8 +141,8 @@ int shape_ultimate_test_box(
     if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
         Box box1, box2;
         box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);
-        int result1 = shape_ultimate_test_box(shape, box1, min_vol, collect);
-        int result2 = shape_ultimate_test_box(shape, box2, min_vol, collect);
+        int result1 = shape_ultimate_test_box(shape, &box1, min_vol, collect);
+        int result2 = shape_ultimate_test_box(shape, &box2, min_vol, collect);
         if (result1 != BOX_CAN_INTERSECT_SHAPE && result2 != BOX_CAN_INTERSECT_SHAPE)
             return result1;     // No matter what value (result1 or result2) is returned because they
                                 // will be equal.
@@ -155,7 +157,7 @@ int shape_test_points(
         const Shape * shape,    // test shape
         size_t npts,            // the number of points
         const double * points,  // array of points - NDIM * npts
-        int * result            // Result - +1 if point belongs to shape, -1
+        char * result           // Result - +1 if point belongs to shape, -1
                                 // otherwise. It must have length npts.
 )
 {
@@ -171,17 +173,17 @@ int shape_test_points(
         char (*op)(char * arg, size_t n, size_t inc);
         op = (shape->opc == INTERSECTION) ? geom_intersection : geom_union;
 
-        size_t n = shape->len;
-        int * sub = malloc(n * npts * sizeof(int));
+        size_t n = shape->alen;
+        char * sub = malloc(n * npts * sizeof(char));
         if (sub == NULL) return SHAPE_NO_MEMORY;
 
         for (i = 0; i < n; ++i) {
-            shape_test_points(shape->args[i], npts, points, sub + i * npts);
+            shape_test_points(((void**) shape->args)[i], npts, points, sub + i * npts);
         }
-        for (i = 0; i < npts; ++i) result[i] = (*op)(sub, n * npts, npts);
+        for (i = 0; i < npts; ++i) result[i] = op(sub, n * npts, npts);
         free(sub);
     }
-    return NODE_SUCCESS;
+    return SHAPE_SUCCESS;
 }
 
 // Gets bounding box, that bounds the shape.
@@ -193,14 +195,15 @@ int shape_bounding_box(
 )
 {
     double lower, upper, ratio;
-    int dim, tl, min_vol = tol * tol * tol;
+    int dim, tl;
+    double min_vol = tol * tol * tol;
     Box box1, box2;
     for (dim = 0; dim < NDIM; ++dim) {
         lower = 0;
         while (box->dims[dim] - lower > tol) {
             ratio = 0.5 * (lower + box->dims[dim]) / box->dims[dim];
             box_split(box, &box1, &box2, dim, ratio);
-            tl = shape_ultimate_test_box(shape, &box2, min_vol);
+            tl = shape_ultimate_test_box(shape, &box2, min_vol, 0);
             if (tl == -1) box_copy(box, &box1);
             else lower = box1.dims[dim];
         }
@@ -208,12 +211,12 @@ int shape_bounding_box(
         while (box->dims[dim] - upper > tol) {
             ratio = 0.5 * (box->dims[dim] - upper) / box->dims[dim];
             box_split(box, &box1, &box2, dim, ratio);
-            tl = shape_ultimate_test_box(shape, &box1, min_vol);
+            tl = shape_ultimate_test_box(shape, &box1, min_vol, 0);
             if (tl == -1) box_copy(box, &box2);
             else upper = box2.dims[dim];
         }
     }
-    return NODE_SUCCESS;
+    return SHAPE_SUCCESS;
 }
 
 // Gets volume of the shape
@@ -229,9 +232,9 @@ double shape_volume(
     if (result == BOX_OUTSIDE_SHAPE) return 0;             // Box don't belong to the shape
     if (box->volume > min_vol) {            // Shape intersects the box
         Box box1, box2;
-        box_split(box, box1, box2, BOX_SPLIT_AUTODIR, 0.5);
-        double vol1 = shape_volume(shape, box1, min_vol);
-        double vol2 = shape_volume(shape, box2, min_vol);
+        box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);
+        double vol1 = shape_volume(shape, &box1, min_vol);
+        double vol2 = shape_volume(shape, &box2, min_vol);
         return vol1 + vol2;
     } else {                        // Minimum volume has been reached, but shape still intersects box
         return 0.5 * box->volume;   // This is statistical decision. On average a half of the box belongs to the shape.
@@ -250,7 +253,7 @@ void shape_reset_stat(Shape * shape)
 }
 
 // Collects statistics about shape.
-int shape_collect_statistics(
+void shape_collect_statistics(
         Shape * shape,          // Shape
         const Box * box,        // Global box, where statistics is collected
         double min_vol          // minimal volume, when splitting process stops.
@@ -260,6 +263,24 @@ int shape_collect_statistics(
     shape_ultimate_test_box(shape, box, min_vol, 1);
 }
 
+// Gets statistics table
+char * shape_get_stat_table(
+        Shape * shape,          // Shape
+        size_t * nrows,         // number of rows
+        size_t * ncols          // number of columns
+)
+{
+    *nrows = shape->stats->len;
+    *ncols = shape->alen;
+    char * table = malloc(*ncols * *nrows * sizeof(char));
+    StatUnit ** statarr = rbtree_to_array(shape->stats);
+    size_t i, j;
+    for (i = 0; i < *nrows; ++i)
+        for (j = 0; j < *ncols; ++j)
+            *(table + i * (*ncols) + j) = statarr[i]->arr[j];
+    free(statarr);
+    return table;
+}
 
 // Operation functions
 
