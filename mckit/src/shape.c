@@ -48,11 +48,11 @@ int shape_init(
     shape->alen = alen;
     shape->stats = NULL;
     if (is_void(opc)) {
-        shape->args = 0;
+        shape->args = NULL;
     } else if (is_final(opc)) {
         shape->args = *args;
     } else {
-        shape->args = (void**) malloc(alen * sizeof(Shape *));
+        shape->args = (void *) malloc(alen * sizeof(Shape *));
         if (shape->args == NULL) return SHAPE_FAILURE;
         size_t i;
         for (i = 0; i < alen; ++i) ((void**) shape->args)[i] = args[i];

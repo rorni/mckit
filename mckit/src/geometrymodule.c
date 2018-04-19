@@ -66,6 +66,18 @@ static PyObject * boxobj_copy(BoxObject * self);
 static PyObject * boxobj_generate_random_points(BoxObject * self, PyObject * npts);
 static PyObject * boxobj_test_points(BoxObject * self, PyObject * points);
 static PyObject * boxobj_split(BoxObject * self, PyObject * args, PyObject * kwds);
+static PyObject * boxobj_getcorners(BoxObject * self, void * closure);
+static PyObject * boxobj_getvolume(BoxObject * self, void * closure);
+static PyObject * boxobj_getbounds(BoxObject * self, void * closure);
+static PyObject * boxobj_getcenter(BoxObject * self, void * closure);
+
+static PyGetSetDef boxobj_getsetters[] = {
+        {"corners", (getter) boxobj_getcorners, NULL, "Box's corners", NULL},
+        {"volume", (getter) boxobj_getvolume, NULL, "Box's volume", NULL},
+        {"bounds", (getter) boxobj_getbounds, NULL, "Box's bounds", NULL},
+        {"center", (getter) boxobj_getcenter, NULL, "Box's center", NULL},
+        {NULL}
+};
 
 static PyMethodDef boxobj_methods[] = {
         {"copy", (PyCFunction) boxobj_copy, METH_NOARGS, "Makes a copy of the box."},
@@ -87,6 +99,7 @@ static PyTypeObject BoxType = {
         .tp_dealloc = (destructor) boxobj_dealloc,
         .tp_init = (initproc) boxobj_init,
         .tp_methods = boxobj_methods,
+        .tp_getset = boxobj_getsetters,
 };
 
 static void boxobj_dealloc(BoxObject * self)
@@ -180,12 +193,12 @@ boxobj_split(BoxObject * self, PyObject * args, PyObject * kwds)
     int direct;
     static char * kwlist[] = {"dir", "ratio", NULL};
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|$sd", &dir, &ratio)) return NULL;
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|$sd", kwlist, &dir, &ratio)) return NULL;
 
-    if (dir == "auto") direct = BOX_SPLIT_AUTODIR;
-    else if (strcmp(dir, "x")) direct = BOX_SPLIT_X;
-    else if (strcmp(dir, "y")) direct = BOX_SPLIT_Y;
-    else if (strcmp(dir, "z")) direct = BOX_SPLIT_Z;
+    if (strcmp(dir, "auto") == 0) direct = BOX_SPLIT_AUTODIR;
+    else if (strcmp(dir, "x") == 0) direct = BOX_SPLIT_X;
+    else if (strcmp(dir, "y") == 0) direct = BOX_SPLIT_Y;
+    else if (strcmp(dir, "z") == 0) direct = BOX_SPLIT_Z;
     else {
         PyErr_SetString(PyExc_ValueError, "Unknown splitting direction.");
         return NULL;
@@ -208,6 +221,48 @@ boxobj_split(BoxObject * self, PyObject * args, PyObject * kwds)
     }
     return Py_BuildValue("(OO)", box1, box2);
 }
+
+static PyObject * boxobj_getcorners(BoxObject * self, void * closure)
+{
+    npy_intp dims[] = {NCOR, NDIM};
+    PyObject * corners = PyArray_EMPTY(2, dims, NPY_DOUBLE, 0);
+    int i;
+    double * data = (double *) PyArray_DATA(corners);
+    for (i = 0; i < NCOR * NDIM; ++i) {
+        data[i] = self->box.corners[i];
+    }
+    return corners;
+}
+
+
+static PyObject * boxobj_getvolume(BoxObject * self, void * closure)
+{
+    return Py_BuildValue("d", self->box.volume);
+}
+
+static PyObject * boxobj_getbounds(BoxObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM, 2};
+    PyObject * bounds = PyArray_EMPTY(2, dims, NPY_DOUBLE, 0);
+    int i;
+    double * data = (double *) PyArray_DATA(bounds);
+    for (i = 0; i < NDIM; ++i) {
+        data[2 * i] = self->box.lb[i];
+        data[2 * i + 1] = self->box.ub[i];
+    }
+    return bounds;
+}
+
+static PyObject * boxobj_getcenter(BoxObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * center = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    int i;
+    double * data = (double *) PyArray_DATA(center);
+    for (i = 0; i < NDIM; ++i) data[i] = self->box.center[i];
+    return center;
+}
+
 
 // ========================================================================================== //
 // ========================== Surface wrappers ============================================== //
@@ -513,26 +568,27 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
     else if (strcmp(opcstr, "identity") == 0) opc = IDENTITY;
     else {
         PyErr_SetString(PyExc_ValueError, "Unknown operation");
-        free(opcstr);
+        //free(opcstr);
         return -1;
     }
 
-    size_t i, alen = PySequence_Size(arglist);
+    size_t i, j, alen = PySequence_Size(arglist);
     if (alen < 0) return -1;
 
     void ** arguments = NULL;
 
     if (alen > 0) {
-        arguments = malloc(alen * sizeof(void *));
+        arguments = (void **) malloc(alen * sizeof(void *));
         PyObject *item;
         for (i = 0; i < alen; ++i) {
-            item = PySequence_Fast_GET_ITEM(arglist, i);
+            item = PySequence_GetItem(arglist, i);
             if (PyObject_TypeCheck(item, &SurfaceType)) {
-                *(arguments + i) = &((SurfaceObject *) item)->surf;
+                *(arguments + i) = (void *) &((SurfaceObject *) item)->surf;
             } else if (PyObject_TypeCheck(item, &ShapeType)) {
-                *(arguments + i) = &((ShapeObject *) item)->shape;
+                *(arguments + i) = (void *) &((ShapeObject *) item)->shape;
             } else {
                 PyErr_SetString(PyExc_TypeError, "Shape instance is expected");
+                for (j = 0; j < i; ++j) Py_DECREF(arguments[j]);
                 free(arguments);
                 return -1;
             }
@@ -652,6 +708,7 @@ shapeobj_collect_statistics(ShapeObject * self, PyObject * args)
     }
 
     shape_collect_statistics(&self->shape, &((BoxObject *) box)->box, min_vol);
+    Py_RETURN_NONE;
 }
 
 static PyObject *

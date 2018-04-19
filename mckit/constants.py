@@ -53,8 +53,7 @@ GLOBAL_BOX = None
 
 from .fmesh import Box
 
-GLOBAL_BOX = Box(-0.5 * MAX_DIM * (EX + EY + EZ), EX * MAX_DIM,
-                 EY * MAX_DIM, EZ * MAX_DIM)
+GLOBAL_BOX = Box(-0.5 * MAX_DIM * (EX + EY + EZ), MAX_DIM, MAX_DIM, MAX_DIM)
 
 # ------------------------------------------------------------------------------
 path = os.path.dirname(sys.modules[__name__].__file__)

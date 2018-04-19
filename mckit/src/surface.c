@@ -356,9 +356,10 @@ int surface_test_box(Surface * surf, const Box * box)
         for (i = 0; i < NCOR; ++i) {
             cblas_dcopy(NDIM, box->corners + i * NDIM, 1, x, 1);
             opt_result = nlopt_optimize(opt, x, &opt_val);
-            if (sign * opt_val < 0) return 0;   // If sign and found opt_val have different signs - the surface
-                                                // definitely intersects the box. If we have not found such solution
-                                                // - for sure not intersects.
+            if (sign * opt_val < 0) {    // If sign and found opt_val have different signs - the surface
+                sign = 0;                // definitely intersects the box. If we have not found such solution
+                break;                   // - for sure not intersects.
+            }
         }
         nlopt_destroy(opt);
     }
