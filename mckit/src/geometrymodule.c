@@ -8,6 +8,8 @@
 #include "surface.h"
 #include "shape.h"
 
+#include "box_doc.h"
+
 // ===================================================================================================== //
 
 #define parent_pyobject(type, field, pointer) ((PyObject *) ((char *) (pointer) - offsetof(type, field)))
@@ -95,21 +97,19 @@ static PyGetSetDef boxobj_getsetters[] = {
 };
 
 static PyMethodDef boxobj_methods[] = {
-        {"copy", (PyCFunction) boxobj_copy, METH_NOARGS, "Makes a copy of the box."},
-        {"generate_random_points", (PyCFunction) boxobj_generate_random_points, METH_O,
-                                                         "Generate N random points inside the box."},
-        {"test_points", (PyCFunction) boxobj_test_points, METH_O, "Tests points if they are inside the box."},
-        {"split", (PyCFunctionWithKeywords) boxobj_split, METH_VARARGS | METH_KEYWORDS,
-                "Splits the box into two smaller."},
+        {"copy", (PyCFunction) boxobj_copy, METH_NOARGS, BOX_COPY_DOC},
+        {"generate_random_points", (PyCFunction) boxobj_generate_random_points, METH_O, BOX_GRP_DOC},
+        {"test_points", (PyCFunction) boxobj_test_points, METH_O, BOX_TEST_POINTS_DOC},
+        {"split", (PyCFunctionWithKeywords) boxobj_split, METH_VARARGS | METH_KEYWORDS, BOX_SPLIT_DOC},
         {NULL}
 };
 
 static PyTypeObject BoxType = {
         PyObject_HEAD_INIT(NULL)
-                .tp_name = "geometry.Box",
+        .tp_name = "geometry.Box",
         .tp_basicsize = sizeof(BoxObject),
         .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-        .tp_doc = "Box objects",
+        .tp_doc = BOX_DOC,
         .tp_new = PyType_GenericNew,
         .tp_dealloc = (destructor) boxobj_dealloc,
         .tp_init = (initproc) boxobj_init,
