@@ -31,9 +31,9 @@ const char * BOX_DOC =
 "corners"
 "    Box's corners - coordinates of all corners - 8 points."
 "bounds"
-"    Box's bounds - pairs of min and max values along every dimension."
+"    Box's bounds - pairs of min and max values along every dimension.";
 
-const char * BOX_GRP_DOC = "Generates n random points inside the box."
+const char * BOX_GRP_DOC = "Generates n random points inside the box.";
 
 const char * box_test_points_doc =
 "Checks if point(s) p lies inside the box."
@@ -49,7 +49,7 @@ const char * box_test_points_doc =
 "-------"
 "result : numpy.ndarray[int]"
 "    If the point lies inside the box, then 1 value is returned."
-"    If the point lies outside of the box False is returned."
+"    If the point lies outside of the box False is returned.";
 
 const char * BOX_SPLIT_DOC =
 "Splits the box two smaller ones along dim direction."
@@ -67,6 +67,6 @@ const char * BOX_SPLIT_DOC =
 "Returns"
 "-------"
 "box1, box2 : Box"
-"    Resulting boxes. box1 contains parent box base point."
+"    Resulting boxes. box1 contains parent box base point.";
 
-const char * BOX_COPY_DOC = "Makes a copy of the box."
+const char * BOX_COPY_DOC = "Makes a copy of the box.";

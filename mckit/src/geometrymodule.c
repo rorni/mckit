@@ -9,6 +9,7 @@
 #include "shape.h"
 
 #include "box_doc.h"
+#include "surf_doc.h"
 
 // ===================================================================================================== //
 
@@ -375,8 +376,8 @@ surfobj_test_box(SurfaceObject * self, PyObject * box)
 }
 
 static PyMethodDef surfobj_methods[] = {
-        {"test_box", (PyCFunction) surfobj_test_box, METH_O, "Tests where the box is located with respect to the surface."},
-        {"test_points", (PyCFunction) surfobj_test_points, METH_O, "Tests senses of the points with respect to the surface."},
+        {"test_box", (PyCFunction) surfobj_test_box, METH_O, SURF_TEST_BOX_DOC},
+        {"test_points", (PyCFunction) surfobj_test_points, METH_O, SURF_TEST_POINTS_DOC},
         {NULL}
 };
 
