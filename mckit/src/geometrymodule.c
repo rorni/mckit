@@ -8,6 +8,9 @@
 #include "surface.h"
 #include "shape.h"
 
+#include "box_doc.h"
+#include "surf_doc.h"
+
 // ===================================================================================================== //
 
 #define parent_pyobject(type, field, pointer) ((PyObject *) ((char *) (pointer) - offsetof(type, field)))
@@ -52,6 +55,21 @@ convert_to_dbl_vec_array(PyObject * obj, PyObject ** addr)
 }
 
 // ========================================================================================== //
+// =============================== Module constants ========================================= //
+// ========================================================================================== //
+
+static PyObject * module_dict;
+
+#define GET_NAME(name) (PyDict_GetItemString(module_dict, name))
+#define MAX_DIM 5000    // Size of global box in cm.
+
+#define ORIGIN "ORIGIN"
+#define EX "EX"
+#define EY "EY"
+#define EZ "EZ"
+#define GLOBAL_BOX "GLOBAL_BOX"
+
+// ========================================================================================== //
 // ===============================  Box wrappers ============================================ //
 // ========================================================================================== //
 
@@ -73,28 +91,26 @@ static PyObject * boxobj_getcenter(BoxObject * self, void * closure);
 
 static PyGetSetDef boxobj_getsetters[] = {
         {"corners", (getter) boxobj_getcorners, NULL, "Box's corners", NULL},
-        {"volume", (getter) boxobj_getvolume, NULL, "Box's volume", NULL},
-        {"bounds", (getter) boxobj_getbounds, NULL, "Box's bounds", NULL},
-        {"center", (getter) boxobj_getcenter, NULL, "Box's center", NULL},
+        {"volume",  (getter) boxobj_getvolume,  NULL, "Box's volume",  NULL},
+        {"bounds",  (getter) boxobj_getbounds,  NULL, "Box's bounds",  NULL},
+        {"center",  (getter) boxobj_getcenter,  NULL, "Box's center",  NULL},
         {NULL}
 };
 
 static PyMethodDef boxobj_methods[] = {
-        {"copy", (PyCFunction) boxobj_copy, METH_NOARGS, "Makes a copy of the box."},
-        {"generate_random_points", (PyCFunction) boxobj_generate_random_points, METH_O,
-                                                         "Generate N random points inside the box."},
-        {"test_points", (PyCFunction) boxobj_test_points, METH_O, "Tests points if they are inside the box."},
-        {"split", (PyCFunctionWithKeywords) boxobj_split, METH_VARARGS | METH_KEYWORDS,
-                "Splits the box into two smaller."},
+        {"copy", (PyCFunction) boxobj_copy, METH_NOARGS, BOX_COPY_DOC},
+        {"generate_random_points", (PyCFunction) boxobj_generate_random_points, METH_O, BOX_GRP_DOC},
+        {"test_points", (PyCFunction) boxobj_test_points, METH_O, BOX_TEST_POINTS_DOC},
+        {"split", (PyCFunctionWithKeywords) boxobj_split, METH_VARARGS | METH_KEYWORDS, BOX_SPLIT_DOC},
         {NULL}
 };
 
 static PyTypeObject BoxType = {
         PyObject_HEAD_INIT(NULL)
-                .tp_name = "geometry.Box",
+        .tp_name = "geometry.Box",
         .tp_basicsize = sizeof(BoxObject),
         .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-        .tp_doc = "Box objects",
+        .tp_doc = BOX_DOC,
         .tp_new = PyType_GenericNew,
         .tp_dealloc = (destructor) boxobj_dealloc,
         .tp_init = (initproc) boxobj_init,
@@ -111,13 +127,28 @@ static void boxobj_dealloc(BoxObject * self)
 static int
 boxobj_init(BoxObject * self, PyObject * args, PyObject * kwds)
 {
-    PyObject *cent, *ex, *ey, *ez;
+    PyObject *cent, *ex = NULL, *ey = NULL, *ez = NULL;
     double xdim, ydim, zdim;
 
-    if (! PyArg_ParseTuple(args, "O&O&O&O&ddd", convert_to_dbl_vec, &cent,
-                           convert_to_dbl_vec, &ex, convert_to_dbl_vec, &ey, convert_to_dbl_vec, &ez,
-                           &xdim ,&ydim, &zdim))
+    char *kwlist[] = {"", "", "", "", "ex", "ey", "ez", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O&ddd|O&O&O&", kwlist,
+                           convert_to_dbl_vec, &cent, &xdim ,&ydim, &zdim,
+                           convert_to_dbl_vec, &ex, convert_to_dbl_vec, &ey, convert_to_dbl_vec, &ez))
         return -1;
+
+    if (ex == NULL) {
+        ex = GET_NAME(EX);
+        Py_INCREF(ex);
+    }
+    if (ey == NULL) {
+        ey = GET_NAME(EY);
+        Py_INCREF(ey);
+    }
+    if (ez == NULL) {
+        ez = GET_NAME(EZ);
+        Py_INCREF(ez);
+    }
 
     box_dispose(&self->box);
     box_init(&self->box, (double *) PyArray_DATA(cent),
@@ -345,8 +376,8 @@ surfobj_test_box(SurfaceObject * self, PyObject * box)
 }
 
 static PyMethodDef surfobj_methods[] = {
-        {"test_box", (PyCFunction) surfobj_test_box, METH_O, "Tests where the box is located with respect to the surface."},
-        {"test_points", (PyCFunction) surfobj_test_points, METH_O, "Tests senses of the points with respect to the surface."},
+        {"test_box", (PyCFunction) surfobj_test_box, METH_O, SURF_TEST_BOX_DOC},
+        {"test_points", (PyCFunction) surfobj_test_points, METH_O, SURF_TEST_POINTS_DOC},
         {NULL}
 };
 
@@ -767,6 +798,7 @@ PyInit_geometry(void)
 
     Py_INCREF(&ShapeType);
 
+
     PyModule_AddObject(m, "Box", (PyObject *) &BoxType);
 
     PyModule_AddObject(m, "Surface", (PyObject *) &SurfaceType);
@@ -778,6 +810,34 @@ PyInit_geometry(void)
     PyModule_AddObject(m, "GQuadratic", (PyObject *) &GQuadraticType);
 
     PyModule_AddObject(m, "Shape", (PyObject *) &ShapeType);
+
+    // Create Module constants
+
+    PyObject *ex, *ey, *ez, *origin;
+    BoxObject * global_box;
+    npy_intp dims[] = {NDIM};
+
+    origin = PyArray_ZEROS(1, dims, NPY_DOUBLE, 0);
+    ex = PyArray_ZEROS(1, dims, NPY_DOUBLE, 0);
+    ey = PyArray_ZEROS(1, dims, NPY_DOUBLE, 0);
+    ez = PyArray_ZEROS(1, dims, NPY_DOUBLE, 0);
+
+    *((double *) PyArray_DATA(ex) + 0) = 1.0;
+    *((double *) PyArray_DATA(ey) + 1) = 1.0;
+    *((double *) PyArray_DATA(ez) + 2) = 1.0;
+
+    global_box = (BoxObject *) PyType_GenericNew(&BoxType, NULL, NULL);
+    box_init(&global_box->box, (double *) PyArray_DATA(origin), (double *) PyArray_DATA(ex),
+                               (double *) PyArray_DATA(ey),     (double *) PyArray_DATA(ez),
+                               MAX_DIM, MAX_DIM, MAX_DIM);
+
+    PyModule_AddObject(m, ORIGIN, (PyObject *) origin);
+    PyModule_AddObject(m, EX, (PyObject *) ex);
+    PyModule_AddObject(m, EY, (PyObject *) ey);
+    PyModule_AddObject(m, EZ, (PyObject *) ez);
+    PyModule_AddObject(m, GLOBAL_BOX, (PyObject *) global_box);
+
+    module_dict = PyModule_GetDict(m);
 
     return m;
 }

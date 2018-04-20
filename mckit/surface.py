@@ -3,11 +3,18 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from scipy.optimize import fmin_slsqp
 
 from .constants import *
 from .fmesh import Box
 
+from .geometry import Surface    as _Surface,  \
+                      Plane      as _Plane,    \
+                      Sphere     as _Sphere,   \
+                      Cone       as _Cone,     \
+                      Cylinder   as _Cylinder, \
+                      Torus      as _Torus,    \
+                      GQuadratic as _GQuadratic, \
+                      GLOBAL_BOX, ORIGIN, EX, EY, EZ
 
 def create_surface(kind, *params, **options):
     """Creates new surface.
@@ -161,9 +168,7 @@ class Surface(ABC):
         Gets projection of point p on the surface.
     """
     def __init__(self, **options):
-        self._box_results = {}
-        self._box_stack = []
-        self.options = options
+        self.options = options.copy()
 
     def __hash__(self):
         return id(self)
@@ -193,83 +198,6 @@ class Surface(ABC):
             not equal.
         """
 
-    def test_point(self, p):
-        """Checks the sense of point(s) p.
-
-        Parameters
-        ----------
-        p : array_like[float]
-            Coordinates of point(s) to be checked. If it is the only one point,
-            then p.shape=(3,). If it is an array of points, then
-            p.shape=(num_points, 3).
-
-        Returns
-        -------
-        sense : int or numpy.ndarray[int]
-            If the point has positive sense, then +1 value is returned.
-            If point lies on the surface 0 is returned.
-            If point has negative sense -1 is returned.
-            Individual point - single value, array of points - array of
-            ints of shape (num_points,) is returned.
-        """
-        return np.sign(self._func(p)).astype(int)
-
-    def test_box(self, box):
-        """Checks whether this surface crosses the region.
-
-        Box defines a rectangular cuboid. This method checks if this surface
-        crosses the box, i.e. there is two points belonging to this box which
-        have different sense with respect to this surface.
-
-        Parameters
-        ----------
-        box : Box
-            Describes the box.
-
-        Returns
-        -------
-        result : int
-            Test result. It equals one of the following values:
-            +1 if every point inside the box has positive sense.
-             0 if there are both points with positive and negative sense inside
-               the box
-            -1 if every point inside the box has negative sense.
-        """
-        corners = box.corners()
-        senses = self.test_point(corners)
-        sign = np.sign(np.max(senses) + np.min(senses))
-        if sign != 0:
-            bounds = box.bounds()
-            for start_pt in corners:
-                end_pt = fmin_slsqp(
-                    self._func, start_pt, fprime=self._grad,
-                    f_ieqcons=box.f_ieqcons(),
-                    fprime_ieqcons=box.fprime_ieqcons(),
-                    args=(sign,), bounds=bounds, disp=0
-                )
-                if self.test_point(end_pt) * sign < 0:
-                    sign = 0
-        return sign
-
-    @abstractmethod
-    def projection(self, p):
-        """Gets projection of point(s) p on the surface.
-        
-        Finds a projection of point (or points) p on this surface. In case 
-        the surface is not Plane instance only the projection closest to point
-        p is found.
-        
-        Parameters
-        ----------
-        p : array_like[float]
-            Coordinates of point(s).
-
-        Returns
-        -------
-        proj : array_like
-            Projected points.
-        """
-
     @abstractmethod
     def transform(self, tr):
         """Applies transformation to this surface.
@@ -285,49 +213,8 @@ class Surface(ABC):
             The result of this surface transformation.
         """
 
-    @abstractmethod
-    def _func(self, x, sign=+1):
-        """Calculates deviation of point x from this surface.
 
-        If the result is positive, then point has positive sense. Else -
-        negative. sign parameter change sense to the opposite.
-
-        Parameters
-        ----------
-        x : array_like[float]
-            Coordinates of individual point to be tested (if shape (3,)) or
-            of a set of points (if shape (N_pts, 3)).
-        sign : int
-            Multiplier to change test result. It is used in optimization
-            problem to find function minimum.
-
-        Returns
-        -------
-        result : float or array_like[float]
-            Test result for individual point or points.
-        """
-
-    @abstractmethod
-    def _grad(self, x, sign=+1):
-        """Calculates gradient of function _func.
-
-        Parameters
-        ----------
-        x : array_like[float]
-            Coordinates of individual point to be tested (if shape (3,)) or
-            of a set of points (if shape (N_pts, 3)).
-        sign : int
-            Multiplier to change test result. It is used in optimization
-            problem to find function minimum.
-
-        Returns
-        -------
-        result : array_like[float]
-            Gradient values of function in every given point.
-        """
-
-
-class Plane(Surface):
+class Plane(Surface, _Plane):
     """Plane surface class.
 
     Parameters
@@ -349,10 +236,10 @@ class Plane(Surface):
             v = np.array(normal)
             k = offset
         Surface.__init__(self, **options)
-        self._v = v
-        self._k = k
+        _Plane.__init__(self, v, k)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        raise NotImplementedError
         if not isinstance(other, Plane):
             return 0
         corners = box.corners()
@@ -369,26 +256,8 @@ class Plane(Surface):
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr, **self.options)
 
-    def test_box(self, box):
-        # Test sense of all region vertices.
-        senses = self.test_point(box.corners())
-        # Returns 0 if both +1 and -1 values present.
-        return np.sign(np.max(senses) + np.min(senses))
 
-    def projection(self, p):
-        shape = (p.shape[0], 1) if len(p.shape) == 2 else (1,)
-        d = np.reshape(np.dot(p, self._v) + self._k, shape)
-        return p - np.multiply(d, self._v)
-
-    def _func(self, x, sign=+1):
-        p = sign * (np.dot(x, self._v) + self._k)
-        return p
-
-    def _grad(self, x, sign=+1):
-        return self._v
-
-
-class Sphere(Surface):
+class Sphere(Surface, _Sphere):
     """Sphere surface class.
     
     Parameters
@@ -407,10 +276,10 @@ class Sphere(Surface):
             tr = options.pop('transform')
             center = tr.apply2point(center)
         Surface.__init__(self, **options)
-        self._center = np.array(center)
-        self._radius = radius
+        _Sphere.__init__(self, center, radius)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
+        raise NotImplementedError
         if not isinstance(other, Sphere):
             return 0
         delta_center = np.linalg.norm(self._center - other._center)
@@ -421,24 +290,11 @@ class Sphere(Surface):
         else:
             return 0
 
-    def projection(self, p):
-        n = p - self._center
-        n /= np.linalg.norm(n)
-        return self._center + self._radius * n
-
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr, **self.options)
 
-    def _func(self, x, sign=+1):
-        dist = x - self._center
-        quad = np.sum(np.multiply(dist, dist), axis=-1)
-        return sign * (quad - self._radius**2)
 
-    def _grad(self, x, sign=+1):
-        return sign * 2 * (x - self._center)
-
-
-class Cylinder(Surface):
+class Cylinder(Surface, _Cylinder):
     """Cylinder surface class.
     
     Parameters
@@ -460,37 +316,18 @@ class Cylinder(Surface):
             pt = tr.apply2point(pt)
             axis = tr.apply2vector(axis)
         Surface.__init__(self, **options)
-        self._pt = np.array(pt)
-        self._axis = np.array(axis) / np.linalg.norm(axis)
-        self._radius = radius
+        _Cylinder.__init__(self, pt, axis, radius)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison
         return 0
 
-    def projection(self, p):
-        shape = (p.shape[0], 1) if len(p.shape) == 2 else (1,)
-        d = np.reshape(np.dot(p - self._pt, self._axis), shape)
-        b = self._pt + np.multiply(d, self._axis)
-        a = p - b
-        return b + self._radius * a / np.linalg.norm(a)
-
     def transform(self, tr):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr,
                         **self.options)
 
-    def _func(self, x, sign=+1):
-        a = x - self._pt
-        an = np.dot(a, self._axis)
-        quad = np.sum(np.multiply(a, a), axis=-1) - np.multiply(an, an)
-        return sign * (quad - self._radius**2)
 
-    def _grad(self, x, sign=+1):
-        a = x - self._pt
-        return sign * 2 * (a - np.dot(a, self._axis) * self._axis)
-
-
-class Cone(Surface):
+class Cone(Surface, _Cone):
     """Cone surface class.
 
     Parameters
@@ -512,34 +349,18 @@ class Cone(Surface):
             apex = tr.apply2point(apex)
             axis = tr.apply2vector(axis)
         Surface.__init__(self, **options)
-        self._apex = np.array(apex)
-        self._axis = np.array(axis) / np.linalg.norm(axis)
-        self._t2 = ta**2
+        _Cone.__init__(self, apex, axis, ta)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison
         return 0
 
-    def projection(self, p):
-        raise NotImplementedError
-
     def transform(self, tr):
         return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr,
                     **self.options)
 
-    def _func(self, x, sign=+1):
-        a = x - self._apex
-        an = np.dot(a, self._axis)
-        quad = np.sum(np.multiply(a, a), axis=-1)
-        return sign * (quad - np.multiply(an, an) * (1 + self._t2))
 
-    def _grad(self, x, sign=+1):
-        a = x - self._apex
-        t2plus1 = 1 + self._t2
-        return sign * 2 * (a - np.dot(a, self._axis) * self._axis * t2plus1)
-
-
-class GQuadratic(Surface):
+class GQuadratic(Surface, _GQuadratic):
     """Generic quadratic surface class.
 
     Parameters
@@ -564,31 +385,18 @@ class GQuadratic(Surface):
             v = np.array(v)
             k = k
         Surface.__init__(self, **options)
-        self._m = m
-        self._v = v
-        self._k = k
+        _GQuadratic.__init__(self, m, v, k)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison
         return 0
 
-    def projection(self, p):
-        raise NotImplementedError
-
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr,
                           **self.options)
 
-    def _func(self, x, sign=+1):
-        # TODO: Check mclight project for possible performance improvement.
-        quad = np.sum(np.multiply(np.dot(x, self._m), x), axis=-1)
-        return sign * (quad + np.dot(x, self._v) + self._k)
 
-    def _grad(self, x, sign=+1):
-        return sign * (2 * np.dot(x, self._m) + self._v)
-
-
-class Torus(Surface):
+class Torus(Surface, _Torus):
     """Tori surface class.
 
     Parameters
@@ -617,57 +425,12 @@ class Torus(Surface):
             center = np.array(center)
             axis = np.array(axis)
         Surface.__init__(self, **options)
-        self._center = center
-        self._axis = axis / np.linalg.norm(axis)
-        self._R = R
-        self._a = a
-        self._b = b
-        # case of degenerate torus
-        self._spec_pts = []
-        if b > R:
-            offset = a * np.sqrt(1 - (R / b)**2)
-            self._spec_pts.append(self._center + offset * self._axis)
-            self._spec_pts.append(self._center - offset * self._axis)
+        _Torus.__init__(self, center, axis, R, a, b)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison
         return 0
 
-    def projection(self, p):
-        raise NotImplementedError
-
-    def test_box(self, box):
-        # TODO: implement test_box
-        bounds = box.bounds()
-        # If special point is inside region, then torus boundary definitely
-        # in the region.
-        for spec_pt in self._spec_pts:
-            result = True
-            for v, (lo, hi) in zip(spec_pt, bounds):
-                result = result and (lo < v < hi)
-            if result:
-                return 0
-        return super(Torus, self).test_box(box)
-
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b,
                      transform=tr, **self.options)
-
-    def _func(self, x, sign=+1):
-        p = x - self._center
-        pn = np.dot(p, self._axis)
-        pp = np.sum(np.multiply(p, p), axis=-1)
-        sq = np.sqrt(np.maximum(pp - pn**2, 0))
-        return sign * (pn / self._a)**2 + ((sq - self._R) / self._b)**2 - 1
-
-    def _grad(self, x, sign=+1):
-        p = x - self._center
-        pn = np.dot(p, self._axis)
-        pp = np.sum(np.multiply(p, p), axis=-1)
-        sq = np.sqrt(np.maximum(pp - pn ** 2, 0))
-        if sq < RESOLUTION:
-            add_term = 0
-        else:
-            add_term = self._R / (sq * self._b**2) * (p - pn * self._axis)
-        return sign * 2 * (pn / self._a**2 * self._axis + \
-               (p - pn * self._axis) / self._b**2 - add_term)

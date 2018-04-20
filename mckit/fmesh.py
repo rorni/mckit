@@ -7,7 +7,7 @@ import numpy as np
 from .constants import GLOBAL_BOX, EX, EY, EZ
 from .transformation import Transformation
 
-from .geometry import Box as _Box
+from .geometry import Box
 
 
 class Box(_Box):
