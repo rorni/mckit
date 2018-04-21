@@ -425,7 +425,7 @@ coneobj_init(ConeObject * self, PyObject * args, PyObject * kwds)
     double ta;
     if (! PyArg_ParseTuple(args, "O&O&d", convert_to_dbl_vec, &apex, convert_to_dbl_vec, &axis, &ta)) return -1;
 
-    cone_init(&self->surf, (double *) PyArray_DATA(apex), (double *) PyArray_DATA(axis), ta);
+    cone_init(&self->surf, (double *) PyArray_DATA(apex), (double *) PyArray_DATA(axis), ta * ta);
     Py_DECREF(apex);
     Py_DECREF(axis);
     return 0;
@@ -436,7 +436,7 @@ torusobj_init(TorusObject * self, PyObject * args, PyObject * kwds)
 {
     PyObject *center, *axis;
     double r, a, b;
-    if (! PyArg_ParseTuple(args, "O&O&d", convert_to_dbl_vec, &center, convert_to_dbl_vec, &axis, &r, &a, &b)) return -1;
+    if (! PyArg_ParseTuple(args, "O&O&ddd", convert_to_dbl_vec, &center, convert_to_dbl_vec, &axis, &r, &a, &b)) return -1;
 
     int status = torus_init(&self->surf,
                             (double *) PyArray_DATA(center), (double *) PyArray_DATA(axis), r, a, b);
@@ -469,6 +469,28 @@ static PyTypeObject SurfaceType = {
         .tp_methods = surfobj_methods,
 };
 
+static PyObject *
+planeobj_getnorm(PlaneObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * norm = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(norm);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.norm[i];
+    return norm;
+}
+
+static PyObject *
+planeobj_getoffset(PlaneObject * self, void * closure)
+{
+    return Py_BuildValue("d", self->surf.offset);
+}
+
+static PyGetSetDef planeobj_getset[] = {
+        {"_v", (getter) planeobj_getnorm, NULL, "Plane's normal", NULL},
+        {"_k", (getter) planeobj_getoffset, NULL, "Plane's offset", NULL},
+        {NULL}
+};
+
 static PyTypeObject PlaneType = {
         PyVarObject_HEAD_INIT(NULL, 0)
         .tp_base = &SurfaceType,
@@ -478,6 +500,29 @@ static PyTypeObject PlaneType = {
         .tp_doc = "Plane class",
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) planeobj_init,
+        .tp_getset = planeobj_getset,
+};
+
+static PyObject *
+sphereobj_getcenter(SphereObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * center = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(center);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.center[i];
+    return center;
+}
+
+static PyObject *
+sphereobj_getradius(SphereObject * self, void * closure)
+{
+    return Py_BuildValue("d", self->surf.radius);
+}
+
+static PyGetSetDef sphereobj_getset[] = {
+        {"_center", (getter) sphereobj_getcenter, NULL, "Sphere's center", NULL},
+        {"_radius", (getter) sphereobj_getradius, NULL, "Sphere's radius", NULL},
+        {NULL}
 };
 
 static PyTypeObject SphereType = {
@@ -489,6 +534,40 @@ static PyTypeObject SphereType = {
         .tp_doc = "Sphere class",
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) sphereobj_init,
+        .tp_getset = sphereobj_getset,
+};
+
+static PyObject *
+cylinderobj_getpt(CylinderObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * pt = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(pt);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.point[i];
+    return pt;
+}
+
+static PyObject *
+cylinderobj_getaxis(CylinderObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * axis = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(axis);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.axis[i];
+    return axis;
+}
+
+static PyObject *
+cylinderobj_getradius(CylinderObject * self, void * closure)
+{
+    return Py_BuildValue("d", self->surf.radius);
+}
+
+static PyGetSetDef cylinderobj_getset[] = {
+        {"_pt", (getter) cylinderobj_getpt, NULL, "Cylinder's axis point", NULL},
+        {"_axis", (getter) cylinderobj_getaxis, NULL, "Cylinder's axis", NULL},
+        {"_radius", (getter) cylinderobj_getradius, NULL, "Cylinder's radius", NULL},
+        {NULL}
 };
 
 static PyTypeObject CylinderType = {
@@ -500,6 +579,40 @@ static PyTypeObject CylinderType = {
         .tp_doc = "Cylinder class",
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) cylinderobj_init,
+        .tp_getset = cylinderobj_getset,
+};
+
+static PyObject *
+coneobj_getapex(ConeObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * apex = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(apex);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.apex[i];
+    return apex;
+}
+
+static PyObject *
+coneobj_getaxis(ConeObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * axis = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(axis);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.axis[i];
+    return axis;
+}
+
+static PyObject *
+coneobj_getta(ConeObject * self, void * closure)
+{
+    return Py_BuildValue("d", self->surf.ta);
+}
+
+static PyGetSetDef coneobj_getset[] = {
+        {"_apex", (getter) coneobj_getapex, NULL, "Cone's apex", NULL},
+        {"_axis", (getter) coneobj_getaxis, NULL, "Cone's axis", NULL},
+        {"_t2", (getter) coneobj_getta, NULL, "Cone's angle tangent", NULL},
+        {NULL}
 };
 
 static PyTypeObject ConeType = {
@@ -511,6 +624,40 @@ static PyTypeObject ConeType = {
         .tp_doc = "Cone class",
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) coneobj_init,
+        .tp_getset = coneobj_getset,
+};
+
+static PyObject *
+torusobj_getcenter(TorusObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * center = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(center);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.center[i];
+    return center;
+}
+
+static PyObject *
+torusobj_getaxis(TorusObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * axis = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(axis);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.axis[i];
+    return axis;
+}
+
+static PyGetSetDef torusobj_getset[] = {
+        {"_center", (getter) torusobj_getcenter, NULL, "Torus's center", NULL},
+        {"_axis", (getter) torusobj_getaxis, NULL, "Torus's axis", NULL},
+        {NULL}
+};
+
+static PyMemberDef torusobj_members[] = {
+        {"_R", T_DOUBLE, offsetof(TorusObject, surf) + offsetof(Torus, radius), READONLY, "Torus's major radius."},
+        {"_a", T_DOUBLE, offsetof(TorusObject, surf) + offsetof(Torus, a), READONLY, "Torus's minor radius parallel to axis"},
+        {"_b", T_DOUBLE, offsetof(TorusObject, surf) + offsetof(Torus, b), READONLY, "Torus's minor radius perpendicular to axis"},
+        {NULL}
 };
 
 static PyTypeObject TorusType = {
@@ -522,6 +669,41 @@ static PyTypeObject TorusType = {
         .tp_doc = "Torus class",
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) torusobj_init,
+        .tp_getset = torusobj_getset,
+        .tp_members = torusobj_members,
+};
+
+static PyObject *
+gqobj_get_m(GQuadraticObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM, NDIM};
+    PyObject * m = PyArray_EMPTY(2, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(m);
+    for (int i = 0; i < NDIM * NDIM; ++i) data[i] = self->surf.m[i];
+    return m;
+}
+
+static PyObject *
+gqobj_get_v(GQuadraticObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * v = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    double * data = (double *) PyArray_DATA(v);
+    for (int i = 0; i < NDIM; ++i) data[i] = self->surf.v[i];
+    return v;
+}
+
+static PyObject *
+gqobj_get_k(GQuadraticObject * self, void * closure)
+{
+    return Py_BuildValue("d", self->surf.k);
+}
+
+static PyGetSetDef gqobj_getset[] = {
+        {"_m", (getter) gqobj_get_m, NULL, "GQuadratic's matrix.", NULL},
+        {"_v", (getter) gqobj_get_v, NULL, "GQuadratic's vector.", NULL},
+        {"_k", (getter) gqobj_get_k, NULL, "GQuadratic's free term", NULL},
+        {NULL}
 };
 
 static PyTypeObject GQuadraticType = {
@@ -533,6 +715,7 @@ static PyTypeObject GQuadraticType = {
         .tp_doc = "GQuadratic class",
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) gqobj_init,
+        .tp_getset = gqobj_getset,
 };
 
 

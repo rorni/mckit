@@ -4,7 +4,7 @@ import numpy as np
 
 from mckit.fmesh import Box
 
-box = Box([-1, -1, -1], [2, 0, 0], [0, 2, 0], [0, 0, 2])
+box = Box([0, 0, 0], 2, 2, 2)
 
 data = {
     'Plane': [

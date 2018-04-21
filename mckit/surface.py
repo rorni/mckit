@@ -315,6 +315,7 @@ class Cylinder(Surface, _Cylinder):
             tr = options.pop('transform')
             pt = tr.apply2point(pt)
             axis = tr.apply2vector(axis)
+        axis = axis / np.linalg.norm(axis)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
 
@@ -348,6 +349,7 @@ class Cone(Surface, _Cone):
             tr = options.pop('transform')
             apex = tr.apply2point(apex)
             axis = tr.apply2vector(axis)
+        axis = axis / np.linalg.norm(axis)
         Surface.__init__(self, **options)
         _Cone.__init__(self, apex, axis, ta)
 
@@ -424,6 +426,7 @@ class Torus(Surface, _Torus):
         else:
             center = np.array(center)
             axis = np.array(axis)
+        axis = axis / np.linalg.norm(axis)
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, R, a, b)
 

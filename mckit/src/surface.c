@@ -96,11 +96,11 @@ double gq_func(
     GQuadratic * data = (GQuadratic *) f_data;
     if (grad != NULL) {
         cblas_dcopy(NDIM, data->v, 1, grad, 1);
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 2, data->m, 1, x, 1, 1, grad, 1);       
+        cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 2, data->m, NDIM, x, 1, 1, grad, 1);
     }
     double y[NDIM];
     cblas_dcopy(NDIM, data->v, 1, y, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 1, data->m, 1, x, 1, 1, grad, 1);           
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 1, data->m, NDIM, x, 1, 1, y, 1);
     return cblas_ddot(NDIM, y, 1, x, 1) + data->k;
 }
 
@@ -119,12 +119,14 @@ double torus_func(
     double pp = cblas_ddot(NDIM, p, 1, p, 1);
     double sq = sqrt(max(pp - pow(pn, 2), 0));
     if (grad != NULL) {
+        double add = 0;
+        if (sq > 1.e-100) add = data->radius / sq;
         cblas_dcopy(NDIM, p, 1, grad, 1);
         cblas_daxpy(NDIM, -pn, data->axis, 1, grad, 1);
-        cblas_dscal(NDIM, 1 / pow(data->b, 2), grad, 1);
+        cblas_dscal(NDIM, (1 + add) / pow(data->b, 2), grad, 1);
         cblas_daxpy(NDIM, pn / pow(data->a, 2), data->axis, 1, grad, 1);
         cblas_dscal(NDIM, 2, grad, 1);
-    }    
+    }
     return pow(pn / data->a, 2) + pow((sq - data->radius) / data->b, 2) - 1;
 }
 
@@ -244,7 +246,7 @@ int torus_init(
     double b
 )
 {
-    if (radius <= 0 || a <= 0 || b <= 0) return SURFACE_FAILURE;
+    if (a <= 0 || b <= 0) return SURFACE_FAILURE;
     int i;
     surface_INIT((Surface *) surf);
     surf->base.type = TORUS;
@@ -305,8 +307,8 @@ int surface_test_box(Surface * surf, const Box * box)
         int bc = box_is_in(box, surf->last_box);
         // if it is the box already tested (bc == 0) then returns cached result;
         // if it is inner box - then returns cached result only if it is not 0. For inner box result may be different.
-        if (bc == 0 || bc > 0 && surf->last_box_result != 0) 
-            return surf->last_box_result; 
+        if (bc == 0 || bc > 0 && surf->last_box_result != 0)
+            return surf->last_box_result;
     }
 
     // First, test corner points of the box. If they have different senses,
@@ -320,7 +322,9 @@ int surface_test_box(Surface * surf, const Box * box)
         if (corner_tests[i] > maxs) maxs = corner_tests[i];
     }
     // sign == 0 only if both -1 and +1 present in corner_tests.
-    int sign = (int) copysign(1, mins + maxs);
+    int sign = mins + maxs;
+    if (sign == 2) sign = 1;
+    else if (sign == -2) sign = -1;
 
     // The test performed above is sufficient for the plane.
     // But for other surfaces further tests must be done if sign != 0.

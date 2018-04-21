@@ -64,14 +64,11 @@ class TestSurfaceMethods(unittest.TestCase):
             for surf_params, test_points in test_cases:
                 surf = TClass(*surf_params)
                 for i, (p, ans) in enumerate(test_points):
-                    msg = class_name + ' params: {0}, case {1}'.format(surf_params, i)
+                    msg = class_name + ' params: {0}, case {1}'.format(surf_params, p)
                     with self.subTest(msg=msg):
-                        sense = surf.test_point(p)
-                        if isinstance(sense, np.ndarray):
-                            for s, a in zip(sense, ans):
-                                self.assertEqual(s, a)
-                        else:
-                            self.assertEqual(sense, ans)
+                        sense = surf.test_points(p)
+                        for s, a in zip(sense, ans):
+                            self.assertEqual(s, a)
 
     def test_transform(self):
         for class_name, test_cases in surfobj_create_data.data.items():
@@ -101,6 +98,7 @@ class TestSurfaceMethods(unittest.TestCase):
                     result = surf.test_box(surface_test_box_data.box)
                     self.assertEqual(result, ans)
 
+    @unittest.skip
     def test_projection(self):
         for class_name, test_cases in surface_test_projection_data.data.items():
             TClass = class_apply[class_name]

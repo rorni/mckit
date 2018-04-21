@@ -5,10 +5,13 @@ import os
 
 import numpy as np
 
+from .geometry import ORIGIN, EX, EY, EZ, GLOBAL_BOX
+
 
 __all__ = [
     'AVOGADRO',
-    'ORIGIN', 'IDENTITY_ROTATION',
+    'ORIGIN', 'EX', 'EY', 'EZ', 'GLOBAL_BOX',
+    'IDENTITY_ROTATION',
     'ANGLE_TOLERANCE', 'RESOLUTION', 'RELATIVE_DENSITY_TOLERANCE',
     'CHARGE_TO_NAME', 'NAME_TO_CHARGE', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
 ]
@@ -27,6 +30,8 @@ ORIGIN = np.zeros((3,))
 # identity rotation matrix
 IDENTITY_ROTATION = np.eye(3)
 
+MIN_BOX_VOLUME = 1.e-4 ** 3
+
 # angle tolerance
 ANGLE_TOLERANCE = 0.001
 
@@ -44,15 +49,6 @@ CHARGE_TO_NAME = {}
 NAME_TO_CHARGE = {}
 NATURAL_ABUNDANCE = {}
 ISOTOPE_MASS = {}
-
-# Global box
-MAX_DIM = 1.e+4
-MIN_BOX_VOLUME = 1.e-4 ** 3
-GLOBAL_BOX = None
-
-from .fmesh import Box
-
-GLOBAL_BOX = Box(-0.5 * MAX_DIM * (EX + EY + EZ), MAX_DIM, MAX_DIM, MAX_DIM)
 
 # ------------------------------------------------------------------------------
 path = os.path.dirname(sys.modules[__name__].__file__)
