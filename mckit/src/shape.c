@@ -9,7 +9,6 @@
 #define is_final(opc) (opc == COMPLEMENT || opc == IDENTITY)
 #define is_void(opc)  (opc == EMPTY || opc == UNIVERSE)
 #define is_composite(opc) (opc == UNION || opc == INTERSECTION)
-#define invert_opc(opc) ((opc + 3) % 6)
 
 #define geom_complement(arg) (-1 * (arg))
 

@@ -20,6 +20,8 @@
 #define SHAPE_NO_MEMORY -2
 #define SHAPE_WRONG_ARGLENGTH -3
 
+#define invert_opc(opc) ((opc + 3) % 6)
+
 
 typedef struct Shape Shape;
 

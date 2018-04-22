@@ -738,7 +738,6 @@ static PyObject * shapeobj_collect_statistics(ShapeObject * self, PyObject * arg
 static PyObject * shapeobj_get_stat_table(ShapeObject * self);
 
 
-
 static PyMethodDef shapeobj_methods[] = {
         {"test_box", (PyCFunction) surfobj_test_box, METH_VARARGS, "Tests where the box is located with respect to the surface."},
         {"ultimate_test_box", (PyCFunction) shapeobj_ultimate_test_box, METH_VARARGS, ""},
@@ -750,15 +749,57 @@ static PyMethodDef shapeobj_methods[] = {
         {NULL}
 };
 
+static char *opc_name[] = {"I", "C", "E", "U", "S", "R"};
+
+static PyObject *
+shapeobj_getopc(ShapeObject * self, void * closure)
+{
+    return Py_BuildValue("s", opc_name[self->shape.opc]);
+}
+
+static PyObject *
+shapeobj_getinvopc(ShapeObject * self, void * closure)
+{
+    char invcode = invert_opc(self->shape.opc);
+    return Py_BuildValue("s", invcode);
+}
+
+static PyObject *
+shapeobj_getargs(ShapeObject * self, void * closure)
+{
+    PyObject * args = PyList_New(self->shape.alen);
+    PyObject * arg;
+    if (args != NULL) {
+        if (self->shape.alen == 1) {
+            arg = parent_pyobject(SurfaceObject, surf, ((Surface *) self->shape.args));
+        } else {
+            for (int i = 0; i < self->shape.alen; ++i) {
+                arg = parent_pyobject(ShapeObject, shape, ((Shape *) self->shape.args) + i);
+                Py_INCREF(arg);
+                PyList_SET_ITEM(args, i, arg);
+            }
+        }
+    }
+    return args;
+}
+
+static PyGetSetDef shapeobj_getset[] = {
+        {"opc", (getter) shapeobj_getopc, NULL, "Operation code", NULL},
+        {"inverted_opc", (getter) shapeobj_getinvopc, NULL, "Inverted operation code", NULL},
+        {"args", (getter) shapeobj_getargs, NULL, "Argument list", NULL},
+        {NULL}
+};
+
 static PyTypeObject ShapeType = {
         PyVarObject_HEAD_INIT(NULL, 0)
-                .tp_name = "geometry.Shape",
+        .tp_name = "geometry.Shape",
         .tp_basicsize = sizeof(Shape),
         .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
         .tp_doc = "Shape class",
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) shapeobj_init,
         .tp_methods = shapeobj_methods,
+        .tp_getset = shapeobj_getset,
 };
 
 static int
@@ -777,9 +818,9 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
     if (strcmp(opcstr, "I") == 0) opc = INTERSECTION;
     else if (strcmp(opcstr, "C") == 0) opc = COMPLEMENT;
     else if (strcmp(opcstr, "U") == 0) opc = UNION;
-    else if (strcmp(opcstr, "empty") == 0) opc = EMPTY;
-    else if (strcmp(opcstr, "universe") == 0) opc = UNIVERSE;
-    else if (strcmp(opcstr, "identity") == 0) opc = IDENTITY;
+    else if (strcmp(opcstr, "E") == 0) opc = EMPTY;
+    else if (strcmp(opcstr, "R") == 0) opc = UNIVERSE;
+    else if (strcmp(opcstr, "S") == 0) opc = IDENTITY;
     else {
         PyErr_SetString(PyExc_ValueError, "Unknown operation");
         //free(opcstr);
