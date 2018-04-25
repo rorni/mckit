@@ -61,7 +61,7 @@ int shape_init(
 
 void shape_dealloc(Shape * shape)
 {
-    if (shape->args != NULL) free(shape->args);
+    if (shape->args != NULL && ! is_final(shape->opc)) free(shape->args);
     if (shape->stats != NULL) rbtree_free(shape->stats);
 }
 

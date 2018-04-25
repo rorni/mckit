@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from mckit.cell import _complement, _intersection, _union, Cell, GeometryNode
+from mckit.body import Body, Shape, from_polish_notation
 from mckit.surface import create_surface, Surface
 from mckit.constants import *
 from mckit.transformation import Transformation
@@ -30,7 +30,7 @@ def create_node(kind, args):
         else:
             g = surfaces[g]
         new_args.append(g)
-    return GeometryNode(kind, *new_args)
+    return Shape(kind, [new_args])
 
 
 class TestGeometryNode(unittest.TestCase):
@@ -43,7 +43,7 @@ class TestGeometryNode(unittest.TestCase):
                 else:
                     data.append(t)
             with self.subTest(i=i):
-                g = GeometryNode.from_polish_notation(data)
+                g = from_polish_notation(data)
                 self.assertEqual(g, geoms[i])
 
     def test_complement(self):
@@ -157,17 +157,17 @@ class TestCell(unittest.TestCase):
                     pol_geom.append(x)
             with self.subTest(msg="polish #{0}".format(i)):
                 ans = geoms[i]
-                cell = Cell(pol_geom)
+                cell = Body(pol_geom)
                 # print(str(ag))
                 self.assertEqual(cell, ans)
         for i, ag in enumerate(geoms):
             with self.subTest(msg="additive geom #{0}".format(i)):
-                cell = Cell(ag)
+                cell = Body(ag)
                 self.assertEqual(cell, ag)
 
     def test_intersection(self):
         for i, ag1 in enumerate(geoms):
-            c1 = Cell(ag1, **cell_kwargs)
+            c1 = Body(ag1, **cell_kwargs)
             for j, ag2 in enumerate(geoms):
                 if i == j:
                     continue
@@ -175,14 +175,14 @@ class TestCell(unittest.TestCase):
                 g = intersection_geom[i][ind]
                 ans = create_node(g[0], g[1]).clean()
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
-                    c2 = Cell(ag2)
+                    c2 = Body(ag2)
                     u = c1.intersection(c2)
                     self.assertEqual(u, ans)
                     self.assertDictEqual(u, c1)
 
     def test_union(self):
         for i, ag1 in enumerate(geoms):
-            c1 = Cell(ag1, **cell_kwargs)
+            c1 = Body(ag1, **cell_kwargs)
             for j, ag2 in enumerate(geoms):
                 if i == j:
                     continue
@@ -190,7 +190,7 @@ class TestCell(unittest.TestCase):
                 g = union_geom[i][ind]
                 ans = create_node(g[0], g[1]).clean()
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
-                    c2 = Cell(ag2)
+                    c2 = Body(ag2)
                     u = c1.union(c2)
                     self.assertEqual(u, ans)
                     self.assertDictEqual(u, c1)
@@ -243,7 +243,7 @@ class TestCell(unittest.TestCase):
     @unittest.skip
     def test_simplify(self):
         for i, ag in enumerate(geoms):
-            cell = Cell(ag)
+            cell = Body(ag)
             pol_geom = []
             for x in simple_geoms[i]:
                 if isinstance(x, int):
@@ -255,10 +255,11 @@ class TestCell(unittest.TestCase):
                 # print(i, len(s))
                 # for ss in s:
                 #     print(str(ss))
-                ans = Cell(pol_geom)
+                ans = Body(pol_geom)
                 self.assertEqual(ans, s)
 
 
+@unittest.skip
 class TestOperations(unittest.TestCase):
     def test_complement(self):
         for i, (arg, ans) in enumerate(cell_complement_cases):

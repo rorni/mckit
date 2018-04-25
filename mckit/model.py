@@ -8,7 +8,7 @@ import numpy as np
 
 from .parser import lexer, parser
 from .surface import create_surface, Surface
-from .cell import Cell
+from .body import Body
 from .universe import Universe
 from .transformation import Transformation
 from .material import Material
@@ -199,7 +199,7 @@ class Model:
         # if 'MAT' in options:
         #     options['MAT'] = self._get_material_object(options['MAT'], options['RHO'])
         # print(cell_name)
-        return Cell(geometry, **options)
+        return Body(geometry, **options)
 
     def _produce_cell_geometry(self, cell_name):
         """Creates a list that describes cell geometry.

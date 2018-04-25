@@ -728,7 +728,7 @@ typedef struct {
     Shape shape;
 } ShapeObject;
 
-static int shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds);
+static int        shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds);
 static PyObject * shapeobj_test_box(ShapeObject * self, PyObject * args);
 static PyObject * shapeobj_ultimate_test_box(ShapeObject * self, PyObject * args);
 static PyObject * shapeobj_test_points(ShapeObject * self, PyObject * points);
@@ -736,6 +736,7 @@ static PyObject * shapeobj_bounding_box(ShapeObject * self, PyObject * args);
 static PyObject * shapeobj_volume(ShapeObject * self, PyObject * args);
 static PyObject * shapeobj_collect_statistics(ShapeObject * self, PyObject * args);
 static PyObject * shapeobj_get_stat_table(ShapeObject * self);
+static void       shapeobj_dealloc(ShapeObject * self);
 
 
 static PyMethodDef shapeobj_methods[] = {
@@ -749,46 +750,6 @@ static PyMethodDef shapeobj_methods[] = {
         {NULL}
 };
 
-static char *opc_name[] = {"I", "C", "E", "U", "S", "R"};
-
-static PyObject *
-shapeobj_getopc(ShapeObject * self, void * closure)
-{
-    return Py_BuildValue("s", opc_name[self->shape.opc]);
-}
-
-static PyObject *
-shapeobj_getinvopc(ShapeObject * self, void * closure)
-{
-    char invcode = invert_opc(self->shape.opc);
-    return Py_BuildValue("s", invcode);
-}
-
-static PyObject *
-shapeobj_getargs(ShapeObject * self, void * closure)
-{
-    PyObject * args = PyList_New(self->shape.alen);
-    PyObject * arg;
-    if (args != NULL) {
-        if (self->shape.alen == 1) {
-            arg = parent_pyobject(SurfaceObject, surf, ((Surface *) self->shape.args));
-        } else {
-            for (int i = 0; i < self->shape.alen; ++i) {
-                arg = parent_pyobject(ShapeObject, shape, ((Shape *) self->shape.args) + i);
-                Py_INCREF(arg);
-                PyList_SET_ITEM(args, i, arg);
-            }
-        }
-    }
-    return args;
-}
-
-static PyGetSetDef shapeobj_getset[] = {
-        {"opc", (getter) shapeobj_getopc, NULL, "Operation code", NULL},
-        {"inverted_opc", (getter) shapeobj_getinvopc, NULL, "Inverted operation code", NULL},
-        {"args", (getter) shapeobj_getargs, NULL, "Argument list", NULL},
-        {NULL}
-};
 
 static PyTypeObject ShapeType = {
         PyVarObject_HEAD_INIT(NULL, 0)
@@ -798,8 +759,8 @@ static PyTypeObject ShapeType = {
         .tp_doc = "Shape class",
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) shapeobj_init,
+        .tp_dealloc = (destructor) shapeobj_dealloc,
         .tp_methods = shapeobj_methods,
-        .tp_getset = shapeobj_getset,
 };
 
 static int
@@ -855,6 +816,12 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
     return 0;
 }
 
+static void shapeobj_dealloc(ShapeObject * self)
+{
+    shape_dealloc(&self->shape);
+    Py_TYPE(self)->tp_free((PyObject*) self);
+}
+
 static PyObject *
 shapeobj_test_box(ShapeObject * self, PyObject * args)
 {
@@ -863,7 +830,7 @@ shapeobj_test_box(ShapeObject * self, PyObject * args)
     if (! PyArg_ParseTuple(args, "Oc", &box, &collect)) return NULL;
 
     if (! PyObject_TypeCheck(box, &BoxType)) {
-        PyErr_SetString(PyExc_ValueError, "Box instance is expected");
+        PyErr_SetString(PyExc_TypeError, "Box instance is expected");
         return NULL;
     }
 
@@ -969,8 +936,8 @@ shapeobj_collect_statistics(ShapeObject * self, PyObject * args)
 static PyObject *
 shapeobj_get_stat_table(ShapeObject * self)
 {
-    size_t nrows, ncols;
-    char * table_data = shape_get_stat_table(&self->shape, &nrows, &ncols);
+    size_t nrows = 0, ncols = 0;
+    char * table_data; // = shape_get_stat_table(&self->shape, &nrows, &ncols);
     npy_intp dims[] = {nrows, ncols};
     PyObject * table = PyArray_SimpleNewFromData(2, dims, NPY_BYTE, table_data);
     return table;
@@ -1025,12 +992,12 @@ PyInit_geometry(void)
 
     PyModule_AddObject(m, "Box", (PyObject *) &BoxType);
 
-    PyModule_AddObject(m, "Surface", (PyObject *) &SurfaceType);
-    PyModule_AddObject(m, "Plane", (PyObject *) &PlaneType);
-    PyModule_AddObject(m, "Sphere", (PyObject *) &SphereType);
-    PyModule_AddObject(m, "Cylinder", (PyObject *) &CylinderType);
-    PyModule_AddObject(m, "Cone", (PyObject *) &ConeType);
-    PyModule_AddObject(m, "Torus", (PyObject *) &TorusType);
+    PyModule_AddObject(m, "Surface",    (PyObject *) &SurfaceType);
+    PyModule_AddObject(m, "Plane",      (PyObject *) &PlaneType);
+    PyModule_AddObject(m, "Sphere",     (PyObject *) &SphereType);
+    PyModule_AddObject(m, "Cylinder",   (PyObject *) &CylinderType);
+    PyModule_AddObject(m, "Cone",       (PyObject *) &ConeType);
+    PyModule_AddObject(m, "Torus",      (PyObject *) &TorusType);
     PyModule_AddObject(m, "GQuadratic", (PyObject *) &GQuadraticType);
 
     PyModule_AddObject(m, "Shape", (PyObject *) &ShapeType);
