@@ -40,29 +40,32 @@ int shape_init(
         Shape * shape,          // Pointer to struct to be initialized
         char opc,               // Operation code
         size_t alen,            // Length of arguments
-        const void ** args       // Argument array.
+        const void * args       // Argument array.
 )
 {
     shape->opc = opc;
     shape->alen = alen;
     shape->stats = NULL;
-    if (is_void(opc)) {
-        shape->args = NULL;
-    } else if (is_final(opc)) {
-        shape->args = *args;
+    shape->last_box = 0;
+    shape->last_box_result = 0;
+    if (is_final(opc)) {
+        shape->args.surface = (Surface *) args;
     } else {
-        shape->args = (void *) malloc(alen * sizeof(Shape *));
-        if (shape->args == NULL) return SHAPE_FAILURE;
+        shape->args.shapes = (Shape **) malloc(alen * sizeof(Shape *));
+        if (shape->args.shapes == NULL) return SHAPE_FAILURE;
         size_t i;
-        for (i = 0; i < alen; ++i) ((void**) shape->args)[i] = args[i];
+        for (i = 0; i < alen; ++i) shape->args.shapes[i] = ((Shape **) args)[i];
     }
     return SHAPE_SUCCESS;
 }
 
 void shape_dealloc(Shape * shape)
 {
-    if (shape->args != NULL && ! is_final(shape->opc)) free(shape->args);
-    if (shape->stats != NULL) rbtree_free(shape->stats);
+    if (is_composite(shape->opc)) free(shape->args.shapes);
+    if (shape->stats != NULL) {
+        shape_reset_stat(shape);
+        rbtree_free(shape->stats);
+    }
 }
 
 // Tests box location with respect to the shape.
@@ -74,18 +77,18 @@ int shape_test_box(
         char collect            // Collect statistics about results.
 )
 {
-    if (shape->last_box != 0) {
+    /*if (shape->last_box != 0) {
         int bc = box_is_in(box, shape->last_box);
         // if it is the box already tested (bc == 0) then returns cached result;
         // if it is inner box - then returns cached result only if it is not 0. For inner box result may be different.
         if (bc == 0 || bc > 0 && shape->last_box_result != BOX_CAN_INTERSECT_SHAPE)
             return shape->last_box_result;
-    }
+    }*/
 
     int result;
     if (is_final(shape->opc)) {
-        char already = box->subdiv == ((Surface *) shape->args)->last_box;
-        result = surface_test_box(shape->args, box);
+        char already = box->subdiv == (shape->args.surface)->last_box;
+        result = surface_test_box(shape->args.surface, box);
         if (shape->opc == COMPLEMENT) result = geom_complement(result);
         if (collect > 0 && result == 0 && !already) ++zero_surfs;
         else if (collect < 0 && result == 0) {
@@ -100,7 +103,7 @@ int shape_test_box(
         char * sub = malloc(shape->alen * sizeof(char));
 
         for (int i = 0; i < shape->alen; ++i) {
-            sub[i] = shape_test_box(((void **) shape->args)[i], box, collect);
+            sub[i] = shape_test_box((shape->args.shapes)[i], box, collect);
         }
 
         if (shape->opc == INTERSECTION) {
@@ -118,9 +121,9 @@ int shape_test_box(
             if (rbtree_add(shape->stats, stat) != RBT_OK) free(stat);
         } else free(sub);
     }
-    // Cash test result;
-    shape->last_box = box->subdiv;
-    shape->last_box_result = result;
+    // Cache test result;
+    //shape->last_box = box->subdiv;
+    //shape->last_box_result = result;
     return result;
 }
 
@@ -162,7 +165,7 @@ int shape_test_points(
 {
     int i;
     if (is_final(shape->opc)) {
-        surface_test_points(shape->args, npts, points, result);
+        surface_test_points(shape->args.surface, npts, points, result);
         if (shape->opc == COMPLEMENT)
             for (i = 0; i < npts; ++i) result[i] = geom_complement(result[i]);
     } else if (is_void(shape->opc)) {
@@ -177,7 +180,7 @@ int shape_test_points(
         if (sub == NULL) return SHAPE_NO_MEMORY;
 
         for (i = 0; i < n; ++i) {
-            shape_test_points(((void**) shape->args)[i], npts, points, sub + i * npts);
+            shape_test_points((shape->args.shapes)[i], npts, points, sub + i * npts);
         }
         for (i = 0; i < npts; ++i) result[i] = op(sub, n * npts, npts);
         free(sub);

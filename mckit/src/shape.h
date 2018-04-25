@@ -9,6 +9,7 @@
 
 #include "box.h"
 #include "rbtree.h"
+#include "surface.h"
 
 #define BOX_INSIDE_SHAPE        +1
 #define BOX_CAN_INTERSECT_SHAPE  0
@@ -31,7 +32,10 @@ enum Operation {INTERSECTION=0, COMPLEMENT, EMPTY, UNION, IDENTITY, UNIVERSE};
 struct Shape {
     char opc;               // Code of operation applied to arguments (see enum Operation)
     size_t alen;            // Length of arguments
-    void * args;            // Pointer to arguments. It can be either Shape or Surface structures
+    union {
+        Surface * surface;
+        Shape ** shapes;
+    } args;            // Pointer to arguments. It can be either Shape or Surface structures
     uint64_t last_box;      // Subdivision code of last tested box
     int last_box_result;    // Result of last test_box call.
     RBTree * stats;         // Statistics about argument results.

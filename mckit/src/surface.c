@@ -303,13 +303,13 @@ void surface_test_points(
 
 int surface_test_box(Surface * surf, const Box * box)
 {
-    if (surf->last_box != 0) {
+    /*if (surf->last_box != 0) {
         int bc = box_is_in(box, surf->last_box);
         // if it is the box already tested (bc == 0) then returns cached result;
         // if it is inner box - then returns cached result only if it is not 0. For inner box result may be different.
         if (bc == 0 || bc > 0 && surf->last_box_result != 0)
             return surf->last_box_result;
-    }
+    }*/
 
     // First, test corner points of the box. If they have different senses,
     // then surface definitely intersects the box.
@@ -367,9 +367,9 @@ int surface_test_box(Surface * surf, const Box * box)
         }
         nlopt_destroy(opt);
     }
-    // Cash test result;
-    surf->last_box = box->subdiv;
-    surf->last_box_result = sign;
+    // Cache test result;
+    //surf->last_box = box->subdiv;
+    //surf->last_box_result = sign;
     
     return sign;
 }

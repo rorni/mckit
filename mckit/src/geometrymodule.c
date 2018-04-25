@@ -740,7 +740,7 @@ static void       shapeobj_dealloc(ShapeObject * self);
 
 
 static PyMethodDef shapeobj_methods[] = {
-        {"test_box", (PyCFunction) surfobj_test_box, METH_VARARGS, "Tests where the box is located with respect to the surface."},
+        {"test_box", (PyCFunction) shapeobj_test_box, METH_VARARGS, "Tests where the box is located with respect to the surface."},
         {"ultimate_test_box", (PyCFunction) shapeobj_ultimate_test_box, METH_VARARGS, ""},
         {"volume", (PyCFunction) shapeobj_volume, METH_VARARGS, ""},
         {"bounding_box", (PyCFunction) shapeobj_bounding_box, METH_VARARGS, ""},
@@ -767,13 +767,8 @@ static int
 shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
     char * opcstr;
-    PyObject * arglist;
-    if (! PyArg_ParseTuple(args, "sO", &opcstr, &arglist)) return -1;
-
-    if (! PySequence_Check(arglist)) {
-        PyErr_SetString(PyExc_TypeError, "Sequence instance is expected");
-        return -1;
-    }
+    PyObject * arg;
+    if (! PyArg_ParseTuple(args, "sO", &opcstr, &arg)) return -1;
 
     char opc;
     if (strcmp(opcstr, "I") == 0) opc = INTERSECTION;
@@ -788,30 +783,35 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
         return -1;
     }
 
-    size_t i, j, alen = PySequence_Size(arglist);
-    if (alen < 0) return -1;
-
-    void ** arguments = NULL;
-
-    if (alen > 0) {
-        arguments = (void **) malloc(alen * sizeof(void *));
-        PyObject *item;
+    int status;
+    if (opc == IDENTITY || opc == COMPLEMENT) {
+        if (arg == NULL || ! PyObject_TypeCheck(arg, &SurfaceType)) {
+            PyErr_SetString(PyExc_TypeError, "Surface instance is expected...");
+            return -1;
+        }
+        status = shape_init(&self->shape, opc, 1, &((SurfaceObject *) arg)->surf);
+    } else if (opc == UNIVERSE || opc == EMPTY) {
+        status = shape_init(&self->shape, opc, 0, NULL);
+    } else {
+        size_t i, j, alen = PySequence_Size(args);
+        PyObject * item;
+        if (alen < 0) return -1;
+        alen -= 1;
+        Shape ** operands = (Shape **) malloc(alen * sizeof(Shape *));
         for (i = 0; i < alen; ++i) {
-            item = PySequence_GetItem(arglist, i);
-            if (PyObject_TypeCheck(item, &SurfaceType)) {
-                *(arguments + i) = (void *) &((SurfaceObject *) item)->surf;
-            } else if (PyObject_TypeCheck(item, &ShapeType)) {
-                *(arguments + i) = (void *) &((ShapeObject *) item)->shape;
+            item = PySequence_GetItem(args, i + 1);
+            if (PyObject_TypeCheck(item, &ShapeType)) {
+                operands[i] = (Shape *) &((ShapeObject *) item)->shape;
             } else {
                 PyErr_SetString(PyExc_TypeError, "Shape instance is expected");
-                for (j = 0; j < i; ++j) Py_DECREF(arguments[j]);
-                free(arguments);
+                for (j = 0; j < i; ++j) Py_DECREF(operands[j]);
+                free(operands);
                 return -1;
             }
         }
+        status = shape_init(&self->shape, opc, alen, operands);
+        free(operands);
     }
-    int status = shape_init(&self->shape, opc, alen, arguments);
-    free(arguments);
     if (status != SHAPE_SUCCESS) return -1;
     return 0;
 }
@@ -827,10 +827,10 @@ shapeobj_test_box(ShapeObject * self, PyObject * args)
 {
     PyObject * box;
     char collect;
-    if (! PyArg_ParseTuple(args, "Oc", &box, &collect)) return NULL;
+    if (! PyArg_ParseTuple(args, "Ob", &box, &collect)) return NULL;
 
     if (! PyObject_TypeCheck(box, &BoxType)) {
-        PyErr_SetString(PyExc_TypeError, "Box instance is expected");
+        PyErr_SetString(PyExc_TypeError, "Box instance is expected...");
         return NULL;
     }
 
