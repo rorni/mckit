@@ -35,7 +35,7 @@ struct Shape {
     union {
         Surface * surface;
         Shape ** shapes;
-    } args;            // Pointer to arguments. It can be either Shape or Surface structures
+    } args;                 // Pointer to arguments. It can be either Shape or Surface structures
     uint64_t last_box;      // Subdivision code of last tested box
     int last_box_result;    // Result of last test_box call.
     RBTree * stats;         // Statistics about argument results.

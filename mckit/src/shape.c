@@ -50,9 +50,11 @@ int shape_init(
     shape->last_box_result = 0;
     if (is_final(opc)) {
         shape->args.surface = (Surface *) args;
+    } else if (is_void(opc)) {
+        shape->args.surface = NULL;
     } else {
         shape->args.shapes = (Shape **) malloc(alen * sizeof(Shape *));
-        if (shape->args.shapes == NULL) return SHAPE_FAILURE;
+        if (shape->args.shapes == NULL) return SHAPE_NO_MEMORY;
         size_t i;
         for (i = 0; i < alen; ++i) shape->args.shapes[i] = ((Shape **) args)[i];
     }
@@ -77,17 +79,17 @@ int shape_test_box(
         char collect            // Collect statistics about results.
 )
 {
-    /*if (shape->last_box != 0) {
+    if (shape->last_box != 0) {
         int bc = box_is_in(box, shape->last_box);
         // if it is the box already tested (bc == 0) then returns cached result;
         // if it is inner box - then returns cached result only if it is not 0. For inner box result may be different.
         if (bc == 0 || bc > 0 && shape->last_box_result != BOX_CAN_INTERSECT_SHAPE)
             return shape->last_box_result;
-    }*/
+    }
 
     int result;
     if (is_final(shape->opc)) {
-        char already = box->subdiv == (shape->args.surface)->last_box;
+        char already = (box->subdiv == (shape->args.surface)->last_box);
         result = surface_test_box(shape->args.surface, box);
         if (shape->opc == COMPLEMENT) result = geom_complement(result);
         if (collect > 0 && result == 0 && !already) ++zero_surfs;
@@ -122,8 +124,8 @@ int shape_test_box(
         } else free(sub);
     }
     // Cache test result;
-    //shape->last_box = box->subdiv;
-    //shape->last_box_result = result;
+    shape->last_box = box->subdiv;
+    shape->last_box_result = result;
     return result;
 }
 

@@ -38,7 +38,7 @@ class Shape(_Shape):
         opc, args = Shape.clean_args(opc, *args)
         self._args = tuple(args)
         self._opc = opc
-        _Shape.__init__(self, opc, args)
+        _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
     def __hash__(self):
@@ -154,7 +154,7 @@ class Shape(_Shape):
         args = []
         for a in self._args:
             args.append(a.transform(tr))
-        return Shape(opc, args)
+        return Shape(opc, *args)
 
     @staticmethod
     def _verify_opc(opc, *args):

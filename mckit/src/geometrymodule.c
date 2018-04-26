@@ -62,12 +62,14 @@ static PyObject * module_dict;
 
 #define GET_NAME(name) (PyDict_GetItemString(module_dict, name))
 #define MAX_DIM 5000    // Size of global box in cm.
+#define MIN_VOLUME 0.001 // Min volume size.
 
 #define ORIGIN "ORIGIN"
 #define EX "EX"
 #define EY "EY"
 #define EZ "EZ"
 #define GLOBAL_BOX "GLOBAL_BOX"
+#define MIN_VOLUME_NAME "MIN_VOLUME"
 
 // ========================================================================================== //
 // ===============================  Box wrappers ============================================ //
@@ -729,20 +731,20 @@ typedef struct {
 } ShapeObject;
 
 static int        shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds);
-static PyObject * shapeobj_test_box(ShapeObject * self, PyObject * args);
-static PyObject * shapeobj_ultimate_test_box(ShapeObject * self, PyObject * args);
+static PyObject * shapeobj_test_box(ShapeObject * self, PyObject * args, PyObject * kwds);
+static PyObject * shapeobj_ultimate_test_box(ShapeObject * self, PyObject * args, PyObject * kwds);
 static PyObject * shapeobj_test_points(ShapeObject * self, PyObject * points);
 static PyObject * shapeobj_bounding_box(ShapeObject * self, PyObject * args);
-static PyObject * shapeobj_volume(ShapeObject * self, PyObject * args);
+static PyObject * shapeobj_volume(ShapeObject * self, PyObject * args, PyObject * kwds);
 static PyObject * shapeobj_collect_statistics(ShapeObject * self, PyObject * args);
 static PyObject * shapeobj_get_stat_table(ShapeObject * self);
 static void       shapeobj_dealloc(ShapeObject * self);
 
 
 static PyMethodDef shapeobj_methods[] = {
-        {"test_box", (PyCFunction) shapeobj_test_box, METH_VARARGS, "Tests where the box is located with respect to the surface."},
-        {"ultimate_test_box", (PyCFunction) shapeobj_ultimate_test_box, METH_VARARGS, ""},
-        {"volume", (PyCFunction) shapeobj_volume, METH_VARARGS, ""},
+        {"test_box", (PyCFunctionWithKeywords) shapeobj_test_box, METH_VARARGS | METH_KEYWORDS, "Tests where the box is located with respect to the surface."},
+        {"ultimate_test_box", (PyCFunctionWithKeywords) shapeobj_ultimate_test_box, METH_VARARGS | METH_KEYWORDS, ""},
+        {"volume", (PyCFunctionWithKeywords) shapeobj_volume, METH_VARARGS | METH_KEYWORDS, ""},
         {"bounding_box", (PyCFunction) shapeobj_bounding_box, METH_VARARGS, ""},
         {"collect_statistics", (PyCFunction) shapeobj_collect_statistics, METH_VARARGS, ""},
         {"get_stat_table", (PyCFunction) shapeobj_get_stat_table, METH_NOARGS, ""},
@@ -754,7 +756,7 @@ static PyMethodDef shapeobj_methods[] = {
 static PyTypeObject ShapeType = {
         PyVarObject_HEAD_INIT(NULL, 0)
         .tp_name = "geometry.Shape",
-        .tp_basicsize = sizeof(Shape),
+        .tp_basicsize = sizeof(ShapeObject),
         .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
         .tp_doc = "Shape class",
         .tp_new = PyType_GenericNew,
@@ -766,9 +768,17 @@ static PyTypeObject ShapeType = {
 static int
 shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
-    char * opcstr;
-    PyObject * arg;
-    if (! PyArg_ParseTuple(args, "sO", &opcstr, &arg)) return -1;
+    size_t arglen = PyTuple_Size(args);
+    if (arglen < 1) {
+        PyErr_SetString(PyExc_TypeError, "Operation identifier is expected.");
+        return -1;
+    }
+    PyObject * pyopc = PyTuple_GetItem(args, 0);
+    if (! PyUnicode_Check(pyopc)) {
+        PyErr_SetString(PyExc_TypeError, "String object is expected.");
+        return -1;
+    }
+    char * opcstr = PyUnicode_AS_DATA(pyopc);
 
     char opc;
     if (strcmp(opcstr, "I") == 0) opc = INTERSECTION;
@@ -779,32 +789,35 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
     else if (strcmp(opcstr, "S") == 0) opc = IDENTITY;
     else {
         PyErr_SetString(PyExc_ValueError, "Unknown operation");
-        //free(opcstr);
         return -1;
     }
 
     int status;
     if (opc == IDENTITY || opc == COMPLEMENT) {
-        if (arg == NULL || ! PyObject_TypeCheck(arg, &SurfaceType)) {
+        PyObject * surf = PyTuple_GetItem(args, 1);
+        if (surf == NULL || ! PyObject_TypeCheck(surf, &SurfaceType)) {
             PyErr_SetString(PyExc_TypeError, "Surface instance is expected...");
             return -1;
         }
-        status = shape_init(&self->shape, opc, 1, &((SurfaceObject *) arg)->surf);
+        Py_INCREF(surf);
+        status = shape_init(&self->shape, opc, 1, &((SurfaceObject *) surf)->surf);
     } else if (opc == UNIVERSE || opc == EMPTY) {
         status = shape_init(&self->shape, opc, 0, NULL);
     } else {
-        size_t i, j, alen = PySequence_Size(args);
+        size_t i, j, alen = arglen - 1;
+        if (alen <= 1) {
+            PyErr_SetString(PyExc_ValueError, "More than one shape object is expected");
+            return -1;
+        }
         PyObject * item;
-        if (alen < 0) return -1;
-        alen -= 1;
         Shape ** operands = (Shape **) malloc(alen * sizeof(Shape *));
         for (i = 0; i < alen; ++i) {
             item = PySequence_GetItem(args, i + 1);
             if (PyObject_TypeCheck(item, &ShapeType)) {
                 operands[i] = (Shape *) &((ShapeObject *) item)->shape;
+                Py_INCREF(item);
             } else {
                 PyErr_SetString(PyExc_TypeError, "Shape instance is expected");
-                for (j = 0; j < i; ++j) Py_DECREF(operands[j]);
                 free(operands);
                 return -1;
             }
@@ -823,11 +836,15 @@ static void shapeobj_dealloc(ShapeObject * self)
 }
 
 static PyObject *
-shapeobj_test_box(ShapeObject * self, PyObject * args)
+shapeobj_test_box(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
-    PyObject * box;
-    char collect;
-    if (! PyArg_ParseTuple(args, "Ob", &box, &collect)) return NULL;
+    PyObject * box = NULL;
+    char collect = 0;
+    static char * kwlist[] = {"box", "collect", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "Ob", kwlist, &box, &collect)) return NULL;
+
+    if (box == NULL) box = GET_NAME(GLOBAL_BOX);
 
     if (! PyObject_TypeCheck(box, &BoxType)) {
         PyErr_SetString(PyExc_TypeError, "Box instance is expected...");
@@ -839,12 +856,17 @@ shapeobj_test_box(ShapeObject * self, PyObject * args)
 }
 
 static PyObject *
-shapeobj_ultimate_test_box(ShapeObject * self, PyObject * args)
+shapeobj_ultimate_test_box(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
-    PyObject * box;
-    char collect;
-    double min_vol;
-    if (! PyArg_ParseTuple(args, "Odc", &box, &min_vol, &collect)) return NULL;
+    PyObject * box = NULL;
+    char collect = 0;
+    double min_vol = MIN_VOLUME;
+
+    static char * kwlist[] = {"box", "min_volume", "collect", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|Odb", kwlist, &box, &min_vol, &collect)) return NULL;
+
+    if (box == NULL) box = GET_NAME(GLOBAL_BOX);
 
     if (! PyObject_TypeCheck(box, &BoxType)) {
         PyErr_SetString(PyExc_ValueError, "Box instance is expected");
@@ -902,11 +924,16 @@ shapeobj_bounding_box(ShapeObject * self, PyObject * args)
 }
 
 static PyObject *
-shapeobj_volume(ShapeObject * self, PyObject * args)
+shapeobj_volume(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
-    PyObject * box;
-    double min_vol;
-    if (! PyArg_ParseTuple(args, "Od", &box, &min_vol)) return NULL;
+    PyObject * box = NULL;
+    double min_vol = MIN_VOLUME;
+
+    static char * kwlist[] = {"box", "min_volume", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|Od", kwlist, &box, &min_vol)) return NULL;
+
+    if (box == NULL) box = GET_NAME(GLOBAL_BOX);
 
     if (! PyObject_TypeCheck(box, &BoxType)) {
         PyErr_SetString(PyExc_ValueError, "Box instance is expected");
@@ -937,7 +964,7 @@ static PyObject *
 shapeobj_get_stat_table(ShapeObject * self)
 {
     size_t nrows = 0, ncols = 0;
-    char * table_data; // = shape_get_stat_table(&self->shape, &nrows, &ncols);
+    char * table_data = shape_get_stat_table(&self->shape, &nrows, &ncols);
     npy_intp dims[] = {nrows, ncols};
     PyObject * table = PyArray_SimpleNewFromData(2, dims, NPY_BYTE, table_data);
     return table;
@@ -1027,6 +1054,7 @@ PyInit_geometry(void)
     PyModule_AddObject(m, EY, (PyObject *) ey);
     PyModule_AddObject(m, EZ, (PyObject *) ez);
     PyModule_AddObject(m, GLOBAL_BOX, (PyObject *) global_box);
+    PyModule_AddObject(m, MIN_VOLUME_NAME, Py_BuildValue("d", MIN_VOLUME));
 
     module_dict = PyModule_GetDict(m);
 
