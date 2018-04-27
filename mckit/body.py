@@ -6,6 +6,7 @@ import numpy as np
 from .geometry import Shape as _Shape
 from .surface import Surface
 from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
+from .printer import print_card
 
 
 class Shape(_Shape):
@@ -42,7 +43,43 @@ class Shape(_Shape):
         return self._hash
 
     def __str__(self):
-        pass
+        return print_card(self._get_words(None))
+
+    def _get_words(self, parent_opc):
+        """Gets list of words that describe the shape.
+
+        Parameters
+        ----------
+        parent_opc : str
+            Operation code of parent shape. It is needed for proper use of
+            parenthesis.
+
+        Returns
+        -------
+        words : list[str]
+            List of words.
+        """
+        words = []
+        if self.opc == 'S':
+            words.append('{0}'.format(self.args[0].options['name']))
+        elif self.opc == 'C':
+            words.append('-{0}'.format(self.args[0].options['name']))
+        elif self.opc == 'E':
+            words.append('EMPTY_SET')
+        elif self.opc == 'R':
+            words.append('UNIVERSE_SET')
+        else:
+            sep = ' ' if self.opc == 'I' else ':'
+            args = self.args
+            if self.opc == 'U' and parent_opc == 'I':
+                words.append('(')
+            for a in args[:-1]:
+                words.extend(a._get_words(self.opc))
+                words.append(sep)
+            words.extend(args[-1]._get_words(self.opc))
+            if self.opc == 'U' and parent_opc == 'I':
+                words.append(')')
+        return words
 
     @classmethod
     def clean_args(cls, opc, *args):
@@ -296,17 +333,19 @@ class Body(Shape):
         return self._options[key]
 
     def __str__(self):
-        from .model import MCPrinter
-        text = [str(self['name'])]
-        if 'MAT' in self.keys():
+        text = [str(self['name']), ' ']
+        if 'MAT' in self._options.keys():
             text.append(str(self['MAT']))
+            text.append(' ')
             text.append(str(self['RHO']))
+            text.append(' ')
         else:
             text.append('0')
-        text += Shape.str_tokens(self)
-        printer = MCPrinter()
-        text += printer.print_cell_options(self, 5)
-        return MCPrinter.print_card(text)
+            text.append(' ')
+        text.extend(Shape._get_words(self, None))
+        text.append('\n')
+        # insert options printing
+        return print_card(text)
 
     def intersection(self, other):
         """Gets an intersection if this cell with the other.

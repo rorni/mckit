@@ -40,6 +40,7 @@ def print_card(card, offset=8, maxcol=80, sep='\n'):
             while card[i] == sep or card[i].isspace():
                 i += 1
                 if i == len(card):
+                    words.pop()
                     break
         words.append(card[i])
         length += len(card[i])
