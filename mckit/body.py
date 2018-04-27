@@ -262,7 +262,7 @@ def from_polish_notation(polish):
     return operands.pop()
 
 
-class Body(dict):
+class Body(Shape):
     """Represents MCNP's cell.
 
     Parameters
@@ -289,8 +289,11 @@ class Body(dict):
     def __init__(self, geometry, **options):
         if isinstance(geometry, list):
             geometry = from_polish_notation(geometry)
-        self._shape = geometry
-        dict.__init__(self, options)
+        Shape.__init__(self, geometry.opc, *geometry.args)
+        self._options = dict(options)
+
+    def __getitem__(self, key):
+        return self._options[key]
 
     def __str__(self):
         from .model import MCPrinter
@@ -321,8 +324,8 @@ class Body(dict):
         cell : Cell
             The result.
         """
-        geometry = Shape.intersection(self._shape, other._shape)
-        return Body(geometry, **self)
+        geometry = Shape.intersection(self, other)
+        return Body(geometry, **self._options)
 
     def union(self, other):
         """Gets an union if this cell with the other.
@@ -339,8 +342,8 @@ class Body(dict):
         cell : Cell
             The result.
         """
-        geometry = Shape.union(self._shape, other._shape)
-        return Body(geometry, **self)
+        geometry = Shape.union(self, other)
+        return Body(geometry, **self._options)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
                  min_volume=MIN_BOX_VOLUME, trim_size=1):
@@ -368,10 +371,10 @@ class Body(dict):
             Simplified version of this cell.
         """
         print('Collect stage...')
-        self._shape.collect_statistics(box, min_volume)
+        self.collect_statistics(box, min_volume)
         print('finding optimal solution...')
-        variants = self._shape.get_simplest(trim_size)
-        return Body(variants[0], **self)
+        variants = self.get_simplest(trim_size)
+        return Body(variants[0], **self._options)
 
     def populate(self, universe=None):
         """Fills this cell by filling universe.
@@ -419,5 +422,5 @@ class Body(dict):
         cell : Cell
             The result of this cell transformation.
         """
-        geometry = self._shape.transform(tr)
-        return Body(geometry, **self)
+        geometry = self.transform(tr)
+        return Body(geometry, **self._options)

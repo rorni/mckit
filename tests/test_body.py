@@ -30,10 +30,10 @@ def create_node(kind, args):
         else:
             g = surfaces[g]
         new_args.append(g)
-    return Shape(kind, [new_args])
+    return Shape(kind, *new_args)
 
 
-class TestGeometryNode(unittest.TestCase):
+class TestShape(unittest.TestCase):
     def test_from_polish(self):
         for i, raw_data in enumerate(polish_geoms):
             data = []
@@ -56,32 +56,32 @@ class TestGeometryNode(unittest.TestCase):
     def test_intersection(self):
         for i, case in enumerate(intersection_geom):
             for j, g in enumerate(case):
-                ans = create_node(g[0], g[1]).clean()
+                ans = create_node(g[0], g[1])
                 with self.subTest(msg='i={0}, j={1}'.format(i, j)):
                     ind = j if j < i else j + 1
                     test = geoms[i].intersection(geoms[ind])
-                    if test != ans:
-                        print(test, ' =====> ', ans)
+                    #if test != ans:
+                    #    print(test, ' =====> ', ans)
                     self.assertEqual(ans, test)
 
     def test_union(self):
         for i, case in enumerate(union_geom):
             for j, g in enumerate(case):
-                ans = create_node(g[0], g[1]).clean()
+                ans = create_node(g[0], g[1])
                 with self.subTest(msg='i={0}, j={1}'.format(i, j)):
                     ind = j if j < i else j + 1
                     test = geoms[i].union(geoms[ind])
-                    if test != ans:
-                        print(test, ' =====> ', ans)
+                    #if test != ans:
+                    #    print(test, ' =====> ', ans)
                     self.assertEqual(ans, test)
 
-    def test_test_point(self):
+    def test_test_points(self):
         for i, g in enumerate(geoms):
             for j, p in enumerate(node_points):
                 with self.subTest(msg='geom={0}, point={1}'.format(i, j)):
-                    t = g.test_point(p)
+                    t = g.test_points(p)
                     self.assertEqual(t, node_test_point_ans[i][j])
-            t = g.test_point(np.array(node_points))
+            t = g.test_points(np.array(node_points))
             self.assertListEqual(list(t), node_test_point_ans[i])
 
     def test_complexity(self):
@@ -92,7 +92,7 @@ class TestGeometryNode(unittest.TestCase):
 
     def test_test_box(self):
         for i, b_data in enumerate(node_boxes_data):
-            box = Box(b_data['base'], b_data['ex'], b_data['ey'], b_data['ez'])
+            box = Box(b_data['base'], b_data['xdim'], b_data['ydim'], b_data['zdim'])
             for j, g in enumerate(geoms):
                 with self.subTest(msg='box {0}, geom {1}, only result'.format(i, j)):
                     r = g.test_box(box, return_simple=False)
@@ -146,7 +146,7 @@ class TestGeometryNode(unittest.TestCase):
                 self.assertSetEqual(ans, surfs)
 
 
-class TestCell(unittest.TestCase):
+class TestBody(unittest.TestCase):
     def test_creation(self):
         for i, pol_data in enumerate(polish_geoms):
             pol_geom = []
@@ -173,12 +173,12 @@ class TestCell(unittest.TestCase):
                     continue
                 ind = j-1 if j > i else j
                 g = intersection_geom[i][ind]
-                ans = create_node(g[0], g[1]).clean()
+                ans = create_node(g[0], g[1])
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
                     c2 = Body(ag2)
                     u = c1.intersection(c2)
-                    self.assertEqual(u, ans)
-                    self.assertDictEqual(u, c1)
+                    self.assertEqual(Shape(u), ans)
+                    self.assertDictEqual(u._options, c1._options)
 
     def test_union(self):
         for i, ag1 in enumerate(geoms):
@@ -188,12 +188,12 @@ class TestCell(unittest.TestCase):
                     continue
                 ind = j-1 if j > i else j
                 g = union_geom[i][ind]
-                ans = create_node(g[0], g[1]).clean()
+                ans = create_node(g[0], g[1])
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
                     c2 = Body(ag2)
                     u = c1.union(c2)
-                    self.assertEqual(u, ans)
-                    self.assertDictEqual(u, c1)
+                    self.assertEqual(Shape(u), ans)
+                    self.assertDictEqual(u._options, c1._options)
 
 #     def test_populate(self):
 #         for i, ag_out in enumerate(additives):
