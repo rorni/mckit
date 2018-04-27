@@ -31,18 +31,18 @@ class Shape(_Shape):
     shape : Shape
         Shape instance.
     """
-    _inv_opc = {'I': 'U', 'E': 'R', 'C': 'S', 'U': 'I', 'R': 'E', 'S': 'C'}
-    _opc_hash = {'I': hash('I'), 'U': ~hash('I'), 'E': hash('E'), 'R': ~hash('E')}
+    _opc_hash = {'I': hash('I'), 'U': ~hash('I'), 'E': hash('E'), 'R': ~hash('E'), 'S': hash('S'), 'C': ~hash('S')}
 
     def __init__(self, opc, *args):
         opc, args = Shape.clean_args(opc, *args)
-        self._args = tuple(args)
-        self._opc = opc
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
     def __hash__(self):
         return self._hash
+
+    def __str__(self):
+        pass
 
     @classmethod
     def clean_args(cls, opc, *args):
@@ -51,28 +51,27 @@ class Shape(_Shape):
             return args[0]._opc, args[0]._args
         elif len(args) == 1 and isinstance(args[0], Shape) and opc == 'C':
             item = args[0].complement()
-            return item._opc, item._args
+            return item.opc, item.args
         elif len(args) > 1:
             # Extend arguments
             args = list(args)
             i = 0
             while i < len(args):
-                if args[i]._opc == opc:
+                if args[i].opc == opc:
                     a = args.pop(i)
-                    args.extend(a._args)
+                    args.extend(a.args)
                 i += 1
 
             i = 0
             while i < len(args):
                 a = args[i]
-                if a._opc == 'E' and opc == 'I' or a._opc == 'R' and opc == 'U':
+                if a.opc == 'E' and opc == 'I' or a.opc == 'R' and opc == 'U':
                     return 'E', []
-                elif a._opc == 'E' and opc == 'U' or a._opc == 'R' and opc == 'I':
+                elif a.opc == 'E' and opc == 'U' or a.opc == 'R' and opc == 'I':
                     args.pop(i)
                     continue
                 for j, b in enumerate(args[i + 1:]):
                     if a.is_complement(b):
-                        cls.already = True
                         if opc == 'I':
                             return 'E', []
                         else:
@@ -84,43 +83,45 @@ class Shape(_Shape):
     def __eq__(self, other):
         if self is other:
             return True
-        if self._opc != other._opc:
+        if self.opc != other.opc:
             return False
-        if len(self._args) != len(other._args):
+        if len(self.args) != len(other.args):
             return False
-        for a, o in zip(self._args, other._args):
+        for a, o in zip(self.args, other.args):
             if not (a == o):
                 return False
         return True
 
     def complement(self):
         """Gets complement to the shape."""
-        if self._opc == 'S':
-            return Shape('C', self._args[0])
-        elif self._opc == 'C':
-            return Shape('S', self._args[0])
-        elif self._opc == 'E':
+        opc = self.opc
+        args = self.args
+        if opc == 'S':
+            return Shape('C', args[0])
+        elif opc == 'C':
+            return Shape('S', args[0])
+        elif opc == 'E':
             return Shape('R')
-        elif self._opc == 'R':
+        elif opc == 'R':
             return Shape('E')
         else:
-            opc = self._inv_opc[self._opc]
-            args = [a.complement() for a in self._args]
-            return Shape(opc, *args)
+            opc = self.invert_opc
+            c_args = [a.complement() for a in args]
+            return Shape(opc, *c_args)
 
     def is_complement(self, other):
         """Checks if this shape is complement to the other."""
         if hash(self) != ~hash(other):
             return False
-        if self._opc != self._inv_opc[other._opc]:
+        if self.opc != other.invert_opc:
             return False
-        if len(self._args) != len(other._args):
+        if len(self.args) != len(other.args):
             return False
-        if len(self._args) == 1:
-            return self._args[0] == other._args[0]
-        elif len(self._args) > 1:
-            for a in self._args:
-                for b in other._args:
+        if len(self.args) == 1:
+            return self.args[0] == other.args[0]
+        elif len(self.args) > 1:
+            for a in self.args:
+                for b in other.args:
                     if a.is_complement(b):
                         break
                 else:
@@ -171,23 +172,23 @@ class Shape(_Shape):
                     raise TypeError("Shape instance is expected for 'I' and 'U' operations.")
 
     def get_simplest(self, trim_size=0):
-        if self._opc != 'I' and self._opc != 'U':
+        if self.opc != 'I' and self.opc != 'U':
             return [self]
         node_cases = []
         complexities = []
         stat = self.get_stat_table()
-        if self._opc == 'I':
+        if self.opc == 'I':
             val = -1
-        elif self._opc == 'U':
+        elif self.opc == 'U':
             val = +1
         else:
             return {self}
 
         drop_index = np.nonzero(np.all(stat == val, axis=1))[0]
         if len(drop_index) == 0:
-            if self._opc == 'I':
+            if self.opc == 'I':
                 return [Shape('E')]
-            if self._opc == 'U':
+            if self.opc == 'U':
                 return [Shape('R')]
 
         arg_results = np.delete(stat, drop_index, axis=0)
@@ -196,11 +197,12 @@ class Shape(_Shape):
             print(self)
             return None
         unique = reduce(set.union, map(set, final_cases))
-        node_variants = {i: self._args[i].get_simplest(trim_size) for i in unique}
+        args = self.args
+        node_variants = {i: args[i].get_simplest(trim_size) for i in unique}
         for indices in final_cases:
             variants = [node_variants[i] for i in indices]
             for args in product(*variants):
-                node = Shape(self._opc, args)
+                node = Shape(self.opc, args)
                 node_cases.append(node)
                 complexities.append(node.complexity())
         sort_ind = np.argsort(complexities)
@@ -260,7 +262,7 @@ def from_polish_notation(polish):
     return operands.pop()
 
 
-class Body(dict):
+class Body(Shape):
     """Represents MCNP's cell.
 
     Parameters
@@ -287,8 +289,11 @@ class Body(dict):
     def __init__(self, geometry, **options):
         if isinstance(geometry, list):
             geometry = from_polish_notation(geometry)
-        self._shape = geometry
-        dict.__init__(self, options)
+        Shape.__init__(self, geometry.opc, *geometry.args)
+        self._options = dict(options)
+
+    def __getitem__(self, key):
+        return self._options[key]
 
     def __str__(self):
         from .model import MCPrinter
@@ -319,8 +324,8 @@ class Body(dict):
         cell : Cell
             The result.
         """
-        geometry = Shape.intersection(self._shape, other._shape)
-        return Body(geometry, **self)
+        geometry = Shape.intersection(self, other)
+        return Body(geometry, **self._options)
 
     def union(self, other):
         """Gets an union if this cell with the other.
@@ -337,8 +342,8 @@ class Body(dict):
         cell : Cell
             The result.
         """
-        geometry = Shape.union(self._shape, other._shape)
-        return Body(geometry, **self)
+        geometry = Shape.union(self, other)
+        return Body(geometry, **self._options)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
                  min_volume=MIN_BOX_VOLUME, trim_size=1):
@@ -366,10 +371,10 @@ class Body(dict):
             Simplified version of this cell.
         """
         print('Collect stage...')
-        self._shape.collect_statistics(box, min_volume)
+        self.collect_statistics(box, min_volume)
         print('finding optimal solution...')
-        #variants = self._shape.get_simplest(trim_size)
-        #return Body(variants[0], **self)
+        variants = self.get_simplest(trim_size)
+        return Body(variants[0], **self._options)
 
     def populate(self, universe=None):
         """Fills this cell by filling universe.
@@ -417,5 +422,5 @@ class Body(dict):
         cell : Cell
             The result of this cell transformation.
         """
-        geometry = self._shape.transform(tr)
-        return Body(geometry, **self)
+        geometry = self.transform(tr)
+        return Body(geometry, **self._options)

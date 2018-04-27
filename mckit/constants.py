@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 
-from .geometry import ORIGIN, EX, EY, EZ, GLOBAL_BOX
+from .geometry import ORIGIN, EX, EY, EZ, GLOBAL_BOX, MIN_VOLUME
 
 
 __all__ = [
@@ -30,7 +30,7 @@ ORIGIN = np.zeros((3,))
 # identity rotation matrix
 IDENTITY_ROTATION = np.eye(3)
 
-MIN_BOX_VOLUME = 1.e-4 ** 3
+MIN_BOX_VOLUME = MIN_VOLUME
 
 # angle tolerance
 ANGLE_TOLERANCE = 0.001
