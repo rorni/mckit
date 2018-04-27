@@ -740,6 +740,47 @@ static PyObject * shapeobj_collect_statistics(ShapeObject * self, PyObject * arg
 static PyObject * shapeobj_get_stat_table(ShapeObject * self);
 static void       shapeobj_dealloc(ShapeObject * self);
 
+static char * opcodes[] = {"I", "C", "E", "U", "S", "R"};
+
+static PyObject *
+shapeobj_getopc(ShapeObject * self, void * closure)
+{
+    return Py_BuildValue("s", opcodes[self->shape.opc]);
+}
+
+static PyObject *
+shapeobj_getinvopc(ShapeObject * self, void * closure)
+{
+    return Py_BuildValue("s", opcodes[invert_opc(self->shape.opc)]);
+}
+
+static PyObject *
+shapeobj_getargs(ShapeObject * self, void * closure)
+{
+    PyObject * args = PyTuple_New(self->shape.alen);
+    if (args == NULL) return NULL;
+    if (self->shape.opc == COMPLEMENT || self->shape.opc == IDENTITY) {
+        PyObject * pysurf = parent_pyobject(SurfaceObject, surf, self->shape.args.surface);
+        PyTuple_SET_ITEM(args, 0, pysurf);
+        Py_INCREF(pysurf);
+    } else if (self->shape.opc == UNION || self->shape.opc == INTERSECTION) {
+        PyObject * pyshape;
+        for (int i = 0; i < self->shape.alen; ++i) {
+            pyshape = parent_pyobject(ShapeObject, shape, self->shape.args.shapes[i]);
+            PyTuple_SET_ITEM(args, i, pyshape);
+            Py_INCREF(pyshape);
+        }
+    }
+    return args;
+}
+
+static PyGetSetDef shapeobj_getset[] = {
+    {"opc", (getter) shapeobj_getopc, NULL, "Operation code of shape.", NULL},
+    {"invert_opc", (getter) shapeobj_getinvopc, NULL, "Inverted operation code of shape.", NULL},
+    {"args", (getter) shapeobj_getargs, NULL, "Arguments of shape.", NULL},
+    {NULL}
+};
+
 
 static PyMethodDef shapeobj_methods[] = {
         {"test_box", (PyCFunctionWithKeywords) shapeobj_test_box, METH_VARARGS | METH_KEYWORDS, "Tests where the box is located with respect to the surface."},
@@ -763,6 +804,7 @@ static PyTypeObject ShapeType = {
         .tp_init = (initproc) shapeobj_init,
         .tp_dealloc = (destructor) shapeobj_dealloc,
         .tp_methods = shapeobj_methods,
+        .tp_getset = shapeobj_getset,
 };
 
 static int
@@ -781,12 +823,12 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
     char * opcstr = PyUnicode_AS_DATA(pyopc);
 
     char opc;
-    if (strcmp(opcstr, "I") == 0) opc = INTERSECTION;
-    else if (strcmp(opcstr, "C") == 0) opc = COMPLEMENT;
-    else if (strcmp(opcstr, "U") == 0) opc = UNION;
-    else if (strcmp(opcstr, "E") == 0) opc = EMPTY;
-    else if (strcmp(opcstr, "R") == 0) opc = UNIVERSE;
-    else if (strcmp(opcstr, "S") == 0) opc = IDENTITY;
+    if      (strcmp(opcstr, opcodes[INTERSECTION]) == 0) opc = INTERSECTION;
+    else if (strcmp(opcstr, opcodes[COMPLEMENT])   == 0) opc = COMPLEMENT;
+    else if (strcmp(opcstr, opcodes[UNION])        == 0) opc = UNION;
+    else if (strcmp(opcstr, opcodes[EMPTY])        == 0) opc = EMPTY;
+    else if (strcmp(opcstr, opcodes[UNIVERSE])     == 0) opc = UNIVERSE;
+    else if (strcmp(opcstr, opcodes[IDENTITY])     == 0) opc = IDENTITY;
     else {
         PyErr_SetString(PyExc_ValueError, "Unknown operation");
         return -1;
@@ -831,6 +873,16 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
 
 static void shapeobj_dealloc(ShapeObject * self)
 {
+    if (self->shape.opc == COMPLEMENT || self->shape.opc == IDENTITY) {
+        PyObject * pysurf = parent_pyobject(SurfaceObject, surf, self->shape.args.surface);
+        Py_DECREF(pysurf);
+    } else if (self->shape.opc == UNION || self->shape.opc == INTERSECTION) {
+        PyObject * pyshape;
+        for (int i = 0; i < self->shape.alen; ++i) {
+            pyshape = parent_pyobject(ShapeObject, shape, self->shape.args.shapes[i]);
+            Py_DECREF(pyshape);
+        }
+    }
     shape_dealloc(&self->shape);
     Py_TYPE(self)->tp_free((PyObject*) self);
 }
