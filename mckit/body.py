@@ -84,8 +84,8 @@ class Shape(_Shape):
     @classmethod
     def clean_args(cls, opc, *args):
         cls._verify_opc(opc, *args)
-        if len(args) == 1 and isinstance(args[0], Shape) and opc == 'S':
-            return args[0]._opc, args[0]._args
+        if len(args) == 1 and isinstance(args[0], Shape) and (opc == 'S' or opc == 'I' or opc == 'U'):
+            return args[0].opc, args[0].args
         elif len(args) == 1 and isinstance(args[0], Shape) and opc == 'C':
             item = args[0].complement()
             return item.opc, item.args
@@ -194,6 +194,31 @@ class Shape(_Shape):
             args.append(a.transform(tr))
         return Shape(opc, *args)
 
+    def complexity(self):
+        """Gets complexity of shape."""
+        args = self.args
+        if len(args) == 1:
+            return 1
+        elif len(args) > 1:
+            result = 0
+            for a in args:
+                result += a.complexity()
+            return result
+        else:
+            return 0
+
+    def get_surfaces(self):
+        args = self.args
+        if len(args) == 1:
+            return {args[0]}
+        elif len(args) > 1:
+            result = set()
+            for a in args:
+                result = result.union(a.get_surfaces())
+            return result
+        else:
+            return set()
+
     @staticmethod
     def _verify_opc(opc, *args):
         """Checks if such argument combination is valid."""
@@ -206,6 +231,7 @@ class Shape(_Shape):
                 raise ValueError("Operands are expected.")
             for a in args:
                 if not isinstance(a, Shape):
+                    print(type(a), opc)
                     raise TypeError("Shape instance is expected for 'I' and 'U' operations.")
 
     def get_simplest(self, trim_size=0):
@@ -214,6 +240,7 @@ class Shape(_Shape):
         node_cases = []
         complexities = []
         stat = self.get_stat_table()
+        print(stat)
         if self.opc == 'I':
             val = -1
         elif self.opc == 'U':
@@ -221,15 +248,16 @@ class Shape(_Shape):
         else:
             return {self}
 
-        drop_index = np.nonzero(np.all(stat == val, axis=1))[0]
+        drop_index = np.nonzero(np.all(stat == -val, axis=1))[0]
         if len(drop_index) == 0:
             if self.opc == 'I':
                 return [Shape('E')]
             if self.opc == 'U':
                 return [Shape('R')]
-
         arg_results = np.delete(stat, drop_index, axis=0)
-        final_cases = self.find_coverages(arg_results, value=val)
+        #print(arg_results)
+        cases = self.find_coverages(arg_results, value=val)
+        final_cases = set(tuple(c) for c in cases)
         if len(final_cases) == 0:
             print(self)
             return None
@@ -239,7 +267,7 @@ class Shape(_Shape):
         for indices in final_cases:
             variants = [node_variants[i] for i in indices]
             for args in product(*variants):
-                node = Shape(self.opc, args)
+                node = Shape(self.opc, *args)
                 node_cases.append(node)
                 complexities.append(node.complexity())
         sort_ind = np.argsort(complexities)
@@ -265,12 +293,12 @@ class Shape(_Shape):
                 else:
                     sub_cases = Shape.find_coverages(reminder, value=value)
                     for s in sub_cases:
+                        s = list(s)
                         s.append(j)
                 cases.extend(sub_cases)
         for c in cases:
             c.sort()
-        final_cases = set(tuple(c) for c in cases)
-        return final_cases
+        return cases
 
 
 def from_polish_notation(polish):
@@ -413,6 +441,7 @@ class Body(Shape):
         self.collect_statistics(box, min_volume)
         print('finding optimal solution...')
         variants = self.get_simplest(trim_size)
+        print(len(variants))
         return Body(variants[0], **self._options)
 
     def populate(self, universe=None):
@@ -443,7 +472,7 @@ class Body(Shape):
         for c in universe.cells:
             new_cell = c.intersection(self)  # because properties like MAT, etc
                                              # must be as in filling cell.
-            if 'U' in self.keys():
+            if 'U' in self._options.keys():
                 new_cell['U'] = self['U']    # except universe.
             cells.append(new_cell)
         return cells

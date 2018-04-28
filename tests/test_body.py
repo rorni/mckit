@@ -95,19 +95,8 @@ class TestShape(unittest.TestCase):
             box = Box(b_data['base'], b_data['xdim'], b_data['ydim'], b_data['zdim'])
             for j, g in enumerate(geoms):
                 with self.subTest(msg='box {0}, geom {1}, only result'.format(i, j)):
-                    r = g.test_box(box, return_simple=False)
+                    r = g.test_box(box, collect=False)
                     self.assertEqual(r, node_box_ans[i][j][0])
-                with self.subTest(msg='box {0}, geom {1}, result+geom'.format(i, j)):
-                    r, sg = g.test_box(box, return_simple=True)
-                    ans = set()
-                    for a in node_box_ans[i][j][1]:
-                        ans.add(create_node(a[0], a[1]))
-                    if sg != ans:
-                        print(len(sg))
-                        print(i, ' ', j, '=', list(sg)[0], ' ===> ', list(ans)[0])
-                        print(i, ' ', j, '=', list(sg)[1], ' ===> ', list(ans)[1])
-                    self.assertEqual(r, node_box_ans[i][j][0])
-                    self.assertEqual(sg, ans)
 
     @unittest.skip
     def test_bounding_box(self):
@@ -177,7 +166,7 @@ class TestBody(unittest.TestCase):
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
                     c2 = Body(ag2)
                     u = c1.intersection(c2)
-                    self.assertEqual(Shape(u), ans)
+                    self.assertEqual(Shape(u.opc, *u.args), ans)
                     self.assertDictEqual(u._options, c1._options)
 
     def test_union(self):
@@ -192,7 +181,7 @@ class TestBody(unittest.TestCase):
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
                     c2 = Body(ag2)
                     u = c1.union(c2)
-                    self.assertEqual(Shape(u), ans)
+                    self.assertEqual(Shape(u.opc, *u.args), ans)
                     self.assertDictEqual(u._options, c1._options)
 
 #     def test_populate(self):

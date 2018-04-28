@@ -45,7 +45,7 @@ int shape_init(
 {
     shape->opc = opc;
     shape->alen = alen;
-    shape->stats = NULL;
+    shape->stats = rbtree_create(stat_compare);;
     shape->last_box = 0;
     shape->last_box_result = 0;
     if (is_final(opc)) {
@@ -120,7 +120,10 @@ int shape_test_box(
             stat->arr = sub;
             stat->len = shape->alen;
             stat->vol = box->volume;
-            if (rbtree_add(shape->stats, stat) != RBT_OK) free(stat);
+            if (rbtree_add(shape->stats, stat) != RBT_OK) {
+                free(stat);
+                free(sub);
+            }
         } else free(sub);
     }
     // Cache test result;
@@ -139,7 +142,7 @@ int shape_ultimate_test_box(
         char collect            // Whether to collect statistics about results.
 )
 {
-    if (box->volume <= min_vol || zero_surfs == 1) collect = -1;
+    if (collect != 0 && (box->volume <= min_vol || zero_surfs == 1)) collect = -1;
     else zero_surfs = 0;
     int result = shape_test_box(shape, box, collect);
     if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
@@ -248,11 +251,16 @@ double shape_volume(
 // Resets collected statistics or initializes statistics storage
 void shape_reset_stat(Shape * shape)
 {
-    if (shape->stats == NULL) {
-        shape->stats = rbtree_create(stat_compare);
-    } else {
-        Shape * s;
-        while ((s = rbtree_pop(shape->stats, NULL)) != NULL) free(s);
+    StatUnit * s;
+    while ((s = rbtree_pop(shape->stats, NULL)) != NULL) {
+        free(s->arr);
+        free(s);
+    }
+    shape->last_box = 0;
+    if (is_composite(shape->opc)) {
+        for (int i = 0; i < shape->alen; ++i) {
+            shape_reset_stat(shape->args.shapes[i]);
+        }
     }
 }
 
@@ -263,6 +271,7 @@ void shape_collect_statistics(
         double min_vol          // minimal volume, when splitting process stops.
 )
 {
+    zero_surfs = 0;
     shape_reset_stat(shape);
     shape_ultimate_test_box(shape, box, min_vol, 1);
 }

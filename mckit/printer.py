@@ -33,7 +33,7 @@ def print_card(card, offset=8, maxcol=80, sep='\n'):
     words = []  # a list of individual words.
     line_sep = '\n' + ' ' * offset   # separator between lines.
     i = 0
-    while i < len(card):
+    while i < len(card) - 1:
         if length + len(card[i]) > maxcol or card[i] == sep:
             words.append(line_sep)
             length = offset
