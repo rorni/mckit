@@ -54,14 +54,18 @@ class TestShape(unittest.TestCase):
                 self.assertEqual(c, ans)
 
     def test_intersection(self):
+        for i, g in enumerate(geoms):
+            print(i, ' : ', g)
         for i, case in enumerate(intersection_geom):
             for j, g in enumerate(case):
                 ans = create_node(g[0], g[1])
                 with self.subTest(msg='i={0}, j={1}'.format(i, j)):
                     ind = j if j < i else j + 1
                     test = geoms[i].intersection(geoms[ind])
-                    #if test != ans:
-                    #    print(test, ' =====> ', ans)
+                    if test != ans:
+                        print(geoms[i])
+                        print(geoms[ind])
+                        print(i, j, '>>> ', test, ' =====> ', ans)
                     self.assertEqual(ans, test)
 
     def test_union(self):
@@ -71,8 +75,8 @@ class TestShape(unittest.TestCase):
                 with self.subTest(msg='i={0}, j={1}'.format(i, j)):
                     ind = j if j < i else j + 1
                     test = geoms[i].union(geoms[ind])
-                    #if test != ans:
-                    #    print(test, ' =====> ', ans)
+                    if test != ans:
+                        print(i, j, '>>> ', test, ' =====> ', ans)
                     self.assertEqual(ans, test)
 
     def test_test_points(self):
@@ -162,10 +166,11 @@ class TestBody(unittest.TestCase):
                     continue
                 ind = j-1 if j > i else j
                 g = intersection_geom[i][ind]
-                ans = create_node(g[0], g[1])
+                ans = Body(create_node(g[0], g[1]), **c1._options)
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
                     c2 = Body(ag2)
                     u = c1.intersection(c2)
+                    # print(i, j, '===>\n', ans, '\n-------\n', u, '\n========\n')
                     self.assertEqual(Shape(u.opc, *u.args), ans)
                     self.assertDictEqual(u._options, c1._options)
 
@@ -177,7 +182,7 @@ class TestBody(unittest.TestCase):
                     continue
                 ind = j-1 if j > i else j
                 g = union_geom[i][ind]
-                ans = create_node(g[0], g[1])
+                ans = Body(create_node(g[0], g[1]), **c1._options)
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
                     c2 = Body(ag2)
                     u = c1.union(c2)

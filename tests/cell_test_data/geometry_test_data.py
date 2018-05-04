@@ -21,7 +21,7 @@ polish_geoms = [
     [3, 8, 'C', 'I', 5, 'C', 'I', 4, 'C', 'U', 6, 'C', 'U', 2, 'C', 'I']
 ]
 
-cell_kwargs = {'U': 5, 'IMP:N': 1, 'DEN': -4.3}
+cell_kwargs = {'U': 5, 'IMP:N': 1, 'DEN': -4.3, 'name': 1}
 
 create_geom = [
     ('U', [('I', [('C', [2]), ('S', [3]), ('S', [1]), ('C', [5])]), ('C', [4])]),
