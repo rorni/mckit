@@ -4,6 +4,9 @@
 
 #define BIT_LEN 64
 
+// Turn on caching of test_box results.
+char enable_box_cache = 0;
+
 /* Each row is delta to be added to center point to obtain specific corner.
  * They must be multiplied by corresponding box's dimensions.
  */
@@ -94,6 +97,7 @@ void box_copy(Box * dst, const Box * src)
 {
     box_init(dst, src->center, src->ex, src->ey, src->ez, 
                   src->dims[0], src->dims[1], src->dims[2]);
+    dst->subdiv = src->subdiv;
 }
 
 int box_generate_random_points(

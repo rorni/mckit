@@ -82,7 +82,8 @@ int shape_test_box(
     if (shape->last_box != 0) {
         int bc = box_is_in(box, shape->last_box);
         // if it is the box already tested (bc == 0) then returns cached result;
-        // if it is inner box - then returns cached result only if it is not 0. For inner box result may be different.
+        // if it is inner box - then returns cached result only if it is not 0.
+        // For inner box result may be different.
         if (bc == 0 || bc > 0 && shape->last_box_result != BOX_CAN_INTERSECT_SHAPE)
             return shape->last_box_result;
     }
@@ -187,7 +188,7 @@ int shape_test_points(
         for (i = 0; i < n; ++i) {
             shape_test_points((shape->args.shapes)[i], npts, points, sub + i * npts);
         }
-        for (i = 0; i < npts; ++i) result[i] = op(sub, n * npts, npts);
+        for (i = 0; i < npts; ++i) result[i] = op(sub + i, n * npts, npts);
         free(sub);
     }
     return SHAPE_SUCCESS;
@@ -210,6 +211,7 @@ int shape_bounding_box(
         while (box->dims[dim] - lower > tol) {
             ratio = 0.5 * (lower + box->dims[dim]) / box->dims[dim];
             box_split(box, &box1, &box2, dim, ratio);
+            shape_reset_cache(shape);
             tl = shape_ultimate_test_box(shape, &box2, min_vol, 0);
             if (tl == -1) box_copy(box, &box1);
             else lower = box1.dims[dim];
@@ -218,6 +220,7 @@ int shape_bounding_box(
         while (box->dims[dim] - upper > tol) {
             ratio = 0.5 * (box->dims[dim] - upper) / box->dims[dim];
             box_split(box, &box1, &box2, dim, ratio);
+            shape_reset_cache(shape);
             tl = shape_ultimate_test_box(shape, &box1, min_vol, 0);
             if (tl == -1) box_copy(box, &box2);
             else upper = box2.dims[dim];
@@ -245,6 +248,19 @@ double shape_volume(
         return vol1 + vol2;
     } else {                        // Minimum volume has been reached, but shape still intersects box
         return 0.5 * box->volume;   // This is statistical decision. On average a half of the box belongs to the shape.
+    }
+}
+
+// Resets cache of shape and all objects involved.
+void shape_reset_cache(Shape * shape)
+{
+    shape->last_box = 0;
+    if (is_final(shape->opc)) {
+        shape->args.surface->last_box = 0;
+    } else if (is_composite(shape->opc)) {
+        for (int i = 0; i < shape->alen; ++i) {
+            shape_reset_cache((shape->args.shapes)[i]);
+        }
     }
 }
 

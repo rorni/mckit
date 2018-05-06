@@ -90,12 +90,14 @@ static PyObject * boxobj_getcorners(BoxObject * self, void * closure);
 static PyObject * boxobj_getvolume(BoxObject * self, void * closure);
 static PyObject * boxobj_getbounds(BoxObject * self, void * closure);
 static PyObject * boxobj_getcenter(BoxObject * self, void * closure);
+static PyObject * boxobj_getdims(BoxObject * self, void * closure);
 
 static PyGetSetDef boxobj_getsetters[] = {
         {"corners", (getter) boxobj_getcorners, NULL, "Box's corners", NULL},
         {"volume",  (getter) boxobj_getvolume,  NULL, "Box's volume",  NULL},
         {"bounds",  (getter) boxobj_getbounds,  NULL, "Box's bounds",  NULL},
         {"center",  (getter) boxobj_getcenter,  NULL, "Box's center",  NULL},
+        {"dimensions", (getter) boxobj_getdims, NULL, "Box's dimensions", NULL},
         {NULL}
 };
 
@@ -296,6 +298,15 @@ static PyObject * boxobj_getcenter(BoxObject * self, void * closure)
     return center;
 }
 
+static PyObject * boxobj_getdims(BoxObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * dimensions = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    int i;
+    double * data = (double *) PyArray_DATA(dimensions);
+    for (i = 0; i < NDIM; ++i) data[i] = self->box.dims[i];
+    return dimensions;
+}
 
 // ========================================================================================== //
 // ========================== Surface wrappers ============================================== //
@@ -372,6 +383,7 @@ surfobj_test_box(SurfaceObject * self, PyObject * box)
         return NULL;
     }
 
+    self->surf.last_box = 0;
     int result = surface_test_box(&self->surf, &((BoxObject *) box)->box);
 
     return Py_BuildValue("i", result);
@@ -903,6 +915,7 @@ shapeobj_test_box(ShapeObject * self, PyObject * args, PyObject * kwds)
         return NULL;
     }
 
+    shape_reset_cache(&self->shape);
     int result = shape_test_box(&self->shape, &((BoxObject *) box)->box, collect);
     return Py_BuildValue("i", result);
 }
@@ -925,6 +938,7 @@ shapeobj_ultimate_test_box(ShapeObject * self, PyObject * args, PyObject * kwds)
         return NULL;
     }
 
+    shape_reset_cache(&self->shape);
     int result = shape_ultimate_test_box(&self->shape, &((BoxObject *) box)->box, min_vol, collect);
     return Py_BuildValue("i", result);
 }
@@ -965,6 +979,7 @@ shapeobj_bounding_box(ShapeObject * self, PyObject * args)
     BoxObject * box = (BoxObject *) boxobj_copy((BoxObject *) start_box);
     if (box == NULL) return NULL;
 
+    shape_reset_cache(&self->shape);
     int status = shape_bounding_box(&self->shape, &box->box, tol);
 
     if (status == SHAPE_SUCCESS) return (PyObject *) box;
@@ -992,6 +1007,7 @@ shapeobj_volume(ShapeObject * self, PyObject * args, PyObject * kwds)
         return NULL;
     }
 
+    shape_reset_cache(&self->shape);
     double vol = shape_volume(&self->shape, &((BoxObject *) box)->box, min_vol);
     return Py_BuildValue("d", vol);
 }

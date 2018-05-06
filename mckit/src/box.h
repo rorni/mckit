@@ -31,6 +31,8 @@ struct Box {
     VSLStreamStatePtr rng;  // Random generator. Allocated when it is needed.
 };
 
+extern char enable_box_cache;
+
 // Initializes box structure.
 int box_init(
     Box * box,              // Pointer to box structure being initialized

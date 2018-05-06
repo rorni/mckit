@@ -6,6 +6,7 @@ import numpy as np
 
 from .constants import *
 from .fmesh import Box
+from .printer import print_card
 
 from .geometry import Surface    as _Surface,  \
                       Plane      as _Plane,    \

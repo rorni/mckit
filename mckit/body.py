@@ -97,7 +97,8 @@ class Shape(_Shape):
                 if args[i].opc == opc:
                     a = args.pop(i)
                     args.extend(a.args)
-                i += 1
+                else:
+                    i += 1
 
             i = 0
             while i < len(args):

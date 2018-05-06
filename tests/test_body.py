@@ -54,8 +54,6 @@ class TestShape(unittest.TestCase):
                 self.assertEqual(c, ans)
 
     def test_intersection(self):
-        for i, g in enumerate(geoms):
-            print(i, ' : ', g)
         for i, case in enumerate(intersection_geom):
             for j, g in enumerate(case):
                 ans = create_node(g[0], g[1])
@@ -85,8 +83,9 @@ class TestShape(unittest.TestCase):
                 with self.subTest(msg='geom={0}, point={1}'.format(i, j)):
                     t = g.test_points(p)
                     self.assertEqual(t, node_test_point_ans[i][j])
-            t = g.test_points(np.array(node_points))
-            self.assertListEqual(list(t), node_test_point_ans[i])
+            with self.subTest(msg='geom={0}, point=all'.format(i)):
+                t = g.test_points(np.array(node_points))
+                self.assertListEqual(list(t), node_test_point_ans[i])
 
     def test_complexity(self):
         for i, g in enumerate(geoms):
@@ -94,42 +93,53 @@ class TestShape(unittest.TestCase):
                 c = g.complexity()
                 self.assertEqual(c, node_complexity_data[i])
 
+    @staticmethod
+    def recur(s, b):
+        if s.opc == 'C' or s.opc == 'S':
+            return '({0}{1}={2})'.format(s.opc, s.args[0].options['name'], s.args[0].test_box(b))
+        else:
+            res = []
+            for a in s.args:
+                res.append(TestShape.recur(a, b))
+            return '({0}'.format(s.opc) + ''.join(res) + '={0})'.format(s.test_box(b, False))
+
     def test_test_box(self):
         for i, b_data in enumerate(node_boxes_data):
             box = Box(b_data['base'], b_data['xdim'], b_data['ydim'], b_data['zdim'])
             for j, g in enumerate(geoms):
-                with self.subTest(msg='box {0}, geom {1}, only result'.format(i, j)):
+                with self.subTest(msg='box {0}, geom {1}'.format(i, j)):
                     r = g.test_box(box, collect=False)
-                    self.assertEqual(r, node_box_ans[i][j][0])
+                    self.assertEqual(r, node_box_ans[i][j])
 
-    @unittest.skip
+    # @unittest.skip
     def test_bounding_box(self):
-        base = [-10, -10, -10]
+        base = [0, 0, 0]
         dims = [30, 30, 30]
-        gb = Box(base, [dims[0], 0, 0], [0, dims[1], 0], [0, 0, dims[2]])
+        gb = Box(base, dims[0], dims[1], dims[2])
         tol = 0.2
         for i, (ag, limits) in enumerate(zip(geoms, node_bounding_box)):
             with self.subTest(i=i):
-                bb = ag.bounding_box(box=gb, tol=tol)
+                bb = ag.bounding_box(gb, tol)
                 for j in range(3):
                     if limits[j][0] is None:
                         limits[j][0] = base[j]
                     if limits[j][1] is None:
                         limits[j][1] = base[j] + dims[j]
-                    self.assertLessEqual(bb.base[j], limits[j][0])
-                    self.assertGreaterEqual(bb.base[j], limits[j][0] - tol)
-                    self.assertGreaterEqual(bb.base[j] + bb.scale[j], limits[j][1])
-                    self.assertLessEqual(bb.base[j] + bb.scale[j], limits[j][1] + tol)
+                    bbdim = 0.5 * bb.dimensions[j]
+                    self.assertLessEqual(bb.center[j] - bbdim, limits[j][0])
+                    self.assertGreaterEqual(bb.center[j] - bbdim, limits[j][0] - tol)
+                    self.assertGreaterEqual(bb.center[j] + bbdim, limits[j][1])
+                    self.assertLessEqual(bb.center[j] + bbdim, limits[j][1] + tol)
 
-    @unittest.skip
+    # @unittest.skip
     def test_volume(self):
         for i, b_data in enumerate(node_boxes_data):
-            box = Box(b_data['base'], b_data['ex'], b_data['ey'], b_data['ez'])
+            box = Box(b_data['base'], b_data['xdim'], b_data['ydim'], b_data['zdim'])
             for j, g in enumerate(geoms):
                 with self.subTest(msg='box {0}, geom {1}'.format(i, j)):
-                    v = g.volume(box, min_volume=1.e-3)
+                    v = g.volume(box, min_volume=1.e-4)
                     v_ans = node_volume[i][j]
-                    self.assertAlmostEqual(v, v_ans, delta=v_ans * 0.001)
+                    self.assertAlmostEqual(v, v_ans, delta=v_ans * 0.01)
 
     def test_get_surface(self):
         for i, g in enumerate(geoms):

@@ -100,6 +100,9 @@ double shape_volume(
 // Resets collected statistics or initializes statistics storage
 void shape_reset_stat(Shape * shape);
 
+// Resets cache of shape and all objects involved.
+void shape_reset_cache(Shape * shape);
+
 // Collects statistics about shapes.
 void shape_collect_statistics(
         Shape * shape,          // Shape
