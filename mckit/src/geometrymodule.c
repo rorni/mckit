@@ -866,7 +866,7 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
         PyObject * item;
         Shape ** operands = (Shape **) malloc(alen * sizeof(Shape *));
         for (i = 0; i < alen; ++i) {
-            item = PySequence_GetItem(args, i + 1);
+            item = PyTuple_GetItem(args, i + 1);
             if (PyObject_TypeCheck(item, &ShapeType)) {
                 operands[i] = (Shape *) &((ShapeObject *) item)->shape;
                 Py_INCREF(item);

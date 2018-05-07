@@ -316,7 +316,7 @@ def from_polish_notation(polish):
         The geometry represented by Shape instance.
     """
     operands = []
-    for op in polish:
+    for i, op in enumerate(polish):
         if isinstance(op, Surface):
             operands.append(Shape('S', op))
         elif op == 'C':
@@ -355,6 +355,8 @@ class Body(Shape):
     def __init__(self, geometry, **options):
         if isinstance(geometry, list):
             geometry = from_polish_notation(geometry)
+        elif not isinstance(geometry, Shape):
+            raise TypeError("Geometry list or Shape is expected.")
         Shape.__init__(self, geometry.opc, *geometry.args)
         self._options = dict(options)
 

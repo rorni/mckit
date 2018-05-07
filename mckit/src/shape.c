@@ -65,7 +65,11 @@ void shape_dealloc(Shape * shape)
 {
     if (is_composite(shape->opc)) free(shape->args.shapes);
     if (shape->stats != NULL) {
-        shape_reset_stat(shape);
+        StatUnit * s;
+        while ((s = rbtree_pop(shape->stats, NULL)) != NULL) {
+            free(s->arr);
+            free(s);
+        }
         rbtree_free(shape->stats);
     }
 }
@@ -273,9 +277,10 @@ void shape_reset_stat(Shape * shape)
         free(s);
     }
     shape->last_box = 0;
-    if (is_composite(shape->opc)) {
+    if (is_composite(shape->opc) && shape->args.shapes != NULL) {
         for (int i = 0; i < shape->alen; ++i) {
-            shape_reset_stat(shape->args.shapes[i]);
+            if (shape->args.shapes[i] != NULL)
+                shape_reset_stat(shape->args.shapes[i]);
         }
     }
 }
