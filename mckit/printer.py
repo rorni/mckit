@@ -2,6 +2,11 @@
 import warnings
 
 
+MCNP_FORMATS = {
+    'importance': '{0:.3f}'
+}
+
+
 def print_card(card, offset=8, maxcol=80, sep='\n'):
     """Produce string in MCNP card format.
 
@@ -41,8 +46,29 @@ def print_card(card, offset=8, maxcol=80, sep='\n'):
                 i += 1
                 if i == len(card):
                     words.pop()
-                    break
+                    return ''.join(words)
         words.append(card[i])
         length += len(card[i])
         i += 1
     return ''.join(words)
+
+
+def print_option(option, value):
+    name = option[:3]
+    par = option[3:]
+    if name == 'IMP' and (par == 'N' or par == 'P' or par == 'E'):
+        return ['IMP:{0}={1}'.format(par, MCNP_FORMATS['importance'].format(value))]
+    elif option == 'U':
+        return ['U={0}'.format(value.name)]
+    elif option == 'FILL':
+        universe = value
+        return ['FILL={0}'.format(universe.name)]
+    else:
+        raise ValueError("Incorrect option name: {0}".format(option))
+
+
+CELL_OPTION_GROUPS = (
+    ('IMPN', 'IMPP', 'IMPE'),   # Importance options
+    ('TRCL',),  # Transformation options
+    ('U', 'FILL')  # Universe and fill options
+)

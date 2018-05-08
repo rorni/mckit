@@ -74,6 +74,8 @@ void shape_dealloc(Shape * shape)
     }
 }
 
+double GV;
+
 // Tests box location with respect to the shape.
 // Returns BOX_INSIDE_SHAPE | BOX_CAN_INTERSECT_SHAPE | BOX_OUTSIDE_SHAPE
 //
@@ -97,11 +99,12 @@ int shape_test_box(
         char already = (box->subdiv == (shape->args.surface)->last_box);
         result = surface_test_box(shape->args.surface, box);
         if (shape->opc == COMPLEMENT) result = geom_complement(result);
-        if (collect > 0 && result == 0 && !already) ++zero_surfs;
+        /*if (collect > 0 && result == 0 && !already) ++zero_surfs;
         else if (collect < 0 && result == 0) {
             if (zero_surfs == 1) result = 1;
             else result = -1;
-        }
+        }*/
+        if (collect != 0 && result == 0 && box->volume < GV) result = -1;
     } else if (shape->opc == UNIVERSE) {
         result = BOX_INSIDE_SHAPE;
     } else if (shape->opc == EMPTY) {
@@ -147,8 +150,9 @@ int shape_ultimate_test_box(
         char collect            // Whether to collect statistics about results.
 )
 {
-    if (collect != 0 && (box->volume <= min_vol || zero_surfs == 1)) collect = -1;
-    else zero_surfs = 0;
+    GV = min_vol;
+    //if (collect != 0 && (box->volume <= min_vol || zero_surfs == 1)) collect = -1;
+    //else zero_surfs = 0;
     int result = shape_test_box(shape, box, collect);
     if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
         Box box1, box2;

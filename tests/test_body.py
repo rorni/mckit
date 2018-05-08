@@ -244,10 +244,10 @@ class TestBody(unittest.TestCase):
 #                 print(str(cell), '->', str(ans_geom), '->', len(cell.terms), '->', len(ans_geom.terms))
 #                 self.assertSetEqual(cell.terms, ans_geom.terms)
 #
-    @unittest.skip
+
     def test_simplify(self):
         for i, ag in enumerate(geoms):
-            cell = Body(ag)
+            cell = Body(ag, name=i+10)
             pol_geom = []
             for x in simple_geoms[i]:
                 if isinstance(x, int):
@@ -255,11 +255,15 @@ class TestBody(unittest.TestCase):
                 else:
                     pol_geom.append(x)
             with self.subTest(i=i):
-                s = cell.simplify(min_volume=0.1, box=Box([-10, -10, -10], [26, 0, 0], [0, 20, 0], [0, 0, 20]))
+                s = cell.simplify(min_volume=0.001, box=Box([3, 0, 0], 26, 20, 20))
                 # print(i, len(s))
                 # for ss in s:
                 #     print(str(ss))
-                ans = Body(pol_geom)
+                ans = Body(pol_geom, name=i+20)
+                if ans != s:
+                    print(cell, '\n======')
+                    print(s, '\n---------')
+                    print(ans)
                 self.assertEqual(ans, s)
 
 

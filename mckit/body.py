@@ -6,7 +6,7 @@ import numpy as np
 from .geometry import Shape as _Shape
 from .surface import Surface
 from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
-from .printer import print_card
+from .printer import print_card, CELL_OPTION_GROUPS, print_option
 
 
 class Shape(_Shape):
@@ -220,6 +220,10 @@ class Shape(_Shape):
         else:
             return set()
 
+    def is_empty(self):
+        """Checks if the shape represents an empty set."""
+        return self.opc == 'E'
+
     @staticmethod
     def _verify_opc(opc, *args):
         """Checks if such argument combination is valid."""
@@ -241,7 +245,6 @@ class Shape(_Shape):
         node_cases = []
         complexities = []
         stat = self.get_stat_table()
-        print(stat)
         if self.opc == 'I':
             val = -1
         elif self.opc == 'U':
@@ -256,7 +259,6 @@ class Shape(_Shape):
             if self.opc == 'U':
                 return [Shape('R')]
         arg_results = np.delete(stat, drop_index, axis=0)
-        #print(arg_results)
         cases = self.find_coverages(arg_results, value=val)
         final_cases = set(tuple(c) for c in cases)
         if len(final_cases) == 0:
@@ -294,7 +296,6 @@ class Shape(_Shape):
                 else:
                     sub_cases = Shape.find_coverages(reminder, value=value)
                     for s in sub_cases:
-                        s = list(s)
                         s.append(j)
                 cases.extend(sub_cases)
         for c in cases:
@@ -376,7 +377,20 @@ class Body(Shape):
         text.extend(Shape._get_words(self, None))
         text.append('\n')
         # insert options printing
+        text.extend(self._options_list())
         return print_card(text)
+
+    def _options_list(self):
+        """Generates a list of option words. For __str__ method."""
+        text = []
+        for opt_group in CELL_OPTION_GROUPS:
+            for key in opt_group:
+                if key in self._options.keys():
+                    text.extend(print_option(key, self._options[key]))
+                    text.append(' ')
+            text.append('\n')
+        return text
+
 
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
