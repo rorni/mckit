@@ -12,8 +12,6 @@
 
 #define geom_complement(arg) (-1 * (arg))
 
-static int zero_surfs = 0;
-
 char geom_intersection(char * args, size_t n, size_t inc);
 char geom_union(char * args, size_t n, size_t inc);
 
@@ -74,15 +72,14 @@ void shape_dealloc(Shape * shape)
     }
 }
 
-double GV;
-
 // Tests box location with respect to the shape.
 // Returns BOX_INSIDE_SHAPE | BOX_CAN_INTERSECT_SHAPE | BOX_OUTSIDE_SHAPE
 //
 int shape_test_box(
         Shape * shape,          // Shape to test.
         const Box * box,        // Box to test.
-        char collect            // Collect statistics about results.
+        char collect,           // Collect statistics about results.
+        int * zero_surfaces     // The number of surfaces that was tested to be zero.
 )
 {
     if (shape->last_box != 0) {
@@ -104,7 +101,8 @@ int shape_test_box(
             if (zero_surfs == 1) result = 1;
             else result = -1;
         }*/
-        if (collect != 0 && result == 0 && box->volume < GV) result = -1;
+        // if (collect != 0 && result == 0 && box->volume < GV) result = -1;
+        if (collect > 0 && result == 0 && !already) ++(*zero_surfaces);
     } else if (shape->opc == UNIVERSE) {
         result = BOX_INSIDE_SHAPE;
     } else if (shape->opc == EMPTY) {
@@ -140,6 +138,19 @@ int shape_test_box(
     return result;
 }
 
+int set_zero_surface_pointers(Shape * shape, int n, Surface ** zs)
+{
+    if (is_final(shape->opc)) {
+        zs[n] = shape->args.surface;
+        ++n;
+    } else if (is_composite(shape->opc)) {
+        for (int i = 0; i < shape->alen; ++i) {
+            n += set_zero_surface_pointers(shape->args.surfaces[i], n, zs);
+        }
+    }
+    return n;
+}
+
 // Tests box location with respect to the shape. It tries to find out
 // if the box really intersects the shape with desired accuracy.
 // Returns BOX_INSIDE_SHAPE | BOX_CAN_INTERSECT_SHAPE | BOX_OUTSIDE_SHAPE
@@ -150,10 +161,24 @@ int shape_ultimate_test_box(
         char collect            // Whether to collect statistics about results.
 )
 {
-    GV = min_vol;
     //if (collect != 0 && (box->volume <= min_vol || zero_surfs == 1)) collect = -1;
     //else zero_surfs = 0;
-    int result = shape_test_box(shape, box, collect);
+    int zero_surfaces = 0;
+    int result = shape_test_box(shape, box, collect, &zero_surfaces);
+    if (collect > 0)
+        if (zero_surfaces == 1 || box->volume < min_vol) {
+            // vary all zero surfaces that remain to be -1 and +1
+            Surface *zs[zero_surfaces];
+            set_zero_surface_pointers(shape, 0, zs);
+            int n = 1 << zero_surfaces;
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < zero_surfaces; ++j) {
+                    zs[j]->last_box_result = ((i >> j) & 1) * 2 - 1;
+                }
+                shape_test_box(shape, box, collect, 0);
+            }
+        }
+    }
     if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
         Box box1, box2;
         box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);

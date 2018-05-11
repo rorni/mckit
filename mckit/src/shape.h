@@ -57,7 +57,8 @@ void shape_dealloc(Shape * shape);
 int shape_test_box(
         Shape * shape,          // Shape to test.
         const Box * box,        // Box to test.
-        char collect            // Collect statistics about results.
+        char collect,           // Collect statistics about results.
+        int * zero_surfaces     // The number of surfaces that was tested to be zero.
 );
 
 // Tests box location with respect to the shape. It tries to find out
