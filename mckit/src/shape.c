@@ -87,8 +87,14 @@ int shape_test_box(
         // if it is the box already tested (bc == 0) then returns cached result;
         // if it is inner box - then returns cached result only if it is not 0.
         // For inner box result may be different.
-        if (bc == 0 || bc > 0 && shape->last_box_result != BOX_CAN_INTERSECT_SHAPE)
-            return shape->last_box_result;
+
+        // It is inner box and test result is not 0: -1 or +1 i.e. won't change.
+        char use_cache = (bc > 0 && shape->last_box_result != BOX_CAN_INTERSECT_SHAPE);
+        // If collect < 0 - it means that we try to test different
+        // combinations of the remaining surfaces. In this case caching is not
+        // used if we test the same box again.
+        use_cache ||= (bc == 0 && collect >= 0);
+        if (use_cache) return shape->last_box_result;
     }
 
     int result;
@@ -96,12 +102,6 @@ int shape_test_box(
         char already = (box->subdiv == (shape->args.surface)->last_box);
         result = surface_test_box(shape->args.surface, box);
         if (shape->opc == COMPLEMENT) result = geom_complement(result);
-        /*if (collect > 0 && result == 0 && !already) ++zero_surfs;
-        else if (collect < 0 && result == 0) {
-            if (zero_surfs == 1) result = 1;
-            else result = -1;
-        }*/
-        // if (collect != 0 && result == 0 && box->volume < GV) result = -1;
         if (collect > 0 && result == 0 && !already) ++(*zero_surfaces);
     } else if (shape->opc == UNIVERSE) {
         result = BOX_INSIDE_SHAPE;
@@ -111,7 +111,7 @@ int shape_test_box(
         char * sub = malloc(shape->alen * sizeof(char));
 
         for (int i = 0; i < shape->alen; ++i) {
-            sub[i] = shape_test_box((shape->args.shapes)[i], box, collect);
+            sub[i] = shape_test_box((shape->args.shapes)[i], box, collect, zero_surfaces);
         }
 
         if (shape->opc == INTERSECTION) {
@@ -165,7 +165,14 @@ int shape_ultimate_test_box(
     //else zero_surfs = 0;
     int zero_surfaces = 0;
     int result = shape_test_box(shape, box, collect, &zero_surfaces);
-    if (collect > 0)
+    if (collect > 0 && result == BOX_CAN_INTERSECT_SHAPE)
+        // If collect is on and result is 0 we have the following possibilities:
+        // 1. only one surface has test_box result 0. Then this surface is
+        //    essential for the shape. Further volume division is unnecessary.
+        // 2. minimal volume is already reached. Then remaining surfaces
+        //    somehow describe the shape and they are important.
+        // In those cases we test all possible test_box results of the
+        // remaining surfaces and collect statistics.
         if (zero_surfaces == 1 || box->volume < min_vol) {
             // vary all zero surfaces that remain to be -1 and +1
             Surface *zs[zero_surfaces];
@@ -175,11 +182,10 @@ int shape_ultimate_test_box(
                 for (int j = 0; j < zero_surfaces; ++j) {
                     zs[j]->last_box_result = ((i >> j) & 1) * 2 - 1;
                 }
-                shape_test_box(shape, box, collect, 0);
+                shape_test_box(shape, box, -collect, NULL);
             }
         }
-    }
-    if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
+    } else if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
         Box box1, box2;
         box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);
         int result1 = shape_ultimate_test_box(shape, &box1, min_vol, collect);
@@ -270,7 +276,7 @@ double shape_volume(
                                 // of box splitting finishes.
 )
 {
-    int result = shape_test_box(shape, box, 0);
+    int result = shape_test_box(shape, box, 0, NULL);
     if (result == BOX_INSIDE_SHAPE) return box->volume;   // Box totally belongs to the shape
     if (result == BOX_OUTSIDE_SHAPE) return 0;             // Box don't belong to the shape
     if (box->volume > min_vol) {            // Shape intersects the box

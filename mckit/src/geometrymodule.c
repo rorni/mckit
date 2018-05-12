@@ -904,9 +904,9 @@ shapeobj_test_box(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
     PyObject * box = NULL;
     char collect = 0;
-    static char * kwlist[] = {"box", "collect", NULL};
+    static char * kwlist[] = {"box", NULL};
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "Ob", kwlist, &box, &collect)) return NULL;
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &box)) return NULL;
 
     if (box == NULL) box = GET_NAME(GLOBAL_BOX);
 
@@ -916,7 +916,7 @@ shapeobj_test_box(ShapeObject * self, PyObject * args, PyObject * kwds)
     }
 
     shape_reset_cache(&self->shape);
-    int result = shape_test_box(&self->shape, &((BoxObject *) box)->box, collect);
+    int result = shape_test_box(&self->shape, &((BoxObject *) box)->box, 0, NULL);
     return Py_BuildValue("i", result);
 }
 
