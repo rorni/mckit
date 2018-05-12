@@ -72,6 +72,8 @@ void shape_dealloc(Shape * shape)
     }
 }
 
+#include <stdio.h>
+
 // Tests box location with respect to the shape.
 // Returns BOX_INSIDE_SHAPE | BOX_CAN_INTERSECT_SHAPE | BOX_OUTSIDE_SHAPE
 //
@@ -93,13 +95,14 @@ int shape_test_box(
         // If collect < 0 - it means that we try to test different
         // combinations of the remaining surfaces. In this case caching is not
         // used if we test the same box again.
-        use_cache ||= (bc == 0 && collect >= 0);
+        use_cache = use_cache || (bc == 0 && collect >= 0);
         if (use_cache) return shape->last_box_result;
     }
 
     int result;
     if (is_final(shape->opc)) {
         char already = (box->subdiv == (shape->args.surface)->last_box);
+        // printf("subdiv=%d, last_box=%d, already=%d\n", box->subdiv, (shape->args.surface)->last_box, already);
         result = surface_test_box(shape->args.surface, box);
         if (shape->opc == COMPLEMENT) result = geom_complement(result);
         if (collect > 0 && result == 0 && !already) ++(*zero_surfaces);
@@ -133,19 +136,32 @@ int shape_test_box(
         } else free(sub);
     }
     // Cache test result;
-    shape->last_box = box->subdiv;
-    shape->last_box_result = result;
+    if (collect >= 0) {
+        shape->last_box = box->subdiv;
+        shape->last_box_result = result;
+    }
     return result;
 }
 
-int set_zero_surface_pointers(Shape * shape, int n, Surface ** zs)
+
+int set_zero_surface_pointers(Shape * shape, int n, Surface ** zs, uint64_t subdiv)
 {
     if (is_final(shape->opc)) {
-        zs[n] = shape->args.surface;
-        ++n;
+        // printf("n=%d, test=%d, box=%d, surf=%p\n", n, shape->args.surface->last_box_result, shape->args.surface->last_box, shape->args.surface);
+        if (shape->args.surface->last_box == subdiv && shape->args.surface->last_box_result == 0) {    
+            char already = 0;
+            for (int i = 0; i < n; ++i) {
+                if (zs[i] == shape->args.surface) {
+                    already = 1;
+           //         printf("already\n");
+                    break;
+                }
+            }
+            if (!already) zs[n++] = shape->args.surface;
+        }
     } else if (is_composite(shape->opc)) {
         for (int i = 0; i < shape->alen; ++i) {
-            n += set_zero_surface_pointers(shape->args.surfaces[i], n, zs);
+            n = set_zero_surface_pointers(shape->args.shapes[i], n, zs, subdiv);
         }
     }
     return n;
@@ -165,7 +181,7 @@ int shape_ultimate_test_box(
     //else zero_surfs = 0;
     int zero_surfaces = 0;
     int result = shape_test_box(shape, box, collect, &zero_surfaces);
-    if (collect > 0 && result == BOX_CAN_INTERSECT_SHAPE)
+    if (collect > 0 && result == BOX_CAN_INTERSECT_SHAPE) {
         // If collect is on and result is 0 we have the following possibilities:
         // 1. only one surface has test_box result 0. Then this surface is
         //    essential for the shape. Further volume division is unnecessary.
@@ -174,9 +190,13 @@ int shape_ultimate_test_box(
         // In those cases we test all possible test_box results of the
         // remaining surfaces and collect statistics.
         if (zero_surfaces == 1 || box->volume < min_vol) {
+            //printf("subdiv=%d, zero_surfaces=%d\n", box->subdiv, zero_surfaces);
             // vary all zero surfaces that remain to be -1 and +1
-            Surface *zs[zero_surfaces];
-            set_zero_surface_pointers(shape, 0, zs);
+            Surface **zs = (Surface **) malloc(zero_surfaces * sizeof(Surface*));
+            for (int i = 0; i < zero_surfaces; ++i) zs[i] = NULL;
+            
+            int k = set_zero_surface_pointers(shape, 0, zs, box->subdiv);
+            // printf("k=%d\n", k);
             int n = 1 << zero_surfaces;
             for (int i = 0; i < n; ++i) {
                 for (int j = 0; j < zero_surfaces; ++j) {
@@ -184,8 +204,11 @@ int shape_ultimate_test_box(
                 }
                 shape_test_box(shape, box, -collect, NULL);
             }
+            free(zs);
+            return result;
         }
-    } else if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
+    }
+    if (result == BOX_CAN_INTERSECT_SHAPE && box->volume > min_vol) {
         Box box1, box2;
         box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);
         int result1 = shape_ultimate_test_box(shape, &box1, min_vol, collect);
@@ -327,7 +350,6 @@ void shape_collect_statistics(
         double min_vol          // minimal volume, when splitting process stops.
 )
 {
-    zero_surfs = 0;
     shape_reset_stat(shape);
     shape_ultimate_test_box(shape, box, min_vol, 1);
 }

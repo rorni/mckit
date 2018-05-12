@@ -108,7 +108,7 @@ class TestShape(unittest.TestCase):
             box = Box(b_data['base'], b_data['xdim'], b_data['ydim'], b_data['zdim'])
             for j, g in enumerate(geoms):
                 with self.subTest(msg='box {0}, geom {1}'.format(i, j)):
-                    r = g.test_box(box, collect=False)
+                    r = g.test_box(box)
                     self.assertEqual(r, node_box_ans[i][j])
 
     # @unittest.skip
