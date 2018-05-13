@@ -124,7 +124,7 @@ double torus_func(
         if (sq > 1.e-100) add = data->radius / sq;
         cblas_dcopy(NDIM, p, 1, grad, 1);
         cblas_daxpy(NDIM, -pn, data->axis, 1, grad, 1);
-        cblas_dscal(NDIM, (1 + add) / pow(data->b, 2), grad, 1);
+        cblas_dscal(NDIM, (1 - add) / pow(data->b, 2), grad, 1);
         cblas_daxpy(NDIM, pn / pow(data->a, 2), data->axis, 1, grad, 1);
         cblas_dscal(NDIM, 2, grad, 1);
     }
