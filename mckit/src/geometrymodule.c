@@ -437,9 +437,14 @@ coneobj_init(ConeObject * self, PyObject * args, PyObject * kwds)
 {
     PyObject *apex, *axis;
     double ta;
-    if (! PyArg_ParseTuple(args, "O&O&d", convert_to_dbl_vec, &apex, convert_to_dbl_vec, &axis, &ta)) return -1;
+    int sheet = 0;
+    if (! PyArg_ParseTuple(args, "O&O&di", convert_to_dbl_vec, &apex,
+                           convert_to_dbl_vec, &axis, &ta, &sheet))
+        return -1;
 
-    cone_init(&self->surf, (double *) PyArray_DATA(apex), (double *) PyArray_DATA(axis), ta * ta);
+    cone_init(&self->surf, (double *) PyArray_DATA(apex),
+                           (double *) PyArray_DATA(axis),
+                           ta * ta, sheet);
     Py_DECREF(apex);
     Py_DECREF(axis);
     return 0;
@@ -622,10 +627,17 @@ coneobj_getta(ConeObject * self, void * closure)
     return Py_BuildValue("d", self->surf.ta);
 }
 
+static PyObject *
+coneobj_getsheet(ConeObject * self, void * closure)
+{
+    return Py_BuildValue("i", self->surf.sheet);
+}
+
 static PyGetSetDef coneobj_getset[] = {
         {"_apex", (getter) coneobj_getapex, NULL, "Cone's apex", NULL},
         {"_axis", (getter) coneobj_getaxis, NULL, "Cone's axis", NULL},
         {"_t2", (getter) coneobj_getta, NULL, "Cone's angle tangent", NULL},
+        {"_sheet", (getter) coneobj_getsheet, NULL, "Cone's sheet", NULL},
         {NULL}
 };
 
@@ -858,7 +870,7 @@ shapeobj_init(ShapeObject * self, PyObject * args, PyObject * kwds)
     } else if (opc == UNIVERSE || opc == EMPTY) {
         status = shape_init(&self->shape, opc, 0, NULL);
     } else {
-        size_t i, j, alen = arglen - 1;
+        size_t i, alen = arglen - 1;
         if (alen <= 1) {
             PyErr_SetString(PyExc_ValueError, "More than one shape object is expected");
             return -1;

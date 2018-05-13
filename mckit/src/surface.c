@@ -78,6 +78,7 @@ double cone_func(
     cblas_dcopy(NDIM, x, 1, a, 1);
     cblas_daxpy(NDIM, -1, data->apex, 1, a, 1);
     double an = cblas_ddot(NDIM, a, 1, data->axis, 1);
+    if (data->sheet != 0 && data->sheet * an < 0) an = 0;
     if (grad != NULL) {
         cblas_dcopy(NDIM, a, 1, grad, 1);
         cblas_daxpy(NDIM, -an * (1 + data->ta), data->axis, 1, grad, 1);
@@ -222,7 +223,8 @@ int cone_init(
     Cone * surf,
     const double * apex,
     const double * axis,
-    double ta
+    double ta,
+    int sheet
 )
 {
     if (ta <= 0) return SURFACE_FAILURE;
@@ -230,6 +232,7 @@ int cone_init(
     surface_INIT((Surface *) surf);
     surf->base.type = CONE;
     surf->ta = ta;
+    surf->sheet = sheet;
     for (i = 0; i < NDIM; ++i) {
         surf->apex[i] = apex[i];
         surf->axis[i] = axis[i];

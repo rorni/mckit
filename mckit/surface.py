@@ -5,17 +5,14 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from .constants import *
-from .fmesh import Box
-from .printer import print_card
-
-from .geometry import Surface    as _Surface,  \
-                      Plane      as _Plane,    \
+from .geometry import Plane      as _Plane,    \
                       Sphere     as _Sphere,   \
                       Cone       as _Cone,     \
                       Cylinder   as _Cylinder, \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
                       GLOBAL_BOX, ORIGIN, EX, EY, EZ
+
 
 def create_surface(kind, *params, **options):
     """Creates new surface.
@@ -81,10 +78,12 @@ def create_surface(kind, *params, **options):
     elif kind[0] == 'K':
         if kind[1] == '/':
             r0 = np.array(params[:3])
+            ta = np.sqrt(params[3])
         else:
             r0 = params[0] * axis
-        ta = np.sqrt(params[-1])
-        return Cone(r0, axis, ta, **options)
+            ta = np.sqrt(params[1])
+        sheet = 0 if len(params) % 2 == 0 else params[-1]
+        return Cone(r0, axis, ta, sheet, **options)
     # ---------- GQ -----------------
     elif kind == 'GQ':
         A, B, C, D, E, F, G, H, J, k = params
@@ -340,19 +339,21 @@ class Cone(Surface, _Cone):
         Cone's axis.
     ta : float
         Tangent of angle between axis and generatrix.
+    sheet : int
+        Cone's sheet.
     options : dict
         Dictionary of surface's options. Possible values:
             transform = tr - transformation to be applied to the cone being
                              created. Transformation instance.
     """
-    def __init__(self, apex, axis, ta, **options):
+    def __init__(self, apex, axis, ta, sheet=0, **options):
         if 'transform' in options.keys():
             tr = options.pop('transform')
             apex = tr.apply2point(apex)
             axis = tr.apply2vector(axis)
         axis = axis / np.linalg.norm(axis)
         Surface.__init__(self, **options)
-        _Cone.__init__(self, apex, axis, ta)
+        _Cone.__init__(self, apex, axis, ta, sheet)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison

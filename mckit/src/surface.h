@@ -50,6 +50,7 @@ struct Cone {
     double apex[NDIM];
     double axis[NDIM];
     double ta;
+    int sheet;
 };
 
 struct Torus {
@@ -95,7 +96,8 @@ int cone_init(
     Cone * surf,
     const double * apex,
     const double * axis,
-    double ta
+    double ta,
+    int sheet
 );
 
 int torus_init(

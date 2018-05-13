@@ -3,10 +3,10 @@ from itertools import product
 
 import numpy as np
 
-from .geometry import Shape as _Shape
-from .surface import Surface
 from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
+from .geometry import Shape as _Shape
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
+from .surface import Surface
 
 
 class Shape(_Shape):
@@ -454,11 +454,11 @@ class Body(Shape):
         simple_cell : Cell
             Simplified version of this cell.
         """
-        print('Collect stage...')
+        # print('Collect stage...')
         self.collect_statistics(box, min_volume)
-        print('finding optimal solution...')
+        # print('finding optimal solution...')
         variants = self.get_simplest(trim_size)
-        print(len(variants))
+        # print(len(variants))
         return Body(variants[0], **self._options)
 
     def populate(self, universe=None):
