@@ -98,20 +98,14 @@ SKIP = r'[=, ]'
 t_ANY_ignore = SKIP
 
 
-# def t_eof(t):
-#    t.type = 'BLANK_LINE'
-#    t.value = 'eof'
-#    return t
-
-
 def t_title(t):
     r""".+"""
     t.lexer.section_index = 0
-    lexer.lineno = 1
+    mcnp_input_lexer.lineno = 1
     t.lineno = 1
     t.lexer.last_pos = 1
     t.lexer.begin('cells')
-    # t.lexer.push_state('continue')
+    # t.mcnp_input_lexer.push_state('continue')
     return t
 
 
@@ -250,7 +244,7 @@ def t_continue_cells_ckw_surfs_data_newline_skip(t):
     t.lexer.last_pos = t.lexer.lexpos
 
 
-lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
+mcnp_input_lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
 
 
 def p_model(p):
@@ -633,13 +627,13 @@ def p_material_option(p):
     p[0] = p[1], p[2]
 
 
-parser = yacc.yacc()
+mcnp_input_parser = yacc.yacc(tabmodule="mcnp_input_tab")
 
 # with open('..\\tests\\parser_test_data\\lex2.txt') as f:
 #     text = f.read()
-#     lexer.input(text.upper())
+#     mcnp_input_lexer.input(text.upper())
 #     while True:
-#         tok = lexer.token()
+#         tok = mcnp_input_lexer.token()
 #         print(tok)
-#     result = parser.parse(text.upper())
+#     result = mcnp_input_parser.parse(text.upper())
 #     print(result)

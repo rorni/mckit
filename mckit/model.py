@@ -6,7 +6,7 @@ from copy import deepcopy
 
 import numpy as np
 
-from .parser import lexer, parser
+from .mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
 from .surface import create_surface, Surface
 from .body import Body
 from .universe import Universe
@@ -30,8 +30,8 @@ def read_mcnp(filename):
     """
     with open(filename) as f:
         text = f.read()
-    lexer.begin('INITIAL')
-    title, cells, surfaces, data = parser.parse(text)
+    mcnp_input_lexer.begin('INITIAL')
+    title, cells, surfaces, data = mcnp_input_parser.parse(text)
     return Model(title, cells, surfaces, data)
 
 

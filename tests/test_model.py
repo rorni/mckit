@@ -12,12 +12,12 @@ cases = {}
 
 
 def setUpModule():
-    from mckit.parser import lexer, parser
+    from mckit.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
     for case in case_names:
         with open('tests/model_test_data/{0}.txt'.format(case)) as f:
             text = f.read()
-            lexer.begin('INITIAL')
-            cases[case] = parser.parse(text)
+            mcnp_input_lexer.begin('INITIAL')
+            cases[case] = mcnp_input_parser.parse(text)
 
 
 class TestModel(unittest.TestCase):
