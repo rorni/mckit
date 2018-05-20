@@ -31,7 +31,7 @@ def read_mcnp(filename):
     with open(filename) as f:
         text = f.read()
     mcnp_input_lexer.begin('INITIAL')
-    title, cells, surfaces, data = mcnp_input_parser.parse(text)
+    title, cells, surfaces, data = mcnp_input_parser.parse(text, tracking=True)
     return Model(title, cells, surfaces, data)
 
 
@@ -427,8 +427,8 @@ def _get_transformation_indices(cells, surfaces):
                 trans.add(utr)
 
     for surf in surfaces.values():
-        if 'transform' in surf[2].keys():
-            trans.add(surf[2]['transform'])
+        if 'transform' in surf.keys():
+            trans.add(surf['transform'])
 
     return trans
 
@@ -475,25 +475,25 @@ class MCPrinter:
         """
         cards = [model.title, 'C cell section']
         for i, cell_obj in model.cells.items():
-            cards.append(self.print_card(self.cell_print(cell_obj, name=i)))
+            cards.append(self.print_card(self.cell_print(cell_obj)))
 
         cards.append('\nC surface section')
         for i, surf_obj in model.surfaces.items():
-            cards.append(self.print_card(self.surface_print(surf_obj, name=i)))
+            cards.append(self.print_card(self.surface_print(surf_obj)))
 
         cards.append('\nC data section')
         if 'TR' in model.data.keys():
             cards.append('C transformations')
             for i, tr_obj in model.data['TR'].items():
                 cards.append(self.print_card(
-                    self.transformation_print(tr_obj, name=i))
+                    self.transformation_print(tr_obj))
                 )
 
         if 'M' in model.data.keys():
             cards.append('C materials')
             for i, mat_obj in model.data['M'].items():
                 cards.append(self.print_card(
-                    self.material_print(mat_obj, name=i))
+                    self.material_print(mat_obj))
                 )
 
         cards.append('\n')
@@ -528,21 +528,20 @@ class MCPrinter:
             length += len(w) + 1
         return ' '.join(words)
 
-    def transformation_print(self, tr_obj, name=None):
+    def transformation_print(self, tr_obj):
         """Gets array of words that describe a tr card.
         
         Parameters
         ----------
         tr_obj : dict
             Dictionary that describes transformation. 
-        name : int
-            Name of transformation.
-                    
+
         Returns
         -------
         card : list[str]
             List of words that describes transformation.
         """
+        name = tr_obj.get('name', None)
         card = []
         if name is not None:
             card.append('TR{0:d}'.format(name))
@@ -557,21 +556,20 @@ class MCPrinter:
             card.append('-1')
         return card
 
-    def material_print(self, mat_obj, name=None):
+    def material_print(self, mat_obj):
         """Gets array of words that describe material card.
         
         Parameters
         ----------
         mat_obj : dict
             Dictionary that describes material.
-        name : int
-            Name of material.
-                    
+
         Returns
         -------
         card : list[str]
             List of words that describes material.
         """
+        name = mat_obj['name']
         card = ['M{0:d}'.format(name)]
         places = int(np.ceil(np.log10(1 / self.mat_acc))) + 1
         # atomic data
@@ -589,50 +587,49 @@ class MCPrinter:
                 card.append('{0:5d}.{1}'.format(pair[0], pair[2]))
             card.append(('{0:.' + '{0}'.format(places) + 'g}').format(-pair[1]))
         # keywords
-        for key in set(mat_obj.keys()).difference({'atomic', 'wgt'}):
+        for key in set(mat_obj.keys()).difference({'atomic', 'wgt', 'name'}):
             card.append('{0}={1}'.format(key, mat_obj[key]))
         return card
 
-    def surface_print(self, surf_obj, name=None):
+    def surface_print(self, surf_obj):
         """Gets array of words that describe surface card.
         
         Parameters
         ----------
-        surf_obj : tuple
-            Tuple of surface parameters.
-        name : int
-            Name of surface.
-                    
+        surf_obj : dict
+            Dictionary of surface parameters.
+
         Returns
         -------
         card : list[str]
             List of words that describe surface.
         """
-        surf_spec, params, options = surf_obj
-        card = ['{0}{1:d}'.format(options.get('modifier', ''), name)]
-        if 'transform' in options.keys():
-            card.append('{0:d}'.format(options['transform']))
+        surf_spec = surf_obj['kind']
+        params = surf_obj['params']
+        name = surf_obj['name']
+        card = ['{0}{1:d}'.format(surf_obj.get('modifier', ''), name)]
+        if 'transform' in surf_obj.keys():
+            card.append('{0:d}'.format(surf_obj['transform']))
         card.append(surf_spec)
         places = int(np.ceil(np.log10(1 / self.surf_acc))) + 1
         for p in params:
             card.append(('{0:.' + '{0}'.format(places) + 'g}').format(p))
         return card
 
-    def cell_print(self, cell_obj, name=None):
+    def cell_print(self, cell_obj):
         """Gets array of words that describe cell card.
         
         Parameters
         ----------
         cell_obj : dict
             Dictionary of cell parameters.
-        name : int
-            Name of cell.
-                
+
         Returns
         -------
         card : list[str]
             List of words that describe cell.
         """
+        name = cell_obj['name']
         card = ['{0:d}'.format(name)]
         places = int(np.ceil(np.log10(1 / self.cell_acc))) + 1
         if 'geometry' in cell_obj.keys():

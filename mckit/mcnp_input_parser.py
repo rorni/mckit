@@ -97,6 +97,9 @@ SKIP = r'[=, ]'
 
 t_ANY_ignore = SKIP
 
+card_comments = []
+line_comments = []
+
 
 def t_title(t):
     r""".+"""
@@ -106,6 +109,8 @@ def t_title(t):
     t.lexer.last_pos = 1
     t.lexer.begin('cells')
     # t.mcnp_input_lexer.push_state('continue')
+    line_comments.clear()
+    card_comments.clear()
     return t
 
 
@@ -124,12 +129,12 @@ def t_cells_ckw_surfs_data_blank_line(t):
 
 @lex.TOKEN(LINE_COMMENT)
 def t_continue_cells_ckw_surfs_data_line_comment(t):
-    pass
+    line_comments.append(t)
 
 
 @lex.TOKEN(CARD_COMMENT)
 def t_continue_cells_ckw_surfs_data_card_comment(t):
-    pass  # return t
+    card_comments.append(t)  # return t
 
 
 def t_ANY_error(t):
@@ -260,10 +265,12 @@ def p_cell_cards(p):
                   | cell_card
     """
     if len(p) == 2:
-        p[0] = {p[1][0]: p[1][1]}
+        p[0] = {p[1]['name']: p[1]}
     elif len(p) == 4:
-        name, value = p[3]
-        p[1][name] = value
+        name = p[3]['name']
+        if name in p[1].keys():
+            raise ValueError('Duplicate cell name {0}.'.format(name))
+        p[1][name] = p[3]
         p[0] = p[1]
 
 
@@ -272,18 +279,17 @@ def p_cell_card(p):
                  | int_number cell_material expression
                  | int_number LIKE int_number BUT cell_options
     """
-    name = p[1]
     if len(p) == 6:
-        params = {'reference': p[3]}
-        params.update(p[5])
+        params = p[5]
+        params['reference'] = p[3]
     else:
-        params = {'geometry': p[3]}
+        params = p[4] if (len(p) == 5) else {}
+        params['geometry'] = p[3]
         if p[2] is not None:
             params['MAT'] = p[2][0]
             params['RHO'] = p[2][1]
-        if len(p) == 5:
-            params.update(p[4])
-    p[0] = name, params
+    params['name'] = p[1]
+    p[0] = params
 
 
 def p_cell_options(p):
@@ -412,10 +418,12 @@ def p_surface_cards(p):
                      | surface_card
     """
     if len(p) == 2:
-        p[0] = {p[1][0]: p[1][1]}
+        p[0] = {p[1]['name']: p[1]}
     elif len(p) == 4:
-        name, value = p[3]
-        p[1][name] = value
+        name = p[3]['name']
+        if name in p[1].keys():
+            raise ValueError('Duplicate surface name {0}'.format(name))
+        p[1][name] = p[3]
         p[0] = p[1]
 
 
@@ -424,20 +432,22 @@ def p_surface_card(p):
                     | '+' int_number surface_description
                     | int_number surface_description
     """
-    if len(p) == 3:
-        p[0] = p[1], p[2]
-    else:
-        p[3][2]['modifier'] = p[1]
-        p[0] = p[2], p[3]
+    n = len(p)
+    surf = p[n-1]
+    surf['name'] = p[n-2]
+    if n == 4:
+        surf['modifier'] = p[1]
+    p[0] = surf
 
 
 def p_surface_description(p):
     """surface_description : integer surface_type param_list
                            | surface_type param_list"""
-    if len(p) == 4:
-        p[0] = p[2], p[3], {'transform': p[1]}
-    else:
-        p[0] = p[1], p[2], {}
+    n = len(p)
+    descr = {'params': p[n - 1], 'kind': p[n - 2]}
+    if n == 4:
+        descr['transform'] = p[1]
+    p[0] = descr
 
 
 def p_param_list(p):
@@ -528,14 +538,12 @@ def p_transform_card(p):
     """transform_card : '*' TR int_number transform_params
                       | TR int_number transform_params
     """
-    if len(p) == 5:
-        tr = {'indegrees': True}
-        tr.update(p[4])
-        name = p[3]
-    else:
-        name = p[2]
-        tr = p[3]
-    p[0] = 'TR', {name: tr}
+    n = len(p)
+    tr = p[n-1]
+    tr['name'] = p[n-2]
+    if n == 5:
+        tr['indegrees'] = True
+    p[0] = 'TR', {tr['name']: tr}
 
 
 def p_transform_params(p):
@@ -571,6 +579,7 @@ def p_material_card(p):
     """
     if len(p) == 5:
         p[3].update(p[4])
+    p[3]['name'] = p[2]
     p[0] = 'M', {p[2]: p[3]}
 
 

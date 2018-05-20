@@ -111,7 +111,7 @@ class TestShape(unittest.TestCase):
                     r = g.test_box(box)
                     self.assertEqual(r, node_box_ans[i][j])
 
-    # @unittest.skip
+    @unittest.skip
     def test_bounding_box(self):
         base = [0, 0, 0]
         dims = [30, 30, 30]
@@ -131,7 +131,7 @@ class TestShape(unittest.TestCase):
                     self.assertGreaterEqual(bb.center[j] + bbdim, limits[j][1])
                     self.assertLessEqual(bb.center[j] + bbdim, limits[j][1] + tol)
 
-    # @unittest.skip
+    @unittest.skip
     def test_volume(self):
         for i, b_data in enumerate(node_boxes_data):
             box = Box(b_data['base'], b_data['xdim'], b_data['ydim'], b_data['zdim'])
@@ -245,6 +245,7 @@ class TestBody(unittest.TestCase):
 #                 self.assertSetEqual(cell.terms, ans_geom.terms)
 #
 
+    @unittest.skip
     def test_simplify(self):
         for i, ag in enumerate(geoms):
             cell = Body(ag, name=i+10)

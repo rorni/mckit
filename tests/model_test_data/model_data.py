@@ -96,38 +96,41 @@ read_mcnp_ans = {
         'title': 'model 1',
         'cells': {
             1: {
-                'MAT': 1, 'RHO': -1.0,
+                'MAT': 1, 'RHO': -1.0, 'name': 1,
                 'geometry': [1, 2, 'C', 'I', 3, 'I', 4, 'U']
             },
             2: {
-                'MAT': 2, 'RHO': -2.0, 'TRCL': 3,
+                'MAT': 2, 'RHO': -2.0, 'TRCL': 3, 'name': 2,
                 'geometry': [4, 5, 'I', 6, 'C', 'I', 7, 'U']
             },
             3: {
-                'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'U': 1
+                'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'U': 1, 'name': 3
             },
             4: {
-                'MAT': 3, 'RHO': -4, 'U': 1, 'geometry': [2, 4, 'I', 6, 'I']
+                'MAT': 3, 'RHO': -4, 'U': 1, 'geometry': [2, 4, 'I', 6, 'I'],
+                'name': 4
             },
             5: {
-                'geometry': [1, 3, 'C', 'I', 5, '#', 'I'], 'U': 2
+                'geometry': [1, 3, 'C', 'I', 5, '#', 'I'], 'U': 2, 'name': 5
             },
             6: {
                 'U': 2, 'TRCL': 4, 'FILL': {'universe': 1},
-                'geometry': [2, 4, 'C', 'I', 7, 'I']
+                'geometry': [2, 4, 'C', 'I', 7, 'I'], 'name': 6
             },
             7: {
                 'U': 3, 'FILL': {'universe': 4, 'transform': 3},
-                'geometry': [2, 4, '#', 'I', 6, 'I']
+                'geometry': [2, 4, '#', 'I', 6, 'I'], 'name': 7
             },
             8: {
-                'U':3, 'MAT': 4, 'RHO': -4, 'geometry': [1, 5, 'I', 7, 'C', 'I']
+                'U': 3, 'MAT': 4, 'RHO': -4, 'name': 8,
+                'geometry': [1, 5, 'I', 7, 'C', 'I']
             },
             9: {
-                'MAT': 2, 'RHO': -2, 'U': 4, 'geometry': [2, 5, 'C', 'I', 7, 'I']
+                'MAT': 2, 'RHO': -2, 'U': 4, 'name': 9,
+                'geometry': [2, 5, 'C', 'I', 7, 'I']
             },
             10: {
-                'U': 4, 'geometry': [5, 6, 'C', 'I'],
+                'U': 4, 'geometry': [5, 6, 'C', 'I'], 'name': 10,
                 'FILL': {'universe': 1, 'transform': {'translation': [7, 3, 1],
                                                       'rotation': [30, 60, 90,
                                                                    120, 30, 90,
@@ -135,49 +138,51 @@ read_mcnp_ans = {
                                                       'indegrees': True}}
             },
             11: {
-                'geometry': [6, 7, 'I'], 'FILL': {'universe': 2}
+                'geometry': [6, 7, 'I'], 'FILL': {'universe': 2}, 'name': 11
             },
             12: {
-                'geometry': [5, 7, 'I'], 'FILL': {'universe': 3}
+                'geometry': [5, 7, 'I'], 'FILL': {'universe': 3}, 'name': 12
             },
             13: {
                 'geometry': [1, 2, 'C', 'U', 3, 4, 'C', 'U', 'I'],
-                'IMPN': 1, 'IMPP': 1,
+                'IMPN': 1, 'IMPP': 1, 'name': 13,
                 'TRCL': {'translation': [7, 3, 1], 'rotation': [30, 60, 90,
                                                                 120, 30, 90,
                                                                  90, 90, 0],
                          'indegrees': True}
             },
             14: {
-                'geometry': [1, 2, 'C', 'I', 'C', 3, 4, 'C', 'U', 'C', 'U'], 'IMPN': 1, 'IMPP': 1
+                'geometry': [1, 2, 'C', 'I', 'C', 3, 4, 'C', 'U', 'C', 'U'],
+                'IMPN': 1, 'IMPP': 1, 'name': 14
             },
-            15: {'reference': 2, 'TRCL': 1}
+            15: {'reference': 2, 'TRCL': 1, 'name': 15}
         },
         'surfaces': {
-            1: ('PX', [-5], {'transform': 1}),
-            2: ('PY', [-6], {'transform': 2}),
-            3: ('PZ', [-7], {}),
-            4: ('PZ', [7], {}),
-            5: ('PY', [5], {}),
-            6: ('PX', [6], {}),
-            7: ('SO', [8], {})
+            1: {'kind': 'PX', 'params': [-5], 'transform': 1, 'name': 1},
+            2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+            3: {'kind': 'PZ', 'params': [-7], 'name': 3},
+            4: {'kind': 'PZ', 'params': [7], 'name': 4},
+            5: {'kind': 'PY', 'params': [5], 'name': 5},
+            6: {'kind': 'PX', 'params': [6], 'name': 6},
+            7: {'kind': 'SO', 'params': [8], 'name': 7}
         },
         'data': {
             'TR': {
-                1: {'translation': [5, -3, 4]},
+                1: {'translation': [5, -3, 4], 'name': 1},
                 2: {'translation': [1, 1, 1], 'indegrees': True,
                     'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
-                    'inverted': True},
-                3: {'translation': [1, 2, 3], 'indegrees': True,
+                    'inverted': True, 'name': 2},
+                3: {'translation': [1, 2, 3], 'indegrees': True, 'name': 3,
                     'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0]},
-                4: {'translation': [-1, -2, -3], 'indegrees': True,
+                4: {'translation': [-1, -2, -3], 'indegrees': True, 'name': 4,
                     'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0]}
             },
             'M': {
-                1: {'atomic': [(1000, 2), (8000, 1)]},
-                2: {'wgt': [(7000, 75.5, '50C'), (8000, 23.15), (40000, 1.292)]},
-                3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1},
-                4: {'atomic': [(6012, 1, '50C')]}
+                1: {'atomic': [(1000, 2), (8000, 1)], 'name': 1},
+                2: {'wgt': [(7000, 75.5, '50C'), (8000, 23.15), (40000, 1.292)],
+                    'name': 2},
+                3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1, 'name': 3},
+                4: {'atomic': [(6012, 1, '50C')], 'name': 4}
             },
             'MODE': ['N']
         }
@@ -190,27 +195,28 @@ extract_submodel_ans = {
             'title': 'Universe 1',
             'cells': {
                 3: {
-                    'geometry': [1, 2, '#', 'I', 7, '#', 'I']
+                    'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'name': 3
                 },
                 4: {
-                    'MAT': 3, 'RHO': -4, 'geometry': [2, 4, 'I', 6, 'I']
+                    'MAT': 3, 'RHO': -4, 'geometry': [2, 4, 'I', 6, 'I'],
+                    'name': 4
                 }
             },
             'surfaces': {
-                1: ('PX', [-5], {'transform': 1}),
-                2: ('PY', [-6], {'transform': 2}),
-                4: ('PZ', [7], {}),
-                6: ('PX', [6], {}),
+                1: {'kind': 'PX', 'params': [-5], 'transform': 1, 'name': 1},
+                2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+                4: {'kind': 'PZ', 'params': [7], 'name': 4},
+                6: {'kind': 'PX', 'params': [6], 'name': 6},
             },
             'data': {
                 'TR': {
-                    1: {'translation': [5, -3, 4]},
-                    2: {'translation': [1, 1, 1], 'indegrees': True,
+                    1: {'translation': [5, -3, 4], 'name': 1},
+                    2: {'translation': [1, 1, 1], 'indegrees': True, 'name': 2,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
                         'inverted': True},
                 },
                 'M': {
-                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1},
+                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1, 'name': 3},
                 },
                 'MODE': ['N']
             }
@@ -219,27 +225,28 @@ extract_submodel_ans = {
             'title': 'Universe 1',
             'cells': {
                 3: {
-                    'geometry': [1, 2, '#', 'I', 7, '#', 'I']
+                    'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'name': 3
                 },
                 4: {
-                    'MAT': 3, 'RHO': -4, 'geometry': [2, 4, 'I', 6, 'I']
+                    'MAT': 3, 'RHO': -4, 'geometry': [2, 4, 'I', 6, 'I'],
+                    'name': 4
                 }
             },
             'surfaces': {
-                1: ('PX', [-5], {'transform': 1}),
-                2: ('PY', [-6], {'transform': 2}),
-                4: ('PZ', [7], {}),
-                6: ('PX', [6], {})
+                1: {'kind': 'PX', 'params': [-5], 'transform': 1, 'name': 1},
+                2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+                4: {'kind': 'PZ', 'params': [7], 'name': 4},
+                6: {'kind': 'PX', 'params': [6], 'name': 6}
             },
             'data': {
                 'TR': {
-                    1: {'translation': [5, -3, 4]},
-                    2: {'translation': [1, 1, 1], 'indegrees': True,
+                    1: {'translation': [5, -3, 4], 'name': 1},
+                    2: {'translation': [1, 1, 1], 'indegrees': True, 'name': 2,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
                         'inverted': True}
                 },
                 'M': {
-                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1}
+                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1, 'name': 3}
                 },
                 'MODE': ['N']
             }
@@ -248,38 +255,40 @@ extract_submodel_ans = {
             'title': 'Universe 2',
             'cells': {
                 3: {
-                    'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'U': 1
+                    'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'U': 1, 'name': 3
                 },
                 4: {
-                    'MAT': 3, 'RHO': -4, 'U': 1, 'geometry': [2, 4, 'I', 6, 'I']
+                    'MAT': 3, 'RHO': -4, 'U': 1, 'name': 4,
+                    'geometry': [2, 4, 'I', 6, 'I']
                 },
                 5: {
-                    'geometry': [1, 3, 'C', 'I', 5, '#', 'I']
+                    'geometry': [1, 3, 'C', 'I', 5, '#', 'I'], 'name': 5
                 },
                 6: {
-                    'TRCL': 4, 'FILL': {'universe': 1},
+                    'TRCL': 4, 'FILL': {'universe': 1}, 'name': 6,
                     'geometry': [2, 4, 'C', 'I', 7, 'I']
                 }
             },
             'surfaces': {
-                1: ('PX', [-5], {'transform': 1}),
-                2: ('PY', [-6], {'transform': 2}),
-                3: ('PZ', [-7], {}),
-                4: ('PZ', [7], {}),
-                6: ('PX', [6], {}),
-                7: ('SO', [8], {})
+                1: {'kind': 'PX', 'params': [-5], 'transform': 1, 'name': 1},
+                2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+                3: {'kind': 'PZ', 'params': [-7], 'name': 3},
+                4: {'kind': 'PZ', 'params': [7], 'name': 4},
+                6: {'kind': 'PX', 'params': [6], 'name': 6},
+                7: {'kind': 'SO', 'params': [8], 'name': 7}
             },
             'data': {
                 'TR': {
-                    1: {'translation': [5, -3, 4]},
+                    1: {'translation': [5, -3, 4], 'name': 1},
                     2: {'translation': [1, 1, 1], 'indegrees': True,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
-                        'inverted': True},
+                        'inverted': True, 'name': 2},
                     4: {'translation': [-1, -2, -3], 'indegrees': True,
+                        'name': 4,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0]}
                 },
                 'M': {
-                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1}
+                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1, 'name': 3}
                 },
                 'MODE': ['N']
             }
@@ -288,26 +297,27 @@ extract_submodel_ans = {
             'title': 'Universe 2',
             'cells': {
                 5: {
-                    'geometry': [1, 3, 'C', 'I', 5, '#', 'I']
+                    'geometry': [1, 3, 'C', 'I', 5, '#', 'I'], 'name': 5
                 },
                 6: {
-                    'TRCL': 4, 'geometry': [2, 4, 'C', 'I', 7, 'I']
+                    'TRCL': 4, 'geometry': [2, 4, 'C', 'I', 7, 'I'], 'name': 6
                 }
             },
             'surfaces': {
-                1: ('PX', [-5], {'transform': 1}),
-                2: ('PY', [-6], {'transform': 2}),
-                3: ('PZ', [-7], {}),
-                4: ('PZ', [7], {}),
-                7: ('SO', [8], {})
+                1: {'kind': 'PX', 'params': [-5], 'transform': 1, 'name': 1},
+                2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+                3: {'kind': 'PZ', 'params': [-7], 'name': 3},
+                4: {'kind': 'PZ', 'params': [7], 'name': 4},
+                7: {'kind': 'SO', 'params': [8], 'name': 7}
             },
             'data': {
                 'TR': {
-                    1: {'translation': [5, -3, 4]},
-                    2: {'translation': [1, 1, 1], 'indegrees': True,
+                    1: {'translation': [5, -3, 4], 'name': 1},
+                    2: {'translation': [1, 1, 1], 'indegrees': True, 'name': 2,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
                         'inverted': True},
                     4: {'translation': [-1, -2, -3], 'indegrees': True,
+                        'name': 4,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0]}
                 },
                 'MODE': ['N']
@@ -317,25 +327,26 @@ extract_submodel_ans = {
             'title': 'Universe 3',
             'cells': {
                 3: {
-                    'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'U': 1
+                    'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'U': 1, 'name': 3
                 },
                 4: {
-                    'MAT': 3, 'RHO': -4, 'U': 1, 'geometry': [2, 4, 'I', 6, 'I']
+                    'MAT': 3, 'RHO': -4, 'U': 1, 'name': 4,
+                    'geometry': [2, 4, 'I', 6, 'I']
                 },
                 7: {
-                    'FILL': {'universe': 4, 'transform': 3},
+                    'FILL': {'universe': 4, 'transform': 3}, 'name': 7,
                     'geometry': [2, 4, '#', 'I', 6, 'I']
                 },
                 8: {
-                    'MAT': 4, 'RHO': -4,
+                    'MAT': 4, 'RHO': -4, 'name': 8,
                     'geometry': [1, 5, 'I', 7, 'C', 'I']
                 },
                 9: {
-                    'MAT': 2, 'RHO': -2, 'U': 4,
+                    'MAT': 2, 'RHO': -2, 'U': 4, 'name': 9,
                     'geometry': [2, 5, 'C', 'I', 7, 'I']
                 },
                 10: {
-                    'U': 4, 'geometry': [5, 6, 'C', 'I'],
+                    'U': 4, 'geometry': [5, 6, 'C', 'I'], 'name': 10,
                     'FILL': {'universe': 1,
                              'transform': {'translation': [7, 3, 1],
                                            'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
@@ -343,26 +354,26 @@ extract_submodel_ans = {
                 }
             },
             'surfaces': {
-                1: ('PX', [-5], {'transform': 1}),
-                2: ('PY', [-6], {'transform': 2}),
-                4: ('PZ', [7], {}),
-                5: ('PY', [5], {}),
-                6: ('PX', [6], {}),
-                7: ('SO', [8], {})
+                1: {'kind': 'PX', 'params': [-5], 'transform': 1, 'name': 1},
+                2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+                4: {'kind': 'PZ', 'params': [7], 'name': 4},
+                5: {'kind': 'PY', 'params': [5], 'name': 5},
+                6: {'kind': 'PX', 'params': [6], 'name': 6},
+                7: {'kind': 'SO', 'params': [8], 'name': 7}
             },
             'data': {
                 'TR': {
-                    1: {'translation': [5, -3, 4]},
-                    2: {'translation': [1, 1, 1], 'indegrees': True,
+                    1: {'translation': [5, -3, 4], 'name': 1},
+                    2: {'translation': [1, 1, 1], 'indegrees': True, 'name': 2,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
                         'inverted': True},
-                    3: {'translation': [1, 2, 3], 'indegrees': True,
+                    3: {'translation': [1, 2, 3], 'indegrees': True, 'name': 3,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0]}
                 },
                 'M': {
-                    2: {'wgt': [(7000, 75.5, '50C'), (8000, 23.15), (40000, 1.292)]},
-                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1},
-                    4: {'atomic': [(6012, 1, '50C')]}
+                    2: {'wgt': [(7000, 75.5, '50C'), (8000, 23.15), (40000, 1.292)], 'name': 2},
+                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1, 'name': 3},
+                    4: {'atomic': [(6012, 1, '50C')], 'name': 4}
                 },
                 'MODE': ['N']
             }
@@ -371,29 +382,29 @@ extract_submodel_ans = {
             'title': 'Universe 3',
             'cells': {
                 7: {
-                    'geometry': [2, 4, '#', 'I', 6, 'I']
+                    'geometry': [2, 4, '#', 'I', 6, 'I'], 'name': 7
                 },
                 8: {
-                    'MAT': 4, 'RHO': -4,
+                    'MAT': 4, 'RHO': -4, 'name': 8,
                     'geometry': [1, 5, 'I', 7, 'C', 'I']
                 }
             },
             'surfaces': {
-                1: ('PX', [-5], {'transform': 1}),
-                2: ('PY', [-6], {'transform': 2}),
-                5: ('PY', [5], {}),
-                6: ('PX', [6], {}),
-                7: ('SO', [8], {})
+                1: {'kind': 'PX', 'params': [-5], 'transform': 1, 'name': 1},
+                2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+                5: {'kind': 'PY', 'params': [5], 'name': 5},
+                6: {'kind': 'PX', 'params': [6], 'name': 6},
+                7: {'kind': 'SO', 'params': [8], 'name': 7}
             },
             'data': {
                 'TR': {
-                    1: {'translation': [5, -3, 4]},
-                    2: {'translation': [1, 1, 1], 'indegrees': True,
+                    1: {'translation': [5, -3, 4], 'name': 1},
+                    2: {'translation': [1, 1, 1], 'indegrees': True, 'name': 2,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
                         'inverted': True}
                 },
                 'M': {
-                    4: {'atomic': [(6012, 1, '50C')]}
+                    4: {'atomic': [(6012, 1, '50C')], 'name': 4}
                 },
                 'MODE': ['N']
             }
@@ -402,16 +413,18 @@ extract_submodel_ans = {
             'title': 'Universe 4',
             'cells': {
                 3: {
-                    'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'U': 1
+                    'geometry': [1, 2, '#', 'I', 7, '#', 'I'], 'U': 1, 'name': 3
                 },
                 4: {
-                    'MAT': 3, 'RHO': -4, 'U': 1, 'geometry': [2, 4, 'I', 6, 'I']
+                    'MAT': 3, 'RHO': -4, 'U': 1, 'name': 4,
+                    'geometry': [2, 4, 'I', 6, 'I']
                 },
                 9: {
-                    'MAT': 2, 'RHO': -2, 'geometry': [2, 5, 'C', 'I', 7, 'I']
+                    'MAT': 2, 'RHO': -2, 'name': 9,
+                    'geometry': [2, 5, 'C', 'I', 7, 'I']
                 },
                 10: {
-                    'geometry': [5, 6, 'C', 'I'],
+                    'geometry': [5, 6, 'C', 'I'], 'name': 10,
                     'FILL': {'universe': 1,
                              'transform': {'translation': [7, 3, 1],
                                            'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
@@ -419,23 +432,23 @@ extract_submodel_ans = {
                 }
             },
             'surfaces': {
-                1: ('PX', [-5], {'transform': 1}),
-                2: ('PY', [-6], {'transform': 2}),
-                4: ('PZ', [7], {}),
-                5: ('PY', [5], {}),
-                6: ('PX', [6], {}),
-                7: ('SO', [8], {})
+                1: {'kind': 'PX', 'params': [-5], 'transform': 1, 'name': 1},
+                2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+                4: {'kind': 'PZ', 'params': [7], 'name': 4},
+                5: {'kind': 'PY', 'params': [5], 'name': 5},
+                6: {'kind': 'PX', 'params': [6], 'name': 6},
+                7: {'kind': 'SO', 'params': [8], 'name': 7}
             },
             'data': {
                 'TR': {
-                    1: {'translation': [5, -3, 4]},
-                    2: {'translation': [1, 1, 1], 'indegrees': True,
+                    1: {'translation': [5, -3, 4], 'name': 1},
+                    2: {'translation': [1, 1, 1], 'indegrees': True, 'name': 2,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
                         'inverted': True}
                 },
                 'M': {
-                    2: {'wgt': [(7000, 75.5, '50C'), (8000, 23.15), (40000, 1.292)]},
-                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1}
+                    2: {'wgt': [(7000, 75.5, '50C'), (8000, 23.15), (40000, 1.292)], 'name': 2},
+                    3: {'atomic': [(1000, 2), (6000, 1)], 'GAS': 1, 'name': 3}
                 },
                 'MODE': ['N']
             }
@@ -444,26 +457,27 @@ extract_submodel_ans = {
             'title': 'Universe 4',
             'cells': {
                 9: {
-                    'MAT': 2, 'RHO': -2, 'geometry': [2, 5, 'C', 'I', 7, 'I']
+                    'MAT': 2, 'RHO': -2, 'name': 9,
+                    'geometry': [2, 5, 'C', 'I', 7, 'I']
                 },
                 10: {
-                    'geometry': [5, 6, 'C', 'I']
+                    'geometry': [5, 6, 'C', 'I'], 'name': 10
                 }
             },
             'surfaces': {
-                2: ('PY', [-6], {'transform': 2}),
-                5: ('PY', [5], {}),
-                6: ('PX', [6], {}),
-                7: ('SO', [8], {})
+                2: {'kind': 'PY', 'params': [-6], 'transform': 2, 'name': 2},
+                5: {'kind': 'PY', 'params': [5], 'name': 5},
+                6: {'kind': 'PX', 'params': [6], 'name': 6},
+                7: {'kind': 'SO', 'params': [8], 'name': 7}
             },
             'data': {
                 'TR': {
-                    2: {'translation': [1, 1, 1], 'indegrees': True,
+                    2: {'translation': [1, 1, 1], 'indegrees': True, 'name': 2,
                         'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
                         'inverted': True}
                 },
                 'M': {
-                    2: {'wgt': [(7000, 75.5, '50C'), (8000, 23.15), (40000, 1.292)]}
+                    2: {'wgt': [(7000, 75.5, '50C'), (8000, 23.15), (40000, 1.292)], 'name': 2}
                 },
                 'MODE': ['N']
             }

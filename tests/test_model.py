@@ -135,7 +135,7 @@ class TestMCPrinter(unittest.TestCase):
         for case in case_names:
             with self.subTest(msg='case: {0}'.format(case)):
                 model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
-                ans = {k: printer.cell_print(v, k) for k, v in model.cells.items()}
+                ans = {k: printer.cell_print(v) for k, v in model.cells.items()}
                 self.assertDictEqual(ans, cell_print_ans[case])
 
     def test_surface_print(self):
@@ -143,7 +143,7 @@ class TestMCPrinter(unittest.TestCase):
         for case in case_names:
             with self.subTest(msg='case: {0}'.format(case)):
                 model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
-                ans = {k: printer.surface_print(v, k) for k, v in model.surfaces.items()}
+                ans = {k: printer.surface_print(v) for k, v in model.surfaces.items()}
                 self.assertDictEqual(ans, surface_print_ans[case])
 
     def test_material_print(self):
@@ -151,7 +151,7 @@ class TestMCPrinter(unittest.TestCase):
         for case in case_names:
             with self.subTest(msg='case: {0}'.format(case)):
                 model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
-                ans = {k: printer.material_print(v, k) for k, v in model.data['M'].items()}
+                ans = {k: printer.material_print(v) for k, v in model.data['M'].items()}
                 self.assertDictEqual(ans, material_print_ans[case])
 
     def test_transformation_print(self):
@@ -160,7 +160,7 @@ class TestMCPrinter(unittest.TestCase):
         for case in case_names:
             with self.subTest(msg='case: {0}'.format(case)):
                 model = read_mcnp('tests/model_test_data/{0}.txt'.format(case))
-                ans = {k: printer.transformation_print(v, k) for k, v in model.data['TR'].items()}
+                ans = {k: printer.transformation_print(v) for k, v in model.data['TR'].items()}
                 self.assertDictEqual(ans, transformation_print_ans[case])
 
 
