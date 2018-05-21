@@ -5,6 +5,7 @@ import re
 import ply.lex as lex
 import ply.yacc as yacc
 
+from collections import deque
 
 literals = ['+', '-', ':', '*', '(', ')', '#', '.']
 
@@ -97,8 +98,8 @@ SKIP = r'[=, ]'
 
 t_ANY_ignore = SKIP
 
-card_comments = []
-line_comments = []
+_card_comments = deque()
+_line_comments = []
 
 
 def t_title(t):
@@ -109,8 +110,8 @@ def t_title(t):
     t.lexer.last_pos = 1
     t.lexer.begin('cells')
     # t.mcnp_input_lexer.push_state('continue')
-    line_comments.clear()
-    card_comments.clear()
+    _line_comments.clear()
+    _card_comments.clear()
     return t
 
 
@@ -124,17 +125,18 @@ def t_cells_ckw_surfs_data_blank_line(t):
     else:
         t.lexer.begin('data')
     t.lexer.push_state('continue')
+    _card_comments.append(None)
     return t
 
 
 @lex.TOKEN(LINE_COMMENT)
 def t_continue_cells_ckw_surfs_data_line_comment(t):
-    line_comments.append(t)
+    _line_comments.append(t)
 
 
 @lex.TOKEN(CARD_COMMENT)
 def t_continue_cells_ckw_surfs_data_card_comment(t):
-    card_comments.append(t)  # return t
+    _card_comments.append(t)  # return t
 
 
 def t_ANY_error(t):
@@ -175,6 +177,7 @@ def t_ckw_separator(t):
 def t_INITIAL_surfs_cells_data_separator(t):
     t.lexer.lineno += 1
     t.lexer.last_pos = t.lexer.lexpos
+    _card_comments.append(None)
     return t
 
 
@@ -252,6 +255,15 @@ def t_continue_cells_ckw_surfs_data_newline_skip(t):
 mcnp_input_lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
 
 
+def extract_comments(line):
+    comment = []
+    while _card_comments and (_card_comments[0] is None or _card_comments[0].lineno < line):
+        _card_comments.popleft()
+    while _card_comments and _card_comments[0] is not None:
+        comment.append(_card_comments.popleft().value)
+    return tuple(comment)
+
+
 def p_model(p):
     """model_body : title separator cell_cards blank_line \
                     surface_cards blank_line \
@@ -289,6 +301,9 @@ def p_cell_card(p):
             params['MAT'] = p[2][0]
             params['RHO'] = p[2][1]
     params['name'] = p[1]
+    comment = extract_comments(p.lineno(1))
+    if comment:
+        params['comment'] = comment
     p[0] = params
 
 
@@ -437,6 +452,9 @@ def p_surface_card(p):
     surf['name'] = p[n-2]
     if n == 4:
         surf['modifier'] = p[1]
+    comment = extract_comments(p.lineno(1))
+    if comment:
+        surf['comment'] = comment
     p[0] = surf
 
 
@@ -543,6 +561,9 @@ def p_transform_card(p):
     tr['name'] = p[n-2]
     if n == 5:
         tr['indegrees'] = True
+    comment = extract_comments(p.lineno(1))
+    if comment:
+        tr['comment'] = comment
     p[0] = 'TR', {tr['name']: tr}
 
 
@@ -580,6 +601,9 @@ def p_material_card(p):
     if len(p) == 5:
         p[3].update(p[4])
     p[3]['name'] = p[2]
+    comment = extract_comments(p.lineno(1))
+    if comment:
+        p[3]['comment'] = comment
     p[0] = 'M', {p[2]: p[3]}
 
 

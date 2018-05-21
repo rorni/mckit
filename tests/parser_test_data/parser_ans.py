@@ -64,7 +64,8 @@ ans2 = {
         },
         6: {
             'geometry': [16, 17, 'C', 'I', 18, 'I'],
-            'FILL': {'universe': 1, 'transform': 2}, 'name': 6
+            'FILL': {'universe': 1, 'transform': 2}, 'name': 6,
+            'comment': ('$ comment1', '$ comment2', '$ comment3')
         },
         7: {
             'geometry': [19, 20, 'C', 'I', 21, 'I'], 'name': 7,
@@ -82,7 +83,7 @@ ans2 = {
         1: {'kind': 'PX', 'params': [1], 'modifier': '*', 'name': 1},
         2: {'kind': 'PY', 'params': [2], 'modifier': '+', 'name': 2},
         3: {'kind': 'PZ', 'params': [3], 'name': 3},
-        4: {'kind': 'P', 'params': [1, 2, -3, -5], 'name': 4},
+        4: {'kind': 'P', 'params': [1, 2, -3, -5], 'name': 4, 'comment': ('$ comment4',)},
         5: {'kind': 'SO', 'params': [3], 'name': 5},
         6: {'kind': 'SX', 'params': [4, 5], 'name': 6},
         7: {'kind': 'SY', 'params': [-4, 5], 'name': 7},
@@ -104,11 +105,12 @@ ans2 = {
         23: {'kind': 'TY', 'params': [1, 2, 3, 4, 5, 8], 'name': 23},
         24: {'kind': 'TZ', 'params': [1, 2, 3, 4, 5, 8], 'name': 24},
         25: {'kind': 'SQ', 'params': [1, 2, 3, 4, 5, 6, 7, 8, 9], 'name': 25},
-        26: {'kind': 'GQ', 'params': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'name': 26}
+        26: {'kind': 'GQ', 'params': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'name': 26,
+             'comment': ('$ comment5',)}
     },
     'data': {
         'TR': {
-            1: {'translation': [1, 2, 3], 'name': 1,
+            1: {'translation': [1, 2, 3], 'name': 1, 'comment': ('$ comment6',),
                 'rotation': [1, 1, 1, 2, 2, 2, 3, 3, 3], 'inverted': True},
             2: {'translation': [1, 2, 3], 'indegrees': True, 'inverted': True,
                 'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'name': 2},
