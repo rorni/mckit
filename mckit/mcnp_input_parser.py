@@ -125,7 +125,8 @@ def t_cells_ckw_surfs_data_blank_line(t):
     else:
         t.lexer.begin('data')
     t.lexer.push_state('continue')
-    _card_comments.append(None)
+    if _card_comments and _card_comments[-1] is not None:
+        _card_comments.append(None)
     return t
 
 
@@ -177,7 +178,8 @@ def t_ckw_separator(t):
 def t_INITIAL_surfs_cells_data_separator(t):
     t.lexer.lineno += 1
     t.lexer.last_pos = t.lexer.lexpos
-    _card_comments.append(None)
+    if _card_comments and _card_comments[-1] is not None:
+        _card_comments.append(None)
     return t
 
 
