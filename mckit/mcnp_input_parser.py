@@ -262,7 +262,7 @@ def extract_comments(line):
     while _card_comments and (_card_comments[0] is None or _card_comments[0].lineno < line):
         _card_comments.popleft()
     while _card_comments and _card_comments[0] is not None:
-        comment.append(_card_comments.popleft().value)
+        comment.append(_card_comments.popleft().value.lstrip('$ '))
     return tuple(comment)
 
 
