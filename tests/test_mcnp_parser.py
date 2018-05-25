@@ -49,14 +49,16 @@ class TestMeshtalParser(unittest.TestCase):
     def test_parse(self):
         with open('tests/parser_test_data/fmesh.m') as f:
             text = f.read()
-        meshtal_lexer.input(text)
-        t = meshtal_lexer.token()
-        while t:
-            print(t)
-            t = meshtal_lexer.token()
         meshtal_lexer.begin('INITIAL')
         tallies = meshtal_parser.parse(text, lexer=meshtal_lexer)
-        self.assertEqual(meshtal_ans.ans, tallies)
+        self.assertEqual(tallies.keys(), meshtal_ans.ans.keys())
+        for k in ['date', 'histories', 'title']:
+            self.assertEqual(tallies[k], meshtal_ans.ans[k])
+        for t, a in zip(tallies['tallies'], meshtal_ans.ans['tallies']):
+            for k in ['name', 'particle', 'geom']:
+                self.assertEqual(t[k], a[k])
+            for k, v in a['bins'].items():
+                self.assertEqual(t['bins'][k] == v, True)
 
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ BIN_CYL_ORDER = {'ENERGY': 0, 'R': 1, 'Z': 2, 'THETA': 3}
 
 # List of token names
 tokens = [
+    'separator',
     'newline',
     'int_number',
     'flt_number',
@@ -29,9 +30,9 @@ tokens = [
     'X', 'Y', 'Z', 'R', 'THETA', 'ENERGY', 'TOTAL'
 ]
 
-precedence = (
-    ('left', 'newline'),
-)
+#precedence = (
+#    ('left', 'newline'),
+#)
 
 states = (
     ('title', 'exclusive'),
@@ -68,9 +69,10 @@ def t_norm_tally_minus(t):
 
 
 @lex.TOKEN(BLANK_LINE)
-def t_ANY_blank_line(t):
+def t_ANY_separator(t):
     t.lexer.lineno += 1
     t.lexer.last_pos = t.lexer.lexpos
+    return t
 
 
 @lex.TOKEN(NEWLINE)
@@ -161,10 +163,9 @@ meshtal_lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
 
 
 def p_meshtal(p):
-    """meshtal : header newline title newline float newline tallies
-               | header newline title newline float newline tallies newline
+    """meshtal : header newline title newline float newline separator tallies
     """
-    p[0] = {'date': p[1]['PROBID'], 'title': p[3], 'histories': p[5], 'tallies': p[7]}
+    p[0] = {'date': p[1]['PROBID'], 'title': p[3].lstrip().rstrip(), 'histories': p[5], 'tallies': p[8]}
 
 
 def p_header(p):
@@ -173,20 +174,21 @@ def p_header(p):
 
 
 def p_tallies(p):
-    """tallies : tallies newline tally
+    """tallies : tallies tally
                | tally
     """
     if len(p) == 2:
         p[0] = [p[1]]
     else:
-        p[1].append(p[3])
+        p[1].append(p[2])
         p[0] = p[1]
 
 
 def p_tally(p):
-    """tally :  TALLY integer newline particle TALLY newline boundaries newline data"""
-    tally = {'name': p[2], 'particle': p[4]}
-    boundaries = p[7]
+    """tally : tally_header separator boundaries separator data"""
+    print("tally", p[1]['name'])
+    tally = p[1]
+    boundaries = p[3]
     tally['geom'] = 'XYZ'
     if 'ORIGIN' in boundaries.keys():
         tally['origin'] = boundaries.pop('ORIGIN')
@@ -194,7 +196,7 @@ def p_tally(p):
     if 'AXIS' in boundaries.keys():
         tally['axis'] = boundaries.pop('AXIS')
     tally['bins'] = boundaries.copy()
-    data = p[9]
+    data = p[5]
     od = BIN_CYL_ORDER if 'origin' in tally.keys() else BIN_REC_ORDER
     if 'result' in data.keys():
         src_perm = [od[let] for let in data['order']]
@@ -203,27 +205,33 @@ def p_tally(p):
     else:
         header = data['header']
         data = np.array(data['data'])
-        boundaries['ENERGY'] = 0.5 * (boundaries['ENERGY'][2:] + boundaries['ENERGY'][1:-1])
+        print("boundaries", boundaries)
         shape = [0, 0, 0, 0]
         for k, v in od.items():
-            shape[v] = len(boundaries[k]) - 1
+            shape[v] = boundaries[k].size - 1
+        boundaries['ENERGY'] = 0.5 * (boundaries['ENERGY'][2:] + boundaries['ENERGY'][1:-1])
         result = np.empty(shape)
         error = np.empty(shape)
-        indices = []
+        indices = np.empty((data.shape[0], 4), dtype=int)
         for k in od.keys():
             if k in header:
-                indices[od[k]] = np.searchsorted(boundaries[k], data[:, header.index(k)])
+                indices[:, od[k]] = np.searchsorted(boundaries[k], data[:, header.index(k)]) - 1
             else:
-                indices[od[k]] = np.zeros(data.shape[0])
+                indices[:, od[k]] = np.zeros(data.shape[0])
         res_ind = header.index('RESULT')
         err_ind = header.index('ERROR')
-        indices = np.array(indices)
-        for i in range(indices.shape[1]):
-            result[indices[:, i]] = data[i, res_ind]
-            error[indices[:, i]] = data[i, err_ind]
+        # indices = np.array(indices)
+        for i in range(indices.shape[0]):
+            result[tuple(indices[i, :])] = data[i, res_ind]
+            error[tuple(indices[i, :])] = data[i, err_ind]
         tally['result'] = result
         tally['error'] = error
     p[0] = tally
+
+
+def p_tallY_header(p):
+    """tally_header : TALLY integer newline particle TALLY newline"""
+    p[0] = {'name': p[2], 'particle': p[4]}
 
 
 def p_particle(p):
@@ -242,11 +250,13 @@ def p_boundaries(p):
     if len(p) == 11:
         boundaries['ORIGIN'] = p[6]
         boundaries['AXIS'] = p[8]
+    for k, v in boundaries.items():
+        boundaries[k] = np.array(v)
     p[0] = boundaries
 
 
 def p_bins(p):
-    """bins : direction newline direction newline direction newline energies"""
+    """bins : direction newline direction newline direction newline energies newline"""
     bins = {}
     for name, data in [p[1], p[3], p[5], p[7]]:
         bins[name] = data
@@ -313,20 +323,20 @@ def p_vector(p):
 
 
 def p_matrix(p):
-    """matrix : matrix newline vector
-              | vector
+    """matrix : matrix vector newline
+              | vector newline
     """
-    if len(p) == 2:
+    if len(p) == 3:
         p[0] = [p[1]]
     else:
-        p[1].append(p[3])
+        p[1].append(p[2])
         p[0] = p[1]
 
 
 def p_total_matrix(p):
-    """total_matrix : total_matrix newline TOTAL vector
-                    | TOTAL vector"""
-    if len(p) == 2:
+    """total_matrix : total_matrix TOTAL vector newline
+                    | TOTAL vector newline"""
+    if len(p) == 4:
         p[0] = [p[2]]
     else:
         p[1].append(p[4])
@@ -335,29 +345,31 @@ def p_total_matrix(p):
 
 def p_data(p):
     """data : matrix_data
+            | column_data separator
             | column_data
     """
     p[0] = p[1]
 
 
 def p_column_data(p):
-    """column_data : column_header newline matrix newline total_matrix
-                   | column_header newline matrix
+    """column_data : column_header matrix total_matrix
+                   | column_header matrix
     """
-    p[0] = {'header': p[1], 'data': p[3]}
-    if len(p) == 6:
-        p[0]['total'] = p[5]
+    p[0] = {'header': p[1], 'data': p[2]}
+    if len(p) == 4:
+        p[0]['total'] = p[3]
 
 
 def p_column_header(p):
-    """column_header : ENERGY dir_spec dir_spec dir_spec RESULT ERROR
-                     | dir_spec dir_spec dir_spec RESULT ERROR
+    """column_header : ENERGY dir_spec dir_spec dir_spec RESULT ERROR newline
+                     | dir_spec dir_spec dir_spec RESULT ERROR newline
     """
-    p[0] = p[1:]
+    n = len(p)
+    p[0] = p[1:n-1]
 
 
 def p_matrix_data(p):
-    """matrix_data : energy_bins newline total_energy_bin
+    """matrix_data : energy_bins total_energy_bin
                    | energy_bins
     """
     order, result, error = p[1]
@@ -365,50 +377,53 @@ def p_matrix_data(p):
 
 
 def p_energy_bins(p):
-    """energy_bins : energy_bins newline energy_bin
-                   | energy_bin"""
-    if len(p) == 2:
+    """energy_bins : energy_bins energy_bin separator
+                   | energy_bin separator"""
+    if len(p) == 3:
         order, result, error = p[1]
         p[0] = order, [result], [error]
     else:
-        order, result, error = p[3]
+        order, result, error = p[2]
         p[1][1].append(result)
         p[1][2].append(error)
         p[0] = order, p[1][1], p[1][2]
 
 
 def p_energy_bin(p):
-    """energy_bin : ENERGY ':' float '-' float newline spatial_bins"""
-    order = [p[1]] + p[7][0]
-    p[0] = order, p[7][1], p[7][2]
+    """energy_bin : ENERGY ':' float '-' float newline separator spatial_bins"""
+    print(p[8][0])
+    order = [p[1]] + p[8][0]
+    p[0] = order, p[8][1], p[8][2]
+    print("energy bin")
 
 
 def p_total_energy_bin(p):
-    """total_energy_bin : TOTAL ENERGY newline spatial_bins"""
-    order = [p[1]] + p[4][0]
-    p[0] = order, p[4][1], p[4][2]
+    """total_energy_bin : TOTAL ENERGY newline separator spatial_bins separator"""
+    order = [p[1]] + p[5][0]
+    p[0] = order, p[5][1], p[5][2]
 
 
 def p_spatial_bins(p):
-    """spatial_bins : spatial_bins newline spatial_bin
-                    | spatial_bin
+    """spatial_bins : spatial_bins spatial_bin separator
+                    | spatial_bin separator
     """
-    if len(p) == 2:
+    if len(p) == 3:
         order, result, error = p[1]
         p[0] = order, [result], [error]
     else:
-        order, result, error = p[3]
+        order, result, error = p[2]
         p[1][1].append(result)
         p[1][2].append(error)
         p[0] = order, p[1][1], p[1][2]
 
 
 def p_spatial_bin(p):
-    """spatial_bin : dir_spec ':' float '-' float newline TALLY RESULT ':' dir_spec dir_spec newline matrix newline ERROR newline matrix"""
-    order = [p[1], p[11], p[10]]
-    results = [line[1:] for line in p[13][1:]]
-    errors = [line[1:] for line in p[17][1:]]
+    """spatial_bin : dir_spec ':' float '-' float newline separator TALLY RESULT ':' dir_spec dir_spec newline matrix separator ERROR newline matrix separator"""
+    order = [p[1], p[12], p[11]]
+    results = [line[1:] for line in p[14][1:]]
+    errors = [line[1:] for line in p[18][1:]]
     p[0] = order, results, errors
+    print("Spatial bin ", p[3], p[5])
 
 
 def p_error(p):
