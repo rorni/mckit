@@ -31,7 +31,7 @@ def read_mcnp(filename):
     with open(filename) as f:
         text = f.read()
     mcnp_input_lexer.begin('INITIAL')
-    title, cells, surfaces, data = mcnp_input_parser.parse(text, tracking=True)
+    title, cells, surfaces, data = mcnp_input_parser.parse(text, tracking=True, lexer=mcnp_input_lexer)
     return Model(title, cells, surfaces, data)
 
 
