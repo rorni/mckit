@@ -186,7 +186,6 @@ def p_tallies(p):
 
 def p_tally(p):
     """tally : tally_header separator boundaries separator data"""
-    print("tally", p[1]['name'])
     tally = p[1]
     boundaries = p[3]
     tally['geom'] = 'XYZ'
@@ -195,21 +194,20 @@ def p_tally(p):
         tally['geom'] = 'CYL'
     if 'AXIS' in boundaries.keys():
         tally['axis'] = boundaries.pop('AXIS')
-    tally['bins'] = boundaries.copy()
+    tally['bins'] = {k: np.array(v) for k, v in boundaries.items()}
     data = p[5]
     od = BIN_CYL_ORDER if 'origin' in tally.keys() else BIN_REC_ORDER
     if 'result' in data.keys():
         src_perm = [od[let] for let in data['order']]
-        tally['result'] = np.moveaxis(np.array(data['result']), src_perm, (0, 1, 2, 3))
-        tally['error'] = np.moveaxis(np.array(data['result']), src_perm, (0, 1, 2, 3))
+        tally['result'] = np.moveaxis(np.array(data['result']), (0, 1, 2, 3), src_perm)
+        tally['error'] = np.moveaxis(np.array(data['error']), (0, 1, 2, 3), src_perm)
     else:
         header = data['header']
         data = np.array(data['data'])
-        print("boundaries", boundaries)
         shape = [0, 0, 0, 0]
         for k, v in od.items():
             shape[v] = boundaries[k].size - 1
-        boundaries['ENERGY'] = 0.5 * (boundaries['ENERGY'][2:] + boundaries['ENERGY'][1:-1])
+        boundaries['ENERGY'] = 0.5 * (boundaries['ENERGY'][1:] + boundaries['ENERGY'][:-1])
         result = np.empty(shape)
         error = np.empty(shape)
         indices = np.empty((data.shape[0], 4), dtype=int)
@@ -220,7 +218,6 @@ def p_tally(p):
                 indices[:, od[k]] = np.zeros(data.shape[0])
         res_ind = header.index('RESULT')
         err_ind = header.index('ERROR')
-        # indices = np.array(indices)
         for i in range(indices.shape[0]):
             result[tuple(indices[i, :])] = data[i, res_ind]
             error[tuple(indices[i, :])] = data[i, err_ind]
@@ -391,10 +388,8 @@ def p_energy_bins(p):
 
 def p_energy_bin(p):
     """energy_bin : ENERGY ':' float '-' float newline separator spatial_bins"""
-    print(p[8][0])
     order = [p[1]] + p[8][0]
     p[0] = order, p[8][1], p[8][2]
-    print("energy bin")
 
 
 def p_total_energy_bin(p):
@@ -423,7 +418,6 @@ def p_spatial_bin(p):
     results = [line[1:] for line in p[14][1:]]
     errors = [line[1:] for line in p[18][1:]]
     p[0] = order, results, errors
-    print("Spatial bin ", p[3], p[5])
 
 
 def p_error(p):
