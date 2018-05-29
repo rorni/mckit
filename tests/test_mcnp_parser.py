@@ -1,4 +1,5 @@
 import unittest
+from numpy.testing import assert_array_almost_equal
 
 from mckit.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
 from mckit.meshtal_parser import meshtal_lexer, meshtal_parser
@@ -58,7 +59,9 @@ class TestMeshtalParser(unittest.TestCase):
             for k in ['name', 'particle', 'geom']:
                 self.assertEqual(t[k], a[k])
             for k, v in a['bins'].items():
-                self.assertEqual(t['bins'][k] == v, True)
+                assert_array_almost_equal(t['bins'][k], v)
+            assert_array_almost_equal(t['result'], a['result'])
+            assert_array_almost_equal(t['error'], a['error'])
 
 
 if __name__ == '__main__':
