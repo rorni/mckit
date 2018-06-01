@@ -391,7 +391,6 @@ class Body(Shape):
             text.append('\n')
         return text
 
-
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
 
