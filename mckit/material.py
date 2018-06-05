@@ -6,6 +6,146 @@ from .constants import NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
                        ISOTOPE_MASS, AVOGADRO, \
                        RELATIVE_COMPOSITION_TOLERANCE,\
                        RELATIVE_DENSITY_TOLERANCE
+from .printer import print_card
+
+
+class Composition:
+    """Represents composition.
+
+    Composition is not a material. It specifies only isotopes and their
+    fractions. It doesn't concern absolute quantities like density and
+    concentration. Composition immediately corresponds to the MCNP's
+    material.
+
+    weight and atomic are both lists of tuples: (element, fraction, ...).
+
+    Parameters
+    ----------
+    atomic : list
+        Atomic fractions.
+    weight : list
+        Weight fractions.
+
+    Methods
+    -------
+    molar_mass()
+        Gets molar mass of the composition.
+    get_atomic(isotope)
+        Gets atomic fraction of the isotope.
+    get_weight(isotope)
+        Gets weight fraction of the isotope.
+    """
+    def __init__(self, atomic=[], weight=[]):
+        self._composition = {}
+        elem_w = []
+        frac_w = []
+        for elem, frac in weight:
+            if isinstance(elem, Element):
+                elem_w.append(elem)
+            else:
+                elem_w.append(Element(elem))
+            frac_w.append(frac)
+
+        elem_a = []
+        frac_a = []
+        for elem, frac in atomic:
+            if isinstance(elem, Element):
+                elem_a.append(elem)
+            else:
+                elem_a.append(Element(elem))
+            frac_a.append(frac)
+
+        if len(frac_w) + len(frac_a) > 0:
+            I_w = np.sum(frac_w)
+            I_a = np.sum(frac_a)
+            J_w = np.sum(np.divide(frac_w, [e.molar_mass() for e in elem_w]))
+            J_a = np.sum(np.multiply(frac_a, [e.molar_mass() for e in elem_a]))
+
+            II_diff = I_a - I_w
+            sq_root = np.sqrt(II_diff ** 2 + 4 * J_w * J_a)
+            if II_diff <= 0:
+                self._mu = 0.5 * (sq_root - II_diff) / J_w
+            else:
+                self._mu = 2 * J_a / (sq_root + II_diff)
+
+            norm_factor = self._mu * J_w + I_a
+            for el, frac in zip(elem_w, frac_w):
+                if el not in self._composition.keys():
+                    self._composition[el] = 0.0
+                self._composition[el] += self._mu / norm_factor * frac / el.molar_mass()
+            for el, frac in zip(elem_a, frac_a):
+                if el not in self._composition.keys():
+                    self._composition[el] = 0.0
+                self._composition[el] += frac / norm_factor
+        else:
+            raise ValueError('Incorrect set of parameters.')
+
+    def __str__(self):
+        pass
+
+    def __iter__(self):
+        return self._composition.items()
+
+    def __contains__(self, item):
+        """Checks if the composition contains the item.
+
+        Parameters
+        ----------
+        item : str or Element
+            Isotope. It can be either isotope name or Element instance.
+
+        Returns
+        -------
+        result : bool
+            True if the composition contains the isotope, False otherwise.
+        """
+        if not isinstance(item, Element):
+            item = Element(item)
+        return item in self._composition
+
+    def get_atomic(self, isotope):
+        """Gets atomic fraction of the isotope.
+
+        Raises KeyError if the composition doesn't contain the isotope.
+
+        Parameters
+        ----------
+        isotope : str or Element
+            Isotope. It can be either isotope name or Element instance.
+
+        Returns
+        -------
+        frac : float
+            Atomic fraction of the specified isotope.
+        """
+        if not isinstance(isotope, Element):
+            isotope = Element(isotope)
+        return self._composition[isotope]
+
+    def get_weight(self, isotope):
+        """Gets weight fraction of the isotope.
+
+        Raises KeyError if the composition doesn't contain the isotope.
+
+        Parameters
+        ----------
+        isotope : str or Element
+            Isotope. It can be either isotope name or Element instance.
+
+        Returns
+        -------
+        frac : float
+            Weight fraction of the specified isotope.
+        """
+        if not isinstance(isotope, Element):
+            isotope = Element(isotope)
+        at = self._composition[isotope]
+        return at * isotope.molar_mass() / self._mu
+
+    def molar_mass(self):
+        """Gets composition's effective molar mass [g / mol]."""
+        return self._mu
+
 
 
 class Material:
@@ -263,6 +403,12 @@ class Element:
             return True
         else:
             return False
+
+    def __str__(self):
+        result = str(self._charge * 1000 + self._mass_number)
+        if self._lib is not None:
+            result += '.{0}'.format(self._lib)
+        return result
 
     def charge(self):
         """Gets element's charge number."""
