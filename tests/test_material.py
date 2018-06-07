@@ -1,6 +1,6 @@
 import unittest
 
-from mckit.material import Element, Material, merge_materials, make_mixture
+from mckit.material import Element, Material, merge_materials, mixture
 
 
 class TestElement(unittest.TestCase):
@@ -67,12 +67,12 @@ class TestMaterial(unittest.TestCase):
             for i, (kwargs, n, mu, rho) in enumerate(material_creation_cases):
                 with self.subTest(i=j*2 + i):
                     mat = Material(**kwargs)
-                    mc = mat.correct(vol1, vol2)
-                    self.assertEqual(len(mat._composition.keys()),
-                                     len(mc._composition.keys()))
+                    mc = mat.correct(old_vol=vol1, new_vol=vol2)
+                    self.assertEqual(len(mat._composition._composition.keys()),
+                                     len(mc._composition._composition.keys()))
                     self.assertAlmostEqual(mat._n, mc._n * f, delta=n * 1.e-5)
-                    for k, v in mat._composition.items():
-                        self.assertAlmostEqual(v, mc._composition[k] * f,
+                    for k, v in mat._composition._composition.items():
+                        self.assertAlmostEqual(v, mc._composition._composition[k] * f,
                                                delta=v * 1.e-5)
 
     def test_material_expand(self):
@@ -82,7 +82,7 @@ class TestMaterial(unittest.TestCase):
                 exp = mat.expand()
                 for k, v in ans:
                     elem = Element(k)
-                    self.assertAlmostEqual(exp._composition[elem], v,
+                    self.assertAlmostEqual(exp._composition._composition[elem], v,
                                            delta=v * 1.e-5)
 
     def test_material_merge(self):
@@ -91,10 +91,10 @@ class TestMaterial(unittest.TestCase):
                 mat = merge_materials(Material(atomic=m1), v1,
                                       Material(atomic=m2), v2)
                 mat_ans = Material(atomic=ans)
-                self.assertEqual(len(mat._composition.keys()),
-                                 len(mat_ans._composition.keys()))
+                self.assertEqual(len(mat._composition._composition.keys()),
+                                 len(mat_ans._composition._composition.keys()))
                 for k, v in mat._composition.items():
-                    self.assertAlmostEqual(v, mat_ans._composition[k],
+                    self.assertAlmostEqual(v, mat_ans._composition._composition[k],
                                            delta=v * 1.e-5)
 
     def test_material_eq(self):
@@ -106,12 +106,12 @@ class TestMaterial(unittest.TestCase):
                     result = (materials[i] == materials[j])
                     self.assertTrue(result == material_eq_matrix[i][j])
 
-    def test_make_mixture(self):
+    def test_mixture(self):
         for i, case in enumerate(material_mix_cases):
             components = [Material(**c) for c in case['components']]
             for ftype, fvalues in case['fractions'].items():
                 with self.subTest(msg='{0} - {1}'.format(i, ftype)):
-                    new_mat = make_mixture(*zip(components, fvalues), fraction_type=ftype)
+                    new_mat = mixture(*zip(components, fvalues), fraction_type=ftype)
                     if 'molar_mass' in case.keys():
                         self.assertAlmostEqual(new_mat.molar_mass(), case['molar_mass'], delta=case['molar_mass'] * 1.e-3)
                     if 'density' in case.keys():
