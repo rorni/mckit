@@ -3,7 +3,8 @@ import warnings
 
 
 MCNP_FORMATS = {
-    'importance': '{0:.3f}'
+    'importance': '{0:.3f}',
+    'material_fraction': '{0:.6e}'
 }
 
 
