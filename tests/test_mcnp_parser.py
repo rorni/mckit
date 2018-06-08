@@ -1,8 +1,11 @@
 import unittest
+from numpy.testing import assert_array_almost_equal
 
 from mckit.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
+from mckit.meshtal_parser import meshtal_lexer, meshtal_parser
 from tests.parser_test_data import lex_ans
 from tests.parser_test_data import parser_ans
+from tests.parser_test_data import meshtal_ans
 
 
 class TestLexer(unittest.TestCase):
@@ -35,12 +38,30 @@ class TestParser(unittest.TestCase):
                 with open('tests/parser_test_data/{0}.txt'.format(name)) as f:
                     text = f.read()
                 mcnp_input_lexer.begin('INITIAL')
-                title, cells, surfaces, data = mcnp_input_parser.parse(text)
+                title, cells, surfaces, data = mcnp_input_parser.parse(text, lexer=mcnp_input_lexer)
                 ans = parser_ans.ans[name]
                 self.assertEqual(title, ans['title'])
                 self.assertEqual(cells, ans['cells'])
                 self.assertEqual(surfaces, ans['surfaces'])
                 self.assertEqual(data, ans['data'])
+
+
+class TestMeshtalParser(unittest.TestCase):
+    def test_parse(self):
+        with open('tests/parser_test_data/fmesh.m') as f:
+            text = f.read()
+        meshtal_lexer.begin('INITIAL')
+        tallies = meshtal_parser.parse(text, lexer=meshtal_lexer)
+        self.assertEqual(tallies.keys(), meshtal_ans.ans.keys())
+        for k in ['date', 'histories', 'title']:
+            self.assertEqual(tallies[k], meshtal_ans.ans[k])
+        for t, a in zip(tallies['tallies'], meshtal_ans.ans['tallies']):
+            for k in ['name', 'particle', 'geom']:
+                self.assertEqual(t[k], a[k])
+            for k, v in a['bins'].items():
+                assert_array_almost_equal(t['bins'][k], v)
+            assert_array_almost_equal(t['result'], a['result'])
+            assert_array_almost_equal(t['error'], a['error'])
 
 
 if __name__ == '__main__':

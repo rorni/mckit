@@ -17,7 +17,7 @@ def setUpModule():
         with open('tests/model_test_data/{0}.txt'.format(case)) as f:
             text = f.read()
             mcnp_input_lexer.begin('INITIAL')
-            cases[case] = mcnp_input_parser.parse(text)
+            cases[case] = mcnp_input_parser.parse(text, lexer=mcnp_input_lexer)
 
 
 class TestModel(unittest.TestCase):
