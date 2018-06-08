@@ -1,5 +1,6 @@
 """Module for activation calculations and FISPACT coupling."""
 from itertools import accumulate
+import re
 import subprocess
 import numpy as np
 
@@ -21,6 +22,23 @@ LIBS = {
 }
 
 TIME_UNITS = {'SECS': 1, 'MINS': 60, 'HOURS': 3600, 'DAYS': 3600*24, 'YEARS': 3600*24*365}
+
+
+class FispactError(Exception):
+    pass
+
+
+def fispact_fatal(text):
+    """Raises FispactError exception if FATAL ERROR presents in output.
+
+    Parameters
+    ----------
+    text : str
+        Text to be checked.
+    """
+    match = re.search('^.*FATAL +ERROR.*$', text, flags=re.MULTILINE)
+    if match:
+        raise FispactError(match.group(0))
 
 
 def fispact_files(files='files', collapx='COLLAPX', fluxes='fluxes', arrayx='ARRAYX'):
@@ -46,7 +64,7 @@ def fispact_files(files='files', collapx='COLLAPX', fluxes='fluxes', arrayx='ARR
         f.write('arrayx  ' + arrayx + '\n')
 
 
-def fispact_convert(ebins, flux, convert='convert.i', fluxes='fluxes', arb_flux='arb_flux', files='files.convert'):
+def fispact_convert(ebins, flux, convert='convert', fluxes='fluxes', arb_flux='arb_flux', files='files.convert'):
     """Converts flux to the 709 groups.
 
     Parameters
@@ -65,22 +83,22 @@ def fispact_convert(ebins, flux, convert='convert.i', fluxes='fluxes', arb_flux=
         File name for conversion data.
     """
     with open(files, mode='w') as f:
-        f.write('ind_nuc  ' + DATA_PATH + LIBS['ind_nuc'])
+        f.write('ind_nuc  ' + DATA_PATH + LIBS['ind_nuc'] + '\n')
         f.write('fluxes  ' + fluxes + '\n')
         f.write('arb_flux  ' + arb_flux + '\n')
 
     with open(arb_flux, mode='w') as f:
         ncols = 6
         text = []
-        for i, e in enumerate(ebins):
+        for i, e in enumerate(reversed(ebins)):
             s = '\n' if (i + 1) % ncols == 0 else ' '
-            text.append('{0:.6e}'.format(e))
+            text.append('{0:.6e}'.format(e * 1.e+6))  # Because fispact needs eV, not MeV
             text.append(s)
         text[-1] = '\n'
         f.write(''.join(text))
 
         text = []
-        for i, e in enumerate(flux):
+        for i, e in enumerate(reversed(flux)):
             s = '\n' if (i + 1) % ncols == 0 else ' '
             text.append('{0:.6e}'.format(e))
             text.append(s)
@@ -89,24 +107,24 @@ def fispact_convert(ebins, flux, convert='convert.i', fluxes='fluxes', arb_flux=
         f.write('{0}\n'.format(1))
         f.write('total flux={0:.6e}'.format(np.sum(flux)))
 
-    with open(convert, mode='w') as f:
+    with open(convert + '.i', mode='w') as f:
         text = [
-            '<< convert flux to 709 grout structure >>'
+            '<< convert flux to 709 grout structure >>',
             'CLOBBER',
             'GRPCONVERT {0} 709'.format(len(flux)),
             'FISPACT',
-            '* SPECTRAL MODIFICATION'
-            'END'
+            '* SPECTRAL MODIFICATION',
+            'END',
             '* END'
         ]
         f.write('\n'.join(text))
 
-    status = subprocess.run('fispact', convert, files)
-    status.check_returncode()
-    return fluxes
+    status = subprocess.check_output(['fispact', convert, files], encoding='utf-8')
+    print(status)
+    fispact_fatal(status)
 
 
-def fispact_collapse(collapse='collapse.i', files='files', use_binary=True):
+def fispact_collapse(collapse='collapse', files='files', use_binary=True):
     """Collapses crossections with flux.
 
     Parameters
@@ -119,7 +137,7 @@ def fispact_collapse(collapse='collapse.i', files='files', use_binary=True):
         Use binary data rather text data.
     """
     p = -1 if use_binary else +1
-    with open(collapse, mode='w') as f:
+    with open(collapse + '.i', mode='w') as f:
         text = [
             '<< collapse cross section data >>',
             'CLOBBER',
@@ -131,11 +149,12 @@ def fispact_collapse(collapse='collapse.i', files='files', use_binary=True):
         ]
         f.write('\n'.join(text))
 
-    status = subprocess.run('fispact', collapse, files)
-    status.check_returncode()
+    status = subprocess.check_output(['fispact', collapse, files], encoding='utf-8')
+    print(status)
+    fispact_fatal(status)
 
 
-def fispact_condense(condense='condense.i', files='files'):
+def fispact_condense(condense='condense', files='files'):
     """Condense the decay and fission data.
 
     Parameters
@@ -145,7 +164,7 @@ def fispact_condense(condense='condense.i', files='files'):
     files : str
         Name of files input file.
     """
-    with open(condense, mode='w') as f:
+    with open(condense + '.i', mode='w') as f:
         text = [
             '<< Condense decay data >>',
             'CLOBBER',
@@ -158,11 +177,12 @@ def fispact_condense(condense='condense.i', files='files'):
         ]
         f.write('\n'.join(text))
 
-    status = subprocess.run('fispact', condense, files)
-    status.check_returncode()
+    status = subprocess.check_output(['fispact', condense, files], encoding='utf-8')
+    print(status)
+    fispact_fatal(status)
 
 
-def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile, inventory='inventory.i',
+def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile, inventory='inventory',
                       files='files', nat_reltol=1.e-8, zero=True, mind=1.e+5, use_fission=False, half=True,
                       hazards=False, tab1=False, tab2=False, tab3=False, tab4=False, nostable=False,
                       inv_tol=None, path_tol=None, uncertainty=0):
@@ -272,11 +292,12 @@ def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile,
     text.append('END')
     text.append('* END of calculations')
     # Save to file
-    with open(inventory, mode='w') as f:
+    with open(inventory + '.i', mode='w') as f:
         f.write('\n'.join(text))
     # Run calculations.
-    status = subprocess.run('fispact', inventory, files)
-    status.check_returncode()
+    status = subprocess.check_output(['fispact', inventory, files], encoding='utf-8')
+    print(status)
+    fispact_fatal(status)
 
 
 def fispact_material(material, volume, tolerance=1.e-8):
@@ -497,10 +518,10 @@ class IrradiationProfile:
             last_flux = cur_flux
         if last_flux > 0:
             lines.append('FLUX 0')
-        return '\n'.join(lines)
+        return lines
 
 
-def activation(title, material, volume, spectrum, irr_profile, relax_profile, inventory='inventory.i',
+def activation(title, material, volume, spectrum, irr_profile, relax_profile, inventory='inventory',
                files='files', fluxes='fluxes', collapx='COLLAPX', arrayx='ARRAYX', use_binary=False, **kwargs):
     """Runs activation calculations.
 
