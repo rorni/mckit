@@ -23,31 +23,27 @@ LIBS = {
 TIME_UNITS = {'SECS': 1, 'MINS': 60, 'HOURS': 3600, 'DAYS': 3600*24, 'YEARS': 3600*24*365}
 
 
-def fispact_files(postfix, arrayx='ARRAYX'):
+def fispact_files(files='files', collapx='COLLAPX', fluxes='fluxes', arrayx='ARRAYX'):
     """Creates new files file, that specifies fispact names and data.
 
     Parameters
     ----------
-    postfix : str
-        Postfix to be used in names of files and fluxes.
+    files : str
+        Name of file with list of libraries and other useful files. Default: files
+    collapx : str
+        Name of file of the collapsed cross sections. Default: COLLAPX
+    fluxes : str
+        Name of file with flux data. Default: fluxes.
     arrayx : str
         Name of arrayx file. Usually it is needed to be calculated only once.
-
-    Returns
-    -------
-    filename : str
-        Name of created files file.
     """
-    filename = 'files_' + postfix
-    with open(filename, mode='w') as f:
+    with open(files, mode='w') as f:
         for k, v in LIBS.items():
             f.write(k + '  ' + DATA_PATH + v + '\n')
-        f.write('fluxes fluxes_' + postfix + '\n')
-        collapx = 'COLLAPX_' + postfix
+        f.write('fluxes  ' + fluxes + '\n')
         f.write('collapxi  ' + collapx + '\n')
         f.write('collapxo  ' + collapx + '\n')
         f.write('arrayx  ' + arrayx + '\n')
-    return filename
 
 
 def fispact_convert(ebins, flux, convert='convert.i', fluxes='fluxes', arb_flux='arb_flux', files='files.convert'):
@@ -166,17 +162,69 @@ def fispact_condense(condense='condense.i', files='files'):
     status.check_returncode()
 
 
-def fispact_inventory(title, inventory='inventory.i', files='files'):
+def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile, inventory='inventory.i',
+                      files='files', nat_reltol=1.e-8, zero=True, mind=1.e+5, use_fission=False, half=True,
+                      hazards=False, tab1=False, tab2=False, tab3=False, tab4=False, nostable=False,
+                      inv_tol=None, path_tol=None, uncertainty=0):
     """Runs inventory calculations.
 
     Parameters
     ----------
     title : str
         Title for the inventory.
+    material : Material
+        Material to be irradiated.
+    volume : float
+        Volume of the material.
+    flux : float
+        Total neutron flux.
+    irr_profile : IrradiationProfile
+        Irradiation profile.
+    relax_profile : IrradiationProfile
+        Relaxation profile.
     inventory : str
         File name for inventory input file.
     files : str
         File name for data file.
+    nat_reltol : float
+        Relative tolerance to believe that elements have natural abundance.
+        To force use of isotopic composition set nat_reltol to None. Default: 1.e-8.
+    zero : bool
+        If True, then time value is reset to zero after an irradiation.
+    mind : float
+        Indicate the minimum number of atoms which are regarded as significant
+        for the output inventory. Default: 1.e+5
+    use_fission : bool
+        Causes to use fission reactions. If it is False - fission reactions are omitted.
+        Default: False - not to use fission.
+    half : bool
+        If True, causes the half-lije of each nuclide to be printed in the
+        output at all timesteps. Default: True.
+    hazards : bool
+        If True, causes data on potential ingestion and inhalation doses to be read
+        and dose due to individual nuclides to be printed at all timesteps.
+        Default: False.
+    tab1, tab2, tab3, tab4: bool
+        If True, causes output of the specific data into separate files.
+        tab1 - number of atoms and grams of each nuclide, default: False;
+        tab2 - activity (Bq) and dose rate (Sv per hour) of each nuclide, default: False;
+        tab3 - ingestion and inhalation dose (Sv) of each nuclide, default: False;
+        tab4 - gamma-ray spectrum (MeV per sec) and the number of gammas per group, default: False.
+    nostable : bool
+        If True, printing of stable nuclides in the inventory is suppressed. Default: False
+    inv_tol : (float, float)
+        (atol, rtol) - absolute and relative tolerances for inventory calculations.
+        Default: None - means default values ramain (1.e+4, 2.e-3).
+    path_tol : (float, float)
+        (atol, rtol) - absolute and relative tolerances for pathways calculations.
+        Default: None - means default values remain (1.e+4, 2.e-3).
+    uncertainty : int
+        Controls the uncertainty estimates and pathway information that are
+        calculated and output for each time interval. Default: 0.
+        0 - no pathways or estimates of uncertainty are calculated or output;
+        1 - only estimates of uncertainty are output;
+        2 - both estimates of uncertainty and the pathway information are output;
+        3 - only the pathway information is output;
     """
     # inventory header.
     text = [
@@ -188,13 +236,89 @@ def fispact_inventory(title, inventory='inventory.i', files='files'):
         '* {0}'.format(title)
     ]
     # Initial conditions.
-
-
-    # Irradiation profile
-
+    # ------------------
+    # Material
+    text.extend(fispact_material(material, volume, tolerance=nat_reltol))
+    # Calculation parameters.
+    text.append('MIND  {0:.5e}'.format(mind))
+    if use_fission:
+        text.append('USEFISSION')
+    if half:
+        text.append('HALF')
+    if hazards:
+        text.append('HAZARDS')
+    if tab1:
+        text.append('TAB1 1')
+    if tab2:
+        text.append('TAB2 1')
+    if tab3:
+        text.append('TAB3 1')
+    if tab4:
+        text.append('TAB4 1')
+    if nostable:
+        text.append('NOSTABLE')
+    if inv_tol:
+        text.append('TOLERANCE  0  {1:.4e}  {2:.4e}'.format(*inv_tol))
+    if path_tol:
+        text.append('TOLERANCE  1  {1:.4e}  {2:.4e}'.format(*path_tol))
+    if uncertainty:
+        text.append('UNCERTAINTY {0}'.format(uncertainty))
+    # Irradiation and relaxation profiles
+    text.extend(irr_profile.output(flux))
+    if zero:
+        text.append('ZERO')
+    text.extend(relax_profile.output())
+    # Footer
+    text.append('END')
+    text.append('* END of calculations')
+    # Save to file
+    with open(inventory, mode='w') as f:
+        f.write('\n'.join(text))
     # Run calculations.
     status = subprocess.run('fispact', inventory, files)
     status.check_returncode()
+
+
+def fispact_material(material, volume, tolerance=1.e-8):
+    """Produces FISPACT description of the material.
+
+    Parameters
+    ----------
+    material : Material
+        Material to be irradiated.
+    volume : float
+        Volume of the material.
+    tolerance : float
+        Relative tolerance to believe that isotopes have natural abundance.
+        If None - no checking is performed and FUEL keyword is used.
+
+    Returns
+    -------
+    text : list[str]
+        List of words.
+    """
+    text = ['DENSITY {0}'.format(material.density())]
+    composition = []
+    if tolerance is not None:
+        mat = material.natural(tolerance)
+        if mat is not None:
+            mass = volume * mat.density()
+            for e in mat.elements():
+                composition.append((e, mat.get_weight(e) * 100))
+            text.append('MASS {0} {1}'.format(mass, len(composition)))
+    else:
+        mat = None
+
+    if tolerance is None or mat is None:
+        mat = material.expand()
+        tot_atoms = volume * mat.concentration()
+        for e in mat.elements():
+            composition.append((e, mat.get_atomic(e) * tot_atoms))
+        text.append('FUEL  {0}'.format(len(composition)))
+
+    for e, f in sorted(composition, key=lambda x: -x[1]):
+        text.append('  {0}   {1}'.format(e, f))
+    return text
 
 
 def irradiation_SA2():
@@ -371,53 +495,50 @@ class IrradiationProfile:
             time, unit = self.adjust_time(dur)
             lines.append('TIME {0} {1} {2}'.format(time, unit, rec))
             last_flux = cur_flux
+        if last_flux > 0:
+            lines.append('FLUX 0')
         return '\n'.join(lines)
 
 
-def activation(material, volume, spectrum, irr_profile, relax_times, title=None, overwrite=True, monitor=False,
-               half=True, hazards=True, mind=1.e+5, nostable=True, abstol=1.e+4, reltol=2.e-3, unsert=0,
-               usefission=False):
+def activation(title, material, volume, spectrum, irr_profile, relax_profile, inventory='inventory.i',
+               files='files', fluxes='fluxes', collapx='COLLAPX', arrayx='ARRAYX', use_binary=False, **kwargs):
     """Runs activation calculations.
 
     Parameters
     ----------
+    title : str
+        Title for the inventory.
     material : Material
         Material to be irradiated.
     volume : float
-        Volume of material being irradiated.
-    spectrum : (ndarray[float], ndarray[float])
-        Energy group spectrum of neutrons. (energy_bins, grp_fluxes).
+        Volume of the material.
+    spectrum : (ebins, flux)
+        Flux data. ebins - energy bins; flux - group fluxes for every bin.
     irr_profile : IrradiationProfile
         Irradiation profile.
-    relax_times : IrradiationProfile
-        Cooling profile.
-    title : str
-        Title of the run.
-    overwrite : bool
-        Whether to overwrite existing output files. Default: True.
-    monitor : bool
-        Verbose FISPACT output. Default: False
-    half : bool
-        Print half-life of each nuclide.
-    hazards : bool
-        Print potential ingestion and inhalation doses to be printed.
-    mind : float
-        The number of atoms that is considered to be significant. Default 1.e+5.
-    nostable : bool
-        If True, stable nuclides are not printed in the inventory.
-    abstol : float
-        Absolute error.
-    reltol : float
-        Relative error.
-    unsert : int
-        Uncertainty. 0 - no pathways or estimates of uncertainty are calculated or output; 1 - only estimates
-        of uncertainty are output; 2 - both estimates of uncertainty and the pathway information are output;
-        3 - only the pathway information is output.
-    usefission : bool
-        Fission reactions are included. Default: False.
-
-    Returns
-    -------
-
+    relax_profile : IrradiationProfile
+        Relaxation profile.
+    inventory : str
+        File name for inventory input file.
+    files : str
+        File name for data file.
+    collapx : str
+        Name of file of the collapsed cross sections. Default: COLLAPX
+    fluxes : str
+        Name of file with flux data. Default: fluxes.
+    arrayx : str
+        Name of arrayx file. Usually it is needed to be calculated only once.
+    use_binary : bool
+        Use binary data rather text data.
+    kwargs : dict
+        Paramters for fispact_inventory. See docs for fispact_inventory function.
     """
-    pass
+    fispact_files(files=files, collapx=collapx, fluxes=fluxes, arrayx=arrayx)
+    fispact_convert(spectrum[0], spectrum[1], fluxes=fluxes)
+    fispact_condense(files=files)
+    fispact_collapse(files=files, use_binary=use_binary)
+    fispact_inventory(title, material, volume, np.sum(spectrum[1]), irr_profile, relax_profile, inventory=inventory,
+                      **kwargs)
+
+
+

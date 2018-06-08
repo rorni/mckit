@@ -5,7 +5,7 @@ import numpy as np
 from .constants import NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
                        ISOTOPE_MASS, AVOGADRO, \
                        RELATIVE_COMPOSITION_TOLERANCE,\
-                       RELATIVE_DENSITY_TOLERANCE
+                       RELATIVE_DENSITY_TOLERANCE, CHARGE_TO_NAME
 from .printer import print_card, MCNP_FORMATS
 
 
@@ -230,6 +230,10 @@ class Composition:
             atomics.append((q * 1000, tot_frac))
         return Composition(atomic=atomics, **self._options)
 
+    def elements(self):
+        """Gets iterator over composition's elements."""
+        return iter(self._composition.keys())
+
     @staticmethod
     def mixture(*compositions):
         """Makes mixture of the compositions with specific fractions.
@@ -390,6 +394,44 @@ class Material:
         """Gets material's effective molar mass [g / mol]."""
         return self._composition.molar_mass()
 
+    def get_atomic(self, isotope):
+        """Gets atomic fraction of the isotope.
+
+        Raises KeyError if the composition doesn't contain the isotope.
+
+        Parameters
+        ----------
+        isotope : str or Element
+            Isotope. It can be either isotope name or Element instance.
+
+        Returns
+        -------
+        frac : float
+            Atomic fraction of the specified isotope.
+        """
+        return self._composition.get_atomic(isotope)
+
+    def get_weight(self, isotope):
+        """Gets weight fraction of the isotope.
+
+        Raises KeyError if the composition doesn't contain the isotope.
+
+        Parameters
+        ----------
+        isotope : str or Element
+            Isotope. It can be either isotope name or Element instance.
+
+        Returns
+        -------
+        frac : float
+            Weight fraction of the specified isotope.
+        """
+        return self._composition.get_weight(isotope)
+
+    def elements(self):
+        """Return iterator over elements contained in the material."""
+        return iter(self._composition.elements())
+
 
 def merge_materials(material1, volume1, material2, volume2):
     """Merges materials.
@@ -507,10 +549,14 @@ class Element:
             return False
 
     def __str__(self):
-        result = str(self._charge * 1000 + self._mass_number)
-        if self._lib is not None:
-            result += '.{0}'.format(self._lib)
-        return result
+        name = CHARGE_TO_NAME[self.charge()]
+        if self._mass_number > 0:
+            name += str(self._mass_number)
+        return name
+        #result = str(self._charge * 1000 + self._mass_number)
+        #if self._lib is not None:
+        #    result += '.{0}'.format(self._lib)
+        #return result
 
     def charge(self):
         """Gets element's charge number."""
