@@ -323,7 +323,7 @@ def fispact_material(material, volume, tolerance=1.e-8):
     if tolerance is not None:
         mat = material.natural(tolerance)
         if mat is not None:
-            mass = volume * mat.density()
+            mass = volume * mat.density() / 1000    # Because mass must be specified in kg.
             for e in mat.elements():
                 composition.append((e, mat.get_weight(e) * 100))
             text.append('MASS {0} {1}'.format(mass, len(composition)))
