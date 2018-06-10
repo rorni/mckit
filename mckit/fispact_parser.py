@@ -1,7 +1,5 @@
 import re
 
-import numpy as np
-
 import ply.lex as lex
 import ply.yacc as yacc
 
@@ -149,9 +147,9 @@ def p_isotope(p):
 def p_gamma_data(p):
     """gamma_data : fiss ab ab tot_gamma spectrum"""
     p[5]['fissions'] = p[1]
-    p[5]['alpha'] = p[2]
-    p[5]['beta'] = p[3]
-    p[5]['gamma'] = p[4]
+    p[5]['a-energy'] = p[2]
+    p[5]['b-energy'] = p[3]
+    p[5]['g-energy'] = p[4]
     p[0] = p[5]
 
 
@@ -177,11 +175,11 @@ def p_spectrum(p):
     n = len(p)
     low, high, data1, data2 = p[n-2]
     if n == 3:
-        p[0] = {'bins': [low, high], 'energy': [data1], 'spec': [data2]}
+        p[0] = {'ebins': [low, high], 'data1': [data1], 'data2': [data2]}
     else:
-        p[1]['bins'].append(high)
-        p[1]['energy'].append(data1)
-        p[1]['spec'].append(data2)
+        p[1]['ebins'].append(high)
+        p[1]['data1'].append(data1)
+        p[1]['data2'].append(data2)
         p[0] = p[1]
 
 
@@ -196,3 +194,72 @@ def p_error(p):
         print("Syntax error at token {0} {3}, line {1}, column {2}".format(p.type, p.lexer.lineno, column, p.value))
     else:
         print("Syntax error at EOF")
+
+
+fispact_parser = yacc.yacc(tabmodule="fispact_tab", debug=True)
+
+
+def read_fispact_tab(filename):
+    """Reads FISPACT output tab file.
+
+    This function is common for all tab files (1-4). Output data format depends
+    on file extension: tab1 - number of atoms of each nuclide, tab2 - activity
+    of each nuclide, tab3 - ingestion and inhalation doses,
+    tab4 - gamma-radiation spectrum.
+
+    The result is a list of time frames. Every time frame is a dictionary, that
+    contains the following data:
+        * index - the number of frame. Numbers start from 1;
+        * time - total time passed from the start of irradiation or relaxation
+                 in seconds;
+        * duration - time passed from the previous frame also in seconds;
+        * atoms - dictionary[Element -> float] - the number of atoms for each
+                 element. Only for tab1 file;
+        * activity - dictionary[Element -> float] - the activity of each
+                 element in Bq. Only for tab2 file;
+        * ingestion - dictionary[Element -> float] - ingestion dose for every
+                 isotope in Sv/h. Only for tab3 file;
+        * inhalation - dictionary[Element -> float] - inhalation dose for every
+                 isotope in Sv/h. Only for tab3 file;
+        * fissions - the number of spontaneous fissions. Only for tab4 file;
+        * a-energy - energy of alpha radiation in MeV/sec. Only for tab4 file.
+        * b-energy - energy of beta radiation in MeV/sec. Only for tab4 file.
+        * g-energy - energy of gamma radiation in MeV/sec. Only for tab4 file.
+        * ebins - energy bins for gamma-radiation in MeV. Only for tab4 file.
+        * flux - gamma-radiation group flux in photons per cc per sec. Only for
+                 tab4 file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of FISPACT output tab file.
+
+    Returns
+    -------
+    time_frames : list
+        List of frames for irradiation phase.
+    """
+    ext = filename.rpartition('.')[2].lower()
+    with open(filename) as f:
+        text = f.read()
+    fispact_lexer.lineno = 1
+    fispact_lexer.linepos = 1
+    fispact_lexer.last_pos = 1
+    fispact_lexer.begin('INITIAL')
+    time_frames = fispact_parser.parse(text, lexer=fispact_lexer)
+    time = 0
+    for tf in time_frames:
+        time += tf['duration']
+        tf['time'] = time
+        data1 = tf.pop('data1')
+        data2 = tf.pop('data2')
+        if ext == 'tab1':
+            tf['atoms'] = data1
+        elif ext == 'tab2':
+            tf['activity'] = data1
+        elif ext == 'tab3':
+            tf['ingestion'] = data1
+            tf['inhalation'] = data2
+        elif ext == 'tab4':
+            tf['flux'] = data2
+    return time_frames
