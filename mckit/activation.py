@@ -562,4 +562,5 @@ def activation(title, material, volume, spectrum, irr_profile, relax_profile, in
                       **kwargs)
 
 
-
+def mesh_activation(title, fmesh, universe, irr_profile, relax_profile, **kwargs):
+    pass
