@@ -36,7 +36,7 @@ def fispact_fatal(text):
     text : str
         Text to be checked.
     """
-    match = re.search('^.*FATAL +ERROR.*$', text, flags=re.MULTILINE)
+    match = re.search('^.*run +terminated.*$', text, flags=re.MULTILINE)
     if match:
         raise FispactError(match.group(0))
 
@@ -432,7 +432,7 @@ class IrradiationProfile:
         """
         if record is None:
             record = ''
-        self._flux.append(flux * self._norm)
+        self._flux.append(flux)
         self._duration.append(duration * TIME_UNITS[units])
         self._record.append(record)
         if nominal:
@@ -503,7 +503,7 @@ class IrradiationProfile:
         text : str
             Output.
         """
-        if self._norm is not None:
+        if self._norm is not None and nominal_flux is not None:
             norm_factor = nominal_flux / self._norm
         else:
             norm_factor = 1
@@ -512,9 +512,9 @@ class IrradiationProfile:
         for flux, dur, rec in zip(self._flux, self._duration, self._record):
             cur_flux = flux * norm_factor
             if cur_flux != last_flux:
-                lines.append('FLUX {0}'.format(cur_flux))
+                lines.append('FLUX {0:.4}'.format(cur_flux))
             time, unit = self.adjust_time(dur)
-            lines.append('TIME {0} {1} {2}'.format(time, unit, rec))
+            lines.append('TIME {0:.4} {1} {2}'.format(time, unit, rec))
             last_flux = cur_flux
         if last_flux > 0:
             lines.append('FLUX 0')
@@ -558,7 +558,7 @@ def activation(title, material, volume, spectrum, irr_profile, relax_profile, in
     fispact_convert(spectrum[0], spectrum[1], fluxes=fluxes)
     fispact_condense(files=files)
     fispact_collapse(files=files, use_binary=use_binary)
-    fispact_inventory(title, material, volume, np.sum(spectrum[1]), irr_profile, relax_profile, inventory=inventory,
+    fispact_inventory(title, material, volume, sum(spectrum[1]), irr_profile, relax_profile, inventory=inventory,
                       **kwargs)
 
 
