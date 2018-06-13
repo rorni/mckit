@@ -140,8 +140,11 @@ def p_isotope(p):
                | keyword int_number keyword
     """
     name = p[1] + str(p[2])
-    # TODO: add isomer interpretation
-    p[0] = Element(name)
+    if len(p) == 4:
+        isomer = ord(p[3]) - ord('m') + 1
+    else:
+        isomer = 0
+    p[0] = Element(name, isomer=isomer)
 
 
 def p_gamma_data(p):

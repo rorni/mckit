@@ -510,6 +510,8 @@ class Element:
         '-' can be omitted. If there is no A, then A is assumed to be 0.
     lib : str, optional
         Name of library.
+    isomer : int
+        Isomer level. Default: 0 - ground state.
     comment : str, optional
         Optional comment to the element.
 
@@ -524,7 +526,7 @@ class Element:
     molar_mass()
         Gets isotope's molar mass.
     """
-    def __init__(self, name, lib=None, comment=None):
+    def __init__(self, name, lib=None, isomer=0, comment=None):
         if isinstance(name, int):
             self._charge = name // 1000
             self._mass_number = name % 1000
@@ -536,14 +538,17 @@ class Element:
                 self._charge = int(z)
             self._mass_number = int(a)
         self._lib = lib
+        if self._mass_number == 0:
+            isomer = 0
+        self._isomer = isomer
         self._comment = comment
 
     def __hash__(self):
-        return self._charge * self._mass_number * hash(self._lib)
+        return self._charge * self._mass_number * hash(self._lib) * (self._isomer + 1)
 
     def __eq__(self, other):
         if self._charge == other.charge() and self._mass_number == \
-                other.mass_number() and self._lib == other._lib:
+                other.mass_number() and self._lib == other._lib and self._isomer == other._isomer:
             return True
         else:
             return False
@@ -552,6 +557,10 @@ class Element:
         name = CHARGE_TO_NAME[self.charge()]
         if self._mass_number > 0:
             name += str(self._mass_number)
+            if self._isomer > 0:
+                name += 'm'
+            if self._isomer > 1:
+                name += str(self._isomer - 1)
         return name
         #result = str(self._charge * 1000 + self._mass_number)
         #if self._lib is not None:
