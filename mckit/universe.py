@@ -14,131 +14,50 @@ class Universe:
     
     Parameters
     ----------
-    cells : list
-        A list of cells this universe consist of.
+    cells : iterable
+        A list of cells this universe consist of. Among these cells can be
+        cells of other universes. The most outer universe will be created.
+        Inner universes will be created either, but they will be accessed
+        via the outer.
         
     Methods
     -------
-    get_box_volumes(box, accuracy, pool_size, names)
-        Calculates volumes of cells inside the box.
-    get_mesh_volumes(mesh, accuracy, pool_size)
-        Calculates volumes of cells inside mesh voxels.
-    get_concentrations()
-        Calculates concentrations of materials in voxels.
-    populate()
-        Populates every cell that has fill option by cells of filling universe.
+    fill(cell)
+        Fills every cell that has fill option by cells of filling universe.
     transform(tr)
         Applies transformation tr to this universe. Returns a new universe.
+    inner_universes()
+        Gets all inner universes.
+    get_surfaces()
+        Gets all surfaces contained.
     """
-    def __init__(self, cells, name=0, title=''):
-        self.cells = tuple(cells)
-        self.name = name
-        self.description = title
+    def __init__(self, cells, name=0, comment=None):
+        self._name = name
+        self._comment = comment
+        created_universes = {}
+        self._cells = set()
+        for c in cells:
+            u = c.get('U', 0)
+            if u != name:
+                continue
+            fill = c.get('FILL')
+            if fill is not None:
+                uname = fill['universe']
+                if uname not in created_universes.keys():
+                    created_universes[uname] = Universe(cells, name=uname)
+                fill['universe'] = created_universes[uname]
+            self._cells.add(c)
 
-    def get_mesh_volumes(self, mesh, accuracy=0.1, pool_size=20000):
-        """Calculates volumes of cells that intersect the box or mesh voxels.
+    @property
+    def name(self):
+        return self._name
 
-        Monte Carlo method of calculations is used.
-
-        Parameters
-        ----------
-        mesh : RectMesh
-            Mesh of calculations. Volumes of cells in every voxel are returned.
-        accuracy : float
-            Average linear density of random points (distance between two
-            points). Given in cm. Default - 0.1 cm.
-        pool_size : int
-            The number of points generated at one iteration.
-        
-        Returns
-        -------
-        volumes : array[dict]
-            Volumes of cells in every voxel. Array has the same shape as mesh.
-            Every element of the array is a dictionary of cell_number -> 
-            cell_volume_in_voxel pairs.
-        """
-        mesh_shape = mesh.shape()
-        volumes = np.empty(shape=mesh_shape, dtype=dict)
-        candidates = []
-        for i, c in enumerate(self.cells):
-            s = c.test_box(mesh)
-            if s == +1 or s == 0:
-                candidates.append(i)
-        for i in range(mesh_shape[0]):
-            for j in range(mesh_shape[1]):
-                for k in range(mesh_shape[2]):
-                    volumes[i, j, k] = self.get_box_volumes(
-                        mesh.get_voxel(i, j, k),
-                        accuracy=accuracy,
-                        pool_size=pool_size,
-                        names=candidates
-                    )
-        return volumes
-
-    def get_box_volumes(self, box, accuracy=0.1, pool_size=100000, names=None,
-                        verbose=False):
-        """Calculates volumes of cells that intersect the box.
-
-        Monte Carlo method of calculations is used.
-
-        Parameters
-        ----------
-        box : Box
-            The box.
-        accuracy : float
-            Average linear density of random points (distance between two
-            points). Given in cm. Default - 0.1 cm.
-        pool_size : int
-            The number of points generated at one iteration.
-        names : list
-            List of names of cells to be checked. If None, all cells are 
-            checked.
-
-        Returns
-        -------
-        volumes : dict
-            Volumes of cells. The key is the index of cell.
-        """
-        volumes = {}
-        checking_cells = names if names else list(range(len(self.cells)))
-        tot_cells = len(checking_cells)
-        if verbose:
-            print("The number of cells: {0}".format(tot_cells))
-        for i, name in enumerate(checking_cells):
-            vol = self.cells[name].calculate_volume(box, accuracy=accuracy, pool_size=pool_size)
-            if vol > 0:
-                volumes[name] = vol
-            if verbose:
-                sys.stdout.write('\r')
-                sys.stdout.write(
-                    "cell={0} ({1}/{2}) ".format(name, i, tot_cells)
-                )
-                sys.stdout.flush()
-        if verbose:
-            print(volumes)
-            print("\nDone")
-        return volumes
-
-    def get_concentrations(self, mesh):
-        """Calculates concentrations of each material in mesh.
-
-        Parameters
-        ----------
-        mesh : Mesh
-            Mesh object.
-
-        Returns
-        -------
-        concentrations : dict
-            Concentrations of materials for mesh.
-        """
-        raise NotImplementedError
-
-    def populate(self):
-        """Replaces cells that have fill option by filling universe cells.
+    def fill(self, cell=None, universe=None):
+        """Fills cells that have fill option by filling universe cells.
 
         This procedure is applied recursively. The resulting universe does not
-        contain cells that have fill option.
+        contain cells that have fill option. If cell name is specified, then
+        only specified cell is filled. This method modifies current universe.
 
         Returns
         -------

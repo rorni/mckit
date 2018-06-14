@@ -391,6 +391,14 @@ class Body(Shape):
             text.append('\n')
         return text
 
+    def get(self, option_name, default=None):
+        """Gets option by name without raising an exception."""
+        return self._options.get(option_name, default=default)
+
+    def set(self, option_name, value):
+        """Adds new option to the body or replaces old option."""
+        self._options[option_name] = value
+
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
 
