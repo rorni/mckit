@@ -21,7 +21,7 @@ LIBS = {
     'absorp':   r'decay\\abs_2012'
 }
 
-TIME_UNITS = {'SECS': 1, 'MINS': 60, 'HOURS': 3600, 'DAYS': 3600*24, 'YEARS': 3600*24*365}
+TIME_UNITS = {'SECS': 1., 'MINS': 60., 'HOURS': 3600., 'DAYS': 3600.*24, 'YEARS': 3600.*24*365}
 
 
 class FispactError(Exception):
@@ -278,9 +278,9 @@ def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile,
     if nostable:
         text.append('NOSTABLE')
     if inv_tol:
-        text.append('TOLERANCE  0  {1:.4e}  {2:.4e}'.format(*inv_tol))
+        text.append('TOLERANCE  0  {1:.5e}  {2:.5e}'.format(*inv_tol))
     if path_tol:
-        text.append('TOLERANCE  1  {1:.4e}  {2:.4e}'.format(*path_tol))
+        text.append('TOLERANCE  1  {1:.5e}  {2:.5e}'.format(*path_tol))
     if uncertainty:
         text.append('UNCERTAINTY {0}'.format(uncertainty))
     # Irradiation and relaxation profiles
@@ -326,7 +326,7 @@ def fispact_material(material, volume, tolerance=1.e-8):
             mass = volume * mat.density() / 1000    # Because mass must be specified in kg.
             for e in mat.elements():
                 composition.append((e, mat.get_weight(e) * 100))
-            text.append('MASS {0} {1}'.format(mass, len(composition)))
+            text.append('MASS {0:.5} {1}'.format(mass, len(composition)))
     else:
         mat = None
 
@@ -338,7 +338,7 @@ def fispact_material(material, volume, tolerance=1.e-8):
         text.append('FUEL  {0}'.format(len(composition)))
 
     for e, f in sorted(composition, key=lambda x: -x[1]):
-        text.append('  {0}   {1}'.format(e, f))
+        text.append('  {0}   {1:.5}'.format(e, f))
     return text
 
 
@@ -512,9 +512,9 @@ class IrradiationProfile:
         for flux, dur, rec in zip(self._flux, self._duration, self._record):
             cur_flux = flux * norm_factor
             if cur_flux != last_flux:
-                lines.append('FLUX {0:.4}'.format(cur_flux))
+                lines.append('FLUX {0:.5}'.format(cur_flux))
             time, unit = self.adjust_time(dur)
-            lines.append('TIME {0:.4} {1} {2}'.format(time, unit, rec))
+            lines.append('TIME {0:.5} {1} {2}'.format(time, unit, rec))
             last_flux = cur_flux
         if last_flux > 0:
             lines.append('FLUX 0')

@@ -3,9 +3,11 @@ from numpy.testing import assert_array_almost_equal
 
 from mckit.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
 from mckit.meshtal_parser import meshtal_lexer, meshtal_parser
+from mckit.fispact_parser import read_fispact_tab
 from tests.parser_test_data import lex_ans
 from tests.parser_test_data import parser_ans
 from tests.parser_test_data import meshtal_ans
+from tests.parser_test_data import fispact_ans
 
 
 class TestLexer(unittest.TestCase):
@@ -62,6 +64,31 @@ class TestMeshtalParser(unittest.TestCase):
                 assert_array_almost_equal(t['bins'][k], v)
             assert_array_almost_equal(t['result'], a['result'])
             assert_array_almost_equal(t['error'], a['error'])
+
+
+class TestFispactParser(unittest.TestCase):
+    def test_parse(self):
+        elem_keys = {'atoms', 'activity', 'ingestion', 'inhalation'}
+        list_keys = {'ebins', 'flux'}
+        flt_keys = {'time', 'duration', 'fissions', 'a-energy', 'b-energy', 'g-energy'}
+        int_keys = {'index'}
+        for filename, ans in fispact_ans.ans.items():
+            with self.subTest(msg=filename):
+                data = read_fispact_tab('tests/parser_test_data/{0}'.format(filename))
+                self.assertEqual(len(data), len(ans))
+                for tfa, tfd in zip(ans, data):
+                    self.assertEqual(len(tfa.keys()), len(tfd.keys()))
+                    for key in tfa.keys():
+                        if key in int_keys:
+                            self.assertEqual(tfa[key], tfd[key])
+                        elif key in flt_keys:
+                            self.assertAlmostEqual(tfa[key], tfd[key], delta=1.e-4 * tfa[key])
+                        elif key in list_keys:
+                            assert_array_almost_equal(tfa[key], tfd[key], decimal=4)
+                        elif key in elem_keys:
+                            self.assertEqual(len(tfa[key].keys()), len(tfd[key].keys()))
+                            for k, v in tfa[key].items():
+                                self.assertAlmostEqual(v, tfd[key][k])
 
 
 if __name__ == '__main__':

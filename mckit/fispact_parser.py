@@ -16,7 +16,7 @@ TIME_ALIAS = {
     'ky': TIME_UNITS['YEARS'] * 1000
 }
 
-literals = ['+', '-', ':', '(', ')']
+literals = ['+', '-', '(', ')']
 
 
 # List of token names
@@ -33,10 +33,9 @@ tokens = [
 NEWLINE = r'\n'
 EXPONENT = r'(E[-+]?\d+)'
 INT_NUMBER = r'(\d+)'
-FLT_NUMBER = r'(' + \
-             INT_NUMBER + r'?' + r'\.' + INT_NUMBER + EXPONENT + r'?|' +\
+FLT_NUMBER = INT_NUMBER + r'?' + r'\.' + INT_NUMBER + EXPONENT + r'?|' +\
              INT_NUMBER + r'\.' + r'?' + EXPONENT + r'|' + \
-             INT_NUMBER + r'\.' + r')(?=[ \n-+])'
+             INT_NUMBER + r'\.'
 KEYWORD = r'[A-Z]+(/[A-Z]+)?'
 SKIP = r'[. ]'
 
@@ -86,7 +85,7 @@ def p_data(p):
             | timeframe
     """
     if len(p) == 2:
-        p[0] = p[1]
+        p[0] = [p[1]]
     else:
         p[1].append(p[2])
         p[0] = p[1]
@@ -98,7 +97,7 @@ def p_timeframe(p):
                  | timeheader
     """
     index, interval, time = p[1]
-    frame = {'index': index, 'duration': interval, 'final_time': time}
+    frame = {'index': index, 'duration': interval, 'time': time}
     if len(p) == 3:
         frame.update(p[2])
     p[0] = frame
@@ -157,18 +156,18 @@ def p_gamma_data(p):
 
 
 def p_fiss(p):
-    """fiss : keyword '/' keyword keyword keyword flt_number newline"""
-    p[0] = p[6]
+    """fiss : keyword keyword keyword flt_number newline"""
+    p[0] = p[4]
 
 
 def p_ab(p):
-    """ab : keyword '-' keyword keyword '/' keyword flt_number newline"""
-    p[0] = p[7]
+    """ab : keyword '-' keyword keyword flt_number newline"""
+    p[0] = p[5]
 
 
 def p_tot_gamma(p):
-    """tot_gamma : keyword keyword keyword '/' keyword flt_number newline"""
-    p[0] = p[6]
+    """tot_gamma : keyword keyword keyword flt_number newline"""
+    p[0] = p[4]
 
 
 def p_spectrum(p):
@@ -248,14 +247,15 @@ def read_fispact_tab(filename):
     fispact_lexer.lineno = 1
     fispact_lexer.linepos = 1
     fispact_lexer.last_pos = 1
-    fispact_lexer.begin('INITIAL')
     time_frames = fispact_parser.parse(text, lexer=fispact_lexer)
     time = 0
     for tf in time_frames:
         time += tf['duration']
         tf['time'] = time
-        data1 = tf.pop('data1')
-        data2 = tf.pop('data2')
+        data1 = tf.pop('data1', None)
+        data2 = tf.pop('data2', None)
+        if data1 is None and data2 is None:
+            continue
         if ext == 'tab1':
             tf['atoms'] = data1
         elif ext == 'tab2':
