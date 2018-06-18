@@ -178,19 +178,20 @@ class Composition:
     def expand(self):
         """Expands elements with natural abundances into detailed isotope composition.
 
-        Returns
-        -------
-        new_comp : Composition
-            New composition with detailed isotope composition.
+        Modifies current object.
         """
-        composition = []
+        composition = {}
         for el, conc in self._composition.items():
             for isotope, frac in el.expand().items():
-                composition.append((isotope, conc * frac))
-        return Composition(atomic=composition, **self._options)
+                if isotope not in composition.keys():
+                    composition[isotope] = 0
+                composition[isotope] += conc * frac
+        self._composition = composition
 
     def natural(self, tolerance=1.e-8):
         """Tries to replace detailed isotope composition by natural elements.
+
+        Modifies current object.
 
         Parameters
         ----------
@@ -200,8 +201,8 @@ class Composition:
 
         Returns
         -------
-        new_comp : Composition
-            New composition with natural elements. None returned if the
+        comp : Composition
+            self, if composition is reduced successfully to natural. None returned if the
             composition cannot be reduced to natural.
         """
         already = True
@@ -220,19 +221,21 @@ class Composition:
         if already:  # No need for further checking - only natural elements present.
             return self
 
-        atomics = []
+        composition = {}
         for q, isotopes in by_charge.items():
-            frac = isotopes.pop(0, None)
-            if frac:
-                atomics.append((q * 1000, frac))
+            frac_0 = isotopes.pop(0, None)
             tot_frac = sum(isotopes.values())
             for a, frac in isotopes.items():
                 ifrac = frac / tot_frac
                 delta = 2 * abs(ifrac - NATURAL_ABUNDANCE[q][a]) / (ifrac + NATURAL_ABUNDANCE[q][a])
                 if delta > tolerance:
                     return None
-            atomics.append((q * 1000, tot_frac))
-        return Composition(atomic=atomics, **self._options)
+            elem = Element(q * 1000)
+            composition[elem] = tot_frac
+            if frac_0:
+                composition[elem] += frac_0
+        self._composition = composition
+        return self
 
     def elements(self):
         """Gets iterator over composition's elements."""
@@ -307,7 +310,7 @@ class Material:
         if isinstance(composition, Composition) and not atomic and not weight:
             self._composition = composition
         elif not composition and (weight or atomic):
-            self._composition = Composition(atomic=atomic, weight=weight)
+            self._composition = Composition(atomic=atomic, weight=weight, **options)
         else:
             raise ValueError("Incorrect set of parameters.")
 
@@ -320,10 +323,10 @@ class Material:
         self._options = options
 
     def __eq__(self, other):
-        rel = 2 * abs(self._n - other._n) / (self._n + other._n)
+        rel = 2 * abs(self._n - other.concentration) / (self._n + other.concentration)
         if rel >= RELATIVE_DENSITY_TOLERANCE:
             return False
-        return self._composition == other._composition
+        return self._composition == other.composition
 
     def __getitem__(self, key):
         return self._options[key]
@@ -331,13 +334,20 @@ class Material:
     def __iter__(self):
         return iter(self._composition)
 
+    @property
     def density(self):
         """Gets material's density [g per cc]."""
         return self._n * self._composition.molar_mass() / AVOGADRO
 
+    @property
     def concentration(self):
         """Gets material's concentration [atoms per cc]."""
         return self._n
+
+    @property
+    def composition(self):
+        """Gets Composition instance that corresponds to the material."""
+        return self._composition
 
     def natural(self, tolerance=1.e-8):
         """Tries to replace detailed isotope composition by natural elements.
@@ -364,6 +374,8 @@ class Material:
     def correct(self, old_vol=None, new_vol=None, factor=None):
         """Creates new material with fixed density to keep cell's mass.
 
+        Either old_vol and new_vol or factor must be specified.
+
         Parameters
         ----------
         old_vol : float
@@ -381,7 +393,7 @@ class Material:
         """
         if factor is None:
             factor = old_vol / new_vol
-        return Material(composition=self._composition, concentration=self._n * factor)
+        return Material(composition=self._composition, concentration=self._n * factor, **self._options)
 
     def expand(self):
         """Expands natural elements into detailed isotope composition.
