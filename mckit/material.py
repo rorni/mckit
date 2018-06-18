@@ -64,8 +64,8 @@ class Composition:
         if len(frac_w) + len(frac_a) > 0:
             I_w = np.sum(frac_w)
             I_a = np.sum(frac_a)
-            J_w = np.sum(np.divide(frac_w, [e.molar_mass() for e in elem_w]))
-            J_a = np.sum(np.multiply(frac_a, [e.molar_mass() for e in elem_a]))
+            J_w = np.sum(np.divide(frac_w, [e.molar_mass for e in elem_w]))
+            J_a = np.sum(np.multiply(frac_a, [e.molar_mass for e in elem_a]))
 
             II_diff = I_a - I_w
             sq_root = np.sqrt(II_diff ** 2 + 4 * J_w * J_a)
@@ -78,7 +78,7 @@ class Composition:
             for el, frac in zip(elem_w, frac_w):
                 if el not in self._composition.keys():
                     self._composition[el] = 0.0
-                self._composition[el] += self._mu / norm_factor * frac / el.molar_mass()
+                self._composition[el] += self._mu / norm_factor * frac / el.molar_mass
             for el, frac in zip(elem_a, frac_a):
                 if el not in self._composition.keys():
                     self._composition[el] = 0.0
@@ -90,16 +90,19 @@ class Composition:
     def __eq__(self, other):
         if len(self._composition.keys()) != len(other._composition.keys()):
             return False
-        for (k1, v1), (k2, v2) in zip(self._composition.items(), other._composition.items()):
+        for k1, v1 in self._composition.items():
+            v2 = other._composition.get(k1, None)
+            if v2 is None:
+                return False
             rel = 2 * abs(v1 - v2) / (v1 + v2)
-            if k1 != k2 or rel >= RELATIVE_COMPOSITION_TOLERANCE:
+            if rel >= RELATIVE_COMPOSITION_TOLERANCE:
                 return False
         return True
 
     def __str__(self):
         text = ['M' + str(self['name']), ' ']
         for elem, frac in self._composition.items():
-            text.append(str(elem))
+            text.append(elem.mcnp_repr())
             text.append('  ')
             text.append(MCNP_FORMATS['material_fraction'].format(frac))
             text.append('\n')
@@ -165,8 +168,9 @@ class Composition:
         if not isinstance(isotope, Element):
             isotope = Element(isotope)
         at = self._composition[isotope]
-        return at * isotope.molar_mass() / self._mu
+        return at * isotope.molar_mass / self._mu
 
+    @property
     def molar_mass(self):
         """Gets composition's effective molar mass [g / mol]."""
         return self._mu
@@ -198,15 +202,15 @@ class Composition:
         -------
         new_comp : Composition
             New composition with natural elements. None returned if the
-            composition cannot be reduced tu natural.
+            composition cannot be reduced to natural.
         """
         already = True
         by_charge = {}
         for elem, frac in self._composition.items():
-            q = elem.charge()
+            q = elem.charge
             if q not in by_charge.keys():
                 by_charge[q] = {}
-            a = elem.mass_number()
+            a = elem.mass_number
             if a > 0:
                 already = False
             if a not in by_charge[q].keys():
@@ -537,6 +541,20 @@ class Element:
             else:
                 self._charge = int(z)
             self._mass_number = int(a)
+
+        # molar mass calculation
+        Z = self._charge
+        A = self._mass_number
+        if A > 0:
+            if A in ISOTOPE_MASS[Z].keys():
+                self._molar = ISOTOPE_MASS[Z][A]
+            else:  # If no data about molar mass present, then mass number
+                self._molar = A  # itself is the best approximation.
+        else:  # natural abundance
+            self._molar = 0.0
+            for at_num, frac in NATURAL_ABUNDANCE[Z].items():
+                self._molar += ISOTOPE_MASS[Z][at_num] * frac
+        # Other flags and parameters
         self._lib = lib
         if self._mass_number == 0:
             isomer = 0
@@ -547,14 +565,14 @@ class Element:
         return self._charge * self._mass_number * hash(self._lib) * (self._isomer + 1)
 
     def __eq__(self, other):
-        if self._charge == other.charge() and self._mass_number == \
-                other.mass_number() and self._lib == other._lib and self._isomer == other._isomer:
+        if self._charge == other.charge and self._mass_number == \
+                other.mass_number and self._lib == other._lib and self._isomer == other._isomer:
             return True
         else:
             return False
 
     def __str__(self):
-        name = CHARGE_TO_NAME[self.charge()]
+        name = CHARGE_TO_NAME[self.charge].capitalize()
         if self._mass_number > 0:
             name += str(self._mass_number)
             if self._isomer > 0:
@@ -562,14 +580,38 @@ class Element:
             if self._isomer > 1:
                 name += str(self._isomer - 1)
         return name
-        #result = str(self._charge * 1000 + self._mass_number)
-        #if self._lib is not None:
-        #    result += '.{0}'.format(self._lib)
-        #return result
 
+    def mcnp_repr(self):
+        """Returns MCNP representation of the element."""
+        name = str(self.charge * 1000 + self.mass_number)
+        if self.lib is not None:
+            name += '.{0}'.format(self.lib)
+        return name
+
+    @property
     def charge(self):
         """Gets element's charge number."""
         return self._charge
+
+    @property
+    def mass_number(self):
+        """Gets element's mass number."""
+        return self._mass_number
+
+    @property
+    def molar_mass(self):
+        """Gets element's molar mass."""
+        return self._molar
+
+    @property
+    def lib(self):
+        """Gets library name."""
+        return self._lib
+
+    @property
+    def isomer(self):
+        """Gets isomer level."""
+        return self._isomer
 
     def expand(self):
         """Expands natural element into individual isotopes.
@@ -581,32 +623,13 @@ class Element:
             Keys - elements - Element instances, values - atomic fractions.
         """
         result = {}
-        if self._mass_number > 0:
+        if self._mass_number > 0 and self._mass_number in NATURAL_ABUNDANCE[self._charge].keys():
             result[self] = 1.0
-        else:
+        elif self._mass_number == 0:
             for at_num, frac in NATURAL_ABUNDANCE[self._charge].items():
                 elem_name = '{0:d}{1:03d}'.format(self._charge, at_num)
-                result[Element(elem_name)] = frac
+                result[Element(elem_name, lib=self._lib)] = frac
         return result
-
-    def mass_number(self):
-        """Gets element's mass number."""
-        return self._mass_number
-
-    def molar_mass(self):
-        """Gets element's molar mass."""
-        Z = self._charge
-        A = self._mass_number
-        if A > 0:
-            if A in ISOTOPE_MASS[Z].keys():
-                return ISOTOPE_MASS[Z][A]
-            else:   # If no data about molar mass present, then mass number
-                return A     # itself is the best approximation.
-        else:    # natural abundance
-            mol_mass = 0.0
-            for at_num, frac in NATURAL_ABUNDANCE[Z].items():
-                mol_mass += ISOTOPE_MASS[Z][at_num] * frac
-            return mol_mass
 
     @staticmethod
     def _split_name(name):

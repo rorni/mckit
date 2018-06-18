@@ -1,50 +1,173 @@
 import unittest
 
-from mckit.material import Element, Material, merge_materials, mixture
+from mckit.material import Element, Material, Composition, merge_materials, mixture
+from tests.material_test_data import element_test_data as el_data
+from tests.material_test_data import composition_test_data as com_data
 
 
 class TestElement(unittest.TestCase):
-    def test_split_name(self):
-        for i, (i_name, q, a) in enumerate(isotope_name_cases):
+    def test_creation(self):
+        for i, (data, ans) in enumerate(zip(el_data.element_data, el_data.creation_cases)):
+            name, options = data
             with self.subTest(i=i):
-                Q, A = Element._split_name(i_name)
-                self.assertEqual(Q, q)
-                self.assertEqual(A, a)
+                elem = Element(name, **options)
+                self.assertEqual(elem.charge, ans['charge'])
+                self.assertEqual(elem.mass_number, ans['mass_number'])
+                self.assertAlmostEqual(elem.molar_mass, ans['molar_mass'], delta=ans['molar_mass']*1.e-4)
+                self.assertEqual(elem.lib, ans['lib'])
+                self.assertEqual(elem.isomer, ans['isomer'])
+                self.assertEqual(elem._comment, ans['comment'])
 
-    def test_element_creation(self):
-        for i, (i_name, q, a) in enumerate(element_creation_cases):
+    def test_str(self):
+        for i, (data, ans) in enumerate(zip(el_data.element_data, el_data.str_cases)):
+            name, options = data
             with self.subTest(i=i):
-                elem = Element(i_name)
-                Q = elem.charge()
-                A = elem.mass_number()
-                self.assertEqual(Q, q)
-                self.assertEqual(A, a)
-
-    def test_molar_mass(self):
-        for i, (i_name, mol) in enumerate(molar_mass_cases):
+                elem = Element(name, **options)
+                self.assertEqual(str(elem), ans)
+        for i, (data, ans) in enumerate(zip(el_data.element_data, el_data.str_mcnp_cases)):
+            name, options = data
             with self.subTest(i=i):
-                m = Element(i_name).molar_mass()
-                self.assertAlmostEqual(m, mol, delta=mol * 1.e-5)
+                elem = Element(name, **options)
+                self.assertEqual(elem.mcnp_repr(), ans)
 
-    def test_equality(self):
-        N = len(element_eq_cases)
-        for i, name1 in enumerate(element_eq_cases):
-            el1 = Element(name1)
-            for j, name2 in enumerate(element_eq_cases):
-                el2 = Element(name2)
-                with self.subTest(i=i * N + j):
-                    self.assertTrue((el1 == el2) == element_eq_matrix[i][j])
+    def test_eq(self):
+        for i, (input1, ans) in enumerate(zip(el_data.element_data, el_data.equality)):
+            name1, options1 = input1
+            with self.subTest(i=i):
+                elem1 = Element(name1, **options1)
+                for j, input2 in enumerate(el_data.element_data):
+                    name2, options2 = input2
+                    elem2 = Element(name2, **options2)
+                    self.assertEqual(elem1 == elem2, ans[j])
 
     def test_expand(self):
-        for i, (i_name, exp_dict) in enumerate(element_expand_cases):
+        for i, (data, ans) in enumerate(zip(el_data.element_data, el_data.expand_cases)):
+            name, options = data
             with self.subTest(i=i):
-                el = Element(i_name)
-                exp1 = el.expand()
-                self.assertEqual(len(exp1.items()), len(exp_dict.items()))
-                for k, v in exp1.items():
-                    self.assertAlmostEqual(v, exp_dict[k], delta=1.e-5)
+                elem = Element(name, **options)
+                expand_ans = {Element(name, **opt): v for name, opt, v in ans}
+                expand = elem.expand()
+                self.assertEqual(len(expand.keys()), len(expand_ans.keys()))
+                for k, v in expand_ans.items():
+                    if k not in expand.keys():
+                        print(k, name)
+                    self.assertAlmostEqual(v, expand[k], delta=v * 1.e-4)
 
 
+class TestComposition(unittest.TestCase):
+    def test_composition_creation(self):
+        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.create_data)):
+            comp = {Element(k): v for k, v in ans.items()}
+            with self.subTest(i=i):
+                c = Composition(**inp)
+                self.assertEqual(len(comp.keys()), len(c._composition.keys()))
+                for k, v in comp.items():
+                    # TODO: Review accuracy. Check test data!
+                    self.assertAlmostEqual(v, c._composition[k], delta=v*1.e-3)
+                inp2 = {'atomic': [(Element(k), v) for k, v in inp.get('atomic', [])],
+                        'weight': [(Element(k), v) for k, v in inp.get('weight', [])]}
+                c = Composition(**inp2)
+                self.assertEqual(len(comp.keys()), len(c._composition.keys()))
+                for k, v in comp.items():
+                    # TODO: Review accuracy. Check test data!
+                    self.assertAlmostEqual(v, c._composition[k], delta=v*1.e-3)
+
+    def test_creation_raise(self):
+        for i, inp in enumerate(com_data.create_raise):
+            with self.subTest(i=i):
+                self.assertRaises(ValueError, Composition, **inp)
+
+    def test_molar_mass(self):
+        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.molar_mass_data)):
+            with self.subTest(i=i):
+                c = Composition(**inp)
+                self.assertAlmostEqual(ans, c.molar_mass, delta=ans * 1.e-3)
+
+    def test_contains(self):
+        for i, inp in enumerate(com_data.comp_data):
+            with self.subTest(i=i):
+                c = Composition(**inp)
+                for j, e in enumerate(com_data.contained_elements):
+                    self.assertEqual(Element(e) in c, com_data.contains[j][i])
+                    self.assertEqual(e in c, com_data.contains[j][i])
+
+    def test_atomic(self):
+        for i, inp in enumerate(com_data.comp_data):
+            with self.subTest(i=i):
+                c = Composition(**inp)
+                for j, e in enumerate(com_data.contained_elements):
+                    v = com_data.atomic[j][i]
+                    if v == 0:
+                        self.assertRaises(KeyError, c.get_atomic, e)
+                        self.assertRaises(KeyError, c.get_atomic, Element(e))
+                    else:
+                        # TODO: verify data!
+                        self.assertAlmostEqual(c.get_atomic(e), v, delta=v*1.e-3)
+                        self.assertAlmostEqual(c.get_atomic(Element(e)), v, delta=v * 1.e-3)
+
+    def test_weight(self):
+        for i, inp in enumerate(com_data.comp_data):
+            with self.subTest(i=i):
+                c = Composition(**inp)
+                for j, e in enumerate(com_data.contained_elements):
+                    v = com_data.weight[j][i]
+                    if v == 0:
+                        self.assertRaises(KeyError, c.get_weight, e)
+                        self.assertRaises(KeyError, c.get_weight, Element(e))
+                    else:
+                        # TODO: verify data!
+                        self.assertAlmostEqual(c.get_weight(e), v, delta=v*1.e-3)
+                        self.assertAlmostEqual(c.get_weight(Element(e)), v, delta=v * 1.e-3)
+
+    def test_expand(self):
+        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.expand)):
+            with self.subTest(i=i):
+                c = Composition(**inp)
+                ex = c.expand()
+                self.assertEqual(len(ans.keys()), len(ex._composition.keys()))
+                for k, v in ans.items():
+                    elem = Element(k)
+                    self.assertAlmostEqual(v, ex.get_atomic(elem), delta=v * 1.e-3)
+
+    def test_natural(self):
+        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.natural)):
+            with self.subTest(i=i):
+                c = Composition(**inp).natural(tolerance=1.e-3)
+                if ans is None:
+                    self.assertEqual(c, ans)
+                    continue
+                a = Composition(**ans)
+                self.assertEqual(len(a._composition.keys()), len(c._composition.keys()))
+                for k, v in a:
+                    self.assertAlmostEqual(v, c.get_atomic(k), delta=v * 1.e-3)
+
+    def test_equal(self):
+        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.equal_data)):
+            c = Composition(**inp)
+            for j, (inp2, a) in enumerate(zip(com_data.comp_data, ans)):
+                with self.subTest(msg="c1={0}, c2={1}".format(i, j)):
+                    c2 = Composition(**inp2)
+                    self.assertEqual(c == c2, bool(a))
+
+    def test_get_option(self):
+        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.get_option)):
+            c = Composition(**inp)
+            with self.subTest(i=i):
+                for k, v in ans.items():
+                    self.assertEqual(c[k], v)
+
+    def test_mixture(self):
+        for i, (input, ans_index) in enumerate(com_data.mixture):
+            with self.subTest(i=i):
+                ans = Composition(**com_data.comp_data[ans_index])
+                compositions = []
+                for ci, f in input:
+                    compositions.append((Composition(**com_data.comp_data[ci]), f))
+                m = Composition.mixture(*compositions)
+                self.assertEqual(m, ans)
+
+
+@unittest.skip
 class TestMaterial(unittest.TestCase):
     def test_material_creation(self):
         for i, (kwargs, n, mu, rho) in enumerate(material_creation_cases):
