@@ -275,13 +275,12 @@ class Material:
     Parameters
     ----------
     atomic : list
-        Atomic fractions or concentrations. If none of density and concentration
-        as well as wgt present, then atomic is treated as atomic concentrations
-        of isotopes. Otherwise it can be only atomic fractions.
-    wgt : list
+        Atomic fractions. New composition will be created.
+    weight : list
         Weight fractions of isotopes. density of concentration must present.
     composition : Composition
-        Composition instance.
+        Composition instance. If it is specified, then this composition will be
+        used. Neither atomic nor weight must be present.
     density : float
         Density of the material (g/cc). It is incompatible with concentration
         parameter.
@@ -291,19 +290,26 @@ class Material:
     options : dict
         Extra options.
 
+    Properties
+    ----------
+    density : float
+        Density of the material [g/cc].
+    concentration : float
+        Concentration of the material [atoms/cc].
+    composition : Composition
+        Material's composition.
+    molar_mass : float
+        Material's molar mass [g/mol].
+
     Methods
     -------
-    density()
-        Gets weight density of the material.
-    concentration()
-        Gets atomic concentration of the material.
     correct(old_vol, new_vol)
         Correct material density - returns the corrected version of the
         material.
-    expand()
-        Expands elements of natural composition.
-    molar_mass()
-        Gets molar mass of the material.
+    mixture(*materials, fraction_type)
+        Makes a mixture of specified materials in desired proportions.
+    __getitem__(key)
+        Gets specific option.
     """
     def __init__(self, atomic=(), weight=(), composition=None, density=None, concentration=None, **options):
         # Attributes: _n - atomic density (concentration)
@@ -319,7 +325,7 @@ class Material:
         elif concentration:
             self._n = concentration
         else:
-            self._n = density * AVOGADRO / self._composition.molar_mass()
+            self._n = density * AVOGADRO / self._composition.molar_mass
         self._options = options
 
     def __eq__(self, other):
@@ -331,13 +337,10 @@ class Material:
     def __getitem__(self, key):
         return self._options[key]
 
-    def __iter__(self):
-        return iter(self._composition)
-
     @property
     def density(self):
         """Gets material's density [g per cc]."""
-        return self._n * self._composition.molar_mass() / AVOGADRO
+        return self._n * self._composition.molar_mass / AVOGADRO
 
     @property
     def concentration(self):
@@ -349,27 +352,10 @@ class Material:
         """Gets Composition instance that corresponds to the material."""
         return self._composition
 
-    def natural(self, tolerance=1.e-8):
-        """Tries to replace detailed isotope composition by natural elements.
-
-        Parameters
-        ----------
-        tolerance : float
-            Relative tolerance to consider isotope fractions as equal.
-            Default: 1.e-8
-
-        Returns
-        -------
-        new_mat : Material
-            New material with natural elements. None returned if the
-            composition cannot be reduced tu natural.
-        """
-        nat = self._composition.natural(tolerance)
-        if nat is None:
-            return None
-        if nat is self._composition:
-            return self
-        return Material(composition=nat, concentration=self._n, **self._options)
+    @property
+    def molar_mass(self):
+        """Gets material's effective molar mass [g / mol]."""
+        return self._composition.molar_mass
 
     def correct(self, old_vol=None, new_vol=None, factor=None):
         """Creates new material with fixed density to keep cell's mass.
@@ -395,123 +381,50 @@ class Material:
             factor = old_vol / new_vol
         return Material(composition=self._composition, concentration=self._n * factor, **self._options)
 
-    def expand(self):
-        """Expands natural elements into detailed isotope composition.
-        
-        Returns
-        -------
-        new_mat : Material
-            New material with detailed isotope composition.
-        """
-        new_comp = self._composition.expand()
-        return Material(composition=new_comp, concentration=self._n)
+    @staticmethod
+    def mixture(*materials, fraction_type='weight'):
+        """Creates new material as a mixture of others.
 
-    def molar_mass(self):
-        """Gets material's effective molar mass [g / mol]."""
-        return self._composition.molar_mass()
-
-    def get_atomic(self, isotope):
-        """Gets atomic fraction of the isotope.
-
-        Raises KeyError if the composition doesn't contain the isotope.
+        Volume fractions are not needed to be normalized, but normalization has effect.
+        If the sum of fractions is less than 1, then missing fraction is considered
+        to be void (density is reduced). If the sum of fractions is greater than 1,
+        the effect of compression is taking place. But for weight and atomic fractions
+        normalization will be done anyway.
 
         Parameters
         ----------
-        isotope : str or Element
-            Isotope. It can be either isotope name or Element instance.
+        materials : list
+            A list of pairs material-fraction. material must be a Material class
+            instance because for mixture not only composition but density is
+            important.
+        fraction_type : str
+            Indicate how fraction should be interpreted.
+            'weight' - weight fractions (default);
+            'volume' - volume fractions;
+            'atomic' - atomic fractions.
 
         Returns
         -------
-        frac : float
-            Atomic fraction of the specified isotope.
+        material : Material
+            New material.
         """
-        return self._composition.get_atomic(isotope)
-
-    def get_weight(self, isotope):
-        """Gets weight fraction of the isotope.
-
-        Raises KeyError if the composition doesn't contain the isotope.
-
-        Parameters
-        ----------
-        isotope : str or Element
-            Isotope. It can be either isotope name or Element instance.
-
-        Returns
-        -------
-        frac : float
-            Weight fraction of the specified isotope.
-        """
-        return self._composition.get_weight(isotope)
-
-    def elements(self):
-        """Return iterator over elements contained in the material."""
-        return iter(self._composition.elements())
-
-
-def merge_materials(material1, volume1, material2, volume2):
-    """Merges materials.
-
-    Parameters
-    ----------
-    material1, material2 : Material
-        Materials to be merged.
-    volume1, volume2 : float
-        Volumes of merging cells.
-    """
-    total_vol = volume1 + volume2
-    composition = []
-    for el, frac in material1._composition:
-        composition.append((el, frac * volume1 / total_vol))
-    for el, frac in material2._composition:
-        composition.append((el, frac * volume2 / total_vol))
-    concentration = (material1.concentration() * volume1 + material2.concentration() * volume2) / total_vol
-    return Material(atomic=composition, concentration=concentration)
-
-
-def mixture(*materials, fraction_type='weight'):
-    """Creates new material as a mixture of others.
-
-    Volume fractions are not needed to be normalized, but normalization has effect.
-    If the sum of fractions is less than 1, then missing fraction is considered
-    to be void (density is reduced). If the sum of fractions is greater than 1,
-    the effect of compression is taking place. But for weight and atomic fractions
-    normalization will be done anyway.
-
-    Parameters
-    ----------
-    materials : list
-        A list of pairs material-fraction. material must be a Material class
-        instance because for mixture not only composition but density is
-        important.
-    fraction_type : str
-        Indicate how fraction should be interpreted.
-        'weight' - weight fractions (default);
-        'volume' - volume fractions;
-        'atomic' - atomic fractions.
-
-    Returns
-    -------
-    material : Material
-        New material.
-    """
-    if not materials:
-        raise ValueError('At least one material must be specified.')
-    if fraction_type == 'weight':
-        fun = lambda m, f: f / m.molar_mass()
-        norm = sum(fun(m, f) / m.concentration() for m, f in materials)
-    elif fraction_type == 'volume':
-        fun = lambda m, f: f * m.concentration()
-        norm = 1
-    elif fraction_type == 'atomic':
-        fun = lambda m, f: f
-        norm = sum(fun(m, f) / m.concentration() for m, f in materials)
-    else:
-        raise ValueError('Unknown fraction type')
-    factor = sum([fun(m, f) for m, f in materials])
-    compositions = [(m._composition, fun(m, f) / factor) for m, f in materials]
-    new_comp = Composition.mixture(*compositions)
-    return Material(composition=new_comp, concentration=factor / norm)
+        if not materials:
+            raise ValueError('At least one material must be specified.')
+        if fraction_type == 'weight':
+            fun = lambda m, f: f / m.molar_mass
+            norm = sum(fun(m, f) / m.concentration for m, f in materials)
+        elif fraction_type == 'volume':
+            fun = lambda m, f: f * m.concentration
+            norm = 1
+        elif fraction_type == 'atomic':
+            fun = lambda m, f: f
+            norm = sum(fun(m, f) / m.concentration for m, f in materials)
+        else:
+            raise ValueError('Unknown fraction type')
+        factor = sum([fun(m, f) for m, f in materials])
+        compositions = [(m.composition, fun(m, f) / factor) for m, f in materials]
+        new_comp = Composition.mixture(*compositions)
+        return Material(composition=new_comp, concentration=factor / norm)
 
 
 class Element:
