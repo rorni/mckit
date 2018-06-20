@@ -84,6 +84,9 @@ class RectMesh:
         else:
             self._tr = None
 
+    def __eq__(self, other):
+        return self is other
+
     @property
     def shape(self):
         """Gets the shape of the mesh."""
@@ -103,22 +106,23 @@ class RectMesh:
 
         Returns
         -------
-        volumes : ndarray[object]
-            Volumes of cells for every voxel. Every element of an array is dict instance that holds pairs
-            body -> volume.
+        volumes : dict
+            Volumes of cells for every voxel. It is dictionary cell -> vol_matrix.
+            vol_matrix is SparseData instance - volume of cell for each voxel.
         """
-        volumes = np.empty(self.shape, dtype=object)
+        volumes = {}
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
                 for k in range(self.shape[2]):
                     box = self.get_voxel(i, j, k)
-                    volumes[i, j, k] = {}
                     for c in cells:
                         vol = c.volume(box=box, min_volume=min_volume)
                         if vol > 0:
-                            volumes[i, j, k][c] = vol
+                            if c not in volumes.keys():
+                                volumes[c] = SparseData(self)
+                            volumes[c][i, j, k] = vol
                     if verbose and volumes[i, j, k]:
-                        print('Voxel ({0}, {1}, {2}) - {3}'.format(i, j, k, len(volumes[i, j, k].keys())))
+                        print('Voxel ({0}, {1}, {2})'.format(i, j, k))
         return volumes
 
     def get_voxel(self, i, j, k):
@@ -171,14 +175,14 @@ class RectMesh:
         j = np.searchsorted(self._ybins, y_proj) - 1
         k = np.searchsorted(self._zbins, z_proj) - 1
         if isinstance(i, int):
-            return self._check_indices(i, j, k)
+            return self.check_indices(i, j, k)
         else:
             indices = []
             for x, y, z in zip(i, j, k):
-                indices.append(self._check_indices(x, y, z))
+                indices.append(self.check_indices(x, y, z))
             return indices
 
-    def _check_indices(self, i, j, k):
+    def check_indices(self, i, j, k):
         """Check if the voxel with such indices really exists.
 
         Parameters
@@ -245,6 +249,8 @@ class RectMesh:
             index = np.searchsorted(self._ybins, Y) - 1
         elif Z is not None:
             index = np.searchsorted(self._zbins, Z) - 1
+        else:
+            index = None
 
         if index is None:
             raise ValueError('Specified point lies outside of the mesh.')
@@ -281,6 +287,243 @@ class CylMesh:
         self._axis = np.array(axis)
         self._vec = np.array(vec)
         self._voxels = {}
+        raise NotImplementedError
+
+
+class SparseData:
+    """Describes sparse spatial data.
+
+    Parameters
+    ----------
+    mesh : RectMesh
+        Reference spatial mesh.
+
+    Properties
+    ----------
+    shape : tuple[int]
+        Mesh shape.
+    mesh : RectMesh
+        Mesh object
+    size : int
+        The quantity of nonzero elements.
+
+    Methods
+    -------
+    copy()
+        Makes a copy of the data.
+    """
+    def __init__(self, mesh):
+        self._mesh = mesh
+        self._data = {}
+
+    def __setitem__(self, index, value):
+        """Adds new data element by its index."""
+        index = self._mesh.check_indices(*index)
+        if index is None:
+            raise IndexError('Index value is out of range')
+        if value == 0:
+            self._data.pop(index, None)
+        else:
+            self._data[index] = value
+
+    def __getitem__(self, index):
+        """Gets data value with specified indices."""
+        return self._data.get(index, 0)
+
+    def __iter__(self):
+        return iter(self._data.items())
+
+    def copy(self):
+        result = SparseData(self.mesh)
+        result._data = self._data.copy()
+        return result
+
+    @property
+    def shape(self):
+        return self._mesh.shape
+
+    @property
+    def mesh(self):
+        return self._mesh
+
+    @property
+    def size(self):
+        return len(self._data.keys())
+
+    def __add__(self, other):
+        result = self.copy()
+        result += other
+        return result
+
+    def __mul__(self, other):
+        result = self.copy()
+        result *= other
+        return result
+
+    def __truediv__(self, other):
+        result = self.copy()
+        result /= other
+        return result
+
+    def __sub__(self, other):
+        result = self.copy()
+        result -= other
+        return result
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __rsub__(self, other):
+        return self.__sub__(other)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __rtruediv__(self, other):
+        return self.__truediv__(other)
+
+    def __iadd__(self, other):
+        if isinstance(other, int) or isinstance(other, float):
+            for index, value in self:
+                self[index] += other
+        elif not isinstance(other, SparseData):
+            raise TypeError('Unsupported operand type')
+        elif self.mesh != other.mesh:
+            raise ValueError('These data belong to different meshes.')
+        else:
+            for index, value in other:
+                self[index] += value
+        return self
+
+    def __imul__(self, other):
+        if isinstance(other, int) or isinstance(other, float):
+            for index, value in self:
+                self[index] *= other
+        elif not isinstance(other, SparseData):
+            raise TypeError('Unsupported operand type')
+        elif self.mesh != other.mesh:
+            raise ValueError('These data belong to different meshes.')
+        else:
+            for index, value in other:
+                self[index] *= value
+        return self
+
+    def __isub__(self, other):
+        if isinstance(other, int) or isinstance(other, float):
+            for index, value in self:
+                self[index] -= other
+        elif not isinstance(other, SparseData):
+            raise TypeError('Unsupported operand type')
+        elif self.mesh != other.mesh:
+            raise ValueError('These data belong to different meshes.')
+        else:
+            for index, value in other:
+                self[index] -= value
+        return self
+
+    def __itruediv__(self, other):
+        if isinstance(other, int) or isinstance(other, float):
+            for index, value in self:
+                self[index] = value / other
+        elif not isinstance(other, SparseData):
+            raise TypeError('Unsupported operand type')
+        elif self.mesh != other.mesh:
+            raise ValueError('These data belong to different meshes.')
+        else:
+            for index, value in other:
+                self[index] /= value
+        return self
+
+
+class ElementData:
+    """Represents a snapshot of activation results for a specific time.
+
+    Parameters
+    ----------
+    mesh : RectMesh
+        Reference spatial mesh.
+    time : float
+        Time moment in seconds.
+    duration : float
+        Duration of the time frame.
+    units : str
+        Describes units for data supplied.
+
+    Methods
+    -------
+    add(cell, isotope, index, value)
+        Adds new data item to the storage.
+    """
+    def __init__(self, mesh, time, duration, units='Bq'):
+        self._mesh = mesh
+        self._time = time
+        self._duration = duration
+        self._units = units
+        self._data = {}
+
+    def add(self, cell, isotope, index, value):
+        """Adds new value to the storage.
+
+        Parameters
+        ----------
+        cell : Body
+            Cell, for which the value is given.
+        isotope : Element
+            Isotope, for which the value is given.
+        index : tuple[int]
+            Three indices, which specifies voxel location.
+        value : float
+            Data value.
+        """
+        if cell not in self._data.keys():
+            self._data[cell] = {}
+        data_cell = self._data[cell]
+        if isotope not in data_cell.keys():
+            data_cell[isotope] = SparseData(self._mesh)
+        data_cell[isotope][index] = value
+
+
+class SpectrumData:
+    """Represents a snapshot of activation gamma spectrum for a specific time.
+
+    Parameters
+    ----------
+    mesh : RectMesh
+        Reference spatial mesh.
+    ebins : array_like[float]
+        Energy bin boundaries.
+    time : float
+        Time moment in seconds.
+    duration : float
+        Duration of the time frame.
+    volumes : dict
+        Dictionary of volumes.
+    """
+    def __init__(self, mesh, ebins, time, duration, volumes):
+        self._mesh = mesh
+        self._ebins = np.array(ebins)
+        self._time = time
+        self._duration = duration
+        self._volumes = volumes
+        self._data = {}
+
+    def add(self, cell, index, flux):
+        """Adds new spectrum to the storage.
+
+        Parameters
+        ----------
+        cell : Body
+            Cell, for which the value is given.
+        index : tuple[int]
+            Three indices, which specifies voxel location.
+        flux : array_like[float]
+            Flux data.
+        """
+        if len(flux) != self._ebins.size - 1:
+            raise ValueError("Wrong length of flux vector.")
+        if cell not in self._data.keys():
+            self._data[cell] = SparseData(self._mesh)
+        self._data[cell][index] = np.array(flux)
 
 
 class FMesh:
@@ -343,6 +586,10 @@ class FMesh:
             raise ValueError("Incorrect data shape")
         elif self._error.shape != self._mesh.shape:
             raise ValueError("Incorrect error shape")
+
+    @property
+    def mesh(self):
+        return self._mesh
 
     @property
     def histories(self):
@@ -415,16 +662,3 @@ class FMesh:
             err = err.take(i, axis=0)
         return x, y, data, err
 
-    def calculate_volumes(self, cells, min_volume=1.e-3, verbose=False):
-        """Calculates volumes of cells for every voxel.
-
-        Parameters
-        ----------
-        cells : list[Body]
-            List of cells.
-        min_volume : float
-            Minimum volume for cell's volume calculation.
-        verbose : bool
-            Verbose output.
-        """
-        pass

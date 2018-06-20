@@ -318,23 +318,23 @@ def fispact_material(material, volume, tolerance=1.e-8):
     text : list[str]
         List of words.
     """
-    text = ['DENSITY {0}'.format(material.density())]
+    text = ['DENSITY {0}'.format(material.density)]
     composition = []
     if tolerance is not None:
-        mat = material.natural(tolerance)
+        mat = material.composition.natural(tolerance)
         if mat is not None:
-            mass = volume * mat.density() / 1000    # Because mass must be specified in kg.
-            for e in mat.elements():
-                composition.append((e, mat.get_weight(e) * 100))
+            mass = volume * mat.density / 1000    # Because mass must be specified in kg.
+            for e in mat.composition.elements():
+                composition.append((e, mat.composition.get_weight(e) * 100))
             text.append('MASS {0:.5} {1}'.format(mass, len(composition)))
     else:
         mat = None
 
     if tolerance is None or mat is None:
-        mat = material.expand()
-        tot_atoms = volume * mat.concentration()
-        for e in mat.elements():
-            composition.append((e, mat.get_atomic(e) * tot_atoms))
+        mat = material.composition.expand()
+        tot_atoms = volume * mat.concentration
+        for e in mat.composition.elements():
+            composition.append((e, mat.composition.get_atomic(e) * tot_atoms))
         text.append('FUEL  {0}'.format(len(composition)))
 
     for e, f in sorted(composition, key=lambda x: -x[1]):
@@ -562,5 +562,5 @@ def activation(title, material, volume, spectrum, irr_profile, relax_profile, in
                       **kwargs)
 
 
-def mesh_activation(title, fmesh, universe, irr_profile, relax_profile, **kwargs):
+def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, **kwargs):
     pass
