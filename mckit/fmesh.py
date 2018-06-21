@@ -454,10 +454,9 @@ class ElementData:
     add(cell, isotope, index, value)
         Adds new data item to the storage.
     """
-    def __init__(self, mesh, time, duration, units='Bq'):
+    def __init__(self, mesh, time, units='Bq'):
         self._mesh = mesh
         self._time = time
-        self._duration = duration
         self._units = units
         self._data = {}
 
@@ -499,11 +498,10 @@ class SpectrumData:
     volumes : dict
         Dictionary of volumes.
     """
-    def __init__(self, mesh, ebins, time, duration, volumes):
+    def __init__(self, mesh, ebins, time, volumes):
         self._mesh = mesh
         self._ebins = np.array(ebins)
         self._time = time
-        self._duration = duration
         self._volumes = volumes
         self._data = {}
 
@@ -596,6 +594,18 @@ class FMesh:
         """The number of histories in the run."""
         return self._histories
 
+    def mean_flux(self):
+        """Gets average flux.
+
+        Returns
+        -------
+        ebins : np.array[float]
+            Energy bin boundaries.
+        flux : np.array[float]
+            Average flux in each energy bin.
+        """
+        return self._ebins.copy(), np.mean(self._data, axis=(1, 2, 3))
+
     def get_spectrum(self, point):
         """Gets energy spectrum at the specified point.
         
@@ -616,6 +626,25 @@ class FMesh:
         index = self._mesh.voxel_index(point)
         if index is None:
             raise ValueError("Point {0} lies outside of the mesh.".format(point))
+        return self.get_spectrum_by_index(index)
+
+    def get_spectrum_by_index(self, index):
+        """Gets energy spectrum in the specified voxel.
+
+        Parameters
+        ----------
+        index : tuple[int]
+            Indices of spatial mesh bins.
+
+        Returns
+        -------
+        energies: ndarray[float]
+            Energy bins for the spectrum at the point - group boundaries.
+        flux : ndarray[float]
+            Group flux at the point.
+        err : ndarray[float]
+            Relative errors for flux components.
+        """
         i, j, k = index
         flux = self._data[:, i, j, k]
         err = self._error[:, i, j, k]

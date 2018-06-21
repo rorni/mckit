@@ -4,6 +4,13 @@ import re
 import subprocess
 import numpy as np
 
+from .fispact_parser import read_fispact_tab
+from .fmesh import ElementData, SparseData, SpectrumData
+
+EBINS_24 = [
+    0.00, 0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40, 0.60, 0.80, 1.00, 1.22,
+    1.44, 1.66, 2.00, 2.50, 3.00, 4.00, 5.00, 6.50, 8.00, 10.0, 12.0, 14.0, 20.0
+]
 
 DATA_PATH = r'D:\\nuclear_data\\fispact\\ENDFdata\\'
 
@@ -438,6 +445,22 @@ class IrradiationProfile:
         if nominal:
             self._norm = flux
 
+    def measure_times(self):
+        """Gets a list of times, when output is made.
+
+        Returns
+        -------
+        times : list[float]
+            Output times in seconds.
+        """
+        result = []
+        time = 0
+        for d, r in zip(self._duration, self._record):
+            time += d
+            if r is not None:
+                result.append(time)
+        return result
+
     def relax(self, duration, units='SECS', record=None):
         """Adds relaxation step.
 
@@ -562,5 +585,150 @@ def activation(title, material, volume, spectrum, irr_profile, relax_profile, in
                       **kwargs)
 
 
-def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, **kwargs):
-    pass
+def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=True,
+                    checks=None, folder=None, use_binary=False, read_only=False, **kwargs):
+    """Runs activation calculations for mesh.
+
+    There are two approaches. The first one is rigid - to calculate
+    activation for all mesh voxels for all materials. But this approach is
+    time consuming for large meshes. The second is to run one calculation
+    for every material and for every energy group, and then to make a
+    combination of the obtained results for every voxel. The latter approach
+    may be inaccurate.
+
+    Parameters
+    ----------
+    title : str
+        Title for the inventory.
+    fmesh : FMesh
+        Neutron flux mesh data.
+    volumes : dict
+        Volumes of every cell in every mesh voxel. Body -> SparseData.
+    irr_profile : IrradiationProfile
+        Irradiation profile.
+    relax_profile : IrradiationProfile
+        Relaxation profile.
+    simple : bool
+        If True then simplified approach is used. Otherwise rigid approach is
+        used. Default: True.
+    checks : int
+        The number of checks to be done for simplified approach. It is the number
+        of rigid calculation to be done for random voxels just to compare the
+        results. Default: None - no checks will be done.
+    folder : str
+        Name of output folder.
+    use_binary : bool
+        Use binary data rather text data.
+    read_only : bool
+        If the calculations have been already run and it is necessary only to read
+        results, set this flag to True.
+    kwargs : dict
+        Parameters for fispact_inventory. See docs for fispact_inventory function.
+
+    Returns
+    -------
+    atom_frames : list[ElementData]
+        List of ElementData instances for the number of atoms.
+    activity_frames : list[ElementData]
+        List of ElementData instances for the activities.
+    ingestion_frames : list[Element_data]
+        List of ElementData instances for the ingestion doses.
+    spectrum_frames : list[SpectrumData]
+        List of SpectrumData instances for the gamma spectra.
+    alpha_data : list
+        List of alpha activity data for each time frame. Each timeframe is
+        a dictionary Body->SparseData.
+    beta_data : list
+        Beta activity data
+    gamma_data : list
+        Gamma activity_data
+    fission_data : list
+        Delayed fissions data.
+    """
+    times = irr_profile.measure_times() + relax_profile.measure_times()
+    atom_frames = [ElementData(fmesh.mesh, t, units='at.') for t in times]
+    activity_frames = [ElementData(fmesh.mesh, t, units='Bq') for t in times]
+    ingestion_frames = [ElementData(fmesh.mesh, t, units='Sv/h') for t in times]
+    spectrum_frames = [SpectrumData(fmesh.mesh, EBINS_24, t, volumes) for t in times]
+    alpha_data = []
+    beta_data = []
+    gamma_data = []
+    fission_data = []
+
+    if simple:
+        materials = set(c['MAT'] for c in volumes.keys() if c['MAT'] is not None)
+        ebins, mean_flux = fmesh.mean_flux()
+
+        if not read_only:
+            # component calculation phase
+            fispact_files()
+            fispact_condense()
+
+            for i, f in enumerate(mean_flux):
+                flux = np.zeros_like(mean_flux)
+                flux[i] = f
+
+                files = 'files_bin_{0}'.format(i)
+                fluxes = 'fluxes_bin_{0}'.format(i)
+                collapx = 'collapx_bin_{0}'.format(i)
+                fispact_files(files=files, collapx=collapx, fluxes=fluxes)
+                fispact_convert(ebins, flux, fluxes=fluxes)
+                fispact_collapse(files=files, use_binary=use_binary)
+
+                for m in materials:
+                    inventory = 'inventory_bin_{0}_mat_{1}'.format(i, m)
+                    fispact_inventory(title, m, 1, sum(flux), irr_profile, relax_profile, inventory=inventory, **kwargs)
+
+        # read results
+        atom_data = []
+        act_data = []
+        ing_data = []
+        gam_data = []
+        for i, f in enumerate(mean_flux):
+            atom_data.append({})
+            act_data.append({})
+            ing_data.append({})
+            gam_data.append({})
+            for m in materials:
+                inventory = 'inventory_bin_{0}_mat_{1}'.format(i, m)
+                if 'tab1' in kwargs.keys() and kwargs['tab1']:
+                    atom_data[m] = read_fispact_tab(inventory + 'tab1')
+                if 'tab2' in kwargs.keys() and kwargs['tab2']:
+                    atom_data[m] = read_fispact_tab(inventory + 'tab2')
+                if 'tab3' in kwargs.keys() and kwargs['tab3']:
+                    atom_data[m] = read_fispact_tab(inventory + 'tab3')
+                if 'tab4' in kwargs.keys() and kwargs['tab4']:
+                    atom_data[m] = read_fispact_tab(inventory + 'tab4')
+
+        # make superposition
+        for cell, vol_mesh in volumes.items():
+            mat = cell['MAT']
+            if mat is None:
+                continue
+            for j in range(len(times)):
+                for index, volume in vol_mesh:
+                    ebins, flux, err = fmesh.get_spectrum_by_index(index)
+                    factors = flux / mean_flux
+
+                    for elem, amnt in atom_data[i][mat][j]['atoms'].items():
+                        value = 0
+                        for i, f in enumerate(factors):
+                            value += amnt * f
+                        atom_frames[j].add(cell, elem, index, value)
+
+                    for elem, amnt in act_data[i][mat][j]['activity'].items():
+                        value = 0
+                        for i, f in enumerate(factors):
+                            value += amnt * f
+                        activity_frames[j].add(cell, elem, index, value)
+
+                    for elem, amnt in ing_data[i][mat][j]['ingestion'].items():
+                        value = 0
+                        for i, f in enumerate(factors):
+                            value += amnt * f
+                        ingestion_frames[j].add(cell, elem, index, value)
+
+                    value = np.zeros_like(EBINS_24)
+                    for i, f in enumerate(factors):
+                        value += np.array(gam_data[i][mat][j]['flux'])
+                    spectrum_frames[j].add(cell, index, value)

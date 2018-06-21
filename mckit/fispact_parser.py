@@ -239,7 +239,7 @@ def read_fispact_tab(filename):
     Returns
     -------
     time_frames : list
-        List of frames for irradiation phase.
+        List of time frames.
     """
     ext = filename.rpartition('.')[2].lower()
     with open(filename) as f:
