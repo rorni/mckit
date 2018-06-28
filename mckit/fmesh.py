@@ -399,6 +399,11 @@ class SparseData:
         if isinstance(other, int) or isinstance(other, float):
             for index, value in self:
                 self[index] *= other
+        elif isinstance(other, np.ndarray):
+            if self.shape != other.shape:
+                raise ValueError("Inconsistent shape")
+            for index, value in self:
+                self[index] *= other[index]
         elif not isinstance(other, SparseData):
             raise TypeError('Unsupported operand type')
         elif self.mesh != other.mesh:

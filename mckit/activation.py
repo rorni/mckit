@@ -772,7 +772,7 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
         for i, f in enumerate(mean_flux):
             flux = np.zeros_like(mean_flux)
             flux[i] = f
-            factors = fmesh._data[i, :, :, :] / f * volumes[cell]
+            factors = fmesh._data[i, :, :, :] / f
             if not read_only:
                 files = str(path / 'files_bin_{0}'.format(i))
                 fluxes = str(path / 'fluxes_bin_{0}'.format(i))
@@ -792,13 +792,13 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
                 for cell in material_to_cell[m]:
                     for key in value_keywords:
                         for item, val in zip(result[key], r[key]):
-                            item[cell] += val * factors
+                            item[cell] += val * factors * volumes[cell]
                     for key in element_keywords:
                         for item, r_item in zip(result[key], r[key]):
                             for elem, value in r_item.items():
                                 if elem not in item[cell].keys():
                                     item[cell][elem] = SparseData(fmesh.mesh)
-                                item[cell][elem] += value * factors
+                                item[cell][elem] += value * factors * volumes[cell]
         # Indices for result checking.
         indices = random.sample(index_to_cell.keys(), checks) if checks else []
     else:
