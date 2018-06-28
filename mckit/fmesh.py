@@ -121,7 +121,7 @@ class RectMesh:
                             if c not in volumes.keys():
                                 volumes[c] = SparseData(self)
                             volumes[c][i, j, k] = vol
-                    if verbose and volumes[i, j, k]:
+                    if verbose and volumes[c][i, j, k]:
                         print('Voxel ({0}, {1}, {2})'.format(i, j, k))
         return volumes
 
@@ -433,95 +433,6 @@ class SparseData:
             for index, value in other:
                 self[index] /= value
         return self
-
-
-class ElementData:
-    """Represents a snapshot of activation results for a specific time.
-
-    Parameters
-    ----------
-    mesh : RectMesh
-        Reference spatial mesh.
-    time : float
-        Time moment in seconds.
-    duration : float
-        Duration of the time frame.
-    units : str
-        Describes units for data supplied.
-
-    Methods
-    -------
-    add(cell, isotope, index, value)
-        Adds new data item to the storage.
-    """
-    def __init__(self, mesh, time, units='Bq'):
-        self._mesh = mesh
-        self._time = time
-        self._units = units
-        self._data = {}
-
-    def add(self, cell, isotope, index, value):
-        """Adds new value to the storage.
-
-        Parameters
-        ----------
-        cell : Body
-            Cell, for which the value is given.
-        isotope : Element
-            Isotope, for which the value is given.
-        index : tuple[int]
-            Three indices, which specifies voxel location.
-        value : float
-            Data value.
-        """
-        if cell not in self._data.keys():
-            self._data[cell] = {}
-        data_cell = self._data[cell]
-        if isotope not in data_cell.keys():
-            data_cell[isotope] = SparseData(self._mesh)
-        data_cell[isotope][index] = value
-
-
-class SpectrumData:
-    """Represents a snapshot of activation gamma spectrum for a specific time.
-
-    Parameters
-    ----------
-    mesh : RectMesh
-        Reference spatial mesh.
-    ebins : array_like[float]
-        Energy bin boundaries.
-    time : float
-        Time moment in seconds.
-    duration : float
-        Duration of the time frame.
-    volumes : dict
-        Dictionary of volumes.
-    """
-    def __init__(self, mesh, ebins, time, volumes):
-        self._mesh = mesh
-        self._ebins = np.array(ebins)
-        self._time = time
-        self._volumes = volumes
-        self._data = {}
-
-    def add(self, cell, index, flux):
-        """Adds new spectrum to the storage.
-
-        Parameters
-        ----------
-        cell : Body
-            Cell, for which the value is given.
-        index : tuple[int]
-            Three indices, which specifies voxel location.
-        flux : array_like[float]
-            Flux data.
-        """
-        if len(flux) != self._ebins.size - 1:
-            raise ValueError("Wrong length of flux vector.")
-        if cell not in self._data.keys():
-            self._data[cell] = SparseData(self._mesh)
-        self._data[cell][index] = np.array(flux)
 
 
 class FMesh:
