@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import math
+from functools import reduce
+from operator import xor
+
 import numpy as np
 
 from .constants import NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
@@ -85,19 +89,28 @@ class Composition:
                 self._composition[el] += frac / norm_factor
         else:
             raise ValueError('Incorrect set of parameters.')
+        self._expanded = False
+        self.expand()
+        self._hash = reduce(xor, map(hash, self._composition.keys()))
         self._options = options.copy()
 
     def __eq__(self, other):
+        if not self._expanded:
+            self.expand()
+        if not other._expanded:
+            other.expand()
         if len(self._composition.keys()) != len(other._composition.keys()):
             return False
         for k1, v1 in self._composition.items():
             v2 = other._composition.get(k1, None)
             if v2 is None:
                 return False
-            rel = 2 * abs(v1 - v2) / (v1 + v2)
-            if rel >= RELATIVE_COMPOSITION_TOLERANCE:
+            if not math.isclose(v1, v2, rel_tol=RELATIVE_COMPOSITION_TOLERANCE):
                 return False
         return True
+
+    def __hash__(self):
+        return self._hash
 
     def __str__(self):
         text = ['M' + str(self['name']), ' ']
@@ -180,6 +193,7 @@ class Composition:
 
         Modifies current object.
         """
+        self._expanded = True
         composition = {}
         for el, conc in self._composition.items():
             for isotope, frac in el.expand().items():
@@ -235,6 +249,7 @@ class Composition:
             if frac_0:
                 composition[elem] += frac_0
         self._composition = composition
+        self._expanded = False
         return self
 
     def elements(self):
@@ -329,10 +344,12 @@ class Material:
         self._options = options
 
     def __eq__(self, other):
-        rel = 2 * abs(self._n - other.concentration) / (self._n + other.concentration)
-        if rel >= RELATIVE_DENSITY_TOLERANCE:
+        if not math.isclose(self._n, other.concentration, rel_tol=RELATIVE_DENSITY_TOLERANCE):
             return False
         return self._composition == other.composition
+
+    def __hash__(self):
+        return hash(self._composition)
 
     def __getitem__(self, key):
         return self._options[key]
