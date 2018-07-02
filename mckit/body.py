@@ -364,6 +364,12 @@ class Body(Shape):
     def __getitem__(self, key):
         return self._options[key]
 
+    def __hash__(self):
+        return id(self)
+
+    def __eq__(self, other):
+        return id(self) == id(other)
+
     def __str__(self):
         text = [str(self['name']), ' ']
         if 'MAT' in self._options.keys():
