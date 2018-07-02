@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+import math
+from functools import reduce
+from operator import xor
 
 import numpy as np
 
 from .constants import NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
-                       ISOTOPE_MASS, AVOGADRO, \
-                       RELATIVE_COMPOSITION_TOLERANCE,\
-                       RELATIVE_DENSITY_TOLERANCE, CHARGE_TO_NAME
+                       ISOTOPE_MASS, AVOGADRO, CHARGE_TO_NAME
 from .printer import print_card, MCNP_FORMATS
 
 
@@ -41,6 +42,23 @@ class Composition:
     natural(tolerance)
         Try to replace detailed isotope composition with natural elements.
     """
+    # Relative composition element concentration tolerance
+    _tolerance = 1.e-3
+    # The number of objects created.
+    _object_count = 0
+
+    @classmethod
+    def set_tolerance(cls, value):
+        """Sets new tolerance."""
+        if cls._object_count > 0:
+            raise AttributeError("Composition instances already exist. Cannot set tolerance.")
+        cls._tolerance = value
+
+    @classmethod
+    def get_tolerance(cls):
+        """Gets relative tolerance of Composition comparison."""
+        return cls._tolerance
+
     def __init__(self, atomic=(), weight=(), **options):
         self._composition = {}
         elem_w = []
@@ -86,6 +104,11 @@ class Composition:
         else:
             raise ValueError('Incorrect set of parameters.')
         self._options = options.copy()
+        self._hash = reduce(xor, map(hash, self._composition.keys()))
+        self._object_count += 1
+
+    def __del__(self):
+        self._object_count -= 1
 
     def __eq__(self, other):
         if len(self._composition.keys()) != len(other._composition.keys()):
@@ -94,10 +117,12 @@ class Composition:
             v2 = other._composition.get(k1, None)
             if v2 is None:
                 return False
-            rel = 2 * abs(v1 - v2) / (v1 + v2)
-            if rel >= RELATIVE_COMPOSITION_TOLERANCE:
+            if not math.isclose(v1, v2, rel_tol=self._tolerance):
                 return False
         return True
+
+    def __hash__(self):
+        return self._hash
 
     def __str__(self):
         text = ['M' + str(self['name']), ' ']
@@ -178,15 +203,24 @@ class Composition:
     def expand(self):
         """Expands elements with natural abundances into detailed isotope composition.
 
-        Modifies current object.
+        Returns
+        -------
+        new_comp : Composition
+            New expanded composition or self.
         """
         composition = {}
+        already = True
         for el, conc in self._composition.items():
+            if el.mass_number == 0:
+                already = False
             for isotope, frac in el.expand().items():
                 if isotope not in composition.keys():
                     composition[isotope] = 0
                 composition[isotope] += conc * frac
-        self._composition = composition
+        if already:
+            return self
+        else:
+            return Composition(atomic=composition.items(), **self._options)
 
     def natural(self, tolerance=1.e-8):
         """Tries to replace detailed isotope composition by natural elements.
@@ -234,8 +268,7 @@ class Composition:
             composition[elem] = tot_frac
             if frac_0:
                 composition[elem] += frac_0
-        self._composition = composition
-        return self
+        return Composition(atomic=composition.items(), **self._options)
 
     def elements(self):
         """Gets iterator over composition's elements."""
@@ -311,6 +344,23 @@ class Material:
     __getitem__(key)
         Gets specific option.
     """
+    # Relative density tolerance. Relative difference in densities when materials
+    _tolerance = 1.e-3
+    # The number of created Material instances.
+    _object_count = 0
+
+    @classmethod
+    def set_tolerance(cls, value):
+        """Sets new tolerance."""
+        if cls._object_count > 0:
+            raise AttributeError("Material instances already exist. Cannot set tolerance.")
+        cls._tolerance = value
+
+    @classmethod
+    def get_tolerance(cls):
+        """Gets relative tolerance of Composition comparison."""
+        return cls._tolerance
+
     def __init__(self, atomic=(), weight=(), composition=None, density=None, concentration=None, **options):
         # Attributes: _n - atomic density (concentration)
         if isinstance(composition, Composition) and not atomic and not weight:
@@ -327,12 +377,18 @@ class Material:
         else:
             self._n = density * AVOGADRO / self._composition.molar_mass
         self._options = options
+        self._object_count += 1
+
+    def __del__(self):
+        self._object_count -= 1
 
     def __eq__(self, other):
-        rel = 2 * abs(self._n - other.concentration) / (self._n + other.concentration)
-        if rel >= RELATIVE_DENSITY_TOLERANCE:
+        if not math.isclose(self._n, other.concentration, rel_tol=self._tolerance):
             return False
         return self._composition == other.composition
+
+    def __hash__(self):
+        return hash(self._composition)
 
     def __getitem__(self, key):
         return self._options[key]

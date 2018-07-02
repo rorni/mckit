@@ -6,6 +6,7 @@ import subprocess
 import numpy as np
 from pathlib import Path
 
+from .constants import TIME_UNITS
 from .fispact_parser import read_fispact_tab
 from .fmesh import SparseData
 
@@ -34,8 +35,6 @@ LIBS = {
     'a2data':   r'decay\\a2_2012',
     'absorp':   r'decay\\abs_2012'
 }
-
-TIME_UNITS = {'SECS': 1., 'MINS': 60., 'HOURS': 3600., 'DAYS': 3600.*24, 'YEARS': 3600.*24*365}
 
 
 class FispactError(Exception):
