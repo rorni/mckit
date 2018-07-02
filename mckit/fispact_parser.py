@@ -3,7 +3,7 @@ import re
 import ply.lex as lex
 import ply.yacc as yacc
 
-from .activation import TIME_UNITS
+from mckit.constants import TIME_UNITS
 from .material import Element
 
 

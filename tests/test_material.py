@@ -124,11 +124,11 @@ class TestComposition(unittest.TestCase):
         for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.expand)):
             with self.subTest(i=i):
                 c = Composition(**inp)
-                c.expand()
-                self.assertEqual(len(ans.keys()), len(c._composition.keys()))
+                exp = c.expand()
+                self.assertEqual(len(ans.keys()), len(exp._composition.keys()))
                 for k, v in ans.items():
                     elem = Element(k)
-                    self.assertAlmostEqual(v, c.get_atomic(elem), delta=v * 1.e-3)
+                    self.assertAlmostEqual(v, exp.get_atomic(elem), delta=v * 1.e-3)
 
     def test_natural(self):
         for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.natural)):

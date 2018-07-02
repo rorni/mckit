@@ -12,7 +12,7 @@ __all__ = [
     'AVOGADRO',
     'ORIGIN', 'EX', 'EY', 'EZ', 'GLOBAL_BOX', 'MIN_BOX_VOLUME',
     'IDENTITY_ROTATION',
-    'ANGLE_TOLERANCE', 'RESOLUTION', 'RELATIVE_DENSITY_TOLERANCE',
+    'ANGLE_TOLERANCE', 'RESOLUTION',
     'CHARGE_TO_NAME', 'NAME_TO_CHARGE', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
 ]
 
@@ -34,12 +34,6 @@ MIN_BOX_VOLUME = MIN_VOLUME
 
 # angle tolerance
 ANGLE_TOLERANCE = 0.001
-
-# Relative density tolerance. Relative difference in densities when materials
-# with the same composition are supposed to be the same.
-RELATIVE_DENSITY_TOLERANCE = 1.e-3
-# Relative composition element concentration tolerance
-RELATIVE_COMPOSITION_TOLERANCE = 1.e-3
 
 # Resolution of float number
 RESOLUTION = np.finfo(float).resolution
@@ -75,3 +69,4 @@ with open(path + '/data/isotopes.dat') as f:
 #    print(ISOTOPE_MASS)
 #    print(NATURAL_ABUNDANCE)
 
+TIME_UNITS = {'SECS': 1., 'MINS': 60., 'HOURS': 3600., 'DAYS': 3600.*24, 'YEARS': 3600.*24*365}
