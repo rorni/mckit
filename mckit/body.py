@@ -397,6 +397,10 @@ class Body(Shape):
             text.append('\n')
         return text
 
+    def material(self):
+        """Gets body's material. None is returned if no material present."""
+        return self._options.get('MAT', None)
+
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
 
