@@ -46,6 +46,8 @@ class Transformation:
         Gets coordinates of point p in the global coordinate system.
     apply2vector(v)
         Gets coordinates of vector v in the global coordinate system.
+    apply2transform(tr)
+        Gets resulting transformation.
     reverse()
         Reverses this transformation, and returns the result.
     """
@@ -178,6 +180,28 @@ class Transformation:
         """
         # In contrast with apply2point - no translation is needed.
         return np.dot(v1, np.transpose(self._u))
+
+    def apply2transform(self, tr):
+        """Gets new transformation.
+
+        Suppose there are three coordinate systems r0, r1, r2. Transformation
+        tr: r2 -> r1; and this transformation: r1 -> r. Thus the resulting
+        transformation: r2 -> r. In other words the result is a sequence of
+        two transformations: tr and this. tr is applied first.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be modified.
+
+        Returns
+        -------
+        new_tr : Transformation
+            New transformation - the result.
+        """
+        rot = np.dot(self._u, tr._u)
+        trans = self.apply2point(tr._t)
+        return Transformation(translation=trans, rotation=rot)
 
     def reverse(self):
         """Reverses this transformation.

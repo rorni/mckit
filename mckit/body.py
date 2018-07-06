@@ -7,6 +7,7 @@ from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
 from .geometry import Shape as _Shape
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
+from .transformation import Transformation
 
 
 class Shape(_Shape):
@@ -514,5 +515,11 @@ class Body(Shape):
         cell : Cell
             The result of this cell transformation.
         """
-        geometry = self.transform(tr)
-        return Body(geometry, **self._options)
+        geometry = Shape.transform(self, tr)
+        cell = Body(geometry, **self._options)
+        fill = cell.get('FILL', None)
+        if fill:
+            tr_in = fill.get('transform', Transformation())
+            new_tr = tr.apply2transform(tr_in)
+            fill['transform'] = new_tr
+        return cell

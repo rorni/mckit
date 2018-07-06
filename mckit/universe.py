@@ -156,7 +156,6 @@ class Universe:
         universe : Universe
             New transformed universe.
         """
-        # TODO: Add transformation modification of included fill cards.
         tr_cells = []
         for cell in self._cells:
             tr_cells.append(cell.transform(tr))
