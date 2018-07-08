@@ -1,8 +1,8 @@
 import unittest
 from numpy.testing import assert_array_almost_equal
 
-from mckit.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
-from mckit.meshtal_parser import meshtal_lexer, meshtal_parser
+from mckit.parser.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
+from mckit.parser.meshtal_parser import meshtal_lexer, meshtal_parser
 from tests.parser_test_data import lex_ans
 from tests.parser_test_data import parser_ans
 from tests.parser_test_data import meshtal_ans

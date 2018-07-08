@@ -1,10 +1,9 @@
 import unittest
 import os
 
-from tests.model_test_data.geometry_replace import surf_obj, cell_cases
 from mckit.model import _get_universe_dependencies, read_mcnp, \
     _get_surface_indices, _get_contained_cells, _get_composition_indices, \
-    _get_transformation_indices, Model, MCPrinter
+    _get_transformation_indices, MCPrinter
 
 from tests.model_test_data.model_data import *
 
@@ -12,7 +11,7 @@ cases = {}
 
 
 def setUpModule():
-    from mckit.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
+    from mckit.parser.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
     for case in case_names:
         with open('tests/model_test_data/{0}.txt'.format(case)) as f:
             text = f.read()

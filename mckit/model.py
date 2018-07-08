@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from collections import deque
-from functools import reduce
 from copy import deepcopy
 
 import numpy as np
 
-from .mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
+from mckit.parser.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
 from .surface import create_surface, Surface
 from .body import Body
 from .universe import Universe
