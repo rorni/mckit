@@ -1,13 +1,41 @@
 # -*- coding: utf-8 -*-
 import math
+import os
+import sys
 from functools import reduce
 from operator import xor
 
 import numpy as np
 
-from .constants import NAME_TO_CHARGE, NATURAL_ABUNDANCE, \
-                       ISOTOPE_MASS, AVOGADRO, CHARGE_TO_NAME
 from .printer import print_card, MCNP_FORMATS
+
+__all__ = [
+    'AVOGADRO', 'Element', 'Composition', 'Material'
+]
+
+AVOGADRO = 6.02214085774e+23
+
+_CHARGE_TO_NAME = {}
+_NAME_TO_CHARGE = {}
+_NATURAL_ABUNDANCE = {}
+_ISOTOPE_MASS = {}
+_path = os.path.dirname(sys.modules[__name__].__file__)
+
+with open(_path + '/data/isotopes.dat') as f:
+    for line in f:
+        number, name, *data = line.split()
+        number = int(number)
+        name = name.upper()
+        _CHARGE_TO_NAME[number] = name
+        _NAME_TO_CHARGE[name] = number
+        _NATURAL_ABUNDANCE[number] = {}
+        _ISOTOPE_MASS[number] = {}
+        for i in range(len(data) // 3):
+            isotope = int(data[i * 3])
+            _ISOTOPE_MASS[number][isotope] = float(data[i * 3 + 1])
+            abun = data[i * 3 + 2]
+            if abun != '*':
+                _NATURAL_ABUNDANCE[number][isotope] = float(abun) / 100.0
 
 
 class Composition:
@@ -261,7 +289,7 @@ class Composition:
             tot_frac = sum(isotopes.values())
             for a, frac in isotopes.items():
                 ifrac = frac / tot_frac
-                delta = 2 * abs(ifrac - NATURAL_ABUNDANCE[q][a]) / (ifrac + NATURAL_ABUNDANCE[q][a])
+                delta = 2 * abs(ifrac - _NATURAL_ABUNDANCE[q][a]) / (ifrac + _NATURAL_ABUNDANCE[q][a])
                 if delta > tolerance:
                     return None
             elem = Element(q * 1000)
@@ -518,7 +546,7 @@ class Element:
         else:
             z, a = self._split_name(name.upper())
             if z.isalpha():
-                self._charge = NAME_TO_CHARGE[z]
+                self._charge = _NAME_TO_CHARGE[z]
             else:
                 self._charge = int(z)
             self._mass_number = int(a)
@@ -527,14 +555,14 @@ class Element:
         Z = self._charge
         A = self._mass_number
         if A > 0:
-            if A in ISOTOPE_MASS[Z].keys():
-                self._molar = ISOTOPE_MASS[Z][A]
+            if A in _ISOTOPE_MASS[Z].keys():
+                self._molar = _ISOTOPE_MASS[Z][A]
             else:  # If no data about molar mass present, then mass number
                 self._molar = A  # itself is the best approximation.
         else:  # natural abundance
             self._molar = 0.0
-            for at_num, frac in NATURAL_ABUNDANCE[Z].items():
-                self._molar += ISOTOPE_MASS[Z][at_num] * frac
+            for at_num, frac in _NATURAL_ABUNDANCE[Z].items():
+                self._molar += _ISOTOPE_MASS[Z][at_num] * frac
         # Other flags and parameters
         self._lib = lib
         if self._mass_number == 0:
@@ -553,7 +581,7 @@ class Element:
             return False
 
     def __str__(self):
-        name = CHARGE_TO_NAME[self.charge].capitalize()
+        name = _CHARGE_TO_NAME[self.charge].capitalize()
         if self._mass_number > 0:
             name += str(self._mass_number)
             if self._isomer > 0:
@@ -604,10 +632,10 @@ class Element:
             Keys - elements - Element instances, values - atomic fractions.
         """
         result = {}
-        if self._mass_number > 0 and self._mass_number in NATURAL_ABUNDANCE[self._charge].keys():
+        if self._mass_number > 0 and self._mass_number in _NATURAL_ABUNDANCE[self._charge].keys():
             result[self] = 1.0
         elif self._mass_number == 0:
-            for at_num, frac in NATURAL_ABUNDANCE[self._charge].items():
+            for at_num, frac in _NATURAL_ABUNDANCE[self._charge].items():
                 elem_name = '{0:d}{1:03d}'.format(self._charge, at_num)
                 result[Element(elem_name, lib=self._lib)] = frac
         return result

@@ -1,31 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import sys
-import os
-
 import numpy as np
 
-from .geometry import ORIGIN, EX, EY, EZ, GLOBAL_BOX, MIN_VOLUME
-
+from .geometry import MIN_VOLUME
 
 __all__ = [
-    'AVOGADRO',
     'ORIGIN', 'EX', 'EY', 'EZ', 'GLOBAL_BOX', 'MIN_BOX_VOLUME',
     'IDENTITY_ROTATION',
-    'ANGLE_TOLERANCE', 'RESOLUTION',
-    'CHARGE_TO_NAME', 'NAME_TO_CHARGE', 'NATURAL_ABUNDANCE', 'ISOTOPE_MASS'
+    'ANGLE_TOLERANCE', 'RESOLUTION'
 ]
-
-
-AVOGADRO = 6.02214085774e+23
-
-# basis vectors
-EX = np.array([1, 0, 0])
-EY = np.array([0, 1, 0])
-EZ = np.array([0, 0, 1])
-
-# the origin of coordinate system - vector of zeros.
-ORIGIN = np.zeros((3,))
 
 # identity rotation matrix
 IDENTITY_ROTATION = np.eye(3)
@@ -39,34 +22,15 @@ ANGLE_TOLERANCE = 0.001
 RESOLUTION = np.finfo(float).resolution
 
 # Natural presence of isotopes
-CHARGE_TO_NAME = {}
-NAME_TO_CHARGE = {}
-NATURAL_ABUNDANCE = {}
-ISOTOPE_MASS = {}
 
 # ------------------------------------------------------------------------------
-path = os.path.dirname(sys.modules[__name__].__file__)
 
-with open(path + '/data/isotopes.dat') as f:
-    for line in f:
-        number, name, *data = line.split()
-        number = int(number)
-        name = name.upper()
-        CHARGE_TO_NAME[number] = name
-        NAME_TO_CHARGE[name] = number
-        NATURAL_ABUNDANCE[number] = {}
-        ISOTOPE_MASS[number] = {}
-        for i in range(len(data) // 3):
-            isotope = int(data[i * 3])
-            ISOTOPE_MASS[number][isotope] = float(data[i * 3 + 1])
-            abun = data[i * 3 + 2]
-            if abun != '*':
-                NATURAL_ABUNDANCE[number][isotope] = float(abun) / 100.0
+
 
 
 # if __name__ == '__main__':
-#    print(NAME_TO_CHARGE)
-#    print(ISOTOPE_MASS)
-#    print(NATURAL_ABUNDANCE)
+#    print(_NAME_TO_CHARGE)
+#    print(_ISOTOPE_MASS)
+#    print(_NATURAL_ABUNDANCE)
 
 TIME_UNITS = {'SECS': 1., 'MINS': 60., 'HOURS': 3600., 'DAYS': 3600.*24, 'YEARS': 3600.*24*365}
