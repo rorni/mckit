@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
 from .body import Body
+from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
+from .material import Composition, Material
+from .parser.mcnp_input_parser import read_mcnp
+from .transformation import Transformation
 
 
 class Universe:
@@ -72,6 +75,48 @@ class Universe:
                     fill['universe'] = universes[uname]
             c.set('U', self)
             self._cells.append(c)
+
+    @staticmethod
+    def from_file(filename):
+        """Reads MCNP universe from file.
+
+        Parameters
+        ----------
+        filename : str
+            Input file name.
+
+        Returns
+        -------
+        universe : Universe
+            New universe corresponding to the file.
+        """
+        title, cells, surfaces, data = read_mcnp(filename)
+
+        # Create transformations objects
+        transforms = data.get('TR', {})
+        for tr_name, tr_data in transforms.items():
+            transforms[tr_name] = Transformation(**tr_data)
+        for s in surfaces.values():
+            replace(s, 'transform', transforms, None)
+
+        # Create composition objects (MCNP materials)
+        compositions = data.get('M', {})
+        for mat_name, mat_data in compositions.items():
+            compositions[mat_name] = Composition(**mat_data)
+
+        for c in cells.values():
+            replace(c, 'TRCL', transforms, Transformation)
+            fill = c.get('FILL', None)
+            if fill:
+                replace(fill, 'transform', transforms, Transformation)
+            rho = c.pop('RHO', 0)
+            if rho != 0:
+                args = {'composition': compositions[c['MAT']]}
+                if rho > 0:
+                    args['concentration'] = rho * 1.e+24
+                else:
+                    args['density'] = -rho
+                c['MAT'] = Material(**args)
 
     def __iter__(self):
         return iter(self._cells)
@@ -260,3 +305,28 @@ class Universe:
             if c.get['name'] == key:
                 return c
         raise KeyError("No such cell: {0}".format(key))
+
+
+def replace(data, keyword, replace_items, factory):
+    """Replaces values of dict according to replacement dictionary.
+
+    It modifies current object.
+
+    Parameters
+    ----------
+    data : dict
+        dict instance that has key which value has to be replaced. It must
+        contain 'name' keyword.
+    keyword : str
+        Keyword to be replaced.
+    replace_items : dict
+        A dictionary of replacements.
+    factory : function
+        A function or class constructor, that takes keyword arguments to
+        create an object, if value is a dict instance.
+    """
+    value = data.get(keyword, None)
+    if isinstance(value, dict):
+        data[keyword] = factory(**value)
+    else:
+        data[keyword] = replace_items[value]

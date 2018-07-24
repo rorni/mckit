@@ -5,33 +5,12 @@ from copy import deepcopy
 
 import numpy as np
 
-from mckit.parser.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
 from .surface import create_surface, Surface
 from .body import Body
 from .universe import Universe
 from .transformation import Transformation
 from .material import Material
 from .constants import RELATIVE_DENSITY_TOLERANCE
-
-
-def read_mcnp(filename):
-    """Reads MCNP model from file and creates corresponding objects.
-
-    Parameters
-    ----------
-    filename : str
-        File that contains MCNP model.
-
-    Returns
-    -------
-    model : Model
-        Calculation model.
-    """
-    with open(filename) as f:
-        text = f.read()
-    mcnp_input_lexer.begin('INITIAL')
-    title, cells, surfaces, data = mcnp_input_parser.parse(text, tracking=True, lexer=mcnp_input_lexer)
-    return Model(title, cells, surfaces, data)
 
 
 class Model:
@@ -71,7 +50,7 @@ class Model:
     """
     def __init__(self, title, cells, surfaces, data, base_universe=0,
                  take_inserted=True):
-        self.title = deepcopy(title)
+        self.title = title
         self.cells = _get_contained_cells(cells, base_universe, take_inserted)
         surf_ind = _get_surface_indices(self.cells)
         self.surfaces = {si: deepcopy(surfaces[si]) for si in surf_ind}

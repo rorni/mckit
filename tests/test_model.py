@@ -1,9 +1,9 @@
 import unittest
 import os
 
-from mckit.model import _get_universe_dependencies, read_mcnp, \
-    _get_surface_indices, _get_contained_cells, _get_composition_indices, \
+from mckit.model import _get_universe_dependencies, _get_surface_indices, _get_contained_cells, _get_composition_indices, \
     _get_transformation_indices, MCPrinter
+from mckit.parser.mcnp_input_parser import read_mcnp
 
 from tests.model_test_data.model_data import *
 

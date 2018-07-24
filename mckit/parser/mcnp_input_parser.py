@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import re
+from collections import deque
 
 import ply.lex as lex
 import ply.yacc as yacc
-
-from collections import deque
 
 literals = ['+', '-', ':', '*', '(', ')', '#', '.']
 
@@ -664,11 +663,30 @@ def p_material_option(p):
 
 mcnp_input_parser = yacc.yacc(tabmodule="mcnp_input_tab", debug=False)
 
-# with open('..\\tests\\parser_test_data\\lex2.txt') as f:
-#     text = f.read()
-#     mcnp_input_lexer.input(text.upper())
-#     while True:
-#         tok = mcnp_input_lexer.token()
-#         print(tok)
-#     result = mcnp_input_parser.parse(text.upper())
-#     print(result)
+
+def read_mcnp(filename):
+    """Reads MCNP model from file and creates corresponding objects.
+
+    Parameters
+    ----------
+    filename : str
+        File that contains MCNP model.
+
+    Returns
+    -------
+    title : str
+        Title of the MCNP model.
+    cells : dict
+        Dictionary of cell data. cell_name -> cell_data. The later is again
+        a dict.
+    surfaces : dict
+        Dictionary of surface data. surf_name -> surf_data. The later is again
+        a dict of surface parameters.
+    data : dict
+        Dictionary of data cards. data_type -> data_name -> data. The later is
+        again a dict.
+    """
+    with open(filename) as f:
+        text = f.read()
+    mcnp_input_lexer.begin('INITIAL')
+    return mcnp_input_parser.parse(text, tracking=True, lexer=mcnp_input_lexer)
