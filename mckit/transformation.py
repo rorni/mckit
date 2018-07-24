@@ -3,10 +3,13 @@
 
 import numpy as np
 
-from .constants import *
+from .geometry import ORIGIN
 
+__all__ = ['Transformation', 'IDENTITY_ROTATION']
 
-__all__ = ['Transformation']
+IDENTITY_ROTATION = np.eye(3)
+
+ANGLE_TOLERANCE = 0.001
 
 
 class Transformation:
@@ -192,3 +195,4 @@ class Transformation:
         u1 = np.transpose(self._u)
         t1 = -np.dot(u1, self._t)
         return Transformation(translation=t1, rotation=u1)
+
