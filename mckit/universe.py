@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from collections import OrderedDict
+
 from .body import Body
+from .surface import create_surface
 from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
 from .material import Composition, Material
 from .parser.mcnp_input_parser import read_mcnp
@@ -96,27 +99,27 @@ class Universe:
         transforms = data.get('TR', {})
         for tr_name, tr_data in transforms.items():
             transforms[tr_name] = Transformation(**tr_data)
-        for s in surfaces.values():
-            replace(s, 'transform', transforms, None)
 
         # Create composition objects (MCNP materials)
         compositions = data.get('M', {})
         for mat_name, mat_data in compositions.items():
             compositions[mat_name] = Composition(**mat_data)
 
-        for c in cells.values():
-            replace(c, 'TRCL', transforms, Transformation)
-            fill = c.get('FILL', None)
-            if fill:
-                replace(fill, 'transform', transforms, Transformation)
-            rho = c.pop('RHO', 0)
-            if rho != 0:
-                args = {'composition': compositions[c['MAT']]}
-                if rho > 0:
-                    args['concentration'] = rho * 1.e+24
-                else:
-                    args['density'] = -rho
-                c['MAT'] = Material(**args)
+        # create surface objects
+        surfaces = {name: _create_surface_object(data, transforms) for name, data in surfaces.items()}
+
+        # create cell objects
+        cells = OrderedDict(cells.items())
+        created_cells = {}
+        while cells:
+            name, data = cells.popitem(last=False)
+            cell = _create_cell_object(data, created_cells, surfaces, transforms, compositions)
+            if cell:
+                created_cells[name] = cell
+            else:
+                cells[name] = data
+
+        return Universe(created_cells, verbose_name=title)
 
     def __iter__(self):
         return iter(self._cells)
@@ -321,7 +324,7 @@ def replace(data, keyword, replace_items, factory):
         Keyword to be replaced.
     replace_items : dict
         A dictionary of replacements.
-    factory : function
+    factory : func
         A function or class constructor, that takes keyword arguments to
         create an object, if value is a dict instance.
     """
@@ -330,3 +333,104 @@ def replace(data, keyword, replace_items, factory):
         data[keyword] = factory(**value)
     else:
         data[keyword] = replace_items[value]
+
+
+def _create_surface_object(surf_data, transforms):
+    """Creates surface object from surface data dictionary.
+
+    Parameters
+    ----------
+    surf_data : dict
+        A dictionary of surface data. It must contain 'kind' and 'params' keys.
+        Other keys are optional.
+    transforms : dict
+        A dictionary of transformation objects. tr_name (int) -> transform (Transformation).
+
+    Returns
+    -------
+    surf : Surface
+        New Surface instance.
+    """
+    surf_data = surf_data.copy()
+    kind = surf_data.pop('kind')
+    params = surf_data.pop('params')
+    tr_name = surf_data.get('transform', None)
+    if tr_name:
+        surf_data['transform'] = transforms[tr_name]
+    return create_surface(kind, *params, **surf_data)
+
+
+def _create_cell_object(cell_data, created_cells, surfaces, transforms, compositions):
+    """Creates cell object from cell data dictionary.
+
+    Parameters
+    ----------
+    cell_data : dict
+        A dictionary of cell data.
+    created_cells : dict
+        A dictionary of already created cells. cell_name (int) -> cell (Body).
+    surfaces : dict
+        A dictionary of Surface objects.
+    transforms : dict
+        A dictionary of Transformation objects.
+    compositions : dict
+        A dictionary of Composition objects.
+
+    Returns
+    -------
+    cell : Body
+        New Body instance. None if this cell cannot be created for now.
+    """
+    geometry = cell_data.pop('geometry', None)
+    if geometry is None:
+        # reference geometry
+        ref_name = cell_data.pop('reference')
+        geometry = created_cells.get(ref_name, None)
+        if geometry:
+            for k, v in geometry._options._items():
+                if k not in cell_data.keys():
+                    cell_data[k] = v
+        else:  # Reference cell has not been created yet. Terminating.
+            cell_data['reference'] = ref_name
+            return None
+    else:
+        # replace geometry numbers by corresponding surface objects.
+        n = len(geometry)
+        for i in range(n):
+            if isinstance(geometry[i], int):
+                if i + 1 < n and geometry[i+1] == '#':
+                    if geometry[i] in created_cells.keys():
+                        geometry[i] = created_cells[geometry[i]]
+                        geometry[i+1] = 'C'
+                    else:
+                        cell_data['geometry'] = geometry
+                        return None
+                else:
+                    geometry[i] = surfaces[geometry[i]]
+    # replace options
+    _transform_replace(cell_data, 'TRCL', transforms)
+
+    fill = cell_data.get('FILL', None)
+    if fill:
+        _transform_replace(fill, 'transform', transforms)
+
+    comp_name = cell_data.get('MAT', None)
+    if comp_name:
+        data = {'composition': compositions[comp_name]}
+        rho = cell_data.pop('RHO')
+        if rho > 0:
+            data['concentration'] = rho * 1.e+24
+        else:
+            data['density'] = - rho
+        cell_data['MAT'] = Material(**data)
+
+    return Body(geometry, **cell_data)
+
+
+def _transform_replace(data, key, transforms):
+    tr = data.get(key, None)
+    if isinstance(tr, int):
+        data[key] = transforms[tr]
+    elif isinstance(tr, dict):
+        data[key] = Transformation(**tr)
+

@@ -321,6 +321,8 @@ def from_polish_notation(polish):
     for i, op in enumerate(polish):
         if isinstance(op, Surface):
             operands.append(Shape('S', op))
+        elif isinstance(op, Shape):
+            operands.append(op)
         elif op == 'C':
             operands.append(operands.pop().complement())
         else:
