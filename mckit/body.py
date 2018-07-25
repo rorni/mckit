@@ -7,6 +7,7 @@ from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
 from .geometry import Shape as _Shape
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
+from .transformation import Transformation
 
 
 class Shape(_Shape):
@@ -320,6 +321,8 @@ def from_polish_notation(polish):
     for i, op in enumerate(polish):
         if isinstance(op, Surface):
             operands.append(Shape('S', op))
+        elif isinstance(op, Shape):
+            operands.append(op)
         elif op == 'C':
             operands.append(operands.pop().complement())
         else:
@@ -400,6 +403,14 @@ class Body(Shape):
     def material(self):
         """Gets body's material. None is returned if no material present."""
         return self._options.get('MAT', None)
+
+    def get(self, option_name, default=None):
+        """Gets option by name without raising an exception."""
+        return self._options.get(option_name, default=default)
+
+    def set(self, option_name, value):
+        """Adds new option to the body or replaces old option."""
+        self._options[option_name] = value
 
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
@@ -516,5 +527,11 @@ class Body(Shape):
         cell : Cell
             The result of this cell transformation.
         """
-        geometry = self.transform(tr)
-        return Body(geometry, **self._options)
+        geometry = Shape.transform(self, tr)
+        cell = Body(geometry, **self._options)
+        fill = cell.get('FILL', None)
+        if fill:
+            tr_in = fill.get('transform', Transformation())
+            new_tr = tr.apply2transform(tr_in)
+            fill['transform'] = new_tr
+        return cell

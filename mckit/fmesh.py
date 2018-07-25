@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from itertools import product
-from abc import ABC, abstractmethod
-
 import numpy as np
 
-from .constants import GLOBAL_BOX, EX, EY, EZ
+from .constants import EX, EY, EZ
 from .transformation import Transformation
-from .meshtal_parser import meshtal_parser, meshtal_lexer
+from mckit.parser.meshtal_parser import meshtal_parser, meshtal_lexer
 
 from .geometry import Box
 

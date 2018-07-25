@@ -91,6 +91,18 @@ class TestTransformationMethods(unittest.TestCase):
             for j in range(3):
                 self.assertAlmostEqual(m1[i, j], m[i, j])
 
+    def test_apply2tr(self):
+        for i, params1 in enumerate(tr_tr_cases):
+            tr1 = Transformation(**params1)
+            for j, params2 in enumerate(tr_tr_cases):
+                tr2 = Transformation(**params2)
+                with self.subTest(msg='outer={0}, inner={1}'.format(i, j)):
+                    for p in tr_points:
+                        ans = tr1.apply2point(tr2.apply2point(p))
+                        tr = tr1.apply2transform(tr2)
+                        res = tr.apply2point(p)
+                        np.testing.assert_almost_equal(ans, res)
+
     def test_reverse(self):
         tr_inv = tr_glob.reverse()
         for i, (p1, p) in enumerate(point_transformation_cases):
@@ -151,6 +163,23 @@ orthogonalization_creation_cases = [
 
 tr_glob = Transformation(translation=[1, 2, -3], indegrees=True,
                          rotation=[30, 60, 90, 120, 30, 90, 90, 90, 0])
+
+tr_tr_cases = [
+    {'translation': [1, 2, 3]},
+    {'translation': [-4, 2, -3]},
+    {'translation': [3, 0, 9], 'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0],
+     'indegrees': True},
+    {'translation': [1, 4, -2], 'rotation': [0, 90, 90, 90, 30, 60, 90, 120, 30],
+     'indegrees': True},
+    {'translation': [-2, 5, 3], 'rotation': [30, 90, 60, 90, 0, 90, 120, 90, 30],
+     'indegrees': True}
+]
+
+tr_points = [
+    np.array([1, 0, 0]), np.array([2, -3, 1]), np.array([-4, 1, 9]),
+    np.array([7, 2, 5]), np.array([8, -1, 3]), np.array([8, -3, 2]),
+    np.array([3, 6, 4]), np.array([2, -5, -1]), np.array([-2, 7, 2])
+]
 
 point_transformation_cases = [
     (np.array([1, 0, 0]), np.array([np.sqrt(3) / 2 + 1, 2.5, -3])),

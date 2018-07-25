@@ -1,6 +1,6 @@
 import unittest
 
-from mckit.model import read_mcnp
+from mckit.parser.mcnp_input_parser import read_mcnp
 from mckit.fmesh import Box
 
 from tests.universe_test_data.volume_ans import *
