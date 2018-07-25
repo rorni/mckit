@@ -3,8 +3,8 @@ from itertools import product
 
 import numpy as np
 
-from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
-from .geometry import Shape as _Shape
+from .constants import MIN_BOX_VOLUME
+from .geometry import Shape as _Shape, GLOBAL_BOX
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
@@ -46,7 +46,7 @@ class Shape(_Shape):
     def __str__(self):
         return print_card(self._get_words(None))
 
-    def _get_words(self, parent_opc):
+    def _get_words(self, parent_opc=None):
         """Gets list of words that describe the shape.
 
         Parameters
@@ -84,6 +84,7 @@ class Shape(_Shape):
 
     @classmethod
     def clean_args(cls, opc, *args):
+        args = [a.shape if isinstance(a, Body) else a for a in args]
         cls._verify_opc(opc, *args)
         if len(args) == 1 and isinstance(args[0], Shape) and (opc == 'S' or opc == 'I' or opc == 'U'):
             return args[0].opc, args[0].args
@@ -332,7 +333,7 @@ def from_polish_notation(polish):
     return operands.pop()
 
 
-class Body(Shape):
+class Body(dict):
     """Represents MCNP's cell.
 
     Parameters
@@ -361,11 +362,8 @@ class Body(Shape):
             geometry = from_polish_notation(geometry)
         elif not isinstance(geometry, Shape):
             raise TypeError("Geometry list or Shape is expected.")
-        Shape.__init__(self, geometry.opc, *geometry.args)
-        self._options = dict(options)
-
-    def __getitem__(self, key):
-        return self._options[key]
+        dict.__init__(self, options)
+        self._shape = geometry
 
     def __hash__(self):
         return id(self)
@@ -375,7 +373,7 @@ class Body(Shape):
 
     def __str__(self):
         text = [str(self['name']), ' ']
-        if 'MAT' in self._options.keys():
+        if 'MAT' in self.keys():
             text.append(str(self['MAT']))
             text.append(' ')
             text.append(str(self['RHO']))
@@ -383,7 +381,7 @@ class Body(Shape):
         else:
             text.append('0')
             text.append(' ')
-        text.extend(Shape._get_words(self, None))
+        text.extend(self._shape._get_words())
         text.append('\n')
         # insert options printing
         text.extend(self._options_list())
@@ -394,23 +392,20 @@ class Body(Shape):
         text = []
         for opt_group in CELL_OPTION_GROUPS:
             for key in opt_group:
-                if key in self._options.keys():
-                    text.extend(print_option(key, self._options[key]))
+                if key in self.keys():
+                    text.extend(print_option(key, self[key]))
                     text.append(' ')
             text.append('\n')
         return text
 
+    @property
+    def shape(self):
+        """Gets body's shape."""
+        return self._shape
+
     def material(self):
         """Gets body's material. None is returned if no material present."""
-        return self._options.get('MAT', None)
-
-    def get(self, option_name, default=None):
-        """Gets option by name without raising an exception."""
-        return self._options.get(option_name, default=default)
-
-    def set(self, option_name, value):
-        """Adds new option to the body or replaces old option."""
-        self._options[option_name] = value
+        return self.get('MAT', None)
 
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
@@ -428,8 +423,8 @@ class Body(Shape):
         cell : Cell
             The result.
         """
-        geometry = Shape.intersection(self, other)
-        return Body(geometry, **self._options)
+        geometry = self._shape.intersection(other)
+        return Body(geometry, **self)
 
     def union(self, other):
         """Gets an union if this cell with the other.
@@ -446,8 +441,8 @@ class Body(Shape):
         cell : Cell
             The result.
         """
-        geometry = Shape.union(self, other)
-        return Body(geometry, **self._options)
+        geometry = self._shape.union(other)
+        return Body(geometry, **self)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
                  min_volume=MIN_BOX_VOLUME, trim_size=1):
@@ -475,11 +470,11 @@ class Body(Shape):
             Simplified version of this cell.
         """
         # print('Collect stage...')
-        self.collect_statistics(box, min_volume)
+        self._shape.collect_statistics(box, min_volume)
         # print('finding optimal solution...')
-        variants = self.get_simplest(trim_size)
+        variants = self._shape.get_simplest(trim_size)
         # print(len(variants))
-        return Body(variants[0], **self._options)
+        return Body(variants[0], **self)
 
     def populate(self, universe=None):
         """Fills this cell by filling universe.
@@ -509,7 +504,7 @@ class Body(Shape):
         for c in universe.cells:
             new_cell = c.intersection(self)  # because properties like MAT, etc
                                              # must be as in filling cell.
-            if 'U' in self._options.keys():
+            if 'U' in self.keys():
                 new_cell['U'] = self['U']    # except universe.
             cells.append(new_cell)
         return cells
@@ -527,8 +522,8 @@ class Body(Shape):
         cell : Cell
             The result of this cell transformation.
         """
-        geometry = Shape.transform(self, tr)
-        cell = Body(geometry, **self._options)
+        geometry = self._shape.transform(tr)
+        cell = Body(geometry, **self)
         fill = cell.get('FILL', None)
         if fill:
             tr_in = fill.get('transform', Transformation())

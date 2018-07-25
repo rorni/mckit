@@ -5,8 +5,8 @@ import numpy as np
 from .geometry import MIN_VOLUME
 
 __all__ = [
-    'ORIGIN', 'EX', 'EY', 'EZ', 'GLOBAL_BOX', 'MIN_BOX_VOLUME',
-    'RESOLUTION'
+    'MIN_BOX_VOLUME',
+    'RESOLUTION', 'TIME_UNITS'
 ]
 
 

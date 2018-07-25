@@ -4,7 +4,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 from mckit.constants import TIME_UNITS
-from .material import Element
+from mckit.material import Element
 
 
 TIME_ALIAS = {

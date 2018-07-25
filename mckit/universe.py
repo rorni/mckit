@@ -309,6 +309,9 @@ class Universe:
                 return c
         raise KeyError("No such cell: {0}".format(key))
 
+    def give_names(self, start_cell=1, start_surf=1, start_mat=1, start_tr=1):
+        raise NotImplementedError
+
 
 def replace(data, keyword, replace_items, factory):
     """Replaces values of dict according to replacement dictionary.
@@ -385,11 +388,12 @@ def _create_cell_object(cell_data, created_cells, surfaces, transforms, composit
     if geometry is None:
         # reference geometry
         ref_name = cell_data.pop('reference')
-        geometry = created_cells.get(ref_name, None)
-        if geometry:
-            for k, v in geometry._options._items():
+        ref_cell = created_cells.get(ref_name, None)
+        if ref_cell:
+            for k, v in ref_cell.items():
                 if k not in cell_data.keys():
                     cell_data[k] = v
+            geometry = ref_cell.shape
         else:  # Reference cell has not been created yet. Terminating.
             cell_data['reference'] = ref_name
             return None

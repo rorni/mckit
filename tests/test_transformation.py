@@ -4,8 +4,8 @@ import unittest
 
 import numpy as np
 
-from mckit.constants import *
-from mckit.transformation import Transformation
+from mckit.transformation import Transformation, IDENTITY_ROTATION
+from mckit.geometry import ORIGIN
 
 places = 10
 

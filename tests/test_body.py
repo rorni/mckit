@@ -3,12 +3,8 @@ import unittest
 import numpy as np
 
 from mckit.body import Body, Shape, from_polish_notation
-from mckit.surface import create_surface, Surface
-from mckit.constants import *
-from mckit.transformation import Transformation
 from mckit.fmesh import Box
-from mckit.universe import Universe
-
+from mckit.surface import create_surface
 from tests.cell_test_data.geometry_test_data import *
 
 surfaces = {}
@@ -159,14 +155,14 @@ class TestBody(unittest.TestCase):
                 else:
                     pol_geom.append(x)
             with self.subTest(msg="polish #{0}".format(i)):
-                ans = geoms[i]
+                ans = Shape(geoms[i].opc, *geoms[i].args)
                 cell = Body(pol_geom)
                 # print(str(ag))
-                self.assertEqual(cell, ans)
+                self.assertEqual(cell.shape, ans)
         for i, ag in enumerate(geoms):
             with self.subTest(msg="additive geom #{0}".format(i)):
                 cell = Body(ag)
-                self.assertEqual(cell, ag)
+                self.assertEqual(cell.shape, ag)
 
     def test_intersection(self):
         for i, ag1 in enumerate(geoms):
@@ -176,13 +172,13 @@ class TestBody(unittest.TestCase):
                     continue
                 ind = j-1 if j > i else j
                 g = intersection_geom[i][ind]
-                ans = Body(create_node(g[0], g[1]), **c1._options)
+                ans = Body(create_node(g[0], g[1]), **c1)
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
                     c2 = Body(ag2)
                     u = c1.intersection(c2)
                     # print(i, j, '===>\n', ans, '\n-------\n', u, '\n========\n')
-                    self.assertEqual(Shape(u.opc, *u.args), ans)
-                    self.assertDictEqual(u._options, c1._options)
+                    self.assertEqual(u.shape, ans.shape)
+                    self.assertDictEqual(u, c1)
 
     def test_union(self):
         for i, ag1 in enumerate(geoms):
@@ -192,12 +188,12 @@ class TestBody(unittest.TestCase):
                     continue
                 ind = j-1 if j > i else j
                 g = union_geom[i][ind]
-                ans = Body(create_node(g[0], g[1]), **c1._options)
+                ans = Body(create_node(g[0], g[1]), **c1)
                 with self.subTest(msg='additive i={0}, j={1}'.format(i, j)):
                     c2 = Body(ag2)
                     u = c1.union(c2)
-                    self.assertEqual(Shape(u.opc, *u.args), ans)
-                    self.assertDictEqual(u._options, c1._options)
+                    self.assertEqual(u.shape, ans.shape)
+                    self.assertDictEqual(u, c1)
 
 #     def test_populate(self):
 #         for i, ag_out in enumerate(additives):
