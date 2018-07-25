@@ -10,6 +10,9 @@ from .surface import Surface
 from .transformation import Transformation
 
 
+__all__ = ['Shape', 'Body']
+
+
 class Shape(_Shape):
     """Describes shape.
 

@@ -8,9 +8,13 @@ import numpy as np
 from pathlib import Path
 
 from .constants import TIME_UNITS
-from .fispact_parser import read_fispact_tab
+from .parser.fispact_parser import read_fispact_tab
 from .fmesh import SparseData
 from .body import Body
+
+
+__all__ = ['activation', 'mesh_activation']
+
 
 EBINS_24 = [
     0.00, 0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40, 0.60, 0.80, 1.00, 1.22,

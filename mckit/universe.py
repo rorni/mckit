@@ -10,6 +10,9 @@ from .parser.mcnp_input_parser import read_mcnp
 from .transformation import Transformation
 
 
+__all__ = ['Universe']
+
+
 class Universe:
     """Describes universe - a set of cells.
     

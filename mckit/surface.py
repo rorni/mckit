@@ -13,6 +13,11 @@ from .geometry import Plane      as _Plane,    \
                       GQuadratic as _GQuadratic, \
                       GLOBAL_BOX, ORIGIN, EX, EY, EZ
 
+__all__ = [
+    'create_surface', 'Plane', 'Sphere', 'Cone', 'Torus', 'GQuadratic',
+    'Cylinder'
+]
+
 
 def create_surface(kind, *params, **options):
     """Creates new surface.

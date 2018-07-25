@@ -9,9 +9,7 @@ import numpy as np
 
 from .printer import print_card, MCNP_FORMATS
 
-__all__ = [
-    'AVOGADRO', 'Element', 'Composition', 'Material'
-]
+__all__ = ['AVOGADRO', 'Element', 'Composition', 'Material']
 
 AVOGADRO = 6.02214085774e+23
 
