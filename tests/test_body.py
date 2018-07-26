@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from mckit.body import Body, Shape, from_polish_notation
-from mckit.fmesh import Box
+from mckit.geometry import Box
 from mckit.surface import create_surface
 from tests.cell_test_data.geometry_test_data import *
 

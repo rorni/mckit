@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 
-from mckit.fmesh import Box
+from mckit.geometry import Box
 
 from tests.fmesh_test_data import box_test_data as btd
 

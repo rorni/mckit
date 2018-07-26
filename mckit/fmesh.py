@@ -5,7 +5,7 @@ import numpy as np
 from .transformation import Transformation
 from mckit.parser.meshtal_parser import meshtal_parser, meshtal_lexer
 
-from .geometry import Box, EX, EY, EZ
+from .geometry import EX, EY, EZ
 
 
 _BIN_NAMES = {'ENERGY': 'ebins', 'X': 'xbins', 'Y': 'ybins', 'Z': 'zbins', 'R': 'rbins', 'THETA': 'tbins'}

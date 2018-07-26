@@ -4,7 +4,8 @@ from collections import OrderedDict
 
 from .body import Body
 from .surface import create_surface
-from .constants import GLOBAL_BOX, MIN_BOX_VOLUME
+from .constants import MIN_BOX_VOLUME
+from .geometry import GLOBAL_BOX
 from .material import Composition, Material
 from .parser.mcnp_input_parser import read_mcnp
 from .transformation import Transformation
@@ -39,7 +40,7 @@ class Universe:
         
     Methods
     -------
-    fill(cell)
+    apply_fill(cell)
         Fills every cell that has fill option by cells of filling universe.
     transform(tr)
         Applies transformation tr to this universe. Returns a new universe.
@@ -135,11 +136,11 @@ class Universe:
     def verbose_name(self):
         return self._verbose_name
 
-    def fill(self):
-        """Fills cells that have fill option by filling universe cells.
+    def apply_fill(self):
+        """Fills cells that have apply_fill option by filling universe cells.
 
         This method modifies current universe. The cells that initially
-        were in this universe and had fill option are replaced by filling
+        were in this universe and had apply_fill option are replaced by filling
         universe. Geometry of the cell being filled is used to bound cells
         of filler universe. Simplification won't be done by default.
         The user should call simplification when needed.
