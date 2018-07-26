@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from mckit.fmesh import Box
+from mckit.geometry import Box
 
 box = Box([0, 0, 0], 2, 2, 2)
 

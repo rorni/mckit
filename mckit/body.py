@@ -16,6 +16,8 @@ __all__ = ['Shape', 'Body']
 class Shape(_Shape):
     """Describes shape.
 
+    Shape is immutable object.
+
     Parameters
     ----------
     opc : str
@@ -31,15 +33,48 @@ class Shape(_Shape):
         no arguments must be specified for 'E' or 'R' opc. Only one argument
         must present for 'C' or 'S' opc values.
 
-    Returns
+    Properties
+    ----------
+    opc : str
+        Operation code. It may be different from opc passed in __init__.
+    invert_opc : str
+        Operation code, complement to the opc.
+    args : tuple
+        A tuple of shape's arguments.
+
+    Methods
     -------
-    shape : Shape
-        Shape instance.
+    test_box(box)
+        Tests if the box intersects the shape.
+    volume(box, min_volume)
+        Calculates the volume of the shape with desired accuracy.
+    bounding_box(box, tol)
+        Finds bounding box for the shape with desired accuracy.
+    test_points(points)
+        Tests the senses of the points.
+    is_complement(other)
+        Checks if other is a complement to the shape.
+    complement()
+        Gets complement shape.
+    union(*other)
+        Creates an union of the shape with the others.
+    intersection(*other)
+        Creates an intersection of the shape with the others.
+    transform(tr)
+        Gets transformed version of the shape.
+    is_empty()
+        Checks if this shape is empty - no space belong to it.
+    get_surfaces()
+        Gets all Surface objects that bounds the shape.
+    complexity()
+        Gets the complexity of the shape description.
+    get_simplest()
+        Gets the simplest description of the shape.
     """
     _opc_hash = {'I': hash('I'), 'U': ~hash('I'), 'E': hash('E'), 'R': ~hash('E'), 'S': hash('S'), 'C': ~hash('S')}
 
     def __init__(self, opc, *args):
-        opc, args = Shape.clean_args(opc, *args)
+        opc, args = Shape._clean_args(opc, *args)
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
@@ -86,7 +121,8 @@ class Shape(_Shape):
         return words
 
     @classmethod
-    def clean_args(cls, opc, *args):
+    def _clean_args(cls, opc, *args):
+        """Performs cleaning of input arguments."""
         args = [a.shape if isinstance(a, Body) else a for a in args]
         cls._verify_opc(opc, *args)
         if len(args) == 1 and isinstance(args[0], Shape) and (opc == 'S' or opc == 'I' or opc == 'U'):
@@ -136,7 +172,13 @@ class Shape(_Shape):
         return True
 
     def complement(self):
-        """Gets complement to the shape."""
+        """Gets complement to the shape.
+
+        Returns
+        -------
+        comp_shape : Shape
+            Complement shape.
+        """
         opc = self.opc
         args = self.args
         if opc == 'S':
@@ -153,7 +195,13 @@ class Shape(_Shape):
             return Shape(opc, *c_args)
 
     def is_complement(self, other):
-        """Checks if this shape is complement to the other."""
+        """Checks if this shape is complement to the other.
+
+        Returns
+        -------
+        result : bool
+            Test result.
+        """
         if hash(self) != ~hash(other):
             return False
         if self.opc != other.invert_opc:
@@ -186,14 +234,47 @@ class Shape(_Shape):
                 self._hash ^= hash(a)
 
     def intersection(self, *other):
-        """Gets intersection with other shape."""
+        """Gets intersection with other shape.
+
+        Parameters
+        ----------
+        other : tuple
+            A list of Shape or Body objects, which must be intersected.
+
+        Returns
+        -------
+        result : Shape
+            New shape.
+        """
         return Shape('I', self, *other)
 
     def union(self, *other):
-        """Gets union with other shape."""
+        """Gets union with other shape.
+
+        Parameters
+        ----------
+        other : tuple
+            A list of Shape or Body objects, which must be joined.
+
+        Returns
+        -------
+        result : Shape
+            New shape."""
         return Shape('U', self, *other)
 
     def transform(self, tr):
+        """Transforms the shape.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+
+        Returns
+        -------
+        result : Shape
+            New shape.
+        """
         opc = self._opc
         args = []
         for a in self._args:
@@ -201,7 +282,15 @@ class Shape(_Shape):
         return Shape(opc, *args)
 
     def complexity(self):
-        """Gets complexity of shape."""
+        """Gets complexity of shape.
+
+        Returns
+        -------
+        complexity : int
+            The complexity of the shape description. It is the number of
+            surfaces needed to describe the shape. Repeats are taken into
+            account.
+        """
         args = self.args
         if len(args) == 1:
             return 1
@@ -214,6 +303,13 @@ class Shape(_Shape):
             return 0
 
     def get_surfaces(self):
+        """Gets all surfaces that describe the shape.
+
+        Returns
+        -------
+        surfaces : set[Surface]
+            A set of surfaces.
+        """
         args = self.args
         if len(args) == 1:
             return {args[0]}
@@ -245,6 +341,19 @@ class Shape(_Shape):
                     raise TypeError("Shape instance is expected for 'I' and 'U' operations.")
 
     def get_simplest(self, trim_size=0):
+        """Gets the simplest found description of the shape.
+
+        Parameters
+        ----------
+        trim_size : int
+            Shape variants with complexity greater than minimal one more than
+            trim_size are thrown away.
+
+        Returns
+        -------
+        shapes : list[Shape]
+            A list of shapes with minimal complexity.
+        """
         if self.opc != 'I' and self.opc != 'U':
             return [self]
         node_cases = []
@@ -264,7 +373,7 @@ class Shape(_Shape):
             if self.opc == 'U':
                 return [Shape('R')]
         arg_results = np.delete(stat, drop_index, axis=0)
-        cases = self.find_coverages(arg_results, value=val)
+        cases = self._find_coverages(arg_results, value=val)
         final_cases = set(tuple(c) for c in cases)
         if len(final_cases) == 0:
             print(self)
@@ -288,7 +397,7 @@ class Shape(_Shape):
         return final_nodes
 
     @staticmethod
-    def find_coverages(results, value=+1):
+    def _find_coverages(results, value=+1):
         n = results.shape[1]
         cnt = np.count_nonzero(results == value, axis=1)
         i = np.argmin(cnt)
@@ -299,7 +408,7 @@ class Shape(_Shape):
                 if reminder.shape[0] == 0:
                     sub_cases = [[j]]
                 else:
-                    sub_cases = Shape.find_coverages(reminder, value=value)
+                    sub_cases = Shape._find_coverages(reminder, value=value)
                     for s in sub_cases:
                         s.append(j)
                 cases.extend(sub_cases)
