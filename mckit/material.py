@@ -526,16 +526,27 @@ class Element:
     comment : str, optional
         Optional comment to the element.
 
+    Properties
+    ----------
+    charge : int
+        Charge number of the isotope.
+    mass_number : int
+        Isotope's mass number.
+    molar_mass : float
+        Isotope's molar mass.
+    lib : str
+        Data library ID. Usually it is MCNP library, like '31b' for FENDL31b.
+    isomer : int
+        Isomer level. Usually may appear in FISPACT output.
+
     Methods
     -------
-    charge()
-        Gets isotope's electric charge
     expand()
         Expands natural composition of this element.
-    mass_number()
-        Gets isotope's mass number
-    molar_mass()
-        Gets isotope's molar mass.
+    fispact_repr()
+        Gets FISPACT representation of the element.
+    mcnp_repr()
+        Gets MCNP representation of the element.
     """
     def __init__(self, name, lib=None, isomer=0, comment=None):
         if isinstance(name, int):
@@ -581,7 +592,7 @@ class Element:
     def __str__(self):
         name = _CHARGE_TO_NAME[self.charge].capitalize()
         if self._mass_number > 0:
-            name += str(self._mass_number)
+            name += '-' + str(self._mass_number)
             if self._isomer > 0:
                 name += 'm'
             if self._isomer > 1:
@@ -589,10 +600,21 @@ class Element:
         return name
 
     def mcnp_repr(self):
-        """Returns MCNP representation of the element."""
+        """Gets MCNP representation of the element."""
         name = str(self.charge * 1000 + self.mass_number)
         if self.lib is not None:
             name += '.{0}'.format(self.lib)
+        return name
+
+    def fispact_repr(self):
+        """Gets FISPACT representation of the element."""
+        name = _CHARGE_TO_NAME[self.charge].capitalize()
+        if self._mass_number > 0:
+            name += str(self._mass_number)
+            if self._isomer > 0:
+                name += 'm'
+            if self._isomer > 1:
+                name += str(self._isomer - 1)
         return name
 
     @property
