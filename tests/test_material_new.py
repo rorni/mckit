@@ -497,3 +497,171 @@ class TestComposition:
         to_mix = [(compositions[i], f) for i, f in mix_components]
         mixture = Composition.mixture(*to_mix)
         assert mixture == compositions[ans_index]
+
+
+class TestMaterial:
+    cases = [
+        {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)], 'density': 1.2929e-3, 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479)], 'weight': [('O', 0.23148), ('AR', 0.012886)], 'density': 1.2929e-3, 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479), ('O', 0.21052)], 'weight': [('AR', 0.012886)], 'concentration': 5.3509e+19, 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479), ('Ar', 0.0046936)], 'weight': [('O', 0.23148)], 'concentration': 5.3509e+19, 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 1)], 'density': 1.251e-3},
+        {'atomic': [('O', 1)], 'density': 1.42897e-3},
+        {'atomic': [('Ar', 1)], 'density': 1.784e-3}
+    ]
+
+    @pytest.fixture(scope='class')
+    def materials(self):
+        mats = [Material(**c) for c in self.cases]
+        return mats
+
+    @pytest.mark.parametrize('data', [
+        {},
+        {'atomic': [('N', 1)]},
+        {'weight': [('N', 1)]},
+        {'atomic': [('N', 1)], 'weight': [('N', 1)]},
+        {'composition': {'atomic': [('N', 1)]}},
+        {'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)]},
+        {'composition': {'atomic': [('N', 1)]}, 'weight': [('N', 1)]},
+        {'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)], 'weight': [('N', 1)]},
+        {'density': 7.8},
+        {'concentration': 1.e+23},
+        {'density': 7.8, 'concentration': 1.e+23},
+        {'density': 7.8, 'concentration': 1.e+23, 'atomic': [('N', 1)]},
+        {'density': 7.8, 'concentration': 1.e+23, 'weight': [('N', 1)]},
+        {'density': 7.8, 'concentration': 1.e+23, 'atomic': [('N', 1)], 'weight': [('N', 1)]},
+        {'density': 7.8, 'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)]},
+        {'density': 7.8, 'composition': {'atomic': [('N', 1)]}, 'weight': [('N', 1)]},
+        {'density': 7.8, 'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)], 'weight': [('N', 1)]},
+        {'concentration': 7.8, 'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)]},
+        {'concentration': 7.8, 'composition': {'atomic': [('N', 1)]}, 'weight': [('N', 1)]},
+        {'concentration': 7.8, 'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)], 'weight': [('N', 1)]}
+    ])
+    def test_creation_failure(self, data):
+        if 'composition' in data.keys():
+            data['composition'] = Composition(**data['composition'])
+        with pytest.raises(ValueError):
+            Material(**data)
+
+    @pytest.mark.parametrize('case', cases)
+    def test_creation(self, case):
+        mat1 = Material(**case)
+        data = case.copy()
+        atomic = data.pop('atomic', tuple())
+        weight = data.pop('weight', tuple())
+        comp = Composition(atomic=atomic, weight=weight)
+        mat2 = Material(composition=comp, **data)
+        assert mat1.composition == comp
+        assert mat2.composition == comp
+        if 'density' in data.keys():
+            d = pytest.approx(data['density'], rel=1.e-5)
+            assert mat1.density == d
+            assert mat2.density == d
+        elif 'concentration' in data.keys():
+            d = pytest.approx(data['concentration'], rel=1.e-5)
+            assert mat1.concentration == d
+            assert mat2.concentration == d
+
+    eq_matrix = [
+        [1, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 1]
+    ]
+
+    @pytest.mark.parametrize('case1', range(len(cases)))
+    @pytest.mark.parametrize('case2', range(len(cases)))
+    def test_equal(self, materials, case1, case2):
+        mat1 = materials[case1]
+        mat2 = materials[case2]
+        assert (mat1 == mat2) == bool(self.eq_matrix[case1][case2])
+
+    @pytest.mark.parametrize('case_no', range(len(cases)))
+    @pytest.mark.parametrize('data', [
+        {'new_vol': 5, 'old_vol': 2.5},
+        {'new_vol': 4, 'old_vol': 6},
+        {'factor': 2}
+    ])
+    def test_correct(self, materials, case_no, data):
+        mat = materials[case_no]
+        new_mat = mat.correct(**data)
+        assert mat.composition == new_mat.composition
+        if 'factor' in data.keys():
+            ans_den = pytest.approx(mat.density * data['factor'], rel=1.e-10)
+            assert new_mat.density == ans_den
+        else:
+            old_mass = data['old_vol'] * mat.density
+            new_mass = data['new_vol'] * new_mat.density
+            assert old_mass == pytest.approx(new_mass, rel=1.e-10)
+
+    @pytest.mark.parametrize('input_data, expected', [
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1)], 'volume'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.8)], 'volume'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3 * 0.8}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1.2)], 'volume'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3 * 1.2}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1)], 'weight'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.8)], 'weight'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1.2)], 'weight'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1)], 'atomic'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.8)], 'atomic'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1.2)], 'atomic'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.78084),
+              ({'atomic': [('O', 1)], 'density': 1.42897e-3}, 0.20948),
+              ({'atomic': [('Ar', 1)], 'density': 1.784e-3}, 0.00934)],
+             'volume'),
+            {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)],
+             'density': 1.2929e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.755465),
+              ({'atomic': [('O', 1)], 'density': 1.42897e-3}, 0.23148),
+              ({'atomic': [('Ar', 1)], 'density': 1.784e-3}, 0.012886)],
+             'weight'),
+            {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)],
+             'density': 1.2929e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.78479),
+              ({'atomic': [('O', 1)], 'density': 1.42897e-3}, 0.21052),
+              ({'atomic': [('Ar', 1)], 'density': 1.784e-3}, 0.0046936)],
+             'atomic'),
+            {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)],
+             'density': 1.2929e-3}
+        )
+    ])
+    def test_mixture(self, input_data, expected):
+        materials, ftype = input_data
+        materials = [(Material(**kws), frac) for kws, frac in materials]
+        ans_mat = Material(**expected)
+        mix = Material.mixture(*materials, fraction_type=ftype)
+        assert ans_mat == mix
