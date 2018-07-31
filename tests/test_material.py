@@ -1,229 +1,667 @@
-import unittest
+import pytest
 
-from mckit.material import Element, Material, Composition
-from tests.material_test_data import element_test_data as el_data
-from tests.material_test_data import composition_test_data as com_data
-from tests.material_test_data import material_test_data as mat_data
+from mckit.material import Element, Composition, Material
 
 
-class TestElement(unittest.TestCase):
-    def test_creation(self):
-        for i, (data, ans) in enumerate(zip(el_data.element_data, el_data.creation_cases)):
-            name, options = data
-            with self.subTest(i=i):
-                elem = Element(name, **options)
-                self.assertEqual(elem.charge, ans['charge'])
-                self.assertEqual(elem.mass_number, ans['mass_number'])
-                self.assertAlmostEqual(elem.molar_mass, ans['molar_mass'], delta=ans['molar_mass']*1.e-4)
-                self.assertEqual(elem.lib, ans['lib'])
-                self.assertEqual(elem.isomer, ans['isomer'])
-                self.assertEqual(elem._comment, ans['comment'])
+class TestElement:
+    cases = [
+        ('H', {}), ('1000', {}), ('1001', {}),
+        ('CA', {}), ('ca', {}), ('Ca', {'lib': '21c'}),
+        ('CA40', {'lib': '21c'}), ('CA-40', {}), ('Ca42', {'lib': '21c'}),
+        ('ca-43', {}), ('CA-41', {}),
+        ('U', {}), ('U', {'isomer': 1}), ('U235', {}),
+        ('u235', {'isomer': 1, 'lib': '50c'}),
+        ('U-238', {'comment': 'pure 238'}), ('92238', {}), ('92000', {}),
+        ('Be', {}), ('Be-9', {}), ('4000', {}), ('4009', {}), (4000, {}),
+        (4009, {})
+    ]
 
-    def test_str(self):
-        for i, (data, ans) in enumerate(zip(el_data.element_data, el_data.str_cases)):
-            name, options = data
-            with self.subTest(i=i):
-                elem = Element(name, **options)
-                self.assertEqual(str(elem), ans)
-        for i, (data, ans) in enumerate(zip(el_data.element_data, el_data.str_mcnp_cases)):
-            name, options = data
-            with self.subTest(i=i):
-                elem = Element(name, **options)
-                self.assertEqual(elem.mcnp_repr(), ans)
+    @pytest.mark.parametrize("case_no, expected", enumerate([
+        {'charge': 1, 'mass_number': 0, 'molar_mass': 1.0079, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 1, 'mass_number': 0, 'molar_mass': 1.0079, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 1, 'mass_number': 1, 'molar_mass': 1.007825, 'lib': None,
+         'isomer': 0, 'comment': None},
 
-    def test_eq(self):
-        for i, (input1, ans) in enumerate(zip(el_data.element_data, el_data.equality)):
-            name1, options1 = input1
-            with self.subTest(i=i):
-                elem1 = Element(name1, **options1)
-                for j, input2 in enumerate(el_data.element_data):
-                    name2, options2 = input2
-                    elem2 = Element(name2, **options2)
-                    self.assertEqual(elem1 == elem2, ans[j])
+        {'charge': 20, 'mass_number': 0, 'molar_mass': 40.078, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 20, 'mass_number': 0, 'molar_mass': 40.078, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 20, 'mass_number': 0, 'molar_mass': 40.078, 'lib': '21c',
+         'isomer': 0, 'comment': None},
+        {'charge': 20, 'mass_number': 40, 'molar_mass': 39.962591, 'lib': '21c',
+         'isomer': 0, 'comment': None},
+        {'charge': 20, 'mass_number': 40, 'molar_mass': 39.962591, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 20, 'mass_number': 42, 'molar_mass': 41.958618, 'lib': '21c',
+         'isomer': 0, 'comment': None},
+        {'charge': 20, 'mass_number': 43, 'molar_mass': 42.958767, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 20, 'mass_number': 41, 'molar_mass': 41, 'lib': None,
+         'isomer': 0, 'comment': None},
 
-    def test_expand(self):
-        for i, (data, ans) in enumerate(zip(el_data.element_data, el_data.expand_cases)):
-            name, options = data
-            with self.subTest(i=i):
-                elem = Element(name, **options)
-                expand_ans = {Element(name, **opt): v for name, opt, v in ans}
-                expand = elem.expand()
-                self.assertEqual(len(expand.keys()), len(expand_ans.keys()))
-                for k, v in expand_ans.items():
-                    if k not in expand.keys():
-                        print(k, name)
-                    self.assertAlmostEqual(v, expand[k], delta=v * 1.e-4)
+        {'charge': 92, 'mass_number': 0, 'molar_mass': 238.0289, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 92, 'mass_number': 0, 'molar_mass': 238.0289, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 92, 'mass_number': 235, 'molar_mass': 235.043923,
+         'lib': None, 'isomer': 0, 'comment': None},
+        {'charge': 92, 'mass_number': 235, 'molar_mass': 235.043923,
+         'lib': '50c', 'isomer': 1, 'comment': None},
+        {'charge': 92, 'mass_number': 238, 'molar_mass': 238.050783,
+         'lib': None, 'isomer': 0, 'comment': 'pure 238'},
+        {'charge': 92, 'mass_number': 238, 'molar_mass': 238.050783,
+         'lib': None, 'isomer': 0, 'comment': None},
+        {'charge': 92, 'mass_number': 0, 'molar_mass': 238.0289, 'lib': None,
+         'isomer': 0, 'comment': None},
 
+        {'charge': 4, 'mass_number': 0, 'molar_mass': 9.012182, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 4, 'mass_number': 9, 'molar_mass': 9.012182, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 4, 'mass_number': 0, 'molar_mass': 9.012182, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 4, 'mass_number': 9, 'molar_mass': 9.012182, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 4, 'mass_number': 0, 'molar_mass': 9.012182, 'lib': None,
+         'isomer': 0, 'comment': None},
+        {'charge': 4, 'mass_number': 9, 'molar_mass': 9.012182, 'lib': None,
+         'isomer': 0, 'comment': None}
+    ]))
+    def test_creation(self, case_no, expected):
+        name, options = self.cases[case_no]
+        elem = Element(name, **options)
+        assert elem.charge == expected['charge']
+        assert elem.mass_number == expected['mass_number']
+        assert elem.lib == expected['lib']
+        assert elem.isomer == expected['isomer']
+        assert elem._comment == expected['comment']
+        assert elem.molar_mass == pytest.approx(expected['molar_mass'], 1.e-4)
 
-class TestComposition(unittest.TestCase):
-    def test_composition_creation(self):
-        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.create_data)):
-            comp = {Element(k): v for k, v in ans.items()}
-            with self.subTest(i=i):
-                c = Composition(**inp)
-                self.assertEqual(len(comp.keys()), len(c._composition.keys()))
-                for k, v in comp.items():
-                    # TODO: Review accuracy. Check test data!
-                    self.assertAlmostEqual(v, c._composition[k], delta=v*1.e-3)
-                inp2 = {'atomic': [(Element(k), v) for k, v in inp.get('atomic', [])],
-                        'weight': [(Element(k), v) for k, v in inp.get('weight', [])]}
-                c = Composition(**inp2)
-                self.assertEqual(len(comp.keys()), len(c._composition.keys()))
-                for k, v in comp.items():
-                    # TODO: Review accuracy. Check test data!
-                    self.assertAlmostEqual(v, c._composition[k], delta=v*1.e-3)
+    @pytest.mark.parametrize("case_no, expected", enumerate([
+        [('H1', {}, 0.999885), ('H2', {}, 0.000115)],
+        [('H1', {}, 0.999885), ('H2', {}, 0.000115)],
+        [('H1', {}, 1.0)],
 
-    def test_creation_raise(self):
-        for i, inp in enumerate(com_data.create_raise):
-            with self.subTest(i=i):
-                self.assertRaises(ValueError, Composition, **inp)
+        [('CA40', {}, 0.96941), ('CA42', {}, 0.00647), ('CA43', {}, 0.00135),
+         ('CA44', {}, 0.02086), ('CA46', {}, 0.00004), ('CA48', {}, 0.00187)],
+        [('CA40', {}, 0.96941), ('CA42', {}, 0.00647), ('CA43', {}, 0.00135),
+         ('CA44', {}, 0.02086), ('CA46', {}, 0.00004), ('CA48', {}, 0.00187)],
+        [('CA40', {'lib': '21c'}, 0.96941), ('CA42', {'lib': '21c'}, 0.00647),
+         ('CA43', {'lib': '21c'}, 0.00135), ('CA44', {'lib': '21c'}, 0.02086),
+         ('CA46', {'lib': '21c'}, 0.00004), ('CA48', {'lib': '21c'}, 0.00187)],
+        [('CA40', {'lib': '21c'}, 1.0)],
+        [('CA40', {}, 1.0)],
+        [('CA42', {'lib': '21c'}, 1.0)],
+        [('CA43', {}, 1.0)],
+        [],
 
-    def test_molar_mass(self):
-        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.molar_mass_data)):
-            with self.subTest(i=i):
-                c = Composition(**inp)
-                self.assertAlmostEqual(ans, c.molar_mass, delta=ans * 1.e-3)
+        [('U234', {}, 0.000055), ('U235', {}, 0.007200),
+         ('U238', {}, 0.992745)],
+        [('U234', {}, 0.000055), ('U235', {}, 0.007200),
+         ('U238', {}, 0.992745)],
+        [('U235', {}, 1.0)],
+        [('U235', {'isomer': 1, 'lib': '50c'}, 1.0)],
+        [('U238', {}, 1.0)],
+        [('U238', {}, 1.0)],
+        [('U234', {}, 0.000055), ('U235', {}, 0.007200),
+         ('U238', {}, 0.992745)],
 
-    def test_contains(self):
-        for i, inp in enumerate(com_data.comp_data):
-            with self.subTest(i=i):
-                c = Composition(**inp)
-                for j, e in enumerate(com_data.contained_elements):
-                    self.assertEqual(Element(e) in c, com_data.contains[j][i])
-                    self.assertEqual(e in c, com_data.contains[j][i])
+        [('BE9', {}, 1.0)],
+        [('BE9', {}, 1.0)],
+        [('BE9', {}, 1.0)],
+        [('BE9', {}, 1.0)],
+        [('BE9', {}, 1.0)],
+        [('BE9', {}, 1.0)]
+    ]))
+    def test_expand(self, case_no, expected):
+        name, options = self.cases[case_no]
+        elem = Element(name, **options)
+        expanded_ans = {Element(nam, **opt): pytest.approx(frac, rel=1.e-5)
+                        for nam, opt, frac in expected}
+        expanded = elem.expand()
+        assert expanded == expanded_ans
 
-    def test_atomic(self):
-        for i, inp in enumerate(com_data.comp_data):
-            with self.subTest(i=i):
-                c = Composition(**inp)
-                for j, e in enumerate(com_data.contained_elements):
-                    v = com_data.atomic[j][i]
-                    if v == 0:
-                        self.assertRaises(KeyError, c.get_atomic, e)
-                        self.assertRaises(KeyError, c.get_atomic, Element(e))
-                    else:
-                        # TODO: verify data!
-                        self.assertAlmostEqual(c.get_atomic(e), v, delta=v*1.e-3)
-                        self.assertAlmostEqual(c.get_atomic(Element(e)), v, delta=v * 1.e-3)
+    @pytest.mark.parametrize("case_no, expected", enumerate([
+        'H', 'H', 'H-1', 'Ca', 'Ca', 'Ca', 'Ca-40', 'Ca-40', 'Ca-42', 'Ca-43',
+        'Ca-41', 'U', 'U', 'U-235', 'U-235m', 'U-238', 'U-238', 'U', 'Be',
+        'Be-9', 'Be', 'Be-9', 'Be', 'Be-9'
+    ]))
+    def test_str(self, case_no, expected):
+        name, options = self.cases[case_no]
+        elem = Element(name, **options)
+        assert expected == str(elem)
 
-    def test_weight(self):
-        for i, inp in enumerate(com_data.comp_data):
-            with self.subTest(i=i):
-                c = Composition(**inp)
-                for j, e in enumerate(com_data.contained_elements):
-                    v = com_data.weight[j][i]
-                    if v == 0:
-                        self.assertRaises(KeyError, c.get_weight, e)
-                        self.assertRaises(KeyError, c.get_weight, Element(e))
-                    else:
-                        # TODO: verify data!
-                        self.assertAlmostEqual(c.get_weight(e), v, delta=v*1.e-3)
-                        self.assertAlmostEqual(c.get_weight(Element(e)), v, delta=v * 1.e-3)
+    @pytest.mark.parametrize("case_no, expected", enumerate([
+        '1000', '1000', '1001', '20000', '20000', '20000.21c', '20040.21c',
+        '20040', '20042.21c', '20043', '20041', '92000', '92000', '92235',
+        '92235.50c', '92238', '92238', '92000', '4000', '4009', '4000', '4009',
+        '4000', '4009'
+    ]))
+    def test_mcnp_repr(self, case_no, expected):
+        name, options = self.cases[case_no]
+        elem = Element(name, **options)
+        assert expected == elem.mcnp_repr()
 
-    def test_expand(self):
-        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.expand)):
-            with self.subTest(i=i):
-                c = Composition(**inp)
-                exp = c.expand()
-                self.assertEqual(len(ans.keys()), len(exp._composition.keys()))
-                for k, v in ans.items():
-                    elem = Element(k)
-                    self.assertAlmostEqual(v, exp.get_atomic(elem), delta=v * 1.e-3)
+    @pytest.mark.parametrize("case_no, expected", enumerate([
+        'H', 'H', 'H1', 'Ca', 'Ca', 'Ca', 'Ca40', 'Ca40', 'Ca42', 'Ca43',
+        'Ca41', 'U', 'U', 'U235', 'U235m', 'U238', 'U238', 'U', 'Be', 'Be9',
+        'Be', 'Be9', 'Be', 'Be9'
+    ]))
+    def test_fispact_repr(self, case_no, expected):
+        name, options = self.cases[case_no]
+        elem = Element(name, **options)
+        assert expected == elem.fispact_repr()
 
-    def test_natural(self):
-        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.natural)):
-            with self.subTest(i=i):
-                c = Composition(**inp).natural(tolerance=1.e-3)
-                if ans is None:
-                    self.assertEqual(c, ans)
-                    continue
-                a = Composition(**ans)
-                self.assertEqual(len(a._composition.keys()), len(c._composition.keys()))
-                for k, v in a:
-                    self.assertAlmostEqual(v, c.get_atomic(k), delta=v * 1.e-3)
+    equality = [
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 
-    def test_equal(self):
-        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.equal_data)):
-            c = Composition(**inp)
-            for j, (inp2, a) in enumerate(zip(com_data.comp_data, ans)):
-                with self.subTest(msg="c1={0}, c2={1}".format(i, j)):
-                    c2 = Composition(**inp2)
-                    self.assertEqual(c == c2, bool(a))
+        [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 
-    def test_get_option(self):
-        for i, (inp, ans) in enumerate(zip(com_data.comp_data, com_data.get_option)):
-            c = Composition(**inp)
-            with self.subTest(i=i):
-                for k, v in ans.items():
-                    self.assertEqual(c[k], v)
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
 
-    def test_mixture(self):
-        for i, (input, ans_index) in enumerate(com_data.mixture):
-            with self.subTest(i=i):
-                ans = Composition(**com_data.comp_data[ans_index])
-                compositions = []
-                for ci, f in input:
-                    compositions.append((Composition(**com_data.comp_data[ci]), f))
-                m = Composition.mixture(*compositions)
-                self.assertEqual(m, ans)
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1]
+    ]
 
-
-class TestMaterial(unittest.TestCase):
-    def test_creation_failure(self):
-        for i, case in enumerate(mat_data.failure_cases):
-            with self.subTest(i=i):
-                if 'composition' in case.keys():
-                    case['composition'] = Composition(**case['composition'])
-                self.assertRaises(ValueError, Material, **case)
-
-    def test_creation_cases(self):
-        for i, case_data in enumerate(mat_data.creation_cases):
-            with self.subTest(i=i):
-                case = case_data.copy()
-                atomic = case.pop('atomic', tuple())
-                weight = case.pop('weight', tuple())
-                comp = Composition(atomic=atomic, weight=weight)
-                mat1 = Material(atomic=atomic, weight=weight, **case)
-                mat2 = Material(composition=comp, **case)
-                self.assertEqual(mat1.composition, comp)
-                self.assertEqual(mat2.composition, comp)
-                if 'density' in case.keys():
-                    d = case['density']
-                    self.assertAlmostEqual(mat1.density, d, delta=d * 1.e-5)
-                    self.assertAlmostEqual(mat2.density, d, delta=d * 1.e-5)
-                elif 'concentration' in case.keys():
-                    c = case['concentration']
-                    self.assertAlmostEqual(mat1.concentration, c, delta=c*1.e-5)
-                    self.assertAlmostEqual(mat2.concentration, c, delta=c*1.e-5)
-
-    def test_equality(self):
-        mats = [Material(**case) for case in mat_data.creation_cases]
-        for i, m1 in enumerate(mats):
-            for j, m2 in enumerate(mats):
-                with self.subTest(msg='i={0}, j={1}'.format(i, j)):
-                    self.assertEqual(m1 == m2, bool(mat_data.equal_cases[i][j]))
-
-    def test_factor(self):
-        mat = Material(**mat_data.creation_cases[0])
-        for i, case in enumerate(mat_data.correct_cases):
-            with self.subTest(i=i):
-                new_mat = mat.correct(**case)
-                self.assertEqual(mat.composition, new_mat.composition)
-                if 'factor' in case.keys():
-                    self.assertAlmostEqual(new_mat.density, mat.density * case['factor'])
-                else:
-                    old_mass = case['old_vol'] * mat.density
-                    new_mass = case['new_vol'] * new_mat.density
-                    self.assertAlmostEqual(old_mass, new_mass, delta= 0.5e-3 * (old_mass + new_mass))
-
-    def test_mixture(self):
-        for i, ((materials, ftype), ans) in enumerate(zip(mat_data.mixture_cases, mat_data.mixture_answers)):
-            with self.subTest(i=i):
-                ans_mat = Material(**ans)
-                mats = [(Material(**kws), frac) for kws, frac in materials]
-                mix = Material.mixture(*mats, fraction_type=ftype)
-                self.assertEqual(ans_mat, mix)
+    @pytest.mark.parametrize('arg1', range(len(cases)))
+    @pytest.mark.parametrize('arg2', range(len(cases)))
+    def test_eq(self, arg1, arg2):
+        name1, options1 = self.cases[arg1]
+        name2, options2 = self.cases[arg2]
+        elem1 = Element(name1, **options1)
+        elem2 = Element(name2, **options2)
+        test_result = (elem1 == elem2)
+        assert test_result == bool(self.equality[arg1][arg2])
 
 
-if __name__ == '__main__':
-    unittest.main()
+class TestComposition:
+    cases = [
+        {'atomic': [('H', 1)], 'name': 1, 'lib': '21c'},
+        {'atomic': [('O', 5)], 'name': 1, 'lib': '21c'},
+        {'atomic': [('H', 2), ('O', 1)], 'name': 1, 'lib': '21c'},
+        {'weight': [('H', 1)], 'name': 1, 'lib': '21c'},
+        {'weight': [('H', 0.11189), ('O', 0.888109)], 'name': 1, 'lib': '21c'},
+        {'weight': [('H', 11.189), ('O', 88.8109)], 'name': 1, 'lib': '21c'},
+        {'weight': [('H', 0.11189)], 'atomic': [('O', 0.33333)], 'name': 1,
+         'lib': '21c'},
+
+        {'atomic': [('Ni-58', 68.077), ('Ni-60', 26.223), ('Ni-61', 1.140),
+                    ('Ni-62', 3.635), ('Ni-64', 0.926)], 'name': 1,
+         'lib': '21c'},
+        {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)],
+         'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479)],
+         'weight': [('O', 0.23148), ('AR', 0.012886)], 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479), ('O', 0.21052)],
+         'weight': [('AR', 0.012886)], 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479), ('Ar', 0.0046936)],
+         'weight': [('O', 0.23148)], 'name': 1, 'lib': '21c'},
+        {'atomic': [('Ni-58', 68.277), ('Ni-60', 26.023), ('Ni-61', 1.140),
+                    ('Ni-62', 3.635), ('Ni-64', 0.926)], 'name': 1,
+         'lib': '21c'},
+        {'atomic': [('Ni-58', 68.077), ('Ni-60', 26.223), ('Ni-61', 1.140),
+                    ('Ni-62', 3.635), ('Ni-64', 0.926), ('O', 100.)], 'name': 1,
+         'lib': '21c'},
+        {'atomic': [('Ni-58', 68.077), ('Ni-60', 26.223), ('Ni-61', 1.140),
+                    ('Ni-62', 3.635), ('Ni-64', 0.926), ('Ni', 100.)],
+         'name': 1, 'lib': '21c'}
+    ]
+
+    @pytest.fixture(scope="class")
+    def compositions(self):
+        comp = [Composition(**params) for params in self.cases]
+        return comp
+
+    @pytest.mark.parametrize('case_no, expected', enumerate([
+        {'H': 1.0},
+        {'O': 1.0},
+        {'H': 0.66667, 'O': 0.33333},
+        {'H': 1.0},
+        {'H': 0.66667, 'O': 0.33333},
+        {'H': 0.66667, 'O': 0.33333},
+        {'H': 0.66667, 'O': 0.33333},
+
+        {'Ni-58': 0.68077, 'Ni-60': 0.26223, 'Ni-61': 0.01140, 'Ni-62': 0.03635,
+         'Ni-64': 0.00926},
+        {'N': 0.78479, 'O': 0.21052, 'Ar': 0.0046936},
+        {'N': 0.78479, 'O': 0.21052, 'Ar': 0.0046936},
+        {'N': 0.78479, 'O': 0.21052, 'Ar': 0.0046936},
+        {'N': 0.78479, 'O': 0.21052, 'Ar': 0.0046936},
+
+        {'Ni-58': 0.68277, 'Ni-60': 0.26023, 'Ni-61': 0.01140, 'Ni-62': 0.03635,
+         'Ni-64': 0.00926},
+        {'Ni-58': 0.68077 / 2, 'Ni-60': 0.26223 / 2, 'Ni-61': 0.01140 / 2,
+         'Ni-62': 0.03635 / 2, 'Ni-64': 0.00926 / 2, 'O': 0.5},
+        {'Ni-58': 0.68077 / 2, 'Ni-60': 0.26223 / 2, 'Ni-61': 0.01140 / 2,
+         'Ni-62': 0.03635 / 2, 'Ni-64': 0.00926 / 2, 'Ni': 0.5}
+    ]))
+    def test_create(self, case_no, expected):
+        comp = Composition(**self.cases[case_no])
+        ans = {Element(k): pytest.approx(v, rel=1.e-3) for k, v in expected.items()}
+        assert comp._composition == ans
+        inp2 = {'atomic': [(Element(k), v) for k, v in self.cases[case_no].get('atomic', [])],
+                'weight': [(Element(k), v) for k, v in self.cases[case_no].get('weight', [])]}
+        comp2 = Composition(**inp2)
+        assert comp2._composition == ans
+
+    @pytest.mark.parametrize('input', [
+        {'atomic': [], 'weight': []},
+        {'atomic': []},
+        {'weight': []},
+        {}
+    ])
+    def test_create_failure(self, input):
+        with pytest.raises(ValueError):
+            Composition(**input)
+
+    @pytest.mark.parametrize('case_no, expected', enumerate([
+        1.0079, 15.99903, 6.00509, 1.0079, 6.00509, 6.00509, 6.00509, 58.6934,
+        14.551, 14.551, 14.551, 14.551,
+        58.6934, 74.6928 / 2, 58.6934
+    ]))
+    def test_molar_mass(self, compositions, case_no, expected):
+        comp = compositions[case_no]
+        assert comp.molar_mass == pytest.approx(expected, rel=1.e-3)
+
+    @pytest.mark.parametrize('case_no, expected', enumerate([
+        {'H': 1, 'O': 0, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 1, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 1, 'O': 0, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 1, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 1, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 1, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0, 'Ni58': 1, 'Ni60': 1, 'Ni61': 1, 'Ni62': 1, 'Ni64': 1, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 1, 'Ar': 1},
+        {'H': 0, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 1, 'Ar': 1},
+        {'H': 0, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 1, 'Ar': 1},
+        {'H': 0, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 1, 'Ar': 1},
+        {'H': 0, 'O': 0, 'Ni58': 1, 'Ni60': 1, 'Ni61': 1, 'Ni62': 1, 'Ni64': 1, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 1, 'Ni58': 1, 'Ni60': 1, 'Ni61': 1, 'Ni62': 1, 'Ni64': 1, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0, 'Ni58': 1, 'Ni60': 1, 'Ni61': 1, 'Ni62': 1, 'Ni64': 1, 'N': 0, 'Ar': 0},
+    ]))
+    def test_contains(self, compositions, case_no, expected):
+        comp = compositions[case_no]
+        for k, v in expected.items():
+            assert (k in comp) == bool(v)
+            assert (Element(k) in comp) == bool(v)
+
+    @pytest.mark.parametrize('case_no, expected', enumerate([
+        {'H': 1, 'O': 0, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0.66667, 'O': 0.33333, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 1, 'O': 0, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0.66667, 'O': 0.33333, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0.66667, 'O': 0.33333, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0.66667, 'O': 0.33333, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0, 'Ni58': 0.68077, 'Ni60': 0.26223, 'Ni61': 0.01140, 'Ni62': 0.03635, 'Ni64': 0.00926, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0.21052, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0.78479, 'Ar': 0.0046936},
+        {'H': 0, 'O': 0.21052, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0.78479, 'Ar': 0.0046936},
+        {'H': 0, 'O': 0.21052, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0.78479, 'Ar': 0.0046936},
+        {'H': 0, 'O': 0.21052, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0.78479, 'Ar': 0.0046936},
+        {'H': 0, 'O': 0, 'Ni58': 0.68277, 'Ni60': 0.26023, 'Ni61': 0.01140, 'Ni62': 0.03635, 'Ni64': 0.00926, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0.5, 'Ni58': 0.68077 / 2, 'Ni60': 0.26223 / 2, 'Ni61': 0.01140 / 2, 'Ni62': 0.03635 / 2, 'Ni64': 0.00926 / 2, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0, 'Ni58': 0.68077 / 2, 'Ni60': 0.26223 / 2, 'Ni61': 0.01140 / 2, 'Ni62': 0.03635 / 2, 'Ni64': 0.00926 / 2, 'N': 0, 'Ar': 0}
+    ]))
+    def test_atomic(self, compositions, case_no, expected):
+        comp = compositions[case_no]
+        for k, v in expected.items():
+            if v == 0:
+                with pytest.raises(KeyError):
+                    comp.get_atomic(k)
+                    comp.get_atomic(Element(k))
+            else:
+                assert comp.get_atomic(k) == pytest.approx(v, rel=1.e-3)
+                assert comp.get_atomic(Element(k)) == pytest.approx(v, rel=1.e-3)
+
+    @pytest.mark.parametrize('case_no, expected', enumerate([
+        {'H': 1, 'O': 0, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 1, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0.11189, 'O': 0.888109, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 1, 'O': 0, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0.11189, 'O': 0.888109, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0.11189, 'O': 0.888109, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0.11189, 'O': 0.888109, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0, 'Ni58': 0.6719775, 'Ni60': 0.267759, 'Ni61': 0.0118336, 'Ni62': 0.0383482, 'Ni64': 0.0100815, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0.23148, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0.755465, 'Ar': 0.012886},
+        {'H': 0, 'O': 0.23148, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0.755465, 'Ar': 0.012886},
+        {'H': 0, 'O': 0.23148, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0.755465, 'Ar': 0.012886},
+        {'H': 0, 'O': 0.23148, 'Ni58': 0, 'Ni60': 0, 'Ni61': 0, 'Ni62': 0, 'Ni64': 0, 'N': 0.755465, 'Ar': 0.012886},
+        {'H': 0, 'O': 0, 'Ni58': 0.673952, 'Ni60': 0.265712, 'Ni61': 0.0118336, 'Ni62': 0.0383482, 'Ni64': 0.0100815, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0.21421, 'Ni58': 0.52804, 'Ni60': 0.210404, 'Ni61': 0.0092996, 'Ni62': 0.030138, 'Ni64': 0.0079254, 'N': 0, 'Ar': 0},
+        {'H': 0, 'O': 0, 'Ni58': 0.6719775 / 2, 'Ni60': 0.267759 / 2, 'Ni61': 0.0118336 / 2, 'Ni62': 0.0383482 / 2, 'Ni64': 0.0100815 / 2, 'N': 0, 'Ar': 0},
+    ]))
+    def test_weight(self, compositions, case_no, expected):
+        comp = compositions[case_no]
+        for k, v in expected.items():
+            if v == 0:
+                with pytest.raises(KeyError):
+                    comp.get_weight(k)
+                    comp.get_weight(Element(k))
+            else:
+                assert comp.get_weight(k) == pytest.approx(v, rel=1.e-3)
+                assert comp.get_weight(Element(k)) == pytest.approx(v,
+                                                                    rel=1.e-3)
+
+    @pytest.mark.parametrize('case_no, expected', enumerate([
+        {'H1': 0.999885, 'H2': 0.000115},
+        {'O16': 0.99757, 'O17': 0.00038, 'O18': 0.00205},
+        {'H1': 0.666593, 'H2': 7.666e-5, 'O16': 0.99757 / 3, 'O17': 0.00038 / 3,
+         'O18': 0.00205 / 3},
+        {'H1': 0.999885, 'H2': 0.000115},
+        {'H1': 0.666593, 'H2': 7.666e-5, 'O16': 0.99757 / 3, 'O17': 0.00038 / 3,
+         'O18': 0.00205 / 3},
+        {'H1': 0.666593, 'H2': 7.666e-5, 'O16': 0.99757 / 3, 'O17': 0.00038 / 3,
+         'O18': 0.00205 / 3},
+        {'H1': 0.666593, 'H2': 7.666e-5, 'O16': 0.99757 / 3, 'O17': 0.00038 / 3,
+         'O18': 0.00205 / 3},
+        {'Ni-58': 0.68077, 'Ni-60': 0.26223, 'Ni-61': 0.01140, 'Ni-62': 0.03635,
+         'Ni-64': 0.00926},
+        {'N14': 0.99632 * 0.78479, 'N15': 0.00368 * 0.78479,
+         'O16': 0.99757 * 0.21052, 'O17': 0.00038 * 0.21052,
+         'O18': 0.00205 * 0.21052,
+         'AR36': 0.003365 * 0.0046936, 'Ar38': 0.000632 * 0.0046936,
+         'Ar40': 00.996003 * 0.0046936},
+        {'N14': 0.99632 * 0.78479, 'N15': 0.00368 * 0.78479,
+         'O16': 0.99757 * 0.21052, 'O17': 0.00038 * 0.21052,
+         'O18': 0.00205 * 0.21052,
+         'AR36': 0.003365 * 0.0046936, 'Ar38': 0.000632 * 0.0046936,
+         'Ar40': 00.996003 * 0.0046936},
+        {'N14': 0.99632 * 0.78479, 'N15': 0.00368 * 0.78479,
+         'O16': 0.99757 * 0.21052, 'O17': 0.00038 * 0.21052,
+         'O18': 0.00205 * 0.21052,
+         'AR36': 0.003365 * 0.0046936, 'Ar38': 0.000632 * 0.0046936,
+         'Ar40': 00.996003 * 0.0046936},
+        {'N14': 0.99632 * 0.78479, 'N15': 0.00368 * 0.78479,
+         'O16': 0.99757 * 0.21052, 'O17': 0.00038 * 0.21052,
+         'O18': 0.00205 * 0.21052,
+         'AR36': 0.003365 * 0.0046936, 'Ar38': 0.000632 * 0.0046936,
+         'Ar40': 00.996003 * 0.0046936},
+        {'Ni-58': 0.68277, 'Ni-60': 0.26023, 'Ni-61': 0.01140, 'Ni-62': 0.03635,
+         'Ni-64': 0.00926},
+        {'Ni-58': 0.68077 / 2, 'Ni-60': 0.26223 / 2, 'Ni-61': 0.01140 / 2,
+         'Ni-62': 0.03635 / 2, 'Ni-64': 0.00926 / 2,
+         'O16': 0.99757 / 2, 'O17': 0.00038 / 2, 'O18': 0.00205 / 2},
+        {'Ni-58': 0.68077, 'Ni-60': 0.26223, 'Ni-61': 0.01140, 'Ni-62': 0.03635,
+         'Ni-64': 0.00926}
+    ]))
+    def test_expand(self, compositions, case_no, expected):
+        comp = compositions[case_no]
+        expanded = comp.expand()
+        ans = {Element(k): pytest.approx(v, rel=1.e-3) for k, v in
+               expected.items()}
+        assert ans == expanded._composition
+
+    @pytest.mark.parametrize('case_no, expected', enumerate([
+        {'atomic': [('H', 1)]},
+        {'atomic': [('O', 1)]},
+        {'atomic': [('H', 2), ('O', 1)]},
+        {'atomic': [('H', 1)]},
+        {'atomic': [('H', 2), ('O', 1)]},
+        {'atomic': [('H', 2), ('O', 1)]},
+        {'atomic': [('H', 2), ('O', 1)]},
+
+        {'atomic': [('Ni', 1.0)]},
+        {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)]},
+        {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)]},
+        {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)]},
+        {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)]},
+        None,
+        {'atomic': [('Ni', 0.5), ('O', 0.5)]},
+        {'atomic': [('Ni', 1.0)]}
+    ]))
+    def test_natural(self, compositions, case_no, expected):
+        comp = compositions[case_no]
+        nat = comp.natural(tolerance=1.e-3)
+        if expected is None:
+            assert nat == None
+        else:
+            ans = {k: pytest.approx(v, rel=1.e-3) for k, v in Composition(**expected)}
+            assert nat._composition == ans
+
+    eq_matrix = [
+        [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    ]
+
+    @pytest.mark.parametrize('case1', range(len(cases)))
+    @pytest.mark.parametrize('case2', range(len(cases)))
+    def test_equal(self, compositions, case1, case2):
+        comp1 = compositions[case1]
+        comp2 = compositions[case2]
+        assert (comp1 == comp2) == bool(self.eq_matrix[case1][case2])
+
+    @pytest.mark.parametrize('case_no, expected_kw', enumerate([
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'},
+        {'name': 1, 'lib': '21c'}
+    ]))
+    def test_get_option(self, compositions, case_no, expected_kw):
+        comp = compositions[case_no]
+        for key, value in expected_kw.items():
+            assert comp[key] == value
+
+    @pytest.mark.parametrize('mix_components, ans_index', [
+        ([(0, 1)], 0),
+        ([(0, 2)], 0),
+        ([(0, 2), (1, 1)], 2),
+        ([(7, 1), (1, 1)], 13),
+        ([(0, 1), (1, 1), (0, 1)], 2),
+        ([(7, 1), (1, 0.5), (1, 0.5)], 13)
+    ])
+    def test_mixture(self, compositions, mix_components, ans_index):
+        to_mix = [(compositions[i], f) for i, f in mix_components]
+        mixture = Composition.mixture(*to_mix)
+        assert mixture == compositions[ans_index]
+
+
+class TestMaterial:
+    cases = [
+        {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)], 'density': 1.2929e-3, 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479)], 'weight': [('O', 0.23148), ('AR', 0.012886)], 'density': 1.2929e-3, 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479), ('O', 0.21052)], 'weight': [('AR', 0.012886)], 'concentration': 5.3509e+19, 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 0.78479), ('Ar', 0.0046936)], 'weight': [('O', 0.23148)], 'concentration': 5.3509e+19, 'name': 1, 'lib': '21c'},
+        {'atomic': [('N', 1)], 'density': 1.251e-3},
+        {'atomic': [('O', 1)], 'density': 1.42897e-3},
+        {'atomic': [('Ar', 1)], 'density': 1.784e-3}
+    ]
+
+    @pytest.fixture(scope='class')
+    def materials(self):
+        mats = [Material(**c) for c in self.cases]
+        return mats
+
+    @pytest.mark.parametrize('data', [
+        {},
+        {'atomic': [('N', 1)]},
+        {'weight': [('N', 1)]},
+        {'atomic': [('N', 1)], 'weight': [('N', 1)]},
+        {'composition': {'atomic': [('N', 1)]}},
+        {'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)]},
+        {'composition': {'atomic': [('N', 1)]}, 'weight': [('N', 1)]},
+        {'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)], 'weight': [('N', 1)]},
+        {'density': 7.8},
+        {'concentration': 1.e+23},
+        {'density': 7.8, 'concentration': 1.e+23},
+        {'density': 7.8, 'concentration': 1.e+23, 'atomic': [('N', 1)]},
+        {'density': 7.8, 'concentration': 1.e+23, 'weight': [('N', 1)]},
+        {'density': 7.8, 'concentration': 1.e+23, 'atomic': [('N', 1)], 'weight': [('N', 1)]},
+        {'density': 7.8, 'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)]},
+        {'density': 7.8, 'composition': {'atomic': [('N', 1)]}, 'weight': [('N', 1)]},
+        {'density': 7.8, 'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)], 'weight': [('N', 1)]},
+        {'concentration': 7.8, 'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)]},
+        {'concentration': 7.8, 'composition': {'atomic': [('N', 1)]}, 'weight': [('N', 1)]},
+        {'concentration': 7.8, 'composition': {'atomic': [('N', 1)]}, 'atomic': [('N', 1)], 'weight': [('N', 1)]}
+    ])
+    def test_creation_failure(self, data):
+        if 'composition' in data.keys():
+            data['composition'] = Composition(**data['composition'])
+        with pytest.raises(ValueError):
+            Material(**data)
+
+    @pytest.mark.parametrize('case', cases)
+    def test_creation(self, case):
+        mat1 = Material(**case)
+        data = case.copy()
+        atomic = data.pop('atomic', tuple())
+        weight = data.pop('weight', tuple())
+        comp = Composition(atomic=atomic, weight=weight)
+        mat2 = Material(composition=comp, **data)
+        assert mat1.composition == comp
+        assert mat2.composition == comp
+        if 'density' in data.keys():
+            d = pytest.approx(data['density'], rel=1.e-5)
+            assert mat1.density == d
+            assert mat2.density == d
+        elif 'concentration' in data.keys():
+            d = pytest.approx(data['concentration'], rel=1.e-5)
+            assert mat1.concentration == d
+            assert mat2.concentration == d
+
+    eq_matrix = [
+        [1, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 1]
+    ]
+
+    @pytest.mark.parametrize('case1', range(len(cases)))
+    @pytest.mark.parametrize('case2', range(len(cases)))
+    def test_equal(self, materials, case1, case2):
+        mat1 = materials[case1]
+        mat2 = materials[case2]
+        assert (mat1 == mat2) == bool(self.eq_matrix[case1][case2])
+
+    @pytest.mark.parametrize('case_no', range(len(cases)))
+    @pytest.mark.parametrize('data', [
+        {'new_vol': 5, 'old_vol': 2.5},
+        {'new_vol': 4, 'old_vol': 6},
+        {'factor': 2}
+    ])
+    def test_correct(self, materials, case_no, data):
+        mat = materials[case_no]
+        new_mat = mat.correct(**data)
+        assert mat.composition == new_mat.composition
+        if 'factor' in data.keys():
+            ans_den = pytest.approx(mat.density * data['factor'], rel=1.e-10)
+            assert new_mat.density == ans_den
+        else:
+            old_mass = data['old_vol'] * mat.density
+            new_mass = data['new_vol'] * new_mat.density
+            assert old_mass == pytest.approx(new_mass, rel=1.e-10)
+
+    @pytest.mark.parametrize('input_data, expected', [
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1)], 'volume'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.8)], 'volume'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3 * 0.8}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1.2)], 'volume'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3 * 1.2}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1)], 'weight'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.8)], 'weight'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1.2)], 'weight'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1)], 'atomic'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.8)], 'atomic'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 1.2)], 'atomic'),
+            {'atomic': [('N', 1)], 'density': 1.251e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.78084),
+              ({'atomic': [('O', 1)], 'density': 1.42897e-3}, 0.20948),
+              ({'atomic': [('Ar', 1)], 'density': 1.784e-3}, 0.00934)],
+             'volume'),
+            {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)],
+             'density': 1.2929e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.755465),
+              ({'atomic': [('O', 1)], 'density': 1.42897e-3}, 0.23148),
+              ({'atomic': [('Ar', 1)], 'density': 1.784e-3}, 0.012886)],
+             'weight'),
+            {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)],
+             'density': 1.2929e-3}
+        ),
+        (
+            ([({'atomic': [('N', 1)], 'density': 1.251e-3}, 0.78479),
+              ({'atomic': [('O', 1)], 'density': 1.42897e-3}, 0.21052),
+              ({'atomic': [('Ar', 1)], 'density': 1.784e-3}, 0.0046936)],
+             'atomic'),
+            {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)],
+             'density': 1.2929e-3}
+        )
+    ])
+    def test_mixture(self, input_data, expected):
+        materials, ftype = input_data
+        materials = [(Material(**kws), frac) for kws, frac in materials]
+        ans_mat = Material(**expected)
+        mix = Material.mixture(*materials, fraction_type=ftype)
+        assert ans_mat == mix
