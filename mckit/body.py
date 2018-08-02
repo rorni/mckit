@@ -125,12 +125,9 @@ class Shape(_Shape):
         """Performs cleaning of input arguments."""
         args = [a.shape if isinstance(a, Body) else a for a in args]
         cls._verify_opc(opc, *args)
-        if len(args) == 1 and isinstance(args[0], Shape) and (opc == 'S' or opc == 'I' or opc == 'U'):
-            return args[0].opc, args[0].args
-        elif len(args) == 1 and isinstance(args[0], Shape) and opc == 'C':
-            item = args[0].complement()
-            return item.opc, item.args
-        elif len(args) > 1:
+        if opc == 'I' or opc == 'U':
+            args = [Shape('S', a) if isinstance(a, Surface) else a for a in args]
+        if len(args) > 1:
             # Extend arguments
             args = list(args)
             i = 0
@@ -145,7 +142,7 @@ class Shape(_Shape):
             while i < len(args):
                 a = args[i]
                 if a.opc == 'E' and opc == 'I' or a.opc == 'R' and opc == 'U':
-                    return 'E', []
+                    return a.opc, []
                 elif a.opc == 'E' and opc == 'U' or a.opc == 'R' and opc == 'I':
                     args.pop(i)
                     continue
@@ -157,7 +154,24 @@ class Shape(_Shape):
                             return 'R', []
                 i += 1
             args.sort(key=hash)
+
+        if len(args) == 1 and isinstance(args[0], Shape) and (opc == 'S' or opc == 'I' or opc == 'U'):
+            return args[0].opc, args[0].args
+        elif len(args) == 1 and isinstance(args[0], Shape) and opc == 'C':
+            item = args[0].complement()
+            return item.opc, item.args
         return opc, args
+
+    @staticmethod
+    def _verify_opc(opc, *args):
+        """Checks if such argument combination is valid."""
+        if (opc == 'E' or opc == 'R') and len(args) > 0:
+            raise ValueError("No arguments are expected.")
+        elif (opc == 'S' or opc == 'C') and len(args) != 1:
+            raise ValueError("Only one operand is expected.")
+        elif opc == 'I' or opc == 'U':
+            if len(args) == 0:
+                raise ValueError("Operands are expected.")
 
     def __eq__(self, other):
         if self is other:
@@ -275,9 +289,9 @@ class Shape(_Shape):
         result : Shape
             New shape.
         """
-        opc = self._opc
+        opc = self.opc
         args = []
-        for a in self._args:
+        for a in self.args:
             args.append(a.transform(tr))
         return Shape(opc, *args)
 
@@ -325,20 +339,6 @@ class Shape(_Shape):
         """Checks if the shape represents an empty set."""
         return self.opc == 'E'
 
-    @staticmethod
-    def _verify_opc(opc, *args):
-        """Checks if such argument combination is valid."""
-        if (opc == 'E' or opc == 'R') and len(args) > 0:
-            raise ValueError("No arguments are expected.")
-        elif (opc == 'S' or opc == 'C') and len(args) != 1:
-            raise ValueError("Only one operand is expected.")
-        elif opc == 'I' or opc == 'U':
-            if len(args) == 0:
-                raise ValueError("Operands are expected.")
-            for a in args:
-                if not isinstance(a, Shape):
-                    print(type(a), opc)
-                    raise TypeError("Shape instance is expected for 'I' and 'U' operations.")
 
     def get_simplest(self, trim_size=0):
         """Gets the simplest found description of the shape.
@@ -416,33 +416,33 @@ class Shape(_Shape):
             c.sort()
         return cases
 
+    @staticmethod
+    def from_polish_notation(polish):
+        """Creates Shape instance from reversed Polish notation.
 
-def from_polish_notation(polish):
-    """Creates Shape instance from reversed Polish notation.
+        Parameters
+        ----------
+        polish : list
+            List of surfaces and operations written in reversed Polish Notation.
 
-    Parameters
-    ----------
-    polish : list
-        List of surfaces and operations written in reversed Polish Notation.
-
-    Returns
-    -------
-    shape : Shape
-        The geometry represented by Shape instance.
-    """
-    operands = []
-    for i, op in enumerate(polish):
-        if isinstance(op, Surface):
-            operands.append(Shape('S', op))
-        elif isinstance(op, Shape):
-            operands.append(op)
-        elif op == 'C':
-            operands.append(operands.pop().complement())
-        else:
-            arg1 = operands.pop()
-            arg2 = operands.pop()
-            operands.append(Shape(op, arg1, arg2))
-    return operands.pop()
+        Returns
+        -------
+        shape : Shape
+            The geometry represented by Shape instance.
+        """
+        operands = []
+        for i, op in enumerate(polish):
+            if isinstance(op, Surface):
+                operands.append(Shape('S', op))
+            elif isinstance(op, Shape):
+                operands.append(op)
+            elif op == 'C':
+                operands.append(operands.pop().complement())
+            else:
+                arg1 = operands.pop()
+                arg2 = operands.pop()
+                operands.append(Shape(op, arg1, arg2))
+        return operands.pop()
 
 
 class Body(dict):
@@ -471,7 +471,9 @@ class Body(dict):
     """
     def __init__(self, geometry, **options):
         if isinstance(geometry, list):
-            geometry = from_polish_notation(geometry)
+            geometry = Shape.from_polish_notation(geometry)
+        elif isinstance(geometry, Body):
+            geometry = geometry.shape
         elif not isinstance(geometry, Shape):
             raise TypeError("Geometry list or Shape is expected.")
         dict.__init__(self, options)
