@@ -12,7 +12,7 @@ IDENTITY_ROTATION = np.eye(3)
 ANGLE_TOLERANCE = 0.001
 
 
-class Transformation:
+class Transformation(dict):
     """Geometry transformation object.
 
     Parameters
@@ -37,6 +37,8 @@ class Transformation:
         of local coordinate system defined in the global one. Otherwise - the
         origin of global coordinate system defined in the local one.
         Default: False
+    options : dict
+        Other options, like name, comment, etc.
 
     Methods
     -------
@@ -55,7 +57,7 @@ class Transformation:
         Reverses this transformation, and returns the result.
     """
     def __init__(self, translation=ORIGIN, rotation=None,
-                 indegrees=False, inverted=False):
+                 indegrees=False, inverted=False, **options):
 
         translation = np.array(translation, dtype=float)
         if translation.shape != (3,):
@@ -92,6 +94,7 @@ class Transformation:
                 u[:, i] = u[:, i] * np.sign(r[i, i])
         self._u = u
         self._t = -np.dot(u, translation) if inverted else translation.copy()
+        dict.__init__(self, options)
 
     def apply2gq(self, m1, v1, k1):
         """Gets parameters of generic quadratic surface in the main CS.

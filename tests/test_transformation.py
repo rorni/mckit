@@ -5,37 +5,41 @@ from mckit.transformation import Transformation, IDENTITY_ROTATION
 from mckit.geometry import ORIGIN
 
 
-@pytest.mark.parametrize('args, rot, offset', [
-    ({}, IDENTITY_ROTATION, ORIGIN),
-    ({'indegrees': True}, IDENTITY_ROTATION, ORIGIN),
-    ({'indegrees': False}, IDENTITY_ROTATION, ORIGIN),
-    ({'inverted': True}, IDENTITY_ROTATION, ORIGIN),
-    ({'inverted': False}, IDENTITY_ROTATION, ORIGIN),
-    ({'translation': [1, 0, 0]}, IDENTITY_ROTATION, np.array([1, 0, 0])),
+@pytest.mark.parametrize('args, rot, offset, options', [
+    ({}, IDENTITY_ROTATION, ORIGIN, {}),
+    ({'indegrees': True}, IDENTITY_ROTATION, ORIGIN, {}),
+    ({'indegrees': False}, IDENTITY_ROTATION, ORIGIN, {}),
+    ({'inverted': True}, IDENTITY_ROTATION, ORIGIN, {}),
+    ({'inverted': False}, IDENTITY_ROTATION, ORIGIN, {}),
+    ({'translation': [1, 0, 0]}, IDENTITY_ROTATION, np.array([1, 0, 0]), {}),
     ({'translation': [1, 0, 0], 'inverted': True}, IDENTITY_ROTATION,
-     np.array([-1, 0, 0])),
+     np.array([-1, 0, 0]), {}),
     ({'translation': [1, 2, 3], 'inverted': True}, IDENTITY_ROTATION,
-     np.array([-1, -2, -3])),
+     np.array([-1, -2, -3]), {}),
+    ({'translation': [1, 2, 3], 'inverted': True, 'name': 1}, IDENTITY_ROTATION,
+     np.array([-1, -2, -3]), {'name': 1}),
     ({'rotation': np.cos(
         np.array([30, 60, 90, 120, 30, 90, 90, 90, 0]) * np.pi / 180)},
      np.cos(np.array([[30, 120, 90], [60, 30, 90], [90, 90, 0]]) * np.pi / 180),
-     ORIGIN),
+     ORIGIN, {}),
     ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True},
      np.cos(np.array([[30, 120, 90], [60, 30, 90], [90, 90, 0]]) * np.pi / 180),
-     ORIGIN),
+     ORIGIN, {}),
     ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True,
       'translation': [1, 2, 3]},
      np.cos(np.array([[30, 120, 90], [60, 30, 90], [90, 90, 0]]) * np.pi / 180),
-     np.array([1, 2, 3])),
+     np.array([1, 2, 3]), {}),
     ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True,
       'translation': [1, 2, 3], 'inverted': True},
      np.cos(np.array([[30, 120, 90], [60, 30, 90], [90, 90, 0]]) * np.pi / 180),
-     np.array([-(np.sqrt(3) - 2) / 2, -(2 * np.sqrt(3) + 1) / 2, -3]))
+     np.array([-(np.sqrt(3) - 2) / 2, -(2 * np.sqrt(3) + 1) / 2, -3]), {})
 ])
-def test_creation(args, rot, offset):
+def test_creation(args, rot, offset, options):
     tr = Transformation(**args)
     np.testing.assert_array_almost_equal(tr._u, rot)
     np.testing.assert_array_almost_equal(tr._t, offset)
+    for k, v in options.items():
+        assert tr[k] == v
 
 
 @pytest.mark.parametrize('args', [
