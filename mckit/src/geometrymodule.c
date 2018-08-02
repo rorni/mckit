@@ -1036,6 +1036,7 @@ shapeobj_collect_statistics(ShapeObject * self, PyObject * args)
         return NULL;
     }
 
+    shape_reset_cache(&self->shape);
     shape_collect_statistics(&self->shape, &((BoxObject *) box)->box, min_vol);
     Py_RETURN_NONE;
 }
