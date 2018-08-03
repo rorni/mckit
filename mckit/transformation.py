@@ -12,7 +12,7 @@ IDENTITY_ROTATION = np.eye(3)
 ANGLE_TOLERANCE = 0.001
 
 
-class Transformation(dict):
+class Transformation:
     """Geometry transformation object.
 
     Parameters
@@ -94,7 +94,13 @@ class Transformation(dict):
                 u[:, i] = u[:, i] * np.sign(r[i, i])
         self._u = u
         self._t = -np.dot(u, translation) if inverted else translation.copy()
-        dict.__init__(self, options)
+        self._options = options
+
+    def __getitem__(self, key):
+        return self._options.get(key, None)
+
+    def __setitem__(self, key, value):
+        self._options[key] = value
 
     def apply2gq(self, m1, v1, k1):
         """Gets parameters of generic quadratic surface in the main CS.

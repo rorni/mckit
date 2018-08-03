@@ -207,3 +207,16 @@ def test_reverse(transforms, p1, p):
     result = tr_inv.apply2point(p)
     np.testing.assert_array_almost_equal(result, p1)
 
+
+@pytest.mark.parametrize('options', [
+    {'name': 1, 'comment': 'abcdef'},
+    {'name': 1},
+    {'comment': 'rrreee'}
+])
+@pytest.mark.parametrize('tr_no', range(len(tr_tr_cases)))
+def test_set_item(trtr, tr_no, options):
+    tr = trtr[tr_no]
+    for k, v in options.items():
+        tr[k] = v
+    for k, v in options.items():
+        assert tr[k] == v
