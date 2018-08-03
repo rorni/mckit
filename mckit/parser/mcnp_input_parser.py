@@ -6,6 +6,13 @@ from collections import deque
 import ply.lex as lex
 import ply.yacc as yacc
 
+from ..material import Element, Composition, Material
+from ..transformation import Transformation
+from ..surface import create_surface
+from ..body import Body
+from ..universe import Universe
+
+
 literals = ['+', '-', ':', '*', '(', ')', '#', '.']
 
 
@@ -299,8 +306,11 @@ def p_cell_card(p):
         params = p[4] if (len(p) == 5) else {}
         params['geometry'] = p[3]
         if p[2] is not None:
-            params['MAT'] = p[2][0]
-            params['RHO'] = p[2][1]
+            params['MAT'] = {'composition': p[2][0]}
+            if p[2][1] > 0:
+                params['MAT']['concentration'] = p[2][1] * 1.e+24
+            else:
+                params['MAT']['density'] = abs(p[2][1])
     params['name'] = p[1]
     comment = extract_comments(p.lineno(1))
     if comment:
@@ -630,12 +640,12 @@ def p_zaid_fraction(p):
     """zaid_fraction : int_number '.' lib_spec float
                      | int_number float
     """
-    if len(p) == 5:
-        key = 'atomic' if p[4] > 0 else 'wgt'
-        p[0] = key, p[1], abs(p[4]), p[3]
-    else:
-        key = 'atomic' if p[2] > 0 else 'wgt'
-        p[0] = key, p[1], abs(p[2])
+    n = len(p)
+    key = 'atomic' if p[n-1] > 0 else 'weight'
+    opts = {}
+    if n == 5:
+        opts['lib'] = p[3]
+    p[0] = key, p[1], opts, abs(p[n-1])
 
 
 def p_material_options(p):
@@ -689,4 +699,139 @@ def read_mcnp(filename):
     with open(filename) as f:
         text = f.read()
     mcnp_input_lexer.begin('INITIAL')
-    return mcnp_input_parser.parse(text, tracking=True, lexer=mcnp_input_lexer)
+    title, cells, surfaces, data = mcnp_input_parser.parse(
+        text, tracking=True, lexer=mcnp_input_lexer
+    )
+
+    _create_and_replace_transformations(cells, surfaces, data)
+    _create_surfaces(surfaces, cells)
+    _create_and_replace_compositions(cells, data)
+
+    for name in cells.keys():
+        replace(cells, name, {'dict': lambda x: get_cell_object(name, cells)})
+    return Universe(cells, comment=title)
+
+
+def _create_and_replace_transformations(cells, surfaces, data):
+    # Create transformation objects
+    transforms = data.get('TR', {})
+    for tr_name, tr_data in transforms.items():
+        transforms[tr_name] = Transformation(**tr_data)
+
+    def tr_by_name(x):
+        return transforms[x]
+
+    def tr_by_params(x):
+        return Transformation(**x)
+
+    # Replace transformation names in surfaces
+    for sur_value in surfaces.values():
+        replace(sur_value, 'transform', {'int': tr_by_name})
+
+    # Replace transformations in cells
+    for c in cells.values():
+        replace(c, 'TRCL', {'int': tr_by_name, 'dict': tr_by_params})
+        replace(
+            c, 'FILL', {'dict': lambda x: replace(
+                x, 'transform', {'int': tr_by_name, 'dict': tr_by_params}
+            )}
+        )
+
+
+def _create_surfaces(surfaces, cells):
+    for sur_name, sur_value in surfaces.items():
+        kind = sur_value.pop('kind')
+        params = sur_value.pop('params')
+        surfaces[sur_name] = create_surface(kind, *params, **sur_value)
+
+    def replace_surfaces(polish):
+        n = len(polish)
+        for i, p in enumerate(polish):
+            if isinstance(p, int):
+                if i + 1 < n and p == '#': continue
+                polish[i] = surfaces[p]
+        return polish
+
+    for c in cells.values():
+        replace(c, 'geometry', {'list': replace_surfaces})
+
+
+def _create_and_replace_compositions(cells, data):
+    def create_zf_pairs(data):
+        return [(Element(name, **opt), frac) for name, opt, frac in data]
+
+    # Create composition objects
+    compositions = data.get('M', {})
+
+    for comp_name, comp_val in compositions.items():
+        replace(comp_val, 'atomic', {'list': create_zf_pairs})
+        replace(comp_val, 'weight', {'list': create_zf_pairs})
+        compositions[comp_name] = Composition(**comp_val)
+
+    for c in cells.values():
+        replace(
+            c, 'MAT', {'int': lambda x: {'composition': compositions[x]},
+                       'dict': lambda x: replace(
+                       x, 'composition', {'int': lambda y: compositions[y]}
+            )}
+        )
+
+
+def get_cell_object(name, cells):
+    if isinstance(cells[name], Body):
+        return cells[name]
+    cell_data = cells.pop(name)
+    geometry = cell_data.pop('geometry', None)
+    if geometry is None:
+        ref = cell_data.pop('reference')
+        ref_cell = get_cell_object(ref, cells)
+        geometry = ref_cell.shape
+        for k, v in ref_cell.items():
+            if k not in cell_data.keys():
+                cell_data[k] = v
+        rho = cell_data.pop('RHO', None)
+        if rho:
+            if rho > 0:
+                cell_data['MAT']['concentration'] = rho * 1.e+24
+            else:
+                cell_data['MAT']['density'] = abs(rho)
+    else:
+        # Create from polish
+        n = len(geometry)
+        for i in range(n):
+            g = geometry[i]
+            if isinstance(g, int):
+                if geometry[i+1] == '#':
+                    comp_cell = get_cell_object(g, cells)
+                    tr = comp_cell.get('TRCL', None)
+                    if tr:
+                        geometry[i] = comp_cell.shape.transform(tr)
+                    else:
+                        geometry[i] = comp_cell.shape
+                    geometry[i+1] = 'C'
+    cell_data['MAT'] = Material(**cell_data['MAT'])
+    cells[name] = Body(geometry, **cell_data)
+    return cells[name]
+
+
+def replace(data, keyword, factory_dict):
+    """Replaces values of dict according to algorithm specified.
+
+    It modifies current object.
+
+    Parameters
+    ----------
+    data : dict
+        dict instance that has key which value has to be replaced.
+    keyword : str
+        Keyword to be replaced.
+    factory_dict : dict
+        Maps data type to factory function which must be used to create data.
+        str(data_type) -> func.
+    """
+    if keyword not in data.keys():
+        return
+    value = data[keyword]
+    factory = factory_dict.get(type(value), None)
+    if factory:
+        data[keyword] = factory(value)

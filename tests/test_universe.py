@@ -1,14 +1,15 @@
-import unittest
+import pytest
+
+from mckit.universe import Universe
 
 
-@unittest.skip
-class TestUniverse(unittest.TestCase):
-    def test_universe_creation(self):
-        raise NotImplementedError
+@pytest.fixture(scope='module', params=['tests/universe1.i'])
+def universe(request):
+    return Universe.from_file(request.param)
 
-    def test_model_reading(self):
-        raise NotImplementedError
 
+@pytest.mark.skip
+class TestUniverse:
     def test_transform(self):
         raise NotImplementedError
 
@@ -27,9 +28,8 @@ class TestUniverse(unittest.TestCase):
     def test_get_materials(self):
         raise NotImplementedError
 
-    def test_get_universes(self):
-        raise NotImplementedError
+    def test_get_universes(self, universe):
+        u = universe.get_universes()
+        assert u == {1, 2}
 
 
-if __name__ == '__main__':
-    unittest.main()

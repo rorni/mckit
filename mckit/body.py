@@ -460,7 +460,7 @@ class Body(dict):
     -------
     intersection(other)
         Returns an intersection of this cell with the other.
-    populate(universe)
+    fill(universe)
         Fills this cell by universe.
     simplify(box, split_disjoint, min_volume)
         Simplifies cell description.
@@ -590,28 +590,37 @@ class Body(dict):
         # print(len(variants))
         return Body(variants[0], **self)
 
-    def populate(self, universe=None):
+    def fill(self, universe=None, simplify=False, **kwargs):
         """Fills this cell by filling universe.
 
-        If this cell doesn't contain fill options, the cell itself is returned
-        as list of length 1. Otherwise a list of cells from filling universe
-        bounded by cell being filled is returned.
+        If this cell doesn't contain fill options and universe does not
+        specified, the cell itself is returned as list of length 1. Otherwise
+        a list of cells from filling universe bounded by cell being filled is
+        returned.
 
         Parameters
         ----------
         universe : Universe
             Universe which cells fill this one. If None, universe from 'FILL'
             option will be used. If no such universe, the cell itself will be
-            returned.
+            returned. Default: None.
+        simplify : bool
+            If True, all cells obtained will be simplified.
+        **kwargs : dict
+            Keyword parameters for simplify method if simplify is True.
+            Default: False.
 
         Returns
         -------
-        cells : list[Cell]
+        cells : list[Body]
             Resulting cells.
         """
         if universe is None:
             if 'FILL' in self.keys():
-                universe = self['FILL']
+                universe = self['FILL']['universe']
+                tr = self['FILL'].get('transform', None)
+                if tr:
+                    universe = universe.transform(tr)
             else:
                 return [self]
         cells = []
@@ -620,6 +629,8 @@ class Body(dict):
                                              # must be as in filling cell.
             if 'U' in self.keys():
                 new_cell['U'] = self['U']    # except universe.
+            if simplify:
+                new_cell = new_cell.simplify(**kwargs)
             cells.append(new_cell)
         return cells
 

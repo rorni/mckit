@@ -163,11 +163,11 @@ def test_mcnp_lexer(lex_file, expected):
         'cells': {
             1: {
                 'geometry': [1, 2, 'C', 'I', 3, 'I'],
-                'IMPN': 1, 'MAT': 1, 'RHO': -2.0, 'name': 1
+                'IMPN': 1, 'MAT': {'composition': 1, 'density': 2.0}, 'name': 1
             },
             2: {
                 'geometry': [1, 2, 'C', 3, 4, 'I', 'U', 'I'],
-                'VOL': 1, 'MAT': 2, 'RHO': -3.5, 'name': 2
+                'VOL': 1, 'MAT': {'composition': 2, 'density': 3.5}, 'name': 2
             },
             3: {
                 'geometry': [2, 2, '#', 'I', 1, 'C', 3, 'U', 'C', 'I'],
@@ -203,13 +203,14 @@ def test_mcnp_lexer(lex_file, expected):
         'title': 'mcnp parsing test file 2',
         'cells': {
             1: {
-                'geometry': [1, 'C', 2, 'I', 3, 'C', 'U'], 'MAT': 1, 'RHO': -0.5,
-                'IMPN': 1, 'name': 1
+                'geometry': [1, 'C', 2, 'I', 3, 'C', 'U'],
+                'MAT': {'composition': 1, 'density': 0.5}, 'IMPN': 1, 'name': 1
             },
             2: {
                 'geometry': [1, 2, 'C', 3, 4, 'I', 5, 6, 'C', 'U', 'I', 'U', 'I',
                              7, 'U'],
-                'MAT': 2, 'RHO': -1.0, 'U': 1, 'IMPN': 2, 'TRCL': 1, 'name': 2
+                'MAT': {'composition': 2, 'concentration': 1.0}, 'U': 1,
+                'IMPN': 2, 'TRCL': 1, 'name': 2
             },
             3: {'geometry': [8, 9, 'I', 10, 'C', 'I'], 'FILL': {'universe': 1},
                 'name': 3},

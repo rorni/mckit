@@ -457,3 +457,6 @@ class TestBody:
     @pytest.mark.skip
     def test_print(self):
         raise NotImplementedError
+
+    def test_fill(self):
+        raise NotImplementedError
