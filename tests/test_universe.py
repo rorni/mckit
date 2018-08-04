@@ -1,14 +1,14 @@
 import pytest
 
 from mckit.universe import Universe
+from mckit.parser.mcnp_input_parser import read_mcnp
 
 
 @pytest.fixture(scope='module', params=['tests/universe1.i'])
 def universe(request):
-    return Universe.from_file(request.param)
+    return read_mcnp(request.param)
 
 
-@pytest.mark.skip
 class TestUniverse:
     def test_transform(self):
         raise NotImplementedError

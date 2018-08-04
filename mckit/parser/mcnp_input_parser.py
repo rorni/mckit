@@ -703,135 +703,96 @@ def read_mcnp(filename):
         text, tracking=True, lexer=mcnp_input_lexer
     )
 
-    _create_and_replace_transformations(cells, surfaces, data)
-    _create_surfaces(surfaces, cells)
-    _create_and_replace_compositions(cells, data)
-
+    bodies = []
     for name in cells.keys():
-        replace(cells, name, {'dict': lambda x: get_cell_object(name, cells)})
-    return Universe(cells, comment=title)
+        bodies.append(_get_cell(name, cells, surfaces, data))
+    return Universe(bodies, comment=title)
 
 
-def _create_and_replace_transformations(cells, surfaces, data):
-    # Create transformation objects
-    transforms = data.get('TR', {})
-    for tr_name, tr_data in transforms.items():
-        transforms[tr_name] = Transformation(**tr_data)
-
-    def tr_by_name(x):
-        return transforms[x]
-
-    def tr_by_params(x):
-        return Transformation(**x)
-
-    # Replace transformation names in surfaces
-    for sur_value in surfaces.values():
-        replace(sur_value, 'transform', {'int': tr_by_name})
-
-    # Replace transformations in cells
-    for c in cells.values():
-        replace(c, 'TRCL', {'int': tr_by_name, 'dict': tr_by_params})
-        replace(
-            c, 'FILL', {'dict': lambda x: replace(
-                x, 'transform', {'int': tr_by_name, 'dict': tr_by_params}
-            )}
-        )
+def _get_transformation(name, data):
+    if isinstance(name, dict):
+        return Transformation(**name)
+    tr = data['TR'][name]
+    if isinstance(tr, dict):
+        tr = Transformation(**tr)
+        data['TR'][name] = tr
+    return tr
 
 
-def _create_surfaces(surfaces, cells):
-    for sur_name, sur_value in surfaces.items():
-        kind = sur_value.pop('kind')
-        params = sur_value.pop('params')
-        surfaces[sur_name] = create_surface(kind, *params, **sur_value)
-
-    def replace_surfaces(polish):
-        n = len(polish)
-        for i, p in enumerate(polish):
-            if isinstance(p, int):
-                if i + 1 < n and p == '#': continue
-                polish[i] = surfaces[p]
-        return polish
-
-    for c in cells.values():
-        replace(c, 'geometry', {'list': replace_surfaces})
+def _get_composition(name, data):
+    comp = data['M'][name]
+    if isinstance(comp, dict):
+        for i, (el, opt, frac) in enumerate(comp.get('atomic', [])):
+            comp['atomic'][i] = (Element(el, **opt), frac)
+        for i, (el, opt, frac) in enumerate(comp.get('weight', [])):
+            comp['weight'][i] = (Element(el, **opt), frac)
+        comp = Composition(**comp)
+        data['M'][name] = comp
+    return comp
 
 
-def _create_and_replace_compositions(cells, data):
-    def create_zf_pairs(data):
-        return [(Element(name, **opt), frac) for name, opt, frac in data]
-
-    # Create composition objects
-    compositions = data.get('M', {})
-
-    for comp_name, comp_val in compositions.items():
-        replace(comp_val, 'atomic', {'list': create_zf_pairs})
-        replace(comp_val, 'weight', {'list': create_zf_pairs})
-        compositions[comp_name] = Composition(**comp_val)
-
-    for c in cells.values():
-        replace(
-            c, 'MAT', {'int': lambda x: {'composition': compositions[x]},
-                       'dict': lambda x: replace(
-                       x, 'composition', {'int': lambda y: compositions[y]}
-            )}
-        )
+def _get_surface(name, surfaces, data):
+    surf_data = surfaces[name]
+    if isinstance(surf_data, dict):
+        kind = surf_data.pop('kind')
+        params = surf_data.pop('params')
+        tr = surf_data.get('transform', None)
+        if isinstance(tr, int):
+            surf_data['transform'] = _get_transformation(tr, data)
+        surf = create_surface(kind, *params, **surf_data)
+        surfaces[name] = surf
+    else:
+        surf = surf_data
+    return surf
 
 
-def get_cell_object(name, cells):
-    if isinstance(cells[name], Body):
+def _get_cell(name, cells, surfaces, data):
+    if isinstance(cells[name], Body):  # Already exists
         return cells[name]
-    cell_data = cells.pop(name)
+    cell_data = cells.pop(name)  # To avoid circular references and infinite
+                                 # cycle
     geometry = cell_data.pop('geometry', None)
-    if geometry is None:
-        ref = cell_data.pop('reference')
-        ref_cell = get_cell_object(ref, cells)
+    if geometry is None:     # find reference cell
+        ref_name = cell_data.pop('reference')
+        ref_cell = _get_cell(ref_name, cells, surfaces, data)
         geometry = ref_cell.shape
         for k, v in ref_cell.items():
             if k not in cell_data.keys():
                 cell_data[k] = v
         rho = cell_data.pop('RHO', None)
-        if rho:
+        if rho is not None:
             if rho > 0:
                 cell_data['MAT']['concentration'] = rho * 1.e+24
             else:
                 cell_data['MAT']['density'] = abs(rho)
-    else:
-        # Create from polish
-        n = len(geometry)
-        for i in range(n):
-            g = geometry[i]
+    else:    # create geometry from polish notation
+        for i, g in enumerate(geometry):
             if isinstance(g, int):
-                if geometry[i+1] == '#':
-                    comp_cell = get_cell_object(g, cells)
+                if i + 1 < len(geometry) and geometry[i+1] == '#':
+                    comp_cell = _get_cell(g, cells, surfaces, data)
+                    shape = comp_cell.shape
                     tr = comp_cell.get('TRCL', None)
                     if tr:
-                        geometry[i] = comp_cell.shape.transform(tr)
-                    else:
-                        geometry[i] = comp_cell.shape
+                        shape = shape.transform(tr)
+                    geometry[i] = shape
                     geometry[i+1] = 'C'
-    cell_data['MAT'] = Material(**cell_data['MAT'])
-    cells[name] = Body(geometry, **cell_data)
-    return cells[name]
+                else:
+                    geometry[i] = _get_surface(g, surfaces, data)
 
+    # Create material if necessary
+    mat_data = cell_data.get('MAT', None)
+    if mat_data:
+        comp = mat_data['composition']
+        mat_data['composition'] = _get_composition(comp, data)
+        cell_data['MAT'] = Material(**mat_data)
 
-def replace(data, keyword, factory_dict):
-    """Replaces values of dict according to algorithm specified.
+    # Replace transformations
+    if 'TRCL' in cell_data.keys():
+        cell_data['TRCL'] = _get_transformation(cell_data['TRCL'], data)
+    fill = cell_data.get('FILL', {})
+    if 'transform' in fill.keys():
+        fill['transform'] = _get_transformation(fill['transform'], data)
 
-    It modifies current object.
-
-    Parameters
-    ----------
-    data : dict
-        dict instance that has key which value has to be replaced.
-    keyword : str
-        Keyword to be replaced.
-    factory_dict : dict
-        Maps data type to factory function which must be used to create data.
-        str(data_type) -> func.
-    """
-    if keyword not in data.keys():
-        return
-    value = data[keyword]
-    factory = factory_dict.get(type(value), None)
-    if factory:
-        data[keyword] = factory(value)
+    cell = Body(geometry, **cell_data)
+    cells[name] = cell
+    return cell
