@@ -6,7 +6,7 @@ from mckit.material import Element, Composition, Material
 class TestElement:
     cases = [
         ('H', {}), ('1000', {}), ('1001', {}),
-        ('CA', {}), ('ca', {}), ('Ca', {'lib': '21c'}),
+        ('CA', {}), ('ca', {}), ('Ca', {'lib': '21C'}),
         ('CA40', {'lib': '21c'}), ('CA-40', {}), ('Ca42', {'lib': '21c'}),
         ('ca-43', {}), ('CA-41', {}),
         ('U', {}), ('U', {'isomer': 1}), ('U235', {}),

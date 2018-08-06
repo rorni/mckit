@@ -573,6 +573,8 @@ class Element:
             for at_num, frac in _NATURAL_ABUNDANCE[Z].items():
                 self._molar += _ISOTOPE_MASS[Z][at_num] * frac
         # Other flags and parameters
+        if isinstance(lib, str):
+            lib = lib.lower()
         self._lib = lib
         if self._mass_number == 0:
             isomer = 0
