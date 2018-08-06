@@ -6,8 +6,8 @@ c main universe cells
 3 0   #1 #2     IMP:N=0 IMP:P=0
 c universe 1 cells
 10 10 -2.7   -10 11  12 U=1 IMP:N=1 IMP:P=1
-11 11 -1.0   -11 12 -13 U=1 IMP:N=1 IMP:P=1
-13 0          #10 #11   U=1 IMP:N=1 IMP:P=1
+11 11 0.1003 -11 12 -13 U=1 IMP:N=1 IMP:P=1
+12 0          #10 #11   U=1 IMP:N=1 IMP:P=1
 c universe 2 cells
 21 21 -0.9   21 -22 -23    U=2 IMP:N=1 IMP:P=1
 22 22 -7.8   21 -22 23 -24 U=2 IMP:N=1 IMP:P=1
@@ -35,7 +35,7 @@ c universe 2 surfaces
 c data section
 tr1 2 0 0
 m10 6012.21c 1
-m11 1001.21c 2 8016.21c 1
+m11 1001.21c -0.11191 8016.50c -0.88809
 m21 1001.21c 2 6012.21c 1
 m22 26056.21c 1
-m23 5010.21c 1
+m23 5010.21c -1

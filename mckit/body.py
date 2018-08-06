@@ -590,7 +590,7 @@ class Body(dict):
         # print(len(variants))
         return Body(variants[0], **self)
 
-    def fill(self, universe=None, simplify=False, **kwargs):
+    def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
         """Fills this cell by filling universe.
 
         If this cell doesn't contain fill options and universe does not
@@ -604,6 +604,9 @@ class Body(dict):
             Universe which cells fill this one. If None, universe from 'FILL'
             option will be used. If no such universe, the cell itself will be
             returned. Default: None.
+        recurrent : bool
+            If filler universe also contains cells with fill option, they will
+            be also filled. Default: False.
         simplify : bool
             If True, all cells obtained will be simplified.
         **kwargs : dict
@@ -623,8 +626,13 @@ class Body(dict):
                     universe = universe.transform(tr)
             else:
                 return [self]
+        if recurrent:
+            universe = universe.fill(
+                recurrent=True, simplify=simplify, **kwargs
+            )
         cells = []
-        for c in universe.cells:
+        for c in universe:
+            print('in cell name: ', c['name'])
             new_cell = c.intersection(self)  # because properties like MAT, etc
                                              # must be as in filling cell.
             if 'U' in self.keys():
@@ -632,6 +640,7 @@ class Body(dict):
             if simplify:
                 new_cell = new_cell.simplify(**kwargs)
             cells.append(new_cell)
+        print('in cell: ', len(cells))
         return cells
 
     def transform(self, tr):

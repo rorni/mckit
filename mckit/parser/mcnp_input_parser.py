@@ -704,7 +704,7 @@ def read_mcnp(filename):
     )
 
     bodies = []
-    for name in cells.keys():
+    for name in list(cells.keys()):
         bodies.append(_get_cell(name, cells, surfaces, data))
     return Universe(bodies, comment=title)
 

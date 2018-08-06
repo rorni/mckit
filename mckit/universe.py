@@ -39,8 +39,10 @@ class Universe:
         
     Methods
     -------
-    apply_fill(cell)
+    fill(cell)
         Fills every cell that has fill option by cells of filling universe.
+    copy()
+        Makes a copy of the universe.
     transform(tr)
         Applies transformation tr to this universe. Returns a new universe.
     simplify(box, split_disjoint, min_volume, trim_size)
@@ -53,11 +55,11 @@ class Universe:
         Gets all transformations of the universe.
     get_universes()
         Gets all inner universes.
-    select_universe(key)
+    select_universe(name)
         Gets specified inner universe.
     select_cell(name)
         Gets specified cell.
-    give_names(start_cell, start_surf, start_mat, start_tr)
+    rename(start_cell, start_surf, start_mat, start_tr)
         Renames all entities contained in the universe.
     """
     def __init__(self, cells, name=0, verbose_name=None, comment=None, universes=None):
@@ -68,8 +70,12 @@ class Universe:
             universes = {}
         self._cells = []
 
+        print('universe ', name, ' Cells total: ', len(cells))
         for c in cells:
             u = c.get('U', 0)
+            if isinstance(u, Universe):
+                print(u.name)
+                u = u.name
             if u != name:
                 continue
             fill = c.get('FILL')
@@ -81,6 +87,7 @@ class Universe:
                     fill['universe'] = universes[uname]
             c['U'] = self
             self._cells.append(c)
+        print('Universe {0}: {1} cells'.format(name, len(self._cells)))
 
     def __iter__(self):
         return iter(self._cells)
@@ -93,32 +100,56 @@ class Universe:
     def verbose_name(self):
         return self._verbose_name
 
-    def apply_fill(self):
-        """Fills cells that have apply_fill option by filling universe cells.
+    def fill(self, cells=None, recurrent=False, simplify=False, **kwargs):
+        """Fills cells that have fill option by filling universe cells.
 
-        This method modifies current universe. The cells that initially
-        were in this universe and had apply_fill option are replaced by filling
-        universe. Geometry of the cell being filled is used to bound cells
-        of filler universe. Simplification won't be done by default.
-        The user should call simplification when needed.
+        The cells that initially were in this universe and had fill option
+        are replaced by filling universe. Geometry of the cell being filled
+        is used to bound cells of filler universe. Simplification won't be
+        done by default.
+
+        Parameters
+        ----------
+        cells : int or list[int]
+            Names of cell or cells, which must be filled. Default: None - all
+            universe cells will be considered.
+        recurrent : bool
+            Indicates if apply_fill of inner universes should be also invoked.
+            In this case, apply_fill is first invoked for inner universes.
+            Default: False.
+        simplify : bool
+            Whether to simplify universe cells after filling. Default: False.
+        kwargs : dict
+            Parameters for simplify method. See Body.simplify.
+
+        Returns
+        -------
+        new_universe : Universe
+            New filled universe.
         """
+        if isinstance(cells, int):
+            cells = [cells]
         new_cells = []
-        i = 0
-        while i < len(self._cells):
-            fill = self._cells[i].get('FILL')
-            if fill:
-                c = self._cells.pop(i)
-                u = fill['universe']
-                tr = fill.get('transform', None)
-                if tr:
-                    u = u.transform(tr)
-                for uc in u:
-                    new_cells.append(uc.intersection(c))
+        print('filling ...')
+        for c in self._cells:
+            name = c.get('name', 0)
+            print('filled cell: ', name)
+            if cells and name not in cells:
+                new_cells.append(c)
+                print(name, ' +')
             else:
-                i += 1
-        for c in new_cells:
-            c.set('U', self)
-        self._cells.extend(new_cells)
+                new_cells.extend(
+                    c.fill(recurrent=recurrent, simplify=simplify, **kwargs)
+                )
+                print(name, ' +++')
+            print('total cells for new universe: ', len(new_cells))
+        new_universe = Universe(
+            new_cells, name=self.name, verbose_name=self.verbose_name
+        )
+        print(len(new_cells))
+        if simplify:
+            new_universe = new_universe.simplify(**kwargs)
+        return new_universe
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
                  min_volume=MIN_BOX_VOLUME, trim_size=1):
@@ -147,10 +178,13 @@ class Universe:
         """
         cells = []
         for c in self._cells:
-            new_cell = c.simplify(box=box, split_disjoint=split_disjoint, min_volume=min_volume, trim_size=trim_size)
-            if not new_cell.is_empty():
+            new_cell = c.simplify(
+                box=box, split_disjoint=split_disjoint, min_volume=min_volume,
+                trim_size=trim_size
+            )
+            if not new_cell.shape.is_empty():
                 cells.append(new_cell)
-        return Universe(cells)
+        return Universe(cells, name=self.name, verbose_name=self.verbose_name)
 
     def transform(self, tr):
         """Applies transformation tr to this universe. 
@@ -168,7 +202,7 @@ class Universe:
         tr_cells = []
         for cell in self._cells:
             tr_cells.append(cell.transform(tr))
-        return Universe(tr_cells)
+        return Universe(tr_cells, name=self.name, verbose_name=self.verbose_name)
 
     def get_surfaces(self):
         """Gets all surfaces that discribe this universe.
@@ -180,7 +214,7 @@ class Universe:
         """
         surfaces = set()
         for c in self._cells:
-            cs = c.get_surfaces()
+            cs = c.shape.get_surfaces()
             surfaces.update(cs)
         return surfaces
 
@@ -194,7 +228,7 @@ class Universe:
         """
         materials = set()
         for c in self._cells:
-            m = c.material
+            m = c.material()
             if m is not None:
                 materials.add(m)
         return materials
@@ -222,14 +256,14 @@ class Universe:
                     universes.update(fill['universe'].get_universes(recurrent=True))
         return universes
 
-    def select_universe(self, key):
+    def select_universe(self, name):
         """Selects given universe.
 
         If no such universe present, KeyError is raised.
 
         Parameters
         ----------
-        key : int or str
+        name : int or str
             Numeric or verbose name of universe to be selected.
 
         Returns
@@ -237,19 +271,19 @@ class Universe:
         universe : Universe
             Requested universe.
         """
-        if key == self.name or key == self.verbose_name:
+        if name == self.name or name == self.verbose_name:
             return self
         for c in self._cells:
             fill = c.get('FILL')
             if fill:
                 u = fill['universe']
                 try:
-                    return u.select_universe(key)
+                    return u.select_universe(name)
                 except KeyError:
                     pass
-        raise KeyError("No such universe: {0}".format(key))
+        raise KeyError("No such universe: {0}".format(name))
 
-    def select_cell(self, key):
+    def select_cell(self, name):
         """Selects given cell.
 
         Cell must belong this universe.
@@ -257,7 +291,7 @@ class Universe:
 
         Parameters
         ----------
-        key : int
+        name : int
             Name of cell.
 
         Returns
@@ -266,10 +300,10 @@ class Universe:
             Requested cell.
         """
         for c in self._cells:
-            if c.get['name'] == key:
+            if c.get['name'] == name:
                 return c
-        raise KeyError("No such cell: {0}".format(key))
+        raise KeyError("No such cell: {0}".format(name))
 
-    def give_names(self, start_cell=1, start_surf=1, start_mat=1, start_tr=1):
+    def rename(self, start_cell=1, start_surf=1, start_mat=1, start_tr=1):
         raise NotImplementedError
 
