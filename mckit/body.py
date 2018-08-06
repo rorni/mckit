@@ -339,7 +339,6 @@ class Shape(_Shape):
         """Checks if the shape represents an empty set."""
         return self.opc == 'E'
 
-
     def get_simplest(self, trim_size=0):
         """Gets the simplest found description of the shape.
 
