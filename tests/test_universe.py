@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 
 from mckit.universe import Universe
 from mckit.material import Material, Element
@@ -25,7 +26,16 @@ def test_transform():
 @pytest.mark.parametrize('case_no, cells, recur, simp, complexity', [
     (0, 1, False, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
     (0, 2, False, False, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
-
+    (0, None, False, False, {10: 6, 11: 6, 12: 9, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
+    (0, 1, True, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
+    (0, 2, True, False, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
+    (0, None, True, False, {10: 6, 11: 6, 12: 9, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
+    (0, 1, False, True, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
+    (0, 2, False, True, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
+    (0, None, False, True, {10: 6, 11: 6, 12: 9, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
+    (0, 1, True, True, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
+    (0, 2, True, True, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
+    (0, None, True, True, {10: 6, 11: 6, 12: 9, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
 ])
 def test_fill(universe, case_no, cells, recur, simp, complexity):
     u = universe[case_no]
@@ -34,7 +44,6 @@ def test_fill(universe, case_no, cells, recur, simp, complexity):
     for c in u:
         print(c['name'], c.shape.complexity())
         assert c.shape.complexity() == complexity[c['name']]
-
 
 @pytest.mark.slow
 @pytest.mark.parametrize('case_no, u_name, complexity', [

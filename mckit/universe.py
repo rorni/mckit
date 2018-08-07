@@ -92,6 +92,13 @@ class Universe:
     def __iter__(self):
         return iter(self._cells)
 
+    def copy(self):
+        """Makes a shallow copy of this universe."""
+        u = Universe([], name=self.name, verbose_name=self.verbose_name,
+                     comment=self._comment)
+        u._cells = self._cells.copy()
+        return u
+
     @property
     def name(self):
         return self._name
@@ -143,9 +150,8 @@ class Universe:
                 )
                 print(name, ' +++')
             print('total cells for new universe: ', len(new_cells))
-        new_universe = Universe(
-            new_cells, name=self.name, verbose_name=self.verbose_name
-        )
+        new_universe = self.copy()
+        new_universe._cells = new_cells
         print(len(new_cells))
         if simplify:
             new_universe = new_universe.simplify(**kwargs)
@@ -184,7 +190,8 @@ class Universe:
             )
             if not new_cell.shape.is_empty():
                 cells.append(new_cell)
-        return Universe(cells, name=self.name, verbose_name=self.verbose_name)
+        u = self.copy()
+        u._cells = cells
 
     def transform(self, tr):
         """Applies transformation tr to this universe. 
@@ -202,7 +209,9 @@ class Universe:
         tr_cells = []
         for cell in self._cells:
             tr_cells.append(cell.transform(tr))
-        return Universe(tr_cells, name=self.name, verbose_name=self.verbose_name)
+        u = self.copy()
+        u._cells = tr_cells
+        return u
 
     def get_surfaces(self):
         """Gets all surfaces that discribe this universe.
