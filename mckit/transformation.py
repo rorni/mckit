@@ -96,6 +96,12 @@ class Transformation:
         self._t = -np.dot(u, translation) if inverted else translation.copy()
         self._options = options
 
+    def __hash__(self):
+        return id(self)
+
+    def __eq__(self, other):
+        return id(self) == id(other)
+
     def __getitem__(self, key):
         return self._options.get(key, None)
 

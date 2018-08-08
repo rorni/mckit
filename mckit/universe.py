@@ -61,6 +61,10 @@ class Universe:
         Gets specified cell.
     rename(start_cell, start_surf, start_mat, start_tr)
         Renames all entities contained in the universe.
+    check_names()
+        Checks if there is name clashes.
+    save(filename)
+        Saves the universe to file.
     """
     def __init__(self, cells, name=0, verbose_name=None, comment=None, universes=None):
         self._name = name
@@ -70,11 +74,9 @@ class Universe:
             universes = {}
         self._cells = []
 
-        print('universe ', name, ' Cells total: ', len(cells))
         for c in cells:
             u = c.get('U', 0)
             if isinstance(u, Universe):
-                print(u.name)
                 u = u.name
             if u != name:
                 continue
@@ -87,7 +89,6 @@ class Universe:
                     fill['universe'] = universes[uname]
             c['U'] = self
             self._cells.append(c)
-        print('Universe {0}: {1} cells'.format(name, len(self._cells)))
 
     def __iter__(self):
         return iter(self._cells)
@@ -137,22 +138,16 @@ class Universe:
         if isinstance(cells, int):
             cells = [cells]
         new_cells = []
-        print('filling ...')
         for c in self._cells:
             name = c.get('name', 0)
-            print('filled cell: ', name)
             if cells and name not in cells:
                 new_cells.append(c)
-                print(name, ' +')
             else:
                 new_cells.extend(
                     c.fill(recurrent=recurrent, simplify=simplify, **kwargs)
                 )
-                print(name, ' +++')
-            print('total cells for new universe: ', len(new_cells))
         new_universe = self.copy()
         new_universe._cells = new_cells
-        print(len(new_cells))
         if simplify:
             new_universe = new_universe.simplify(**kwargs)
         return new_universe
@@ -313,6 +308,107 @@ class Universe:
                 return c
         raise KeyError("No such cell: {0}".format(name))
 
-    def rename(self, start_cell=1, start_surf=1, start_mat=1, start_tr=1):
-        raise NotImplementedError
+    def rename(self, start_cell=1, start_surf=1, start_mat=1, start_tr=1,
+               name=None, verbose_name=None):
+        """Renames universe entities.
 
+        Modifies current universe. All nested universes must be renamed
+        separately if needed.
+
+        Parameters
+        ----------
+        start_cell : int
+            Starting name for cells. Default: 1.
+        start_surf : int
+            Starting name for surfaces. Default: 1.
+        start_mat : int
+            Starting name for compositions (MCNP materials). Default: 1.
+        start_tr : int
+            Starting name for transformations. Default: 1.
+        name : int
+            Name of this universe. Only needed if name must be changed.
+            Default: None.
+        verbose_name : str
+            Verbose name of this universe. Only needed if verbose name of the
+            universe must be changed. Default: None.
+        """
+        for s in self.get_surfaces():
+            s.options['name'] = start_surf
+            start_surf += 1
+        for comp in set(m.composition for m in self.get_materials()):
+            comp._options['name'] = start_mat
+            start_mat += 1
+        transformations = set()
+        for c in self._cells:
+            c['name'] = start_cell
+            start_cell += 1
+            tr = c.get('TRCL', None)
+            if tr and tr['name']:
+                transformations.add(tr)
+            fill = c.get('FILL', {})
+            tr = fill.get('transform', None)
+            if tr and tr['name']:
+                transformations.add(tr)
+        for tr in transformations:
+            tr['name'] = start_tr
+            start_tr += 1
+        if name is not None:
+            self._name = name
+        if verbose_name is not None:
+            self._verbose_name = verbose_name
+
+    def check_names(self):
+        """Checks if the universe entities have name clashes.
+
+        First it checks if there is name clashes in cells, surfaces, materials
+        and transformations that belong to the universe itself, and then with
+        all other nested universes.
+
+        Returns
+        -------
+        status : bool
+            Status of the check. True if everything is OK, False, otherwise.
+        report : dict
+            Dictionary of check results. Here found clashes are reported.
+        """
+        names = {}
+        self._collect_names(names)
+
+    def _collect_names(self, results):
+        if id(self) in results.keys():
+            return
+        names = {'cells': [], 'surfaces': [], 'compositions': [],
+                 'transformations': [], 'name': self._name}
+        for s in self.get_surfaces():
+            names['surfaces'].append(s.options.get('name', 0))
+        compositions = {m.composition for m in self.get_materials()}
+        for c in compositions:
+            names['compositions'].append(compositions._options.get('name', 0))
+        transformations = set()
+        for c in self:
+            names['cells'].append(c.get('name', 0))
+            tr = c.get('TRCL', None)
+            if tr is not None:
+                transformations.add(tr)
+            fill = c.get('FILL', None)
+            if fill:
+                u = fill['universe']
+                tr = fill.get('transform', None)
+                if tr:
+                    transformations.add(tr)
+                u._collect_names(results)
+        for tr in transformations:
+            names['transformations'].append(tr._options.get('name', 0))
+        results[id(self)] = names
+
+    def save(self, filename, format_rules=None):
+        """Saves the universe to file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of file.
+        format_rules : dict
+            A dictionary of format rules.
+        """
+        raise NotImplementedError
