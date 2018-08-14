@@ -631,7 +631,6 @@ class Body(dict):
             )
         cells = []
         for c in universe:
-            print('in cell name: ', c['name'])
             new_cell = c.intersection(self)  # because properties like MAT, etc
                                              # must be as in filling cell.
             if 'U' in self.keys():
@@ -639,7 +638,6 @@ class Body(dict):
             if simplify:
                 new_cell = new_cell.simplify(**kwargs)
             cells.append(new_cell)
-        print('in cell: ', len(cells))
         return cells
 
     def transform(self, tr):

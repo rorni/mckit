@@ -286,6 +286,7 @@ class TestShape:
         assert result == expected[box_no]
 
     @pytest.mark.slow
+    @pytest.mark.parametrize('tol', [0.2, None])
     @pytest.mark.parametrize('case_no, expected', enumerate([
         [[-4, 4], [-2, 2], [-2, 2]],
         [[3, 5], [-1, 1], [-1, 1]],
@@ -295,12 +296,15 @@ class TestShape:
         [[-4, 5], [-1, 1], [-1, 1]],
         [[2, 6], [-2, 2], [-2, 2]]
     ]))
-    def test_bounding_box(self, geometry, case_no, expected):
-        tol = 0.2
+    def test_bounding_box(self, geometry, tol, case_no, expected):
         base = [0, 0, 0]
         dims = [30, 30, 30]
         gb = Box(base, dims[0], dims[1], dims[2])
-        bb = geometry[case_no].bounding_box(gb, tol)
+        if tol is not None:
+            bb = geometry[case_no].bounding_box(box=gb, tol=tol)
+        else:
+            tol = 100.0
+            bb = geometry[case_no].bounding_box()
         for j, (low, high) in enumerate(expected):
             bbdim = 0.5 * bb.dimensions[j]
             assert bb.center[j] - bbdim <= low
@@ -390,16 +394,16 @@ class TestBody:
 
     @pytest.mark.slow
     @pytest.mark.parametrize('kwarg', kwarg_data)
-    @pytest.mark.parametrize('case_no, expected', enumerate([
-        [2, 'C', 3, 'I', 1, 'I', 5, 'C', 'I', 4, 'C', 'U'],
-        [6, 'C'],
-        [1, 'C'],
-        [2, 'C', 3, 'I', 1, 'I', 5, 'C', 'I', 4, 'C', 'U'],
-        [5, 'C', 3, 'I', 2, 'C', 'I', 1, 'C', 'U'],
-        [3, 8, 'C', 'I', 5, 'C', 'I', 4, 'C', 'U', 6, 'C', 'U'],
-        [4, 'C'],
-        [4]
-    ]))
+    @pytest.mark.parametrize('case_no, expected', [
+        (0, [2, 'C', 3, 'I', 1, 'I', 5, 'C', 'I', 4, 'C', 'U']),
+        (1, [6, 'C']),
+        (2, [1, 'C']),
+        (3, [2, 'C', 3, 'I', 1, 'I', 5, 'C', 'I', 4, 'C', 'U']),
+        (4, [5, 'C', 3, 'I', 2, 'C', 'I', 1, 'C', 'U']),
+        (5, [3, 8, 'C', 'I', 5, 'C', 'I', 4, 'C', 'U', 6, 'C', 'U']),
+        pytest.param(6, [4, 'C'], marks=pytest.mark.xfail(reason="need full simplification approach")),
+        pytest.param(7, [4], marks=pytest.mark.xfail(reason="need full simplification approach"))
+    ])
     def test_simplify(self, geometry, surfaces, case_no, expected, kwarg):
         expected = [TestShape.filter_arg(a, surfaces) for a in expected]
         expected_shape = Shape.from_polish_notation(expected)

@@ -810,7 +810,7 @@ static PyMethodDef shapeobj_methods[] = {
         {"test_box", (PyCFunctionWithKeywords) shapeobj_test_box, METH_VARARGS | METH_KEYWORDS, "Tests where the box is located with respect to the surface."},
         {"ultimate_test_box", (PyCFunctionWithKeywords) shapeobj_ultimate_test_box, METH_VARARGS | METH_KEYWORDS, ""},
         {"volume", (PyCFunctionWithKeywords) shapeobj_volume, METH_VARARGS | METH_KEYWORDS, ""},
-        {"bounding_box", (PyCFunction) shapeobj_bounding_box, METH_VARARGS, ""},
+        {"bounding_box", (PyCFunctionWithKeywords) shapeobj_bounding_box, METH_VARARGS | METH_KEYWORDS, ""},
         {"collect_statistics", (PyCFunction) shapeobj_collect_statistics, METH_VARARGS, ""},
         {"get_stat_table", (PyCFunction) shapeobj_get_stat_table, METH_NOARGS, ""},
         {"test_points", (PyCFunction) shapeobj_test_points, METH_O, "Tests senses of the points with respect to the surface."},
@@ -977,11 +977,16 @@ shapeobj_test_points(ShapeObject * self, PyObject * points)
 }
 
 static PyObject *
-shapeobj_bounding_box(ShapeObject * self, PyObject * args)
+shapeobj_bounding_box(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
-    PyObject * start_box;
-    double tol;
-    if (! PyArg_ParseTuple(args, "Od", &start_box, &tol)) return NULL;
+    PyObject * start_box = NULL;
+    double tol = 100.0;
+
+    static char * kwlist[] = {"tol", "box", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|dO", kwlist, &tol, &start_box)) return NULL;
+
+    if (start_box == NULL) start_box = GET_NAME(GLOBAL_BOX);
 
     if (! PyObject_TypeCheck(start_box, &BoxType)) {
         PyErr_SetString(PyExc_ValueError, "Box instance is expected");
