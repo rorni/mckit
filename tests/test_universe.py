@@ -4,6 +4,7 @@ import numpy as np
 from mckit.material import Material, Element
 from mckit.parser.mcnp_input_parser import read_mcnp
 from mckit.transformation import Transformation
+from mckit.geometry import Box
 
 
 cases = [
@@ -82,6 +83,7 @@ def test_fill(universe, case_no, cells, recur, simp, complexity):
         print(c['name'], c.shape.complexity())
         assert c.shape.complexity() == complexity[c['name']]
 
+
 @pytest.mark.slow
 @pytest.mark.parametrize('case_no, u_name, complexity', [
     pytest.param(0, 0, {1: 2, 2: 3, 3: 4}, marks=pytest.mark.xfail(reason='need full simplification approach')),
@@ -98,6 +100,35 @@ def test_simplify(universe, case_no, u_name, complexity):
     assert len(u._cells) == len(complexity.keys())
     for c in u:
         assert c.shape.complexity() == complexity[c['name']]
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize('tol', [0.2, None])
+@pytest.mark.parametrize('case_no, u_name, expected', [
+    (0, 0, [[-5, 6], [-3, 3], [-3, 3]]),
+    (0, 1, [[3, 9], [-1, 1], [-1, 1]]),
+    (0, 2, [[-6, -1], [-4, 4], [-4, 4]])
+])
+def test_bounding_box(universe, tol, case_no, u_name, expected):
+    base_u = universe[case_no]
+    if u_name == 0:
+        u = base_u
+    else:
+        u = base_u.select_universe(u_name)
+    base = [0, 0, 0]
+    dims = [30, 30, 30]
+    gb = Box(base, dims[0], dims[1], dims[2])
+    if tol is not None:
+        bb = u.bounding_box(box=gb, tol=tol)
+    else:
+        tol = 100.0
+        bb = u.bounding_box()
+    for j, (low, high) in enumerate(expected):
+        bbdim = 0.5 * bb.dimensions[j]
+        assert bb.center[j] - bbdim <= low
+        assert bb.center[j] - bbdim >= low - tol
+        assert bb.center[j] + bbdim >= high
+        assert bb.center[j] + bbdim <= high + tol
 
 
 @pytest.mark.parametrize('case_no, u_name, sur_names', [

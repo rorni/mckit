@@ -2,10 +2,12 @@
 
 from collections import OrderedDict
 
+import numpy as np
+
 from .body import Body
 from .surface import create_surface
 from .constants import MIN_BOX_VOLUME
-from .geometry import GLOBAL_BOX
+from .geometry import GLOBAL_BOX, Box
 from .material import Composition, Material
 from .transformation import Transformation
 
@@ -39,6 +41,8 @@ class Universe:
         
     Methods
     -------
+    bounding_box(tol, box)
+        Gets bounding box of the universe.
     fill(cell)
         Fills every cell that has fill option by cells of filling universe.
     copy()
@@ -107,6 +111,47 @@ class Universe:
     @property
     def verbose_name(self):
         return self._verbose_name
+
+    def bounding_box(self, tol=100, box=GLOBAL_BOX):
+        """Gets bounding box for the universe.
+
+        It finds all bounding boxes for universe cells and then constructs
+        box, that covers all cells' bounding boxes. The main purpose of this
+        method is to find boundaries of the model geometry to compare
+        transformation and surface objects for equality. It is recommended to
+        choose tol value not too small to reduce computation time.
+
+        Parameters
+        ----------
+        tol : float
+            Linear tolerance for the bounding box. The distance [in cm] between
+            every box's surface and universe in every direction won't exceed
+            this value. Default: 100 cm.
+        box : Box
+            Starting box for the search. The user must be sure that box covers
+            all geometry, because cells, that already contains corners of the
+            box will be considered as infinite and will be excluded from
+            analysis.
+
+        Returns
+        -------
+        bbox : Box
+            Universe bounding box.
+        """
+        boxes = []
+        for c in self._cells:
+            test = c.shape.test_points(box.corners)
+            if np.any(test == +1):
+                continue
+            boxes.append(c.shape.bounding_box(tol=tol, box=box))
+        all_corners = np.empty((8 * len(boxes), 3))
+        for i, b in enumerate(boxes):
+            all_corners[i * 8: (i + 1) * 8, :] = b.corners
+        min_pt = np.min(all_corners, axis=0)
+        max_pt = np.max(all_corners, axis=0)
+        center = 0.5 * (min_pt + max_pt)
+        dims = max_pt - min_pt
+        return Box(center, *dims)
 
     def fill(self, cells=None, recurrent=False, simplify=False, **kwargs):
         """Fills cells that have fill option by filling universe cells.
