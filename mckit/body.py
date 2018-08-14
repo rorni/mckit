@@ -487,9 +487,9 @@ class Body(dict):
     def __str__(self):
         text = [str(self['name']), ' ']
         if 'MAT' in self.keys():
-            text.append(str(self['MAT']))
+            text.append(str(self['MAT'].composition['name']))
             text.append(' ')
-            text.append(str(self['RHO']))
+            text.append(str(-self['MAT'].density))
             text.append(' ')
         else:
             text.append('0')

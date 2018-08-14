@@ -12,6 +12,8 @@ from .geometry import Plane      as _Plane,    \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
                       GLOBAL_BOX, ORIGIN, EX, EY, EZ
+from .printer import print_card
+from .transformation import Transformation
 
 __all__ = [
     'create_surface', 'Plane', 'Sphere', 'Cone', 'Torus', 'GQuadratic',
@@ -261,6 +263,23 @@ class Plane(Surface, _Plane):
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr, **self.options)
 
+    def __str__(self):
+        words = [str(self.options['name']), ' ']
+        if np.all(self._v == np.array([1.0, 0.0, 0.0])):
+            words.append('PX')
+        elif np.all(self._v == np.array([0.0, 1.0, 0.0])):
+            words.append('PY')
+        elif np.all(self._v == np.array([0.0, 0.0, 1.0])):
+            words.append('PZ')
+        else:
+            words.append('P')
+            for v in self._v:
+                words.append(' ')
+                words.append('{0:.12e}'.format(v))
+        words.append(' ')
+        words.append('{0:.12e}'.format(self._k))
+        return print_card(words)
+
 
 class Sphere(Surface, _Sphere):
     """Sphere surface class.
@@ -298,6 +317,31 @@ class Sphere(Surface, _Sphere):
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr, **self.options)
 
+    def __str__(self):
+        words = [str(self.options['name']), ' ']
+        if np.all(self._center == np.array([0.0, 0.0, 0.0])):
+            words.append('SO')
+        elif self._center[0] == 0.0 and self._center[1] == 0.0:
+            words.append('SZ')
+            words.append(' ')
+            words.append('{0:.12e}'.format(self._center[2]))
+        elif self._center[1] == 0.0 and self._center[2] == 0.0:
+            words.append('SX')
+            words.append(' ')
+            words.append('{0:.12e}'.format(self._center[0]))
+        elif self._center[0] == 0.0 and self._center[2] == 0.0:
+            words.append('SY')
+            words.append(' ')
+            words.append('{0:.12e}'.format(self._center[1]))
+        else:
+            words.append('S')
+            for v in self._center:
+                words.append(' ')
+                words.append('{0:.12e}'.format(v))
+        words.append(' ')
+        words.append('{0:.12e}'.format(self._radius))
+        return print_card(words)
+
 
 class Cylinder(Surface, _Cylinder):
     """Cylinder surface class.
@@ -331,6 +375,42 @@ class Cylinder(Surface, _Cylinder):
     def transform(self, tr):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr,
                         **self.options)
+
+    def __str__(self):
+        words = [str(self.options['name']), ' ']
+        if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
+            if self._pt[1] == 0.0 and self._pt[2] == 0.0:
+                words.append('CX')
+            else:
+                words.append('C/X')
+                words.extend([' ', '{0:.12e}'.format(self._pt[1]), ' ',
+                              '{0:.12e}'.format(self._pt[2])])
+        elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
+            if self._pt[0] == 0.0 and self._pt[2] == 0.0:
+                words.append('CY')
+            else:
+                words.append('C/Y')
+                words.extend([' ', '{0:.12e}'.format(self._pt[0]), ' ',
+                              '{0:.12e}'.format(self._pt[2])])
+        elif np.all(self._axis == np.array([0.0, 0.0, 1.0])):
+            if self._pt[0] == 0.0 and self._pt[1] == 0.0:
+                words.append('CZ')
+            else:
+                words.append('C/Z')
+                words.extend([' ', '{0:.12e}'.format(self._pt[0]), ' ',
+                              '{0:.12e}'.format(self._pt[1])])
+        else:
+            nx, ny, nz = self._axis
+            m = np.array([[1-nx**2, -nx*ny, -nx*nz],
+                          [-nx*ny, 1-ny**2, -ny*nz],
+                          [-nx*nz, -ny*nz, 1-nz**2]])
+            v = np.zeros(3)
+            k = -self._radius**2
+            m, v, k = Transformation(translation=self._pt).apply2gq(m, v, k)
+            return str(GQuadratic(m, v, k, **self.options))
+        words.append(' ')
+        words.append('{0:.12e}'.format(self._radius))
+        return print_card(words)
 
 
 class Cone(Surface, _Cone):
@@ -368,6 +448,54 @@ class Cone(Surface, _Cone):
         return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr,
                     **self.options)
 
+    def __str__(self):
+        words = [str(self.options['name']), ' ']
+        if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
+            if self._apex[1] == 0.0 and self._apex[2] == 0.0:
+                words.append('KX')
+                words.append(' ')
+                words.append('{0:.12e}'.format(self._apex[0]))
+            else:
+                words.append('K/X')
+                for v in self._apex:
+                    words.append(' ')
+                    words.append('{0:.12e}'.format(v))
+        elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
+            if self._apex[0] == 0.0 and self._apex[2] == 0.0:
+                words.append('KY')
+                words.append(' ')
+                words.append('{0:.12e}'.format(self._apex[1]))
+            else:
+                words.append('K/Y')
+                words.append('K/X')
+                for v in self._apex:
+                    words.append(' ')
+                    words.append('{0:.12e}'.format(v))
+        elif np.all(self._axis == np.array([0.0, 0.0, 1.0])):
+            if self._apex[0] == 0.0 and self._apex[1] == 0.0:
+                words.append('KZ')
+                words.append(' ')
+                words.append('{0:.12e}'.format(self._apex[2]))
+            else:
+                words.append('K/Z')
+                words.append('K/X')
+                for v in self._apex:
+                    words.append(' ')
+                    words.append('{0:.12e}'.format(v))
+        else:
+            nx, ny, nz = self._axis
+            a = 1 + self._t2
+            m = np.array([[1-a*nx**2, -a*nx*ny, -a*nx*nz],
+                          [-a*nx*ny, 1-a*ny**2, -a*ny*nz],
+                          [-a*nx*nz, -a*ny*nz, 1-a*nz**2]])
+            v = np.zeros(3)
+            k = -self._radius**2
+            m, v, k = Transformation(translation=self._apex).apply2gq(m, v, k)
+            return str(GQuadratic(m, v, k, **self.options))
+        words.append(' ')
+        words.append('{0:.12e}'.format(self._t2))
+        return print_card(words)
+
 
 class GQuadratic(Surface, _GQuadratic):
     """Generic quadratic surface class.
@@ -403,6 +531,19 @@ class GQuadratic(Surface, _GQuadratic):
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr,
                           **self.options)
+
+    def __str__(self):
+        words = [str(self.options['name']), ' ', 'GQ']
+        a, b, c = np.diag(self._m)
+        d = self._m[0, 1] + self._m[1, 0]
+        e = self._m[1, 2] + self._m[2, 1]
+        f = self._m[0, 2] + self._m[2, 0]
+        g, h, j = self._v
+        k = self._k
+        for v in [a, b, c, d, e, f, g, h, j, k]:
+            words.append(' ')
+            words.append('{0:.12e}'.format(v))
+        return print_card(words)
 
 
 class Torus(Surface, _Torus):
@@ -444,3 +585,17 @@ class Torus(Surface, _Torus):
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b,
                      transform=tr, **self.options)
+
+    def __str__(self):
+        words = [str(self.options['name']), ' ']
+        if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
+            words.append('TX')
+        elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
+            words.append('TY')
+        elif np.all(self._axis == np.array([0.0, 0.0, 1.0])):
+            words.append('TZ')
+        x, y, z = self._center
+        for v in [x, y, z, self._R, self._a, self._b]:
+            words.append(' ')
+            words.append('{0:.12e}'.format(v))
+        return print_card(words)

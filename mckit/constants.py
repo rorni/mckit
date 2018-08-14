@@ -16,4 +16,7 @@ MIN_BOX_VOLUME = MIN_VOLUME
 RESOLUTION = np.finfo(float).resolution
 
 
+_TOLERANCE = 1.e-3
+
+
 TIME_UNITS = {'SECS': 1., 'MINS': 60., 'HOURS': 3600., 'DAYS': 3600.*24, 'YEARS': 3600.*24*365}

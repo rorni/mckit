@@ -4,6 +4,7 @@
 import numpy as np
 
 from .geometry import ORIGIN
+from .printer import print_card
 
 __all__ = ['Transformation', 'IDENTITY_ROTATION']
 
@@ -95,6 +96,43 @@ class Transformation:
         self._u = u
         self._t = -np.dot(u, translation) if inverted else translation.copy()
         self._options = options
+
+    @staticmethod
+    def _get_precision(u, t, box, tol):
+        u1 = u.transpose()
+        u = 180.0 / np.pi * np.arccos(u)
+        t1 = t
+        prec = np.finfo(float).precision
+        while True:
+            u2 = np.cos(np.pi * np.round(u, prec) / 180.0).transpose()
+            t2 = np.round(t, prec)
+            if np.linalg.norm(t2 - t1) >= tol:
+                break
+            diffs = [np.dot(u1 - u2, c) + np.dot(u2, t2) - np.dot(u1, t1)
+                     for c in box.corners]
+            if max(diffs) >= tol:
+                break
+        return prec + 1
+
+    def _calculate_hash(self, u, t):
+        self._hash = 0
+        for v in t:
+            self._hash ^= hash(v)
+        for v in u.ravel():
+            self._hash ^= hash(v)
+
+    def __str__(self):
+        return print_card(['*TR{0}'.format(self['name'])] + self.get_words())
+
+    def get_words(self):
+        words = []
+        for v in self._t:
+            words.append(' ')
+            words.append('{0:.12e}'.format(v))
+        for v in self._u.ravel():
+            words.append(' ')
+            words.append('{0:.12e}'.foramt(np.arccos(v) * 180 / np.pi))
+        return words
 
     def __hash__(self):
         return id(self)

@@ -456,4 +456,45 @@ class Universe:
         format_rules : dict
             A dictionary of format rules.
         """
-        raise NotImplementedError
+        universe = [self.select_universe(name) for name in self.get_universes()]
+        items = [str(self._verbose_name)]
+        items.append('C cell section. Main universe.')
+        for c in self._cells:
+            items.append(str(c))
+        for u in universe:
+            items.append('C start of universe {0}'.format(u.name))
+            for c in u:
+                items.append(str(c))
+            items.append('C end of universe {0}'.format(u.name))
+        items.append('')
+        items.append('C Surface section')
+        for s in self.get_surfaces():
+            items.append(str(s))
+        for u in universe:
+            items.append('C start of surfaces of universe {0}'.format(u.name))
+            for s in u.get_surfaces():
+                items.append(str(s))
+            items.append('C end of surfaces of universe {0}'.format(u.name))
+        items.append('')
+        items.append('C data section')
+        compositions = {}
+        for mat in self.get_materials():
+            cc = mat.composition
+            compositions[cc['name']] = cc
+        for c in sorted(compositions.keys()):
+            items.append(str(compositions[c]))
+        for u in universe:
+            items.append('C start of surfaces of universe {0}'.format(u.name))
+            for m in u.get_materials():
+                cc = m.composition
+                if cc not in compositions.keys():
+                    compositions[cc['name']] = cc
+                    items.append(str(cc))
+            items.append('C end of surfaces of universe {0}'.format(u.name))
+        items.append('')
+
+        with open(filename, 'w') as f:
+            for item in items:
+                f.write(item)
+                f.write('\n')
+
