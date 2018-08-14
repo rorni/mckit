@@ -2,45 +2,8 @@
 
 import numpy as np
 
-from .transformation import Transformation
-from mckit.parser.meshtal_parser import meshtal_parser, meshtal_lexer
-
 from .geometry import EX, EY, EZ
-
-
-_BIN_NAMES = {'ENERGY': 'ebins', 'X': 'xbins', 'Y': 'ybins', 'Z': 'zbins', 'R': 'rbins', 'THETA': 'tbins'}
-
-
-def read_meshtal(filename):
-    """Reads MCNP meshtal file.
-
-    Parameters
-    ----------
-    filename : str
-        File that contains MCNP meshtally data.
-
-    Returns
-    -------
-    tallies : dict
-        Dictionary of mesh tallies contained in the file. It is
-        tally_name -> Fmesh pairs.
-    """
-    with open(filename) as f:
-        text = f.read()
-    meshtal_lexer.begin('INITIAL')
-    meshtal_data = meshtal_parser.parse(text, lexer=meshtal_lexer)
-    histories = meshtal_data['histories']
-    tallies = {}
-    for t in meshtal_data['tallies']:
-        name = t['name']
-        particle = t['particle']
-        data = t['result']
-        error = t['error']
-        kwdata = {}
-        for k, v in tallies['bins'].items():
-            kwdata[_BIN_NAMES[k]] = v
-        tallies[name] = FMesh(name, particle, data, error, histories=histories, **kwdata)
-    return tallies
+from .transformation import Transformation
 
 
 class AbstractMesh:
