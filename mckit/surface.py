@@ -89,7 +89,7 @@ def create_surface(kind, *params, **options):
         else:
             r0 = params[0] * axis
             ta = np.sqrt(params[1])
-        sheet = 0 if len(params) % 2 == 0 else params[-1]
+        sheet = 0 if len(params) % 2 == 0 else int(params[-1])
         return Cone(r0, axis, ta, sheet, **options)
     # ---------- GQ -----------------
     elif kind == 'GQ':
