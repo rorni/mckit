@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from .geometry import EX, EY, EZ
+from .geometry import EX, EY, EZ, Box
 from .transformation import Transformation
 
 
@@ -51,7 +51,7 @@ class RectMesh:
         """Gets the shape of the mesh."""
         return self._xbins.size - 1, self._ybins.size - 1, self._zbins.size - 1
 
-    def calculate_volumes(self, cells, verbose=False, min_volume=1.e-3):
+    def calculate_volumes(self, cells, with_mat_only=True, verbose=False, min_volume=1.e-3):
         """Calculates volumes of cells.
 
         Parameters
@@ -75,7 +75,9 @@ class RectMesh:
                 for k in range(self.shape[2]):
                     box = self.get_voxel(i, j, k)
                     for c in cells:
-                        vol = c.volume(box=box, min_volume=min_volume)
+                        if with_mat_only and c.material() is None:
+                            continue
+                        vol = c.shape.volume(box=box, min_volume=min_volume)
                         if vol > 0:
                             if c not in volumes.keys():
                                 volumes[c] = SparseData(self)
@@ -127,15 +129,16 @@ class RectMesh:
             point = self._tr.reverse().apply2point(point)
         else:
             point = np.array(point)
-        x_proj = np.dot(EX, point)
-        y_proj = np.dot(EY, point)
-        z_proj = np.dot(EZ, point)
+        x_proj = np.dot(point, EX)
+        y_proj = np.dot(point, EY)
+        z_proj = np.dot(point, EZ)
         i = np.searchsorted(self._xbins, x_proj) - 1
         j = np.searchsorted(self._ybins, y_proj) - 1
         k = np.searchsorted(self._zbins, z_proj) - 1
-        if isinstance(i, int):
+        if len(point.shape) == 1:
             return self.check_indices(i, j, k)
         else:
+            print('i=', i, 'j=', j, 'k=', k)
             indices = []
             for x, y, z in zip(i, j, k):
                 indices.append(self.check_indices(x, y, z))
@@ -203,11 +206,11 @@ class RectMesh:
             raise ValueError('Wrong number of fixed spatial variables.')
 
         if X is not None:
-            index = np.searchsorted(self._xbins, X) - 1
+            index = self._check_x(np.searchsorted(self._xbins, X) - 1)
         elif Y is not None:
-            index = np.searchsorted(self._ybins, Y) - 1
+            index = self._check_y(np.searchsorted(self._ybins, Y) - 1)
         elif Z is not None:
-            index = np.searchsorted(self._zbins, Z) - 1
+            index = self._check_z(np.searchsorted(self._zbins, Z) - 1)
         else:
             index = None
 
