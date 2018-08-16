@@ -273,6 +273,8 @@ class SparseData:
     -------
     copy()
         Makes a copy of the data.
+    total()
+        Finds a sum of all data elements.
     """
     def __init__(self, mesh):
         self._mesh = mesh
@@ -296,8 +298,16 @@ class SparseData:
         return iter(self._data.items())
 
     def copy(self):
+        """Makes a copy of the data."""
         result = SparseData(self.mesh)
         result._data = self._data.copy()
+        return result
+
+    def total(self):
+        """Finds a sum of all data elements."""
+        result = 0.0
+        for v in self._data.values():
+            result += np.sum(v)
         return result
 
     @property
@@ -458,9 +468,9 @@ class FMesh:
             self._mesh = RectMesh(xbins, ybins, zbins, transform=transform)
         elif xbins is None and ybins is None:
             self._mesh = CylMesh(origin, axis, vec, rbins, zbins, tbins)
-        if self._data.shape != self._mesh.shape:
+        if self._data.shape[1:] != self._mesh.shape:
             raise ValueError("Incorrect data shape")
-        elif self._error.shape != self._mesh.shape:
+        elif self._error.shape[1:] != self._mesh.shape:
             raise ValueError("Incorrect error shape")
 
     @property
