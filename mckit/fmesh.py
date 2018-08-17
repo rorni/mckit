@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from itertools import product
+
 import numpy as np
 
 from .geometry import EX, EY, EZ, Box
@@ -257,15 +259,13 @@ class SparseData:
 
     Parameters
     ----------
-    mesh : RectMesh
-        Reference spatial mesh.
+    shape : tuple
+        Shape of the data.
 
     Properties
     ----------
     shape : tuple[int]
         Mesh shape.
-    mesh : RectMesh
-        Mesh object
     size : int
         The quantity of nonzero elements.
 
@@ -273,18 +273,22 @@ class SparseData:
     -------
     copy()
         Makes a copy of the data.
+    dense()
+        Converts SparseData object to dense matrix (numpy array).
     total()
         Finds a sum of all data elements.
     """
-    def __init__(self, mesh):
-        self._mesh = mesh
+    def __init__(self, shape):
+        self._shape = shape
         self._data = {}
 
     def __setitem__(self, index, value):
         """Adds new data element by its index."""
-        index = self._mesh.check_indices(*index)
-        if index is None:
-            raise IndexError('Index value is out of range')
+        if len(index) != len(self._shape):
+            raise ValueError("Wrong shape.")
+        for i, b in zip(index, self._shape):
+            if i < 0 or i >= b:
+                raise IndexError('Index value is out of range')
         if value == 0:
             self._data.pop(index, None)
         else:
@@ -292,6 +296,11 @@ class SparseData:
 
     def __getitem__(self, index):
         """Gets data value with specified indices."""
+        if len(index) != len(self._shape):
+            raise ValueError("Wrong shape.")
+        for i, b in zip(index, self._shape):
+            if i < 0 or i >= b:
+                raise IndexError('Index value is out of range')
         return self._data.get(index, 0)
 
     def __iter__(self):
@@ -299,8 +308,15 @@ class SparseData:
 
     def copy(self):
         """Makes a copy of the data."""
-        result = SparseData(self.mesh)
+        result = SparseData(self._shape)
         result._data = self._data.copy()
+        return result
+
+    def dense(self):
+        """Converts SparseData object to dense matrix (numpy array)."""
+        result = np.zeros(self._shape)
+        for index, value in self._data.items():
+            result[index] = value
         return result
 
     def total(self):
@@ -312,11 +328,7 @@ class SparseData:
 
     @property
     def shape(self):
-        return self._mesh.shape
-
-    @property
-    def mesh(self):
-        return self._mesh
+        return self._shape
 
     @property
     def size(self):
@@ -346,22 +358,19 @@ class SparseData:
         return self.__add__(other)
 
     def __rsub__(self, other):
-        return self.__sub__(other)
+        return self.__sub__(other).__imul__(-1)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    def __rtruediv__(self, other):
-        return self.__truediv__(other)
-
     def __iadd__(self, other):
         if isinstance(other, int) or isinstance(other, float):
-            for index, value in self:
+            for index in product(*map(range, self._shape)):
                 self[index] += other
         elif not isinstance(other, SparseData):
             raise TypeError('Unsupported operand type')
-        elif self.mesh != other.mesh:
-            raise ValueError('These data belong to different meshes.')
+        elif self._shape != other.shape:
+            raise ValueError('Operands have inconsistent shapes')
         else:
             for index, value in other:
                 self[index] += value
@@ -369,7 +378,7 @@ class SparseData:
 
     def __imul__(self, other):
         if isinstance(other, int) or isinstance(other, float):
-            for index, value in self:
+            for index in self._data.keys():
                 self[index] *= other
         elif isinstance(other, np.ndarray):
             if self.shape != other.shape:
@@ -378,20 +387,23 @@ class SparseData:
                 self[index] *= other[index]
         elif not isinstance(other, SparseData):
             raise TypeError('Unsupported operand type')
-        elif self.mesh != other.mesh:
+        elif self._shape != other.shape:
             raise ValueError('These data belong to different meshes.')
         else:
             for index, value in other:
                 self[index] *= value
+            del_indices = set(self._data.keys()).__sub__(set(other._data.keys()))
+            for index in del_indices:
+                self._data.pop(index)
         return self
 
     def __isub__(self, other):
         if isinstance(other, int) or isinstance(other, float):
-            for index, value in self:
+            for index in product(*map(range, self._shape)):
                 self[index] -= other
         elif not isinstance(other, SparseData):
             raise TypeError('Unsupported operand type')
-        elif self.mesh != other.mesh:
+        elif self._shape != other.shape:
             raise ValueError('These data belong to different meshes.')
         else:
             for index, value in other:
@@ -404,7 +416,7 @@ class SparseData:
                 self[index] = value / other
         elif not isinstance(other, SparseData):
             raise TypeError('Unsupported operand type')
-        elif self.mesh != other.mesh:
+        elif self._shape != other.shape:
             raise ValueError('These data belong to different meshes.')
         else:
             for index, value in other:

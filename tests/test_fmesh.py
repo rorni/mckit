@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from itertools import product
 
-from mckit.fmesh import RectMesh
+from mckit.fmesh import RectMesh, SparseData
 from mckit.transformation import Transformation
 from mckit.geometry import EX, EY, EZ
 from mckit.surface import create_surface
@@ -242,4 +242,178 @@ class TestRectMesh:
             assert index == expected['index']
             np.testing.assert_array_almost_equal(x, expected['x'])
             np.testing.assert_array_almost_equal(y, expected['y'])
+
+
+class TestSparseData:
+    @pytest.mark.parametrize('shape', [(2, 4), (5, 3, 8), (9, 8, 4, 6)])
+    def test_creation(self, shape):
+        s = SparseData(shape)
+        assert s._shape == shape
+
+    @pytest.mark.parametrize('shape, input', [
+        ((2, 3), {(0, 1): 3, (1, 2): 4, (1, 1): 2})
+    ])
+    def test_copy(self, shape, input):
+        s = SparseData(shape)
+        s._data = input
+        sc = s.copy()
+        assert sc._data == input
+        assert id(sc._data) != id(input)
+
+    @pytest.mark.parametrize('shape, input, expected', [
+        ((2, 3), {(0, 1): 3, (1, 2): 4, (1, 1): 2}, np.array([[0, 3, 0], [0, 2, 4]])),
+        ((3, 2), {}, np.zeros((3, 2))),
+        ((3, 2), {(0, 0): -1, (2, 1): 4, (0, 1): -2}, np.array([[-1, -2], [0, 0], [0, 4]]))
+    ])
+    def test_dense(self, shape, input, expected):
+        s = SparseData(shape)
+        s._data = input
+        d = s.dense()
+        assert np.all(d == expected)
+
+    @pytest.mark.parametrize('shape, input, expected', [
+        ((2, 3), {(0, 1): 3, (1, 2): 4, (1, 1): 2}, 9.0),
+        ((3, 2), {}, 0.0),
+        ((3, 2), {(0, 0): -1, (2, 1): 4, (0, 1): -2}, 1.0),
+        ((3, 2), {(0, 1): np.array([1, 2, 3]), (2, 1): np.array([-3, 4, 8])}, 15.0)
+    ])
+    def test_total(self, shape, input, expected):
+        s = SparseData(shape)
+        s._data = input
+        assert s.total() == expected
+
+    @pytest.mark.parametrize('index, expected', [
+        ((0, 0), -1),
+        ((0, 1), -2),
+        ((1, 0), 0), ((1, 1), 0), ((2, 0), 0), ((2, 1), 4),
+        ((-1, 0), None), ((2, 2), None)
+    ])
+    def test_get(self, index, expected):
+        s = SparseData((3, 2))
+        s._data = {(0, 0): -1, (2, 1): 4, (0, 1): -2}
+        if expected is None:
+            with pytest.raises(IndexError):
+                print(s[index])
+        else:
+            assert s[index] == expected
+
+    @pytest.mark.parametrize('index, value', [
+        ((0, -1), None), ((1, 2), None), ((3, 4), None), ((2, 1), 3),
+        ((0, 1), -1), ((1, 0), 5)
+    ])
+    def test_set(self, index, value):
+        s = SparseData((3, 2))
+        if value is None:
+            with pytest.raises(IndexError):
+                s[index] = 1
+        else:
+            s[index] = value
+            assert s[index] == value
+
+    @pytest.mark.parametrize('shape, input, index', [
+        ((2, 3), {(0, 1): 3, (1, 2): 4, (1, 1): 2}, (1, 2)),
+        ((3, 2), {}, (0, 1)),
+        ((3, 2), {(0, 0): -1, (2, 1): 4, (0, 1): -2}, (2, 1)),
+    ])
+    def test_set_zero(self, shape, input, index):
+        s = SparseData(shape)
+        s._data = input
+        s[index] = 0
+        assert index not in s._data.keys()
+
+    @pytest.mark.parametrize('shape, input, expected', [
+        ((2, 3), {(0, 1): 3, (1, 2): 4, (1, 1): 2}, 3),
+        ((3, 2), {}, 0),
+        ((3, 2), {(0, 0): -1, (2, 1): 4, (0, 1): -2}, 3),
+    ])
+    def test_size(self, shape, input, expected):
+        s = SparseData(shape)
+        s._data = input
+        assert s.size == expected
+
+    @pytest.mark.parametrize('x, y, expected', [
+        ({(0, 1): 2, (1, 0): 3}, {(0, 0): 5}, {(0, 0): 5, (0, 1): 2, (1, 0): 3}),
+        ({(0, 1): 2, (1, 0): 3}, {(0, 1): 4, (0, 0): 5}, {(0, 0): 5, (0, 1): 6, (1, 0): 3}),
+        (2, {(0, 1): 2, (1, 0): 4}, {(0, 0): 2, (0, 1): 4, (1, 0): 6, (1, 1):2}),
+        (-2, {(0, 1): 2, (1, 0): 4}, {(0, 0): -2, (1, 0): 2, (1, 1): -2}),
+        ({(0, 1): 2, (1, 0): 4}, 2, {(0, 0): 2, (0, 1): 4, (1, 0): 6, (1, 1): 2}),
+        ({(0, 1): 2, (1, 0): 4}, -2, {(0, 0): -2, (1, 0): 2, (1, 1): -2})
+    ])
+    def test_sum(self, x, y, expected):
+        if isinstance(x, dict):
+            a = SparseData((2, 2))
+            a._data = x
+        else:
+            a = x
+        if isinstance(y, dict):
+            b = SparseData((2, 2))
+            b._data = y
+        else:
+            b = y
+        r = a + b
+        assert r._data == expected
+
+    @pytest.mark.parametrize('x, y, expected', [
+        ({(0, 1): 2, (1, 0): 3}, {(0, 0): 5}, {(0, 0): -5, (0, 1): 2, (1, 0): 3}),
+        ({(0, 1): 2, (1, 0): 3}, {(0, 1): 4, (0, 0): 5}, {(0, 0): -5, (0, 1): -2, (1, 0): 3}),
+        (2, {(0, 1): 2, (1, 0): 4}, {(0, 0): 2, (1, 0): -2, (1, 1): 2}),
+        (-2, {(0, 1): 2, (1, 0): 4}, {(0, 0): -2, (1, 0): -6, (1, 1): -2, (0, 1): -4}),
+        ({(0, 1): 2, (1, 0): 4}, 2, {(0, 0): -2, (1, 0): 2, (1, 1): -2}),
+        ({(0, 1): 2, (1, 0): 4}, -2, {(0, 0): 2, (1, 0): 6, (1, 1): 2, (0, 1): 4})
+    ])
+    def test_sub(self, x, y, expected):
+        if isinstance(x, dict):
+            a = SparseData((2, 2))
+            a._data = x
+        else:
+            a = x
+        if isinstance(y, dict):
+            b = SparseData((2, 2))
+            b._data = y
+        else:
+            b = y
+        r = a - b
+        assert r._data == expected
+
+    @pytest.mark.parametrize('x, y, expected', [
+        ({(0, 1): 2, (1, 0): 3}, {(0, 0): 5}, {}),
+        ({(0, 1): 2, (1, 0): 3}, {(0, 1): 4, (0, 0): 5}, {(0, 1): 8}),
+        (2, {(0, 1): 2, (1, 0): 4}, {(0, 1): 4, (1, 0): 8}),
+        (-2, {(0, 1): 2, (1, 0): 4}, {(1, 0): -8, (0, 1): -4}),
+        ({(0, 1): 2, (1, 0): 4}, 2, {(0, 1): 4, (1, 0): 8}),
+        ({(0, 1): 2, (1, 0): 4}, -2, {(1, 0): -8, (0, 1): -4})
+    ])
+    def test_mul(self, x, y, expected):
+        if isinstance(x, dict):
+            a = SparseData((2, 2))
+            a._data = x
+        else:
+            a = x
+        if isinstance(y, dict):
+            b = SparseData((2, 2))
+            b._data = y
+        else:
+            b = y
+        r = a * b
+        assert r._data == expected
+
+    @pytest.mark.parametrize('x, y, expected', [
+        ({(0, 1): 2}, {(0, 1): 5, (1, 0): 4}, {(0, 1): 0.4}),
+        ({(0, 1): 2, (1, 0): 3}, {(0, 1): 4, (0, 0): 5, (1, 0): 3}, {(0, 1): 0.5, (1, 0): 1.0}),
+        ({(0, 1): 2, (1, 0): 4}, 2, {(0, 1): 1.0, (1, 0): 2.0}),
+        ({(0, 1): 2, (1, 0): 4}, -2, {(1, 0): -2.0, (0, 1): -1.0})
+    ])
+    def test_div(self, x, y, expected):
+        if isinstance(x, dict):
+            a = SparseData((2, 2))
+            a._data = x
+        else:
+            a = x
+        if isinstance(y, dict):
+            b = SparseData((2, 2))
+            b._data = y
+        else:
+            b = y
+        r = a / b
+        assert r._data == expected
 

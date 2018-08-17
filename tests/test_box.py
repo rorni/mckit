@@ -4,8 +4,6 @@ import numpy as np
 
 from mckit.geometry import Box
 
-from tests.fmesh_test_data import box_test_data as btd
-
 
 @pytest.fixture(scope='module')
 def box():
