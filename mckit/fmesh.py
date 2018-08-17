@@ -273,6 +273,123 @@ class CylMesh:
         """Gets the shape of the mesh."""
         return self._rbins.size - 1, self._zbins.size - 1, self._tbins.size - 1
 
+    def transform(self, tr):
+        """Transforms this mesh.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+        """
+        raise NotImplementedError
+
+    def calculate_volumes(self, cells, with_mat_only=True, verbose=False, min_volume=1.e-3):
+        """Calculates volumes of cells.
+
+        Parameters
+        ----------
+        cells : list[Body]
+            List of cells.
+        verbose : bool
+            Verbose output during calculations.
+        min_volume : float
+            Minimum volume for cell volume calculations
+
+        Returns
+        -------
+        volumes : dict
+            Volumes of cells for every voxel. It is dictionary cell -> vol_matrix.
+            vol_matrix is SparseData instance - volume of cell for each voxel.
+        """
+        raise NotImplementedError
+
+    def get_voxel(self, i, j, k):
+        """Gets voxel.
+
+        Parameters
+        ----------
+        i, j, k : int
+            Indices of the voxel.
+
+        Returns
+        -------
+        voxel : Box
+            The box that describes the voxel.
+        """
+        raise NotImplementedError
+
+    def voxel_index(self, point, local=False):
+        """Gets index of voxel that contains specified point.
+
+        Parameters
+        ----------
+        point : array_like[float]
+            Coordinates of the point to be checked.
+        local : bool
+            If point is specified in local coordinate system.
+
+        Returns
+        -------
+        i, j, k : int
+            Indices along each dimension of voxel, where the point is located.
+        """
+        raise NotImplementedError
+
+    def check_indices(self, i, j, k):
+        """Check if the voxel with such indices really exists.
+
+        Parameters
+        ----------
+        i, j, k : int
+            Indices along x, y and z dimensions.
+
+        Returns
+        -------
+        index_tuple : tuple(int)
+            A tuple of indices if such voxel exists. None otherwise.
+        """
+        i = self._check_r(i)
+        j = self._check_z(j)
+        k = self._check_t(k)
+        if i is None or j is None or k is None:
+            return None
+        else:
+            return i, j, k
+
+    def _check_r(self, i):
+        if i < 0 or i >= self._rbins.size - 1:
+            return None
+        return i
+
+    def _check_z(self, j):
+        if j < 0 or j >= self._zbins.size - 1:
+            return None
+        return j
+
+    def _check_t(self, k):
+        if k < 0 or k >= self._tbins.size - 1:
+            return None
+        return k
+
+    def slice_axis_index(self, R=None, Z=None, T=None):
+        """Gets index and axis of slice.
+
+        Parameters
+        ----------
+        R, Z, T : float
+            Point of slice in local coordinate system.
+
+        Returns
+        -------
+        axis : int
+            Number of axis.
+        index : int
+            Index along axis.
+        x, y : ndarray[float]
+            Centers of bins along free axes.
+        """
+        raise NotImplementedError
+
 
 class SparseData:
     """Describes sparse spatial data.
