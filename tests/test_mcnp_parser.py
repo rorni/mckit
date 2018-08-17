@@ -209,7 +209,7 @@ def test_mcnp_lexer(lex_file, expected):
             2: {
                 'geometry': [1, 2, 'C', 3, 4, 'I', 5, 6, 'C', 'U', 'I', 'U', 'I',
                              7, 'U'],
-                'MAT': {'composition': 2, 'concentration': 1.0}, 'U': 1,
+                'MAT': {'composition': 2, 'concentration': 1.0e+24}, 'U': 1,
                 'IMPN': 2, 'TRCL': 1, 'name': 2
             },
             3: {'geometry': [8, 9, 'I', 10, 'C', 'I'], 'FILL': {'universe': 1},
