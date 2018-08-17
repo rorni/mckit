@@ -462,7 +462,7 @@ def read_meshtal(filename):
         data = t['result']
         error = t['error']
         kwdata = {}
-        for k, v in tallies['bins'].items():
+        for k, v in t['bins'].items():
             kwdata[_BIN_NAMES[k]] = v
         tallies[name] = FMesh(name, particle, data, error, histories=histories, **kwdata)
     return tallies

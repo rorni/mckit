@@ -9,6 +9,7 @@ from .material import AVOGADRO, Element, Composition, Material
 from .activation import activation, mesh_activation
 from .fmesh import FMesh
 from .parser.mcnp_input_parser import read_mcnp
+from .parser.meshtal_parser import read_meshtal
 
 __all__ = [
     'Universe', 'create_surface', 'Plane', 'Sphere', 'Cylinder', 'Cone',

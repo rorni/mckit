@@ -36,14 +36,9 @@ class RectMesh:
         self._ey = EY
         self._ez = EZ
         self._origin = np.array([self._xbins[0], self._ybins[0], self._zbins[0]])
+        self._tr = None
         if transform is not None:
-            self._ex = transform.apply2vector(self._ex)
-            self._ey = transform.apply2vector(self._ey)
-            self._ez = transform.apply2vector(self._ez)
-            self._origin = transform.apply2point(self._origin)
-            self._tr = transform
-        else:
-            self._tr = None
+            self.transform(transform)
 
     def __eq__(self, other):
         return self is other
@@ -52,6 +47,23 @@ class RectMesh:
     def shape(self):
         """Gets the shape of the mesh."""
         return self._xbins.size - 1, self._ybins.size - 1, self._zbins.size - 1
+
+    def transform(self, tr):
+        """Transforms this mesh.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+        """
+        self._origin = tr.apply2point(self._origin)
+        self._ex = tr.apply2vector(self._ex)
+        self._ey = tr.apply2vector(self._ey)
+        self._ez = tr.apply2vector(self._ez)
+        if self._tr is not None:
+            self._tr = tr.apply2transform(self._tr)
+        else:
+            self._tr = tr
 
     def calculate_volumes(self, cells, with_mat_only=True, verbose=False, min_volume=1.e-3):
         """Calculates volumes of cells.
@@ -82,7 +94,7 @@ class RectMesh:
                         vol = c.shape.volume(box=box, min_volume=min_volume)
                         if vol > 0:
                             if c not in volumes.keys():
-                                volumes[c] = SparseData(self)
+                                volumes[c] = SparseData(self.shape)
                             volumes[c][i, j, k] = vol
                     if verbose and volumes[c][i, j, k]:
                         print('Voxel ({0}, {1}, {2})'.format(i, j, k))
@@ -250,8 +262,16 @@ class CylMesh:
         self._origin = np.array(origin)
         self._axis = np.array(axis)
         self._vec = np.array(vec)
+        self._rbins = np.array(rbins)
+        self._zbins = np.array(zbins)
+        self._tbins = np.array(tbins)
         self._voxels = {}
-        raise NotImplementedError
+        # raise NotImplementedError
+
+    @property
+    def shape(self):
+        """Gets the shape of the mesh."""
+        return self._rbins.size - 1, self._zbins.size - 1, self._tbins.size - 1
 
 
 class SparseData:
@@ -460,9 +480,14 @@ class FMesh:
         
     Methods
     -------
-    get_slice() - gets specific slice of data.
-    get_spectrum(point) - gets energy spectrum at the specified point.
-    calculate_volumes(cells, min_volume, verbose) - calculates volumes of cells for every voxel.
+    get_slice()
+        Gets specific slice of data.
+    get_spectrum(point)
+        Gets energy spectrum at the specified point.
+    get_spectrum_by_index(index)
+        Gets energy spectrum at the specified mesh index.
+    mean_flux()
+        Gets average flux for every energy bin.
     """
     def __init__(self, name, particle, data, error, ebins=None, xbins=None, ybins=None, zbins=None, rbins=None,
                  tbins=None, transform=None, modifier=None, origin=None, axis=None, vec=None, histories=None):
@@ -488,6 +513,10 @@ class FMesh:
     @property
     def mesh(self):
         return self._mesh
+
+    @property
+    def particle(self):
+        return self._particle
 
     @property
     def histories(self):
@@ -586,7 +615,7 @@ class FMesh:
         else:
             if E <= self._ebins[0] or E > self._ebins[-1]:
                 raise ValueError("Specified energy lies outside of energy bins.")
-            i = np.searchsorted(self._ebins, E)
+            i = np.searchsorted(self._ebins, E) - 1
             data = data.take(i, axis=0)
             err = err.take(i, axis=0)
         return x, y, data, err
