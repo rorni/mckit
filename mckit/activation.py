@@ -469,7 +469,7 @@ class IrradiationProfile:
         time = 0
         for d, r in zip(self._duration, self._record):
             time += d
-            if r is not None:
+            if r:
                 result.append(time)
         return result
 
@@ -491,12 +491,13 @@ class IrradiationProfile:
         self._duration.append(duration * TIME_UNITS[units])
         self._record.append(record)
 
-    def adjust_time(self, time):
-        for unit in self._sort_units:
+    @classmethod
+    def adjust_time(cls, time):
+        for unit in cls._sort_units:
             d = time / TIME_UNITS[unit]
-            if d > 1:
+            if d >= 1:
                 return d, unit
-        return time, ''
+        return time, 'SECS'
 
     def insert_record(self, record, time, units='SECS'):
         """Inserts extra observation point for specified time.

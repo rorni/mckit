@@ -529,7 +529,7 @@ class SparseData:
         else:
             for index, value in other:
                 self[index] *= value
-            del_indices = set(self._data.keys()).__sub__(set(other._data.keys()))
+            del_indices = set(self._data.keys()).difference(set(other._data.keys()))
             for index in del_indices:
                 self._data.pop(index)
         return self
