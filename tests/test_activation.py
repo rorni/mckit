@@ -1,6 +1,7 @@
 import pytest
 from pathlib import Path
 import os
+import shutil
 import numpy as np
 from itertools import accumulate
 
@@ -266,13 +267,16 @@ def ebins():
     ]
 ])
 def test_convert(new_ebins, ebins, flux):
-    if Path('fluxes').exists():
-        os.remove('fluxes')
-    fispact_convert(ebins, flux)
+    if not Path('fluxes_convert').exists():
+        os.mkdir('fluxes_convert', mode=0o777)
+    fispact_convert(ebins, flux, convert='fluxes_convert/convert',
+                    fluxes='fluxes_convert/fluxes',
+                    arb_flux='fluxes_convert/arb_flux',
+                    files='fluxes_convert/files.convert')
     new_ebins = np.array(list(reversed(new_ebins))) * 1.e-6
     ebins = np.array(ebins)
-    assert Path('fluxes').exists()
-    with open('fluxes') as f:
+    assert Path('fluxes_convert/fluxes').exists()
+    with open('fluxes_convert/fluxes') as f:
         data = [float(x) for x in f.read().split()[:709]]
         new_flux = [x for x in reversed(data)]
     acc_flux = list(accumulate(flux))
@@ -285,36 +289,45 @@ def test_convert(new_ebins, ebins, flux):
             #       print(i, f, new_acc_flux[ind])
             assert f == pytest.approx(new_acc_flux[ind], rel=5.e-2)
 
-    os.remove('fluxes')
+    shutil.rmtree('fluxes_convert')
 
 
 class TestIrradiationProfile:
-    def test_irradiate(self):
-        raise NotImplementedError
+    @pytest.fixture
+    def irr_prof(self):
+        irr = IrradiationProfile(norm_flux=2.0)
+        irr.irradiate(5.0, 12, units='MINS')
+        irr.relax(20, units='MINS', record='ATOMS')
+        irr.irradiate(1.0, 2, units='HOURS', record='SPEC')
+        irr.relax(1, units='HOURS', record='SPEC')
+        irr.relax(2, units='MINS', record='ATOMS')
+        return irr
 
-    @pytest.mark.parametrize('input, times', [
-        ([
-            {'flux': 5.0, 'duration': 12, 'units': 'MINS', 'record': None},
-            {'duration': 20, 'units': 'MINS', 'record': 'ATOMS'},
-            {'flux': 1.0, 'duration': 2, 'units': 'HOURS', 'record': 'SPEC'},
-            {'duration': 1, 'units': 'HOURS', 'record': 'SPEC'},
-            {'duration': 2, 'units': 'MINS', 'record': 'ATOMS'}
-        ], list(accumulate([32*60, 7200, 3600, 120])))
+    @pytest.mark.parametrize('flux, duration, units, record, exception', [
+        (5.0, 10, 'HOURS', 'ABCD', ValueError),
+        (5.0, 10, 'ABCD', None, KeyError),
+        (-5.0, 10, 'MINS', None, ValueError),
+        (5.0, -10, 'MINS', None, ValueError)
     ])
-    def test_measure_times(self, input, times):
-        irr = IrradiationProfile()
-        for params in input:
-            if 'flux' in params.keys():
-                irr.irradiate(params['flux'], params['duration'],
-                              params['units'], params['record'])
-            else:
-                irr.relax(params['duration'],
-                              params['units'], params['record'])
-        measures = irr.measure_times()
+    def test_irradiate_failure(self, irr_prof, flux, duration, units, record, exception):
+        with pytest.raises(exception):
+            irr_prof.irradiate(flux, duration, units, record)
+
+    @pytest.mark.parametrize('times', [
+        list(accumulate([1920, 7200, 3600, 120]))
+    ])
+    def test_measure_times(self, irr_prof, times):
+        measures = irr_prof.measure_times()
         assert measures == times
 
-    def test_relax(self):
-        raise NotImplementedError
+    @pytest.mark.parametrize('duration, units, record, exception', [
+        (10, 'HOURS', 'ABCD', ValueError),
+        (10, 'ABCD', None, KeyError),
+        (-10, 'MINS', None, ValueError)
+    ])
+    def test_relax(self, irr_prof, duration, units, record, exception):
+        with pytest.raises(exception):
+            irr_prof.relax(duration, units, record)
 
     @pytest.mark.parametrize('time, value, unit', [
         (0.5, 0.5, 'SECS'),
@@ -337,9 +350,32 @@ class TestIrradiationProfile:
         assert adj_unit == unit
         assert adj_val == value
 
-    @pytest.mark.parametrize('input, ')
-    def test_insert_record(self):
-        raise NotImplementedError
+    @pytest.mark.parametrize('input, times, flux, record', [
+        (['SPEC', 20, 'MINS'], [720, 480, 720, 7200, 3600, 120], [5.0, 0, 0, 1.0, 0, 0], ['', 'SPEC', 'ATOMS', 'SPEC', 'SPEC', 'ATOMS']),
+        (['ATOMS', 3, 'HOURS'], [720, 1200, 7200, 1680, 1920, 120], [5.0, 0, 1.0, 0, 0, 0], ['', 'ATOMS', 'SPEC', 'ATOMS', 'SPEC', 'ATOMS']),
+        (['SPEC', 12730, 'SECS'], [720, 1200, 7200, 3600, 10, 110], [5.0, 0, 1.0, 0, 0, 0], ['', 'ATOMS', 'SPEC', 'SPEC', 'SPEC', 'ATOMS']),
+        (['SPEC', 7, 'MINS'], [420, 300, 1200, 7200, 3600, 120], [5.0, 5.0, 0, 1.0, 0, 0], ['SPEC', '', 'ATOMS', 'SPEC', 'SPEC', 'ATOMS']),
+        (['ATOMS', 1, 'HOURS'], [720, 1200, 1680, 5520, 3600, 120], [5.0, 0, 1.0, 1.0, 0, 0], ['', 'ATOMS', 'ATOMS', 'SPEC', 'SPEC', 'ATOMS'])
+    ])
+    def test_insert_record(self, irr_prof, input, times, flux, record):
+        irr_prof.insert_record(*input)
+        assert irr_prof._duration == times
+        assert irr_prof._flux == flux
+        assert irr_prof._record == record
 
-    def test_output(self):
-        raise NotImplementedError
+    @pytest.mark.parametrize('nominal, output', [
+        (10, [
+            'FLUX 25.0',
+            'TIME 12.0 MINS ',
+            'FLUX 0.0',
+            'TIME 20.0 MINS ATOMS',
+            'FLUX 5.0',
+            'TIME 2.0 HOURS SPEC',
+            'FLUX 0.0',
+            'TIME 1.0 HOURS SPEC',
+            'TIME 2.0 MINS ATOMS'
+        ])
+    ])
+    def test_output(self, irr_prof, nominal, output):
+        lines = irr_prof.output(nominal_flux=nominal)
+        assert lines == output

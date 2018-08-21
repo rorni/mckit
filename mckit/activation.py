@@ -451,6 +451,12 @@ class IrradiationProfile:
         """
         if record is None:
             record = ''
+        elif record != 'ATOMS' and record != 'SPEC':
+            raise ValueError('Unknown record')
+        if flux < 0:
+            raise ValueError('Flux cannot be less than zero')
+        if duration <= 0:
+            raise ValueError('Duration cannot be less than zero')
         self._flux.append(flux)
         self._duration.append(duration * TIME_UNITS[units])
         self._record.append(record)
@@ -487,6 +493,10 @@ class IrradiationProfile:
         """
         if record is None:
             record = ''
+        elif record != 'ATOMS' and record != 'SPEC':
+            raise ValueError('Unknown record')
+        if duration <= 0:
+            raise ValueError('Duration cannot be less than zero')
         self._flux.append(0)
         self._duration.append(duration * TIME_UNITS[units])
         self._record.append(record)
@@ -512,9 +522,9 @@ class IrradiationProfile:
             Time units.
         """
         time = time * TIME_UNITS[units]
-        cum_time = accumulate(self._duration)
+        cum_time = list(accumulate(self._duration))
         index = np.searchsorted(cum_time, time)
-        self._flux.insert(index, 0)
+        self._flux.insert(index, self._flux[index])
         self._record.insert(index, record)
         if index < len(cum_time):
             delta = cum_time[index] - time
