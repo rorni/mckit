@@ -297,14 +297,16 @@ def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile,
     if nostable:
         text.append('NOSTABLE')
     if inv_tol:
-        text.append('TOLERANCE  0  {1:.5e}  {2:.5e}'.format(*inv_tol))
+        text.append('TOLERANCE  0  {0:.5e}  {1:.5e}'.format(*inv_tol))
     if path_tol:
-        text.append('TOLERANCE  1  {1:.5e}  {2:.5e}'.format(*path_tol))
+        text.append('TOLERANCE  1  {0:.5e}  {1:.5e}'.format(*path_tol))
     if uncertainty:
         text.append('UNCERTAINTY {0}'.format(uncertainty))
     # Irradiation and relaxation profiles
     text.extend(irr_profile.output(flux))
     if zero:
+       # text.append('ATOMS')
+        text.append('FLUX 0')
         text.append('ZERO')
     text.extend(relax_profile.output())
     # Footer
@@ -340,24 +342,24 @@ def fispact_material(material, volume, tolerance=1.e-8):
     text = ['DENSITY {0}'.format(material.density)]
     composition = []
     if tolerance is not None:
-        mat = material.composition.natural(tolerance)
-        if mat is not None:
-            mass = volume * mat.density / 1000    # Because mass must be specified in kg.
-            for e in mat.composition.elements():
-                composition.append((e, mat.composition.get_weight(e) * 100))
+        nat_comp = material.composition.natural(tolerance)
+        if nat_comp is not None:
+            mass = volume * material.density / 1000    # Because mass must be specified in kg.
+            for e in nat_comp.elements():
+                composition.append((e, nat_comp.get_weight(e) * 100))
             text.append('MASS {0:.5} {1}'.format(mass, len(composition)))
     else:
-        mat = None
+        nat_comp = None
 
-    if tolerance is None or mat is None:
-        mat = material.composition.expand()
-        tot_atoms = volume * mat.concentration
-        for e in mat.composition.elements():
-            composition.append((e, mat.composition.get_atomic(e) * tot_atoms))
+    if tolerance is None or nat_comp is None:
+        exp_comp = material.composition.expand()
+        tot_atoms = volume * material.concentration
+        for e in exp_comp.elements():
+            composition.append((e, exp_comp.get_atomic(e) * tot_atoms))
         text.append('FUEL  {0}'.format(len(composition)))
 
     for e, f in sorted(composition, key=lambda x: -x[1]):
-        text.append('  {0}   {1:.5}'.format(e, f))
+        text.append('  {0:2s}   {1:.5}'.format(str(e), f))
     return text
 
 
@@ -562,8 +564,8 @@ class IrradiationProfile:
             time, unit = self.adjust_time(dur)
             lines.append('TIME {0:.5} {1} {2}'.format(time, unit, rec))
             last_flux = cur_flux
-        if last_flux > 0:
-            lines.append('FLUX 0')
+        #if last_flux > 0:
+        #    lines.append('FLUX 0')
         return lines
 
 
