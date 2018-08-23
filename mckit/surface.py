@@ -277,7 +277,7 @@ class Plane(Surface, _Plane):
                 words.append(' ')
                 words.append('{0:.12e}'.format(v))
         words.append(' ')
-        words.append('{0:.12e}'.format(self._k))
+        words.append('{0:.12e}'.format(-self._k))
         return print_card(words)
 
 
@@ -438,6 +438,7 @@ class Cone(Surface, _Cone):
             axis = tr.apply2vector(axis)
         axis = axis / np.linalg.norm(axis)
         Surface.__init__(self, **options)
+        # TODO: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
         _Cone.__init__(self, apex, axis, ta, sheet)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
@@ -445,8 +446,8 @@ class Cone(Surface, _Cone):
         return 0
 
     def transform(self, tr):
-        return Cone(self._apex, self._axis, np.sqrt(self._t2), transform=tr,
-                    **self.options)
+        return Cone(self._apex, self._axis, np.sqrt(self._t2),
+                    sheet=self._sheet, transform=tr, **self.options)
 
     def __str__(self):
         words = [str(self.options['name']), ' ']
@@ -467,7 +468,6 @@ class Cone(Surface, _Cone):
                 words.append('{0:.12e}'.format(self._apex[1]))
             else:
                 words.append('K/Y')
-                words.append('K/X')
                 for v in self._apex:
                     words.append(' ')
                     words.append('{0:.12e}'.format(v))
@@ -478,7 +478,6 @@ class Cone(Surface, _Cone):
                 words.append('{0:.12e}'.format(self._apex[2]))
             else:
                 words.append('K/Z')
-                words.append('K/X')
                 for v in self._apex:
                     words.append(' ')
                     words.append('{0:.12e}'.format(v))
@@ -494,6 +493,9 @@ class Cone(Surface, _Cone):
             return str(GQuadratic(m, v, k, **self.options))
         words.append(' ')
         words.append('{0:.12e}'.format(self._t2))
+        if self._sheet != 0:
+            words.append(' ')
+            words.append('{0:d}'.format(self._sheet))
         return print_card(words)
 
 
