@@ -7,9 +7,11 @@ from itertools import accumulate
 
 from mckit.activation import FispactError, fispact_fatal, fispact_files, \
                              fispact_convert, fispact_collapse, \
-                             IrradiationProfile, activation, LIBS, DATA_PATH
+                             IrradiationProfile, activation, \
+                             mesh_activation, LIBS, DATA_PATH
 from mckit.material import Material
-from mckit import read_meshtal
+from mckit import read_meshtal, read_mcnp
+from mckit.fmesh import SparseData
 
 
 @pytest.mark.parametrize('text, fatal', [
@@ -411,6 +413,7 @@ fmesh = read_meshtal('tests/activ1.m')[94]
 fluxes = fmesh._data[:, :, 0, 0]
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize('flux, mat, gamma_yield', [
     (fluxes[:, 0],  steel, [4.9092e+09, 2.5711e+09, 2.2591e+09, 7.0520e+08]),
     (fluxes[:, 1],  steel, [2.7429e+09, 1.4365e+09, 1.2622e+09, 3.9401e+08]),
@@ -482,5 +485,99 @@ def test_activation(irr_profile, rel_profile, ebins, flux, mat, gamma_yield):
         assert tot_flux == pytest.approx(expected, rel=0.1)
 
 
-def test_mesh_activation():
-    pass
+@pytest.fixture
+def act2_universe():
+    return read_mcnp('tests/activ2.i')
+
+
+@pytest.fixture
+def cell_mesh(act2_universe):
+    cm = {}
+    vol_data = {
+        3: {
+            (0, 0, 0): 4363.303128629923, (0, 1, 0): 10926.737990230322,
+            (0, 2, 0): 1210.5920724570751, (1, 0, 0): 10927.178978919983,
+            (1, 1, 0): 18000.0, (1, 2, 0): 4926.807012408972,
+            (2, 0, 0): 1210.692722350359, (2, 1, 0): 4926.640748977661,
+            (2, 2, 0): 57.69944563508034
+        },
+        4: {
+            (0, 0, 0): 2185.912571847439, (0, 0, 1): 2178.4597355872393,
+            (0, 1, 0): 5474.039610475302, (0, 1, 1): 5455.369516275823,
+            (0, 2, 0): 606.4782366156578, (0, 2, 1): 604.4117454439402,
+            (1, 0, 0): 5474.260523915291, (1, 0, 1): 5455.5911757051945,
+            (1, 1, 0): 5870.348867028952, (1, 1, 1): 5850.332002155483,
+            (1, 2, 0): 2468.214802443981, (1, 2, 1): 2459.7999919205904,
+            (2, 0, 0): 606.5286621451378, (2, 0, 1): 604.4617015868425,
+            (2, 1, 0): 2468.1315198540688, (2, 1, 1): 2459.7155023366213,
+            (2, 2, 0): 28.906065970659256, (2, 2, 1): 28.80797255784273
+        },
+        5: {
+            (0, 0, 1): 3275.6691752001643, (0, 0, 2): 1092.4295503646135,
+            (0, 1, 1): 8203.05297151208, (0, 1, 2): 2735.691202338785,
+            (0, 2, 1): 908.8283451274037, (0, 2, 2): 303.09488251805305,
+            (1, 0, 1): 8203.382547944784, (1, 0, 2): 2735.8038257807493,
+            (1, 1, 1): 8796.932394616306, (1, 1, 2): 2933.756907004863,
+            (1, 2, 1): 3698.7087735906243, (1, 2, 2): 1233.5134260356426,
+            (2, 0, 1): 908.9042013511062, (2, 0, 2): 303.1196426600218,
+            (2, 1, 1): 3698.585433885455, (2, 1, 2): 1233.4695970639586,
+            (2, 2, 1): 43.31633448600769, (2, 2, 2): 14.44675074890256
+        },
+        6: {
+            (0, 0, 2): 4362.233949825168, (0, 1, 2): 10924.066853709519,
+            (0, 2, 2): 1210.2941628545523, (1, 0, 2): 10924.50625821948,
+            (1, 1, 2): 11714.942165650427, (1, 2, 2): 4925.599230453372,
+            (2, 0, 2): 1210.3950809687376, (2, 1, 2): 4925.434475764632,
+            (2, 2, 2): 57.68485274165869
+        },
+        7: {
+            (0, 0, 2): 2181.116974912584, (0, 0, 3): 2177.390556782484,
+            (0, 1, 2): 5462.033426854759, (0, 1, 3): 5452.69837975502,
+            (0, 2, 2): 605.1470814272761, (0, 2, 3): 604.1138358414173,
+            (1, 0, 2): 5462.25312910974, (1, 0, 3): 5452.918455004692,
+            (1, 1, 2): 8997.802734375, (1, 1, 3): 8982.421875,
+            (1, 2, 2): 2462.799615226686, (1, 2, 3): 2458.5922099649906,
+            (2, 0, 2): 605.1975404843688, (2, 0, 3): 604.1640602052212,
+            (2, 1, 2): 2462.717237882316, (2, 1, 3): 2458.5092291235924,
+            (2, 2, 2): 28.842426370829344, (2, 2, 3): 28.79337966442108
+        }
+    }
+    for name, data in vol_data.items():
+        cell = act2_universe.select_cell(name)
+        cm[cell] = SparseData((3, 3, 5))
+        for index, vol in data.items():
+            cm[cell][index] = vol
+    return cm
+
+
+@pytest.mark.parametrize('fmesh', [
+    read_meshtal('tests/activ2_0.m')[14]
+])
+def test_mesh_activation(ebins, cell_mesh, irr_profile, rel_profile, fmesh):
+    mesh_result = mesh_activation(
+        'test_mesh', fmesh, cell_mesh, irr_profile, rel_profile, simple=True,
+        folder='tests/meshact', use_binary=True, tab4=True, read_only=True
+    )
+    mat_vol = {}
+    result = {}
+    for c, vols in cell_mesh.items():
+        if c.material() not in result.keys():
+            result[c.material()] = {}
+        mat_vol[c.material()] = mat_vol.setdefault(c.material(), 0) + vols
+        #print('mat in ref: ', c.material().composition)
+        for (i, j, k), vol in vols:
+            print(i, j, k)
+            result[c.material()][(i, j, k)] = activation(
+                'test mesh', c.material(), vol, (ebins, fmesh._data[:, i, j, k]),
+                irr_profile, rel_profile, tab4=True, use_binary=True
+            )
+
+    #print(mat_vol.keys())
+    for i, mr in enumerate(mesh_result['spectrum']):
+        for mat, data in mr.items():
+            #print('mat in comp: ', mat.composition)
+            for index, spec in data:
+                print('spec: ', spec)
+                print(mat_vol[mat][index])
+                np.testing.assert_array_almost_equal(spec * mat_vol[mat][index],
+                                                     result[mat][index]['spectrum'][i], decimal=1)

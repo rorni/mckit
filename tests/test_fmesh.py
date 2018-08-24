@@ -418,6 +418,13 @@ class TestSparseData:
         r = a / b
         assert r._data == expected
 
+    @pytest.mark.parametrize('data, expected', [
+        (np.array([[1, 2, 0], [3, 0, 1]]), {(0, 0): 1, (0, 1): 2, (1, 0): 3, (1, 2): 1})
+    ])
+    def test_from(self, data, expected):
+        s = SparseData.from_dense(data)
+        assert s._data == expected
+
 
 class TestFMesh:
     @pytest.fixture

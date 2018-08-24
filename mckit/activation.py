@@ -359,7 +359,7 @@ def fispact_material(material, volume, tolerance=1.e-8):
         text.append('FUEL  {0}'.format(len(composition)))
 
     for e, f in sorted(composition, key=lambda x: -x[1]):
-        text.append('  {0:2s}   {1:.5}'.format(str(e), f))
+        text.append('  {0:2s}   {1:.5}'.format(e.fispact_repr(), f))
     return text
 
 
@@ -747,7 +747,7 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
     for c, v in volumes.items():
         m = c.material()
         if m is not None:
-            vols = mat_vols.setdefault(m, SparseData(fmesh.mesh))
+            vols = mat_vols.setdefault(m, SparseData(fmesh.mesh.shape))
             vols += v
     element_keywords = set()
     value_keywords = set()
@@ -764,11 +764,11 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
         element_keywords.add('inhalation')
     if kwargs.get('tab4', False):
         result['ebins'] = EBINS_24
-        result['spectrum'] = [{m: SparseData(fmesh.mesh) for m in materials} for t in result['time']]
-        result['a-energy'] = [{m: SparseData(fmesh.mesh) for m in materials} for t in result['time']]
-        result['b-energy'] = [{m: SparseData(fmesh.mesh) for m in materials} for t in result['time']]
-        result['g-energy'] = [{m: SparseData(fmesh.mesh) for m in materials} for t in result['time']]
-        result['fissions'] = [{m: SparseData(fmesh.mesh) for m in materials} for t in result['time']]
+        result['spectrum'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
+        result['a-energy'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
+        result['b-energy'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
+        result['g-energy'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
+        result['fissions'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
         value_keywords = {'spectrum', 'a-energy', 'b-energy', 'g-energy', 'fissions'}
 
     not_empty_indices = reduce(set.union, [set(vols._data.keys()) for vols in mat_vols.values()])
@@ -786,7 +786,10 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
         for i, f in enumerate(mean_flux):
             flux = np.zeros_like(mean_flux)
             flux[i] = f
-            factors = fmesh._data[i, :, :, :] / f
+            if f != 0:
+                factors = SparseData.from_dense(fmesh._data[i, :, :, :] / f)
+            else:
+                factors = 0
             if not read_only:
                 files = str(path / 'files_bin_{0}'.format(i))
                 fluxes = str(path / 'fluxes_bin_{0}'.format(i))
@@ -796,7 +799,7 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
                 fispact_collapse(files=files, use_binary=use_binary)
 
             for m in materials:
-                inventory = str(path / 'inventory_bin_{0}_mat_{1}'.format(i, m))
+                inventory = str(path / 'inventory_bin_{0}_c_{1}_d_{2:.4e}'.format(i, m.composition._options['name'], m.density))
                 r = activation(     # Volume 1 is important for uniform factors.
                     title, m, 1.0, (ebins, flux), irr_profile, relax_profile, inventory=inventory,
                     files=files, overwrite=False, read_only=read_only, **kwargs
@@ -805,11 +808,11 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
                 # Result combination
                 for key in value_keywords:
                     for item, val in zip(result[key], r[key]):
-                        item[m] += val * factors
+                        item[m] += mat_vols[m] * factors * val
                 for key in element_keywords:
                     for item, r_item in zip(result[key], r[key]):
                         for elem, value in r_item.items():
-                            values = item[m].setdefault(elem, SparseData(fmesh.mesh))
+                            values = item[m].setdefault(elem, SparseData(fmesh.mesh.shape))
                             values += value * factors
         # Indices for result checking.
         indices = random.sample(not_empty_indices, checks) if checks else []

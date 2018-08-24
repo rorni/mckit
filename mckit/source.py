@@ -18,7 +18,7 @@ def produce_gamma_sdef(cell_volumes, gamma_spectrum):
     Returns
     -------
     total_gamma : float
-        Totl gamma intensity.
+        Total gamma intensity.
     distributions : list
         List of SDEF distributions.
     """

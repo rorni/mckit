@@ -414,6 +414,8 @@ class SparseData:
         Converts SparseData object to dense matrix (numpy array).
     total()
         Finds a sum of all data elements.
+    from_dense()
+        Creates SparseData object from dense matrix (numpy array).
     """
     def __init__(self, shape):
         self._shape = shape
@@ -426,7 +428,7 @@ class SparseData:
         for i, b in zip(index, self._shape):
             if i < 0 or i >= b:
                 raise IndexError('Index value is out of range')
-        if value == 0:
+        if np.all(value == 0):
             self._data.pop(index, None)
         else:
             self._data[index] = value
@@ -442,6 +444,14 @@ class SparseData:
 
     def __iter__(self):
         return iter(self._data.items())
+
+    @staticmethod
+    def from_dense(data):
+        """Creates SparseData object from dense matrix."""
+        sparse = SparseData(data.shape)
+        for index in product(*map(range, data.shape)):
+            sparse[index] = data[index]
+        return sparse
 
     def copy(self):
         """Makes a copy of the data."""
@@ -501,38 +511,31 @@ class SparseData:
         return self.__mul__(other)
 
     def __iadd__(self, other):
-        if isinstance(other, int) or isinstance(other, float):
-            for index in product(*map(range, self._shape)):
-                self[index] += other
-        elif not isinstance(other, SparseData):
-            raise TypeError('Unsupported operand type')
-        elif self._shape != other.shape:
-            raise ValueError('Operands have inconsistent shapes')
-        else:
+        if isinstance(other, SparseData):
+            if self.shape != other.shape:
+                raise ValueError("Inconsistent shapes")
             for index, value in other:
                 self[index] += value
+        else:
+            for index in product(*map(range, self._shape)):
+                self[index] += other
         return self
 
     def __imul__(self, other):
-        if isinstance(other, int) or isinstance(other, float):
-            for index in self._data.keys():
-                self[index] *= other
-        elif isinstance(other, np.ndarray):
+        if isinstance(other, SparseData):
             if self.shape != other.shape:
-                raise ValueError("Inconsistent shape")
-            for index, value in self:
-                self[index] *= other[index]
-        elif not isinstance(other, SparseData):
-            raise TypeError('Unsupported operand type')
-        elif self._shape != other.shape:
-            raise ValueError('These data belong to different meshes.')
-        else:
+                raise ValueError("Inconsistent shapes")
             for index, value in other:
                 self[index] *= value
             del_indices = set(self._data.keys()).difference(set(other._data.keys()))
             for index in del_indices:
                 self._data.pop(index)
+        else:
+            for index in list(self._data.keys()):
+                self[index] *= other
         return self
+
+    # TODO: Revise sub and div methods.
 
     def __isub__(self, other):
         if isinstance(other, int) or isinstance(other, float):

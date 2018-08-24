@@ -349,7 +349,7 @@ class Universe:
             Requested cell.
         """
         for c in self._cells:
-            if c.get['name'] == name:
+            if c.get('name', None) == name:
                 return c
         raise KeyError("No such cell: {0}".format(name))
 
