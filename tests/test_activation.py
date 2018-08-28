@@ -4,6 +4,7 @@ import os
 import shutil
 import numpy as np
 from itertools import accumulate
+import pickle
 
 from mckit.activation import FispactError, fispact_fatal, fispact_files, \
                              fispact_convert, fispact_collapse, \
@@ -556,28 +557,46 @@ def cell_mesh(act2_universe):
 def test_mesh_activation(ebins, cell_mesh, irr_profile, rel_profile, fmesh):
     mesh_result = mesh_activation(
         'test_mesh', fmesh, cell_mesh, irr_profile, rel_profile, simple=True,
-        folder='tests/meshact', use_binary=True, tab4=True, read_only=True
+        folder='tests/meshact2', use_binary=True, tab4=True, read_only=True
     )
-    mat_vol = {}
-    result = {}
-    for c, vols in cell_mesh.items():
-        if c.material() not in result.keys():
-            result[c.material()] = {}
-        mat_vol[c.material()] = mat_vol.setdefault(c.material(), 0) + vols
-        #print('mat in ref: ', c.material().composition)
-        for (i, j, k), vol in vols:
-            print(i, j, k)
-            result[c.material()][(i, j, k)] = activation(
-                'test mesh', c.material(), vol, (ebins, fmesh._data[:, i, j, k]),
-                irr_profile, rel_profile, tab4=True, use_binary=True
-            )
+    if not Path('tests/arch.data').exists():
+        result = {}
+        for c, vols in cell_mesh.items():
+            if c.material() is None:
+                continue
+            result[c] = {}
+
+            for (i, j, k), vol in vols:
+                print(i, j, k)
+                result[c][(i, j, k)] = activation(
+                    'test mesh', c.material(), vol, (ebins, fmesh._data[:, i, j, k]),
+                    irr_profile, rel_profile, tab4=True, use_binary=True, read_only=False, inventory='inventory_{0}_{1}_{2}_b_{3}'.format(i, j, k, c['name'])
+                )
+        with open('tests/arch.data', 'wb') as f:
+            save_result = {c['name']: data for c, data in result.items()}
+            pickle.dump(save_result, f, pickle.HIGHEST_PROTOCOL)
+    else:
+        with open('tests/arch.data', 'rb') as f:
+            save_result = pickle.load(f)
+        result = {}
+        for c in cell_mesh.keys():
+            result[c] = save_result[c['name']]
 
     #print(mat_vol.keys())
-    for i, mr in enumerate(mesh_result['spectrum']):
-        for mat, data in mr.items():
+    for i, time_frame in enumerate(mesh_result['spectrum']):
+        for c, data in time_frame.items():
             #print('mat in comp: ', mat.composition)
             for index, spec in data:
-                print('spec: ', spec)
-                print(mat_vol[mat][index])
-                np.testing.assert_array_almost_equal(spec * mat_vol[mat][index],
-                                                     result[mat][index]['spectrum'][i], decimal=1)
+                tot_x = np.sum(spec)
+                tot_y = np.sum(result[c][index]['spectrum'][i])
+                e_x = np.sum(spec * mesh_result['ebins'][1:])
+                e_y = np.sum(result[c][index]['spectrum'][i] * mesh_result['ebins'][1:])
+                print('t=', i, 'm=', c.material().composition['name'],'index: ', index, 'tot: ', tot_x / tot_y, ' energy: ', e_x / e_y)
+
+                for j, (x, y) in enumerate(zip(spec, result[c][index]['spectrum'][i])):
+                    if y == 0 and x == 0:
+                        continue
+                    #if abs(x - y) / x > 0.001:
+                    #print('t=', i, 'e=', j, 'm=', c.material().composition['name'], x / y, cell_mesh[c][index], x, y)
+                    #assert x == pytest.approx(y, rel=1.e-2)
+                # np.testing.assert_array_almost_equal(spec, result[c][index]['spectrum'][i])

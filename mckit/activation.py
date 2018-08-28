@@ -1,6 +1,7 @@
 """Module for activation calculations and FISPACT coupling."""
 from itertools import accumulate
 from functools import reduce
+from collections import defaultdict
 import random
 import re
 import subprocess
@@ -354,12 +355,14 @@ def fispact_material(material, volume, tolerance=1.e-8):
     if tolerance is None or nat_comp is None:
         exp_comp = material.composition.expand()
         tot_atoms = volume * material.concentration
+        # print('tot atoms ', tot_atoms, 'vol ', volume, 'conc ', material.concentration)
         for e in exp_comp.elements():
             composition.append((e, exp_comp.get_atomic(e) * tot_atoms))
         text.append('FUEL  {0}'.format(len(composition)))
 
     for e, f in sorted(composition, key=lambda x: -x[1]):
-        text.append('  {0:2s}   {1:.5}'.format(e.fispact_repr(), f))
+        # print(e, f)
+        text.append('  {0:2s}   {1:.5e}'.format(e.fispact_repr(), f))
     return text
 
 
@@ -666,6 +669,317 @@ def activation(title, material, volume, spectrum, irr_profile, relax_profile, in
     return result
 
 
+def _mesh_fact(shape):
+    return lambda: SparseData(shape=shape)
+
+
+def prepare_mesh_container(fmesh, volumes, irr_profile, relax_profile, folder,
+                           read_only, **kwargs):
+    """Prepares container for acitvation calculation results.
+
+    Returns
+    -------
+    path : Path
+        Path to store results of calculations.
+    result : dict
+        Dictionary of results. Physical value -> timeframe -> cell -> voxel->
+        value.
+    element_keywords, value_keywords : set
+        A set of physical quantities, which will be calculated.
+    indices : set
+        A set of indices of mesh voxels, that are not empty.
+    """
+    path = Path(folder)
+    if path.exists() and not path.is_dir():
+        raise FileExistsError("Such file exists but it is not folder.")
+    elif not path.exists():
+        if read_only:
+            raise FileNotFoundError("Data directory not found")
+        path.mkdir()
+
+    result = {
+        'time': irr_profile.measure_times() + relax_profile.measure_times(),
+        'fmesh': fmesh,
+        'zero': len(irr_profile.measure_times()),
+        'volumes': volumes
+        # Other are optional
+    }
+
+    cells = volumes.keys()
+
+    factory = _mesh_fact(fmesh.mesh.shape)
+
+    element_keywords = set()
+    value_keywords = set()
+    if kwargs.get('tab1', False):
+        result['atoms'] = [
+            {c: defaultdict(factory) for c in cells} for t in result['time']
+        ]
+        element_keywords.add('atoms')
+    if kwargs.get('tab2', False):
+        result['activity'] = [
+            {c: defaultdict(factory) for c in cells} for t in result['time']
+        ]
+        element_keywords.add('activity')
+    if kwargs.get('tab3', False):
+        result['ingestion'] = [
+            {c: defaultdict(factory) for c in cells} for t in result['time']
+        ]
+        result['inhalation'] = [
+            {c: defaultdict(factory) for c in cells} for t in result['time']
+        ]
+        element_keywords.add('ingestion')
+        element_keywords.add('inhalation')
+    if kwargs.get('tab4', False):
+        result['ebins'] = EBINS_24
+        result['spectrum'] = [
+            {c: factory() for c in cells} for t in result['time']
+        ]
+        result['a-energy'] = [
+            {c: factory() for c in cells} for t in result['time']
+        ]
+        result['b-energy'] = [
+            {c: factory() for c in cells} for t in result['time']
+        ]
+        result['g-energy'] = [
+            {c: factory() for c in cells} for t in result['time']
+        ]
+        result['fissions'] = [
+            {c: factory() for c in cells} for t in result['time']
+        ]
+        value_keywords = {'spectrum', 'a-energy', 'b-energy', 'g-energy',
+                          'fissions'}
+
+    indices = reduce(
+        set.union, [set(vols._data.keys()) for vols in volumes.values()]
+    )
+
+    return path, result, element_keywords, value_keywords, indices
+
+
+def full_mesh_activation(title, fmesh, volumes, irr_profile, relax_profile,
+                         folder, read_only=False, use_indices=None,
+                         use_binary=False, **kwargs):
+    """Do full calculations of activation for mesh voxels.
+
+    Parameters
+    ----------
+    title : str
+        Title for the inventory.
+    fmesh : FMesh
+        FMesh data.
+    volumes : dict
+        A dictionary of cell volumes: cell->SparseData.
+    irr_profile : IrradiationProfile
+        Irradiation profile
+    relax_profile: IrradiationProfile
+        Relaxation profile.
+    folder : str
+        Path to folder with calculation results.
+    read_only : bool
+        Only read already calculated results. Default: False.
+    use_indices : Iterable
+        List of voxel indices, where data must be calculated. Default: None -
+        calculate for all non-empty voxels.
+    use_binary : bool
+        Use binary data rather text data for FISPACT data library.
+    kwargs : dict
+        Parameters for fispact inventory. See docs for fispact_inventory
+        function.
+
+    Returns
+    -------
+    result : dict
+        A dictionary of calculation results. It contains the following keys:
+        'time' - a list of time moments in seconds;
+        'zero' - int - the starting index of relaxation phase.
+        'volumes' - a dict of SparseData. cell->mesh of volumes [cc]
+        'fmesh' - link to fmesh data.
+        'ebins' - a list of gamma energy bins;
+        All other data are lists - one item for each time moment.
+        'atoms' - a of dict of dict of SparseData. material->isotope->mesh of concentrations [atoms];
+        'activity' - a dict of dict of SparseData. material->isotope->mesh of activities [Bq];
+        'ingestion' - a dict of dict of SparseData. material->isotope->mesh of ingestion dose [Sv/hour];
+        'inhalation' - a dict of dict of SparseData. material->isotope->mesh of inhalation dose [Sv/hour]
+        'spectrum' - a dict of SparseData. material->mesh of ndarrays [gammas/sec];
+        'a-energy' - a dict of SparseData. material->mesh of alpha-activity [MeV/sec];
+        'b-energy' - a dict of SparseData. material->mesh of beta-activity [MeV/sec];
+        'g-energy' - a dict of SparseData. material->mesh of gamma-activity [MeV/sec];
+        'fissions' - a dict of SparseData. material->mesh of spontaneous fission neutrons [neutrons/sec];
+    """
+    path, result, element_keywords, value_keywords, indices = \
+        prepare_mesh_container(
+            fmesh, volumes, irr_profile, relax_profile, folder, read_only,
+            **kwargs
+        )
+
+    if use_indices is not None:
+        indices = use_indices
+
+    if not read_only:
+        arrayx = str(path / 'arrayx')
+        files = str(path / 'files')
+        fispact_files(files=files, arrayx=arrayx)
+        fispact_condense(condense=str(path / 'condense'), files=files)
+
+    for i, j, k in indices:
+        # cells, that are contained in this voxel.
+        cells = {}
+        for c, vol in volumes.items():
+            if vol[i, j, k] != 0 and c.material() is not None:
+                cells[c] = vol[i, j, k]
+
+        if not cells:
+            continue
+
+        ebins, flux, err = fmesh.get_spectrum_by_index((i, j, k))
+        ebins[0] = 1.e-11
+        files = str(path / 'files_{0}_{1}_{2}'.format(i, j, k))
+        if not read_only:
+            fluxes = str(path / 'fluxes_{0}_{1}_{2}'.format(i, j, k))
+            collapx = str(path / 'collapx_{0}_{1}_{2}'.format(i, j, k))
+
+            fispact_files(files=files, collapx=collapx, fluxes=fluxes,
+                          arrayx=arrayx)
+            fispact_convert(ebins, flux, fluxes=fluxes)
+            fispact_collapse(files=files, use_binary=use_binary)
+
+        for c, vol in cells.items():
+            mat = c.material()
+            if not mat:
+                continue
+            inventory = str(
+                path / 'inventory_{0}_{1}_{2}_b_{3}'.format(i, j, k, c['name'])
+            )
+            r = activation(
+                title, mat, vol, (ebins, flux), irr_profile, relax_profile,
+                inventory=inventory,
+                files=files, overwrite=False, read_only=read_only, **kwargs
+            )
+
+            for key in value_keywords:
+                for item, value in zip(result[key], r[key]):
+                    item[c][i, j, k] = value
+            for key in element_keywords:
+                for item, r_item in zip(result[key], r[key]):
+                    for elem, value in r_item.items():
+                        item[c][elem][i, j, k] = value
+    return result
+
+
+def simple_mesh_activation(title, fmesh, volumes, irr_profile, relax_profile,
+                           folder, read_only=False, check=None,
+                           use_binary=False, **kwargs):
+    """Do simplified calculations of activation for mesh voxels.
+
+    Parameters
+    ----------
+    title : str
+        Title for the inventory.
+    fmesh : FMesh
+        FMesh data.
+    volumes : dict
+        A dictionary of cell volumes: cell->SparseData.
+    irr_profile : IrradiationProfile
+        Irradiation profile
+    relax_profile: IrradiationProfile
+        Relaxation profile.
+    folder : str
+        Path to folder with calculation results.
+    read_only : bool
+        Only read already calculated results. Default: False.
+    check : int
+        The number of checks. Default: None - no checks.
+    use_binary : bool
+        Use binary data rather text data for FISPACT data library.
+    kwargs : dict
+        Parameters for fispact inventory. See docs for fispact_inventory
+        function.
+
+    Returns
+    -------
+    result : dict
+        A dictionary of calculation results. It contains the following keys:
+        'time' - a list of time moments in seconds;
+        'zero' - int - the starting index of relaxation phase.
+        'volumes' - a dict of SparseData. cell->mesh of volumes [cc]
+        'fmesh' - link to fmesh data.
+        'ebins' - a list of gamma energy bins;
+        All other data are lists - one item for each time moment.
+        'atoms' - a of dict of dict of SparseData. material->isotope->mesh of concentrations [atoms];
+        'activity' - a dict of dict of SparseData. material->isotope->mesh of activities [Bq];
+        'ingestion' - a dict of dict of SparseData. material->isotope->mesh of ingestion dose [Sv/hour];
+        'inhalation' - a dict of dict of SparseData. material->isotope->mesh of inhalation dose [Sv/hour]
+        'spectrum' - a dict of SparseData. material->mesh of ndarrays [gammas/sec];
+        'a-energy' - a dict of SparseData. material->mesh of alpha-activity [MeV/sec];
+        'b-energy' - a dict of SparseData. material->mesh of beta-activity [MeV/sec];
+        'g-energy' - a dict of SparseData. material->mesh of gamma-activity [MeV/sec];
+        'fissions' - a dict of SparseData. material->mesh of spontaneous fission neutrons [neutrons/sec];
+    """
+    path, result, element_keywords, value_keywords, indices = \
+        prepare_mesh_container(
+            fmesh, volumes, irr_profile, relax_profile, folder, read_only,
+            **kwargs
+        )
+
+    materials = set(c.material() for c in volumes.keys())
+    materials.discard(None)
+
+    files = str(path / 'files')
+    if not read_only:
+        arrayx = str(path / 'arrayx')
+        fispact_files(files=files, arrayx=arrayx)
+        fispact_condense(condense=str(path / 'condense'), files=files)
+
+    ebins = fmesh._ebins
+    ebins[0] = 1.e-11
+    max_flux = np.max(fmesh._data, axis=(1, 2, 3))
+    max_volume = max([max(v._data.values()) for v in volumes.values() if v.size > 0])
+    for i, f in enumerate(max_flux):
+        flux = np.zeros_like(max_flux)
+        flux[i] = f
+        if f != 0:
+            factors = SparseData.from_dense(fmesh._data[i, :, :, :] / f)
+        else:
+            continue
+        if not read_only:
+            files = str(path / 'files_bin_{0}'.format(i))
+            fluxes = str(path / 'fluxes_bin_{0}'.format(i))
+            collapx = str(path / 'collapx_bin_{0}'.format(i))
+            fispact_files(files=files, collapx=collapx, fluxes=fluxes,
+                          arrayx=arrayx)
+            fispact_convert(ebins, flux, fluxes=fluxes)
+            fispact_collapse(files=files, use_binary=use_binary)
+
+        mat_results = {}
+        for m in materials:
+            inventory = str(
+                path / 'inventory_bin_{0}_c_{1}_d_{2:.4e}'.format(
+                    i, m.composition._options['name'], m.density
+                )
+            )
+            mat_results[m] = activation(
+                title, m, max_volume, (ebins, flux), irr_profile, relax_profile, inventory=inventory,
+                files=files, overwrite=False, read_only=read_only, **kwargs
+            )
+
+        # Result combination
+        for c, volume in volumes.items():
+            m = c.material()
+            if m is None:
+                continue
+            for key in value_keywords:
+                for item, value in zip(result[key], mat_results[m][key]):
+                    item[c] += volume * factors * value / max_volume
+            for key in element_keywords:
+                for item, r_item in zip(result[key], mat_results[m][key]):
+                    for elem, value in r_item.items():
+                        item[c][elem] += volume * value * factors
+    # Indices for result checking.
+    # indices = random.sample(not_empty_indices, checks) if checks else []
+    return result
+
+
 def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=True,
                     checks=None, folder=None, use_binary=False, read_only=False, **kwargs):
     """Runs activation calculations for mesh.
@@ -726,129 +1040,13 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
         'g-energy' - a dict of SparseData. material->mesh of gamma-activity [MeV/sec/cc];
         'fissions' - a dict of SparseData. material->mesh of spontaneous fission neutrons [neutrons/sec/cc];
     """
-    result = {
-        'time': irr_profile.measure_times() + relax_profile.measure_times(),
-        'mesh': fmesh.mesh,
-        'zero': len(irr_profile.measure_times()),
-        'volumes': volumes
-        # Other are optional
-    }
-
-    path = Path(folder)
-    if path.exists() and not path.is_dir():
-        raise FileExistsError("Such file exists but it is not folder.")
-    elif not path.exists():
-        if read_only:
-            raise FileNotFoundError("Data directory not found")
-        path.mkdir()
-
-    materials = set(filter(None, map(Body.material, volumes.keys())))
-    mat_vols = {}
-    for c, v in volumes.items():
-        m = c.material()
-        if m is not None:
-            vols = mat_vols.setdefault(m, SparseData(fmesh.mesh.shape))
-            vols += v
-    element_keywords = set()
-    value_keywords = set()
-    if kwargs.get('tab1', False):
-        result['atoms'] = [{m: {} for m in materials} for t in result['time']]
-        element_keywords.add('atoms')
-    if kwargs.get('tab2', False):
-        result['activity'] = [{m: {} for m in materials} for t in result['time']]
-        element_keywords.add('activity')
-    if kwargs.get('tab3', False):
-        result['ingestion'] = [{m: {} for m in materials} for t in result['time']]
-        result['inhalation'] = [{m: {} for m in materials} for t in result['time']]
-        element_keywords.add('ingestion')
-        element_keywords.add('inhalation')
-    if kwargs.get('tab4', False):
-        result['ebins'] = EBINS_24
-        result['spectrum'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
-        result['a-energy'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
-        result['b-energy'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
-        result['g-energy'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
-        result['fissions'] = [{m: SparseData(fmesh.mesh.shape) for m in materials} for t in result['time']]
-        value_keywords = {'spectrum', 'a-energy', 'b-energy', 'g-energy', 'fissions'}
-
-    not_empty_indices = reduce(set.union, [set(vols._data.keys()) for vols in mat_vols.values()])
-
-    if not read_only:
-        fispact_files()
-        fispact_condense()
-
-    ebins = None
-    flux = None
-    files = None
-
-    if simple:
-        ebins, mean_flux = fmesh.mean_flux()
-        for i, f in enumerate(mean_flux):
-            flux = np.zeros_like(mean_flux)
-            flux[i] = f
-            if f != 0:
-                factors = SparseData.from_dense(fmesh._data[i, :, :, :] / f)
-            else:
-                factors = 0
-            if not read_only:
-                files = str(path / 'files_bin_{0}'.format(i))
-                fluxes = str(path / 'fluxes_bin_{0}'.format(i))
-                collapx = str(path / 'collapx_bin_{0}'.format(i))
-                fispact_files(files=files, collapx=collapx, fluxes=fluxes)
-                fispact_convert(ebins, flux, fluxes=fluxes)
-                fispact_collapse(files=files, use_binary=use_binary)
-
-            for m in materials:
-                inventory = str(path / 'inventory_bin_{0}_c_{1}_d_{2:.4e}'.format(i, m.composition._options['name'], m.density))
-                r = activation(     # Volume 1 is important for uniform factors.
-                    title, m, 1.0, (ebins, flux), irr_profile, relax_profile, inventory=inventory,
-                    files=files, overwrite=False, read_only=read_only, **kwargs
-                )
-
-                # Result combination
-                for key in value_keywords:
-                    for item, val in zip(result[key], r[key]):
-                        item[m] += mat_vols[m] * factors * val
-                for key in element_keywords:
-                    for item, r_item in zip(result[key], r[key]):
-                        for elem, value in r_item.items():
-                            values = item[m].setdefault(elem, SparseData(fmesh.mesh.shape))
-                            values += value * factors
-        # Indices for result checking.
-        indices = random.sample(not_empty_indices, checks) if checks else []
+    if not simple:
+        result = full_mesh_activation(title, fmesh, volumes, irr_profile,
+                                      relax_profile, folder, read_only=read_only,
+                                      use_binary=use_binary, **kwargs)
     else:
-        indices = not_empty_indices
-
-    for i, j, k in indices:
-        if not read_only:
-            ebins, flux, err = fmesh.get_spectrum_by_index((i, j, k))
-            files = str(path / 'files_{0}_{1}_{2}'.format(i, j, k))
-            fluxes = str(path / 'fluxes_{0}_{1}_{2}'.format(i, j, k))
-            collapx = str(path / 'collapx_{0}_{1}_{2}'.format(i, j, k))
-
-            fispact_files(files=files, collapx=collapx, fluxes=fluxes)
-            fispact_convert(ebins, flux, fluxes=fluxes)
-            fispact_collapse(files=files, use_binary=use_binary)
-
-        for mat, vols in mat_vols.items():
-            vol = vols[i, j, k]
-            inventory = str(path / 'inventory_{0}_{1}_{2}_m_{3}'.format(i, j, k, mat))
-            r = activation(
-                title, mat, vol, (ebins, flux), irr_profile, relax_profile, inventory=inventory,
-                files=files, overwrite=False, read_only=read_only, **kwargs
-            )
-
-            if not simple:
-                for key in value_keywords:
-                    for item, val in zip(result[key], r[key]):
-                        item[mat][i, j, k] = val / vol
-                for key in element_keywords:
-                    for item, r_item in zip(result[key], r[key]):
-                        for elem, value in r_item.items():
-                            values = item[mat].setdefault(elem, SparseData(fmesh.mesh))
-                            values[i, j, k] = value / vol
-            else:
-                # Superposition accuracy checking.
-                pass
+        result = simple_mesh_activation(title, fmesh, volumes, irr_profile,
+                                        relax_profile, folder, read_only=read_only,
+                                        check=checks, use_binary=use_binary, **kwargs)
     return result
 

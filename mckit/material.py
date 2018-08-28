@@ -148,7 +148,7 @@ class Composition:
         return True
 
     def __hash__(self):
-        return self._hash
+        return reduce(xor, map(hash, self._composition.keys()))
 
     def __str__(self):
         text = ['M' + str(self['name']), ' ']
@@ -582,7 +582,7 @@ class Element:
         self._comment = comment
 
     def __hash__(self):
-        return self._charge * self._mass_number * hash(self._lib) * (self._isomer + 1)
+        return self._charge * (self._mass_number + 1) * hash(self._lib) * (self._isomer + 1)
 
     def __eq__(self, other):
         if self._charge == other.charge and self._mass_number == \
