@@ -343,6 +343,28 @@ void shape_reset_stat(Shape * shape)
     }
 }
 
+// Gets shape's contour
+size_t shape_contour(
+        const Shape * shape,    // Shape
+        const Box * box,        // Box, where contour is needed.
+        double min_vol,         // Size of volume to be considered as point
+        double * buffer         // Buffer, where points are put.
+)
+{
+    int result = shape_test_box(shape, box, 0, NULL);
+    if (result == BOX_INSIDE_SHAPE || result == BOX_OUTSIDE_SHAPE) return 0;
+    if (box->volume > min_vol) {
+        Box box1, box2;
+        box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);
+        int n1 = shape_contour(shape, box1, min_vol, buffer);
+        int n2 = shape_contour(shape, box2, min_vol, buffer + n1 * NDIM);
+        return n1 + n2;
+    } else {
+        for (int i = 0; i < NDIM; ++i) *(buffer + i) = box->center[i];
+        return 1;
+    }
+}
+
 // Collects statistics about shape.
 void shape_collect_statistics(
         Shape * shape,          // Shape

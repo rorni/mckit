@@ -98,6 +98,14 @@ double shape_volume(
                                 // of box splitting finishes.
 );
 
+// Gets shape's contour
+size_t shape_contour(
+        const Shape * shape,    // Shape
+        const Box * box,        // Box, where contour is needed.
+        double min_vol,         // Size of volume to be considered as point
+        double * buffer         // Buffer, where points are put.
+);
+
 // Resets collected statistics or initializes statistics storage
 void shape_reset_stat(Shape * shape);
 

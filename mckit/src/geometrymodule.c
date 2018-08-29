@@ -1030,6 +1030,46 @@ shapeobj_volume(ShapeObject * self, PyObject * args, PyObject * kwds)
 }
 
 static PyObject *
+shapeobj_contour(ShapeObject * self, PyObject * args, PyObject * kwds)
+{
+    PyObject *origin, *ex = NULL, *ey = NULL, *trim = NULL;
+    double width, height, delta = 0.01;
+
+    char *kwlist[] = {"", "", "", "ex", "ey", "delta", "trim", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O&dd|O&O&dO", kwlist,
+                           convert_to_dbl_vec, &origin, &width ,&height,
+                           convert_to_dbl_vec, &ex, convert_to_dbl_vec, &ey,
+                           &delta, &trim))
+        return -1;
+
+    if (ex == NULL) {
+        ex = GET_NAME(EX);
+        Py_INCREF(ex);
+    }
+
+    if (ey == NULL) {
+        ey = GET_NAME(EY);
+        Py_INCREF(ey);
+    }
+
+    if (! PyObject_TypeCheck(trim, &ShapeType)) {
+        PyErr_SetString(PyExc_ValueError, "Shape instance is expected");
+        return NULL;
+    }
+
+    double * ex_d = (double *) PyArray_DATA(ex);
+    double * ey_d = (double *) PyArray_DATA(ey);
+
+    Box box;
+    int status = box_init(
+        (double *) PyArray_DATA(origin), ex_d,
+        (double *) PyArray_DATA(ey)
+    );
+
+}
+
+static PyObject *
 shapeobj_collect_statistics(ShapeObject * self, PyObject * args)
 {
     PyObject * box;
