@@ -460,7 +460,9 @@ class Universe:
         items = [str(self._verbose_name)]
         items.append('C cell section. Main universe.')
         for c in self._cells:
+            u = c.pop('U')
             items.append(str(c))
+            c['U'] = u
         for u in universe:
             items.append('C start of universe {0}'.format(u.name))
             for c in u:
