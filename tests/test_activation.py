@@ -554,10 +554,11 @@ def cell_mesh(act2_universe):
 @pytest.mark.parametrize('fmesh', [
     read_meshtal('tests/activ2_0.m')[14]
 ])
-def test_mesh_activation(ebins, cell_mesh, irr_profile, rel_profile, fmesh):
+def test_superposition_mesh_activation(ebins, cell_mesh, irr_profile, rel_profile, fmesh):
     mesh_result = mesh_activation(
         'test_mesh', fmesh, cell_mesh, irr_profile, rel_profile, simple=True,
-        folder='tests/meshact2', use_binary=True, tab4=True, read_only=True
+        folder='tests/meshact2', use_binary=True, tab4=True, read_only=True,
+        inv_tol=(0.1, 1.e-6)
     )
     if not Path('tests/arch.data').exists():
         result = {}
@@ -570,7 +571,9 @@ def test_mesh_activation(ebins, cell_mesh, irr_profile, rel_profile, fmesh):
                 print(i, j, k)
                 result[c][(i, j, k)] = activation(
                     'test mesh', c.material(), vol, (ebins, fmesh._data[:, i, j, k]),
-                    irr_profile, rel_profile, tab4=True, use_binary=True, read_only=False, inventory='inventory_{0}_{1}_{2}_b_{3}'.format(i, j, k, c['name'])
+                    irr_profile, rel_profile, tab4=True, use_binary=True,
+                    read_only=False, inventory='inventory_{0}_{1}_{2}_b_{3}'.format(i, j, k, c['name']),
+                    inv_tol=(0.1, 1.e-6)
                 )
         with open('tests/arch.data', 'wb') as f:
             save_result = {c['name']: data for c, data in result.items()}
@@ -585,18 +588,61 @@ def test_mesh_activation(ebins, cell_mesh, irr_profile, rel_profile, fmesh):
     #print(mat_vol.keys())
     for i, time_frame in enumerate(mesh_result['spectrum']):
         for c, data in time_frame.items():
-            #print('mat in comp: ', mat.composition)
             for index, spec in data:
-                tot_x = np.sum(spec)
-                tot_y = np.sum(result[c][index]['spectrum'][i])
                 e_x = np.sum(spec * mesh_result['ebins'][1:])
                 e_y = np.sum(result[c][index]['spectrum'][i] * mesh_result['ebins'][1:])
-                print('t=', i, 'm=', c.material().composition['name'],'index: ', index, 'tot: ', tot_x / tot_y, ' energy: ', e_x / e_y)
-
                 for j, (x, y) in enumerate(zip(spec, result[c][index]['spectrum'][i])):
                     if y == 0 and x == 0:
                         continue
-                    #if abs(x - y) / x > 0.001:
-                    #print('t=', i, 'e=', j, 'm=', c.material().composition['name'], x / y, cell_mesh[c][index], x, y)
-                    #assert x == pytest.approx(y, rel=1.e-2)
-                # np.testing.assert_array_almost_equal(spec, result[c][index]['spectrum'][i])
+                    diff = abs(x - y) / max(x, y)
+                    xe_frac = x * mesh_result['ebins'][j + 1] / e_x
+                    ye_frac = x * mesh_result['ebins'][j + 1] / e_y
+                    if xe_frac > 2.e-3 or ye_frac > 2.e-3:
+                        print('t=', i, 'e=', j, 'm=',
+                              c.material().composition['name'], x / y,
+                              cell_mesh[c][index], x, y,
+                              x * mesh_result['ebins'][j + 1] / e_x)
+                        assert diff < 0.05
+
+
+@pytest.mark.parametrize('fmesh', [
+    read_meshtal('tests/activ2_0.m')[14]
+])
+def test_full_mesh_activation(ebins, cell_mesh, irr_profile, rel_profile, fmesh):
+    mesh_result = mesh_activation(
+        'test_mesh', fmesh, cell_mesh, irr_profile, rel_profile, simple=False,
+        folder='tests/meshact', use_binary=True, tab4=True, read_only=False,
+        inv_tol=(0.1, 1.e-6)
+    )
+    if not Path('tests/arch.data').exists():
+        result = {}
+        for c, vols in cell_mesh.items():
+            if c.material() is None:
+                continue
+            result[c] = {}
+
+            for (i, j, k), vol in vols:
+                print(i, j, k)
+                result[c][(i, j, k)] = activation(
+                    'test mesh', c.material(), vol, (ebins, fmesh._data[:, i, j, k]),
+                    irr_profile, rel_profile, tab4=True, use_binary=True,
+                    read_only=False, inventory='inventory_{0}_{1}_{2}_b_{3}'.format(i, j, k, c['name']),
+                    inv_tol=(0.1, 1.e-6)
+                )
+        with open('tests/arch.data', 'wb') as f:
+            save_result = {c['name']: data for c, data in result.items()}
+            pickle.dump(save_result, f, pickle.HIGHEST_PROTOCOL)
+    else:
+        with open('tests/arch.data', 'rb') as f:
+            save_result = pickle.load(f)
+        result = {}
+        for c in cell_mesh.keys():
+            result[c] = save_result[c['name']]
+
+    #print(mat_vol.keys())
+    for i, time_frame in enumerate(mesh_result['spectrum']):
+        for c, data in time_frame.items():
+            for index, spec in data:
+                np.testing.assert_array_almost_equal(
+                    spec, result[c][index]['spectrum'][i]
+                )
