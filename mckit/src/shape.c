@@ -343,7 +343,7 @@ void shape_reset_stat(Shape * shape)
     }
 }
 
-// Gets shape's contour
+// Gets shape's contour.Returns the number of points in the contour.
 size_t shape_contour(
         const Shape * shape,    // Shape
         const Box * box,        // Box, where contour is needed.
