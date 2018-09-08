@@ -246,7 +246,7 @@ class Source:
             tokens.append('{0}={1}'.format(k, Source._var_repr(k, v)))
             if isinstance(v, Distribution):
                 cards.append(v.mcnp_repr())
-                for ec in v.get_inner():
+                for ec in sorted(v.get_inner(), key=lambda x: x.name):
                     extra_cards.append(ec.mcnp_repr())
         cards.insert(0, print_card(separate(tokens)))
         cards.extend(extra_cards)

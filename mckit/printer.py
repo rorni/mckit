@@ -59,7 +59,7 @@ def separate(tokens, sep=' '):
 
     Parameters
     ----------
-    tokens : list
+    tokens : list[str]
         A list of strings.
     sep : str
         Separator to be inserted between tokens. Default: single space.
