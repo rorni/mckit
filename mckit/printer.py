@@ -8,12 +8,12 @@ MCNP_FORMATS = {
 }
 
 
-def print_card(card, offset=8, maxcol=80, sep='\n'):
+def print_card(tokens, offset=8, maxcol=80, sep='\n'):
     """Produce string in MCNP card format.
 
     Parameters
     ----------
-    card : list[str]
+    tokens : list[str]
         List of words to be printed.
     offset : int
         The number of spaces to make continuation of line. Minimum 5.
@@ -39,19 +39,42 @@ def print_card(card, offset=8, maxcol=80, sep='\n'):
     words = []  # a list of individual words.
     line_sep = '\n' + ' ' * offset   # separator between lines.
     i = 0
-    while i < len(card):
-        if length + len(card[i]) > maxcol or card[i] == sep:
+    while i < len(tokens):
+        if length + len(tokens[i]) > maxcol or tokens[i] == sep:
             words.append(line_sep)
             length = offset
-            while card[i] == sep or card[i].isspace():
+            while tokens[i] == sep or tokens[i].isspace():
                 i += 1
-                if i == len(card):
+                if i == len(tokens):
                     words.pop()
                     return ''.join(words)
-        words.append(card[i])
-        length += len(card[i])
+        words.append(tokens[i])
+        length += len(tokens[i])
         i += 1
     return ''.join(words)
+
+
+def separate(tokens, sep=' '):
+    """Adds separation symbols between tokens.
+
+    Parameters
+    ----------
+    tokens : list
+        A list of strings.
+    sep : str
+        Separator to be inserted between tokens. Default: single space.
+
+    Returns
+    -------
+    sep_tokens : list
+        List of separated tokens.
+    """
+    sep_tokens = []
+    for t in tokens[:-1]:
+        sep_tokens.append(t)
+        sep_tokens.append(sep)
+    sep_tokens.append(tokens[-1])
+    return sep_tokens
 
 
 def print_option(option, value):
