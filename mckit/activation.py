@@ -906,15 +906,15 @@ def simple_mesh_activation(title, fmesh, volumes, irr_profile, relax_profile,
         'fmesh' - link to fmesh data.
         'ebins' - a list of gamma energy bins;
         All other data are lists - one item for each time moment.
-        'atoms' - a of dict of dict of SparseData. material->isotope->mesh of concentrations [atoms];
-        'activity' - a dict of dict of SparseData. material->isotope->mesh of activities [Bq];
-        'ingestion' - a dict of dict of SparseData. material->isotope->mesh of ingestion dose [Sv/hour];
-        'inhalation' - a dict of dict of SparseData. material->isotope->mesh of inhalation dose [Sv/hour]
-        'spectrum' - a dict of SparseData. material->mesh of ndarrays [gammas/sec];
-        'a-energy' - a dict of SparseData. material->mesh of alpha-activity [MeV/sec];
-        'b-energy' - a dict of SparseData. material->mesh of beta-activity [MeV/sec];
-        'g-energy' - a dict of SparseData. material->mesh of gamma-activity [MeV/sec];
-        'fissions' - a dict of SparseData. material->mesh of spontaneous fission neutrons [neutrons/sec];
+        'atoms' - a of dict of dict of SparseData. cell->isotope->mesh of concentrations [atoms];
+        'activity' - a dict of dict of SparseData. cell->isotope->mesh of activities [Bq];
+        'ingestion' - a dict of dict of SparseData. cell->isotope->mesh of ingestion dose [Sv/hour];
+        'inhalation' - a dict of dict of SparseData. cell->isotope->mesh of inhalation dose [Sv/hour]
+        'spectrum' - a dict of SparseData. cell->mesh of ndarrays [gammas/sec];
+        'a-energy' - a dict of SparseData. cell->mesh of alpha-activity [MeV/sec];
+        'b-energy' - a dict of SparseData. cell->mesh of beta-activity [MeV/sec];
+        'g-energy' - a dict of SparseData. cell->mesh of gamma-activity [MeV/sec];
+        'fissions' - a dict of SparseData. cell->mesh of spontaneous fission neutrons [neutrons/sec];
     """
     path, result, element_keywords, value_keywords, indices = \
         prepare_mesh_container(
@@ -1030,15 +1030,15 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
         'mesh' - mesh data.
         'ebins' - a list of gamma energy bins;
         All other data are lists - one item for each time moment.
-        'atoms' - a of dict of dict of SparseData. material->isotope->mesh of concentrations [atoms/cc];
-        'activity' - a dict of dict of SparseData. material->isotope->mesh of activities [Bq/cc];
-        'ingestion' - a dict of dict of SparseData. material->isotope->mesh of ingestion dose [Sv/hour/cc];
-        'inhalation' - a dict of dict of SparseData. material->isotope->mesh of inhalation dose [Sv/hour/cc]
-        'spectrum' - a dict of SparseData. material->mesh of ndarrays [gammas/sec/cc];
-        'a-energy' - a dict of SparseData. material->mesh of alpha-activity [MeV/sec/cc];
-        'b-energy' - a dict of SparseData. material->mesh of beta-activity [MeV/sec/cc];
-        'g-energy' - a dict of SparseData. material->mesh of gamma-activity [MeV/sec/cc];
-        'fissions' - a dict of SparseData. material->mesh of spontaneous fission neutrons [neutrons/sec/cc];
+        'atoms' - a of dict of dict of SparseData. cell->isotope->mesh of concentrations [atoms];
+        'activity' - a dict of dict of SparseData. cell->isotope->mesh of activities [Bq];
+        'ingestion' - a dict of dict of SparseData. cell->isotope->mesh of ingestion dose [Sv/hour];
+        'inhalation' - a dict of dict of SparseData. cell->isotope->mesh of inhalation dose [Sv/hour]
+        'spectrum' - a dict of SparseData. cell->mesh of ndarrays [gammas/sec];
+        'a-energy' - a dict of SparseData. cell->mesh of alpha-activity [MeV/sec];
+        'b-energy' - a dict of SparseData. cell->mesh of beta-activity [MeV/sec];
+        'g-energy' - a dict of SparseData. cell->mesh of gamma-activity [MeV/sec];
+        'fissions' - a dict of SparseData. cell->mesh of spontaneous fission neutrons [neutrons/sec];
     """
     if not simple:
         result = full_mesh_activation(title, fmesh, volumes, irr_profile,
