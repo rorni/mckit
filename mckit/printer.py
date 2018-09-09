@@ -85,8 +85,15 @@ def print_option(option, value):
     elif option == 'U':
         return ['U={0}'.format(value.name)]
     elif option == 'FILL':
-        universe = value
-        return ['FILL={0}'.format(universe.name)]
+        universe = value['universe']
+        tr = value.get('transform', None)
+        words = ['FILL={0}'.format(universe.name)]
+        if tr:
+            words[0] = '*' + words[0]
+            words.append('(')
+            words.extend(tr.get_words())
+            words.append(')')
+        return words
     else:
         raise ValueError("Incorrect option name: {0}".format(option))
 
