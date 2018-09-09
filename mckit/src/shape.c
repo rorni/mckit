@@ -356,8 +356,8 @@ size_t shape_contour(
     if (box->volume > min_vol) {
         Box box1, box2;
         box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);
-        int n1 = shape_contour(shape, box1, min_vol, buffer);
-        int n2 = shape_contour(shape, box2, min_vol, buffer + n1 * NDIM);
+        int n1 = shape_contour(shape, &box1, min_vol, buffer);
+        int n2 = shape_contour(shape, &box2, min_vol, buffer + n1 * NDIM);
         return n1 + n2;
     } else {
         for (int i = 0; i < NDIM; ++i) *(buffer + i) = box->center[i];

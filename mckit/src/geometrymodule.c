@@ -1029,6 +1029,7 @@ shapeobj_volume(ShapeObject * self, PyObject * args, PyObject * kwds)
     return Py_BuildValue("d", vol);
 }
 
+/*
 static PyObject *
 shapeobj_contour(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
@@ -1060,20 +1061,21 @@ shapeobj_contour(ShapeObject * self, PyObject * args, PyObject * kwds)
 
     double * ex_d = (double *) PyArray_DATA(ex);
     double * ey_d = (double *) PyArray_DATA(ey);
-    double * ez_d = {
+    double ez_d[] = {
         ex_d[1] * ey_d[2] - ex_d[2] * ey_d[1],
         ex_d[2] * ey_d[0] - ex_d[0] * ey_d[2],
         ex_d[0] * ey_d[1] - ex_d[1] * ey_d[0]
-    }
+    };
 
     Box box;
     int status = box_init(
         &box,
         (double *) PyArray_DATA(origin), ex_d, ey_d, ez_d, width, height, delta
     );
-    size_t ntps = shape_contour(&self->shape, &box, delta * delta * delta, )
+    // size_t ntps = shape_contour(&self->shape, &box, delta * delta * delta, )
 
 }
+*/
 
 static PyObject *
 shapeobj_collect_statistics(ShapeObject * self, PyObject * args)
