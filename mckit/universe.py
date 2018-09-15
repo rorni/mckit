@@ -232,6 +232,7 @@ class Universe:
                 cells.append(new_cell)
         u = self.copy()
         u._cells = cells
+        return u
 
     def transform(self, tr):
         """Applies transformation tr to this universe. 
@@ -468,29 +469,38 @@ class Universe:
             items.append('C end of universe {0}'.format(u.name))
         items.append('')
         items.append('C Surface section')
+        used_surfs = set()
         for s in self.get_surfaces():
-            items.append(str(s))
+            if s not in used_surfs:
+                items.append(str(s))
+                used_surfs.add(s)
         for u in universe:
             items.append('C start of surfaces of universe {0}'.format(u.name))
             for s in u.get_surfaces():
-                items.append(str(s))
+                if s not in used_surfs:
+                    items.append(str(s))
+                    used_surfs.add(s)
             items.append('C end of surfaces of universe {0}'.format(u.name))
         items.append('')
         items.append('C data section')
-        compositions = {}
-        for mat in self.get_materials():
-            cc = mat.composition
-            compositions[cc['name']] = cc
-        for c in sorted(compositions.keys()):
-            items.append(str(compositions[c]))
-        for u in universe:
-            items.append('C start of surfaces of universe {0}'.format(u.name))
-            for m in u.get_materials():
-                cc = m.composition
-                if cc not in compositions.keys():
-                    compositions[cc['name']] = cc
+        compositions = set()
+        for cell in self:
+            mat = cell.material()
+            if mat is not None:
+                cc = mat.composition
+                if cc._options['name'] not in compositions:
+                    compositions.add(cc._options['name'])
                     items.append(str(cc))
-            items.append('C end of surfaces of universe {0}'.format(u.name))
+        for u in universe:
+            items.append('C start of materials of universe {0}'.format(u.name))
+            for cell in u:
+                m = cell.material()
+                if m is None: continue
+                cc = m.composition
+                if cc._options['name'] not in compositions:
+                    compositions.add(cc._options['name'])
+                    items.append(str(cc))
+            items.append('C end of materials of universe {0}'.format(u.name))
         items.append('')
 
         with open(filename, 'w') as f:

@@ -82,6 +82,8 @@ def print_option(option, value):
     par = option[3:]
     if name == 'IMP' and (par == 'N' or par == 'P' or par == 'E'):
         return ['IMP:{0}={1}'.format(par, MCNP_FORMATS['importance'].format(value))]
+    elif option == 'VOL':
+        return ['VOL={0}'.format(value)]
     elif option == 'U':
         return ['U={0}'.format(value.name)]
     elif option == 'FILL':
@@ -99,7 +101,7 @@ def print_option(option, value):
 
 
 CELL_OPTION_GROUPS = (
-    ('IMPN', 'IMPP', 'IMPE'),   # Importance options
+    ('IMPN', 'IMPP', 'IMPE', 'VOL'),   # Importance options
     ('TRCL',),  # Transformation options
     ('U', 'FILL')  # Universe and fill options
 )

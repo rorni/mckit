@@ -674,7 +674,7 @@ def p_material_option(p):
 mcnp_input_parser = yacc.yacc(tabmodule="mcnp_input_tab", debug=False)
 
 
-def read_mcnp(filename):
+def read_mcnp(filename, encoding='utf-8'):
     """Reads MCNP model from file and creates corresponding objects.
 
     Parameters
@@ -696,7 +696,7 @@ def read_mcnp(filename):
         Dictionary of data cards. data_type -> data_name -> data. The later is
         again a dict.
     """
-    with open(filename) as f:
+    with open(filename, encoding=encoding) as f:
         text = f.read()
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(

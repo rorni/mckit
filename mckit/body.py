@@ -498,6 +498,9 @@ class Body(dict):
         text.append('\n')
         # insert options printing
         text.extend(self._options_list())
+        for line in self.get('comment', []):
+            text.append('$ ' + str(line))
+            text.append('\n')
         return print_card(text)
 
     def _options_list(self):

@@ -131,7 +131,7 @@ class Transformation:
             words.append('{0:.12e}'.format(v))
         for v in self._u.ravel():
             words.append(' ')
-            words.append('{0:.12e}'.foramt(np.arccos(v) * 180 / np.pi))
+            words.append('{0:.12e}'.format(np.arccos(v) * 180 / np.pi))
         return words
 
     def __hash__(self):
