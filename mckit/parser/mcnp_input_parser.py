@@ -269,7 +269,7 @@ def extract_comments(line):
         _card_comments.popleft()
     while _card_comments and _card_comments[0] is not None:
         comment.append(_card_comments.popleft().value.lstrip('$ '))
-    return tuple(comment)
+    return comment
 
 
 def p_model(p):
