@@ -470,13 +470,13 @@ class Universe:
         items.append('')
         items.append('C Surface section')
         used_surfs = set()
-        for s in self.get_surfaces():
+        for s in sorted(self.get_surfaces(), key=lambda x: x._options['name']):
             if s not in used_surfs:
                 items.append(str(s))
                 used_surfs.add(s)
         for u in universe:
             items.append('C start of surfaces of universe {0}'.format(u.name))
-            for s in u.get_surfaces():
+            for s in sorted(u.get_surfaces(), key=lambda x: x._options['name']):
                 if s not in used_surfs:
                     items.append(str(s))
                     used_surfs.add(s)
