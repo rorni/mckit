@@ -11,6 +11,7 @@ from .geometry import Plane      as _Plane,    \
                       Cylinder   as _Cylinder, \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
+                      Shape      as _Shape
                       GLOBAL_BOX, ORIGIN, EX, EY, EZ
 from .printer import print_card
 from .transformation import Transformation
@@ -157,6 +158,36 @@ def create_replace_dictionary(surfaces, unique=None, box=GLOBAL_BOX, tol=1.e-10)
         else:
             uniq_surfs.add(s)
     return replace
+
+
+class Macrobody(_Shape):
+    """Defines a macrobody.
+
+    Parameters
+    ----------
+    kind : str
+        Type of macrobody. Allowed values: 'BOX', 'RPP', 'SPH', 'RCC', 'RHP',
+        'HEX', 'REC', 'TRC', 'ELL', 'WED', 'ARB'.
+    args : list
+        A list of values that define a macrobody.
+    options : dict
+        A dictionary of extra parameters.
+
+    Methods
+    -------
+    get_facet(number)
+        Gets specific facet of macrobody.
+    test_points(points)
+        Tests the senses of the points.
+    test_box(box)
+        Tests for intersections with the box.
+    """
+    def __init__(self, kind, *args, **options):
+        if kind == 'BOX':
+            pass
+        pass
+        surfs = []
+        _Shape.__init__(self, 'I', *surfs)
 
 
 class Surface(ABC):
