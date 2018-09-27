@@ -3,7 +3,7 @@ import numpy as np
 
 from mckit.transformation import Transformation
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
-    create_surface, Macrobody
+    create_surface, Macrobody, Surface
 from mckit.geometry import Box
 
 
@@ -553,6 +553,47 @@ class TestMacrobody:
         # ('ELL', [0, 0, 0, 0, 0, 3, -2]),
     ]
 
+    @pytest.mark.parametrize('mbnum, facetnum, expected', [
+        (0, 1, {'_v': [1, 0, 0], '_k': -1}),
+        (0, 2, {'_v': [1, 0, 0], '_k': +1}),
+        (0, 3, {'_v': [0, 1, 0], '_k': -1}),
+        (0, 4, {'_v': [0, 1, 0], '_k': +1}),
+        (0, 5, {'_v': [0, 0, 1], '_k': -1}),
+        (0, 6, {'_v': [0, 0, 1], '_k': +1}),
+        (1, 1, {'_v': [1, 0, 0], '_k': -2}),
+        (1, 2, {'_v': [1, 0, 0], '_k': +1}),
+        (1, 3, {'_v': [0, 1, 0], '_k': -1}),
+        (1, 4, {'_v': [0, 1, 0], '_k': +1}),
+        (1, 5, {'_v': [0, 0, 1], '_k': -3}),
+        (1, 6, {'_v': [0, 0, 1], '_k': +1}),
+        (2, 1, {'_v': [1, 0, 0], '_k': -1}),
+        (2, 2, {'_v': [1, 0, 0], '_k': +1}),
+        (2, 3, {'_v': [0, 1, 0], '_k': -1}),
+        (2, 4, {'_v': [0, 1, 0], '_k': +1}),
+        (2, 5, {'_v': [0, 0, 1], '_k': -1}),
+        (2, 6, {'_v': [0, 0, 1], '_k': +1}),
+        (3, 1, {'_v': [1, 0, 0], '_k': -2}),
+        (3, 2, {'_v': [1, 0, 0], '_k': +1}),
+        (3, 3, {'_v': [0, 1, 0], '_k': -1}),
+        (3, 4, {'_v': [0, 1, 0], '_k': +1}),
+        (3, 5, {'_v': [0, 0, 1], '_k': -3}),
+        (3, 6, {'_v': [0, 0, 1], '_k': +1}),
+        (4, 1, {'_center': [3, 2, -1], '_radius': 2}),
+        (5, 1, {'_pt': [0, -5, 0], '_axis': [0, 1, 0], '_radius': 4}),
+        (5, 2, {'_v': [0, 1, 0], '_k': -5}),
+        (5, 3, {'_v': [0, 1, 0], '_k': +5})
+    ])
+    def test_get_facets(self, mbnum, facetnum, expected):
+        kind, params = self.macrobodies[mbnum]
+        mb = Macrobody(kind, *params)
+        facet = mb.get_facet(facetnum)
+        if isinstance(facet, Surface):
+            surf = facet
+        else:
+            surf = facet.args[0]
+        for k, v in expected.items():
+            np.testing.assert_array_almost_equal(surf.__getattribute__(k), v)
+
     points = [
         [0, 0, 0], [-0.9, -0.9, -0.9], [0.9, 0.9, 0.9], [-1.1, 0, 0],
         [0.4, 1.1, 0], [0.5, -0.3, 1.1],
@@ -598,5 +639,3 @@ class TestMacrobody:
         mb = Macrobody(kind, *params)
         assert mb.test_box(self.boxes[boxnum]) == expected
 
-    def test_get_facets(self):
-        pass

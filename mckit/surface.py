@@ -227,7 +227,7 @@ class Macrobody(_Shape):
         facet : Surface
             Requested macrobody's facet.
         """
-        raise NotImplementedError
+        return self.args[number - 1]
 
     def mcnp_repr(self):
         """Gets a list of str objects that represent macrobody in MCNP."""
