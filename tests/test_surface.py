@@ -3,7 +3,7 @@ import numpy as np
 
 from mckit.transformation import Transformation
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
-    create_surface
+    create_surface, Macrobody
 from mckit.geometry import Box
 
 
@@ -535,3 +535,68 @@ class TestGQuadratic:
         np.testing.assert_array_almost_equal(ans_surf._m, surf_tr._m)
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
+
+
+class TestMacrobody:
+    macrobodies = [
+        ('BOX', [-1, -1, -1, 2, 0, 0, 0, 2, 0, 0, 0, 2]),
+        ('BOX', [-1, -1, -1, 3, 0, 0, 0, 2, 0, 0, 0, 4]),
+        ('RPP', [-1, 1, -1, 1, -1, 1]),
+        ('RPP', [-1, 2, -1, 1, -1, 3]),
+        ('SPH', [3, 2, -1, 2]),
+        ('RCC', [0, -5, 0, 0, 10, 0, 4]),
+        # ('RCC', [1, 0, 2, 0, 3, 4, 1]),
+        # ('RHP', [0, 0, -4, 0, 0, 8, 0, 2, 0]),
+        # ('REC', [0, -5, 0, 0, 10, 0, 4, 0, 0, 2]),
+        # ('TRC', [-5, 0, 0, 10, 0, 0, 4, 2]),
+        # ('ELL', [0, 0, -2, 0, 0, 2, 6]),
+        # ('ELL', [0, 0, 0, 0, 0, 3, -2]),
+    ]
+
+    points = [
+        [0, 0, 0], [-0.9, -0.9, -0.9], [0.9, 0.9, 0.9], [-1.1, 0, 0],
+        [0.4, 1.1, 0], [0.5, -0.3, 1.1],
+        [2, 2.1, -1], [4.9, 2, -1], [3, 3.9, -1], [3, 2.01, 0.9], [3, 2, -2.9]
+    ]
+
+    @pytest.mark.parametrize('mbnum, ptnum, expected', [
+        (0, 0, -1), (0, 1, -1), (0, 2, -1), (0, 3, +1), (0, 4, +1), (0, 5, +1),
+        (1, 0, -1), (1, 1, -1), (1, 2, -1), (1, 3, +1), (1, 4, +1), (1, 5, -1),
+        (2, 0, -1), (2, 1, -1), (2, 2, -1), (2, 3, +1), (2, 4, +1), (2, 5, +1),
+        (3, 0, -1), (3, 1, -1), (3, 2, -1), (3, 3, +1), (3, 4, +1), (3, 5, -1),
+        (4, 0, +1), (4, 1, +1), (4, 2, +1), (4, 3, +1), (4, 4, +1), (4, 5, +1),
+        (5, 0, -1), (5, 1, -1), (5, 2, -1), (5, 3, -1), (5, 4, -1), (5, 5, -1),
+        (0, 6, +1), (0, 7, +1), (0, 8, +1), (0, 9, +1), (0, 10, +1),
+        (1, 6, +1), (1, 7, +1), (1, 8, +1), (1, 9, +1), (1, 10, +1),
+        (2, 6, +1), (2, 7, +1), (2, 8, +1), (2, 9, +1), (2, 10, +1),
+        (3, 6, +1), (3, 7, +1), (3, 8, +1), (3, 9, +1), (3, 10, +1),
+        (4, 6, -1), (4, 7, -1), (4, 8, -1), (4, 9, -1), (4, 10, -1),
+        (5, 6, -1), (5, 7, +1), (5, 8, -1), (5, 9, -1), (5, 10, +1),
+    ])
+    def test_points(self, mbnum, ptnum, expected):
+        kind, params = self.macrobodies[mbnum]
+        mb = Macrobody(kind, *params)
+        assert mb.test_points(self.points[ptnum]) == expected
+
+    boxes = [
+        Box([0, 0, 0], 1, 1, 1),
+        Box([4, 0, 0], 3, 2.5, 2.5),
+        Box([0, -3, 0], 1, 1, 1),
+        Box([3, 2, -1], 1, 1, 1),
+        Box([0, 0, 0.5], 1.8, 1.8, 1.8)
+    ]
+
+    @pytest.mark.parametrize('mbnum, boxnum, expected', [
+        (0, 0, -1), (0, 1, +1), (0, 2, +1), (0, 3, +1), (0, 4, 0),
+        (1, 0, -1), (1, 1, +1), (1, 2, +1), (1, 3, +1), (1, 4, -1),
+        (2, 0, -1), (2, 1, +1), (2, 2, +1), (2, 3, +1), (2, 4, 0),
+        (3, 0, -1), (3, 1, +1), (3, 2, +1), (3, 3, +1), (3, 4, -1),
+        (4, 0, +1), (4, 1, 0), (4, 2, +1), (4, 3, -1), (4, 4, +1)
+    ])
+    def test_box(self, mbnum, boxnum, expected):
+        kind, params = self.macrobodies[mbnum]
+        mb = Macrobody(kind, *params)
+        assert mb.test_box(self.boxes[boxnum]) == expected
+
+    def test_get_facets(self):
+        pass
