@@ -102,6 +102,9 @@ def create_surface(kind, *params, **options):
     elif kind[0] == 'T':
         x0, y0, z0, R, a, b = params
         return Torus([x0, y0, z0], axis, R, a, b, **options)
+    # ---------- Macrobodies ---------------------------------
+    elif kind in {'BOX', 'RPP', 'RCC', 'SPH'}:
+        return Macrobody(kind, *params, **options)
     # ---------- Axisymmetric surface defined by points ------
     else:
         if len(params) == 2:
