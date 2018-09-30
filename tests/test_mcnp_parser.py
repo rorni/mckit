@@ -178,6 +178,13 @@ def test_mcnp_lexer(lex_file, expected):
             },
             5: {
                 'geometry': [5, 'C'], 'name': 5
+            },
+            6: {
+                'geometry': [(5, 1), 'C', (5, 2), 'I'], 'name': 6, 'IMPN': 1
+            },
+            7: {
+                'geometry': [(5, 3), 'C', 2, 'I', (5, 5), 'U'], 'name': 7,
+                'IMPP': 0, 'MAT': {'composition': 1, 'density': 4.0}
             }
         },
         'surfaces': {
