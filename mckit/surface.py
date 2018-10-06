@@ -11,7 +11,6 @@ from .geometry import Plane      as _Plane,    \
                       Cylinder   as _Cylinder, \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
-                      Shape      as _Shape,    \
                       GLOBAL_BOX, ORIGIN, EX, EY, EZ
 from .printer import print_card
 from .transformation import Transformation
@@ -102,9 +101,6 @@ def create_surface(kind, *params, **options):
     elif kind[0] == 'T':
         x0, y0, z0, R, a, b = params
         return Torus([x0, y0, z0], axis, R, a, b, **options)
-    # ---------- Macrobodies ---------------------------------
-    elif kind in {'BOX', 'RPP', 'RCC', 'SPH'}:
-        return Macrobody(kind, *params, **options)
     # ---------- Axisymmetric surface defined by points ------
     else:
         if len(params) == 2:
@@ -161,156 +157,6 @@ def create_replace_dictionary(surfaces, unique=None, box=GLOBAL_BOX, tol=1.e-10)
         else:
             uniq_surfs.add(s)
     return replace
-
-
-class Macrobody(_Shape):
-    """Defines a macrobody.
-
-    Parameters
-    ----------
-    kind : str
-        Type of macrobody. Allowed values: 'BOX', 'RPP', 'SPH', 'RCC', 'RHP',
-        'HEX', 'REC', 'TRC', 'ELL', 'WED', 'ARB'.
-    args : list
-        A list of values that define a macrobody.
-    options : dict
-        A dictionary of extra parameters.
-
-    Methods
-    -------
-    get_facet(number)
-        Gets specific facet of macrobody.
-    mcnp_repr()
-        Gets representation of macrobody in MCNP.
-    test_points(points)
-        Tests the senses of the points.
-    test_box(box)
-        Tests for intersections with the box.
-    to_shape()
-        Converts macrobody to ordinary shape.
-    """
-    def __init__(self, kind, *args, **options):
-        if kind == 'BOX':
-            surfs = self._box_surfs(*args)
-        elif kind == 'RPP':
-            surfs = self._rpp_surfs(*args)
-        elif kind == 'SPH':
-            surfs = self._sph_surfs(*args)
-        elif kind == 'RCC':
-            surfs = self._rcc_surfs(*args)
-        elif kind == 'RHP':
-            raise NotImplementedError
-        elif kind == 'HEX':
-            raise NotImplementedError
-        elif kind == 'REC':
-            raise NotImplementedError
-        elif kind == 'TRC':
-            raise NotImplementedError
-        elif kind == 'ELL':
-            raise NotImplementedError
-        elif kind == 'WED':
-            raise NotImplementedError
-        elif kind == 'ARB':
-            raise NotImplementedError
-        if len(surfs) == 1:
-            _Shape.__init__(self, 'S', *surfs)
-        else:
-            _Shape.__init__(self, 'U', *surfs)
-
-    def get_facet(self, number):
-        """Gets specific facet of the macrobody.
-
-        Parameters
-        ----------
-        number : int
-            The number of facet. Depends on macrobody type.
-
-        Returns
-        -------
-        facet : Surface
-            Requested macrobody's facet.
-        """
-        return self.args[number - 1]
-
-    def mcnp_repr(self):
-        """Gets a list of str objects that represent macrobody in MCNP."""
-        raise NotImplementedError
-
-    def to_shape(self):
-        """Gets macrobody as ordinary shape.
-
-        In other words, this method makes a decomposition of the macrobody into
-        individual surfaces.
-
-        Returns
-        -------
-        opc : str
-            Operation code.
-        args : tuple
-            A tuple of surfaces for shape.
-        """
-        raise NotImplementedError
-
-    def _box_surfs(self, *args):
-        if len(args) != 12:
-            raise ValueError('Incorrect number of parameters for BOX macrobody')
-        v = np.array(args[0:3])
-        a1 = np.array(args[3:6])
-        a2 = np.array(args[6:9])
-        a3 = np.array(args[9:12])
-        n1 = a1 / np.linalg.norm(a1)
-        n2 = a2 / np.linalg.norm(a2)
-        n3 = a3 / np.linalg.norm(a3)
-        surfs = [
-            _Shape('S', Plane(n1, -np.dot(n1, v + a1))),
-            _Shape('C', Plane(n1, -np.dot(n1, v))),
-            _Shape('S', Plane(n2, -np.dot(n2, v + a2))),
-            _Shape('C', Plane(n2, -np.dot(n2, v))),
-            _Shape('S', Plane(n3, -np.dot(n3, v + a3))),
-            _Shape('C', Plane(n3, -np.dot(n3, v)))
-        ]
-        return surfs
-
-    def _rpp_surfs(self, *args):
-        if len(args) != 6:
-            raise ValueError('Incorrect number of parameters for RPP macrobody')
-        nx = [1, 0, 0]
-        ny = [0, 1, 0]
-        nz = [0, 0, 1]
-        xmin, xmax, ymin, ymax, zmin, zmax = args
-        surfs = [
-            _Shape('S', Plane(nx, -xmax)),
-            _Shape('C', Plane(nx, -xmin)),
-            _Shape('S', Plane(ny, -ymax)),
-            _Shape('C', Plane(ny, -ymin)),
-            _Shape('S', Plane(nz, -zmax)),
-            _Shape('C', Plane(nz, -zmin))
-        ]
-        return surfs
-
-    def _sph_surfs(self, *args):
-        if len(args) != 4:
-            raise ValueError('Incorrect number of parameters for SPH macrobody')
-        center = args[:3]
-        radius = args[3]
-        surfs = [
-            Sphere(center, radius)
-        ]
-        return surfs
-
-    def _rcc_surfs(self, *args):
-        if len(args) != 7:
-            raise ValueError('Incorrect number of parameters for RCC macrobody')
-        center = np.array(args[0:3])
-        axis = np.array(args[3:6])
-        radius = args[6]
-        norm = axis / np.linalg.norm(axis)
-        surfs = [
-            _Shape('S', Cylinder(center, norm, radius)),
-            _Shape('S', Plane(norm, -np.dot(norm, center + axis))),
-            _Shape('C', Plane(norm, -np.dot(norm, center)))
-        ]
-        return surfs
 
 
 class Surface(ABC):

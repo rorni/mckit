@@ -175,24 +175,13 @@ def test_mcnp_lexer(lex_file, expected):
             },
             4: {
                 'reference': 1, 'RHO': -3.0, 'name': 4
-            },
-            5: {
-                'geometry': [5, 'C'], 'name': 5
-            },
-            6: {
-                'geometry': [(5, 1), 'C', (5, 2), 'I'], 'name': 6, 'IMPN': 1
-            },
-            7: {
-                'geometry': [(5, 3), 'C', 2, 'I', (5, 5), 'U'], 'name': 7,
-                'IMPP': 0, 'MAT': {'composition': 1, 'density': 4.0}
             }
         },
         'surfaces': {
             1: {'kind': 'SX', 'params': [4, 5], 'transform': 1, 'name': 1},
             2: {'kind': 'PX', 'params': [1], 'modifier': '*', 'name': 2},
             3: {'kind': 'S', 'params': [1, 2, -3, 4], 'name':3},
-            4: {'kind': 'PY', 'params': [-5], 'name': 4},
-            5: {'kind': 'RPP', 'params': [-2, 2, -3, 3, -4, 4], 'name': 5}
+            4: {'kind': 'PY', 'params': [-5], 'name': 4}
         },
         'data': {
             'MODE': ['N', 'P'],
@@ -238,7 +227,7 @@ def test_mcnp_lexer(lex_file, expected):
             6: {
                 'geometry': [16, 17, 'C', 'I', 18, 'I'],
                 'FILL': {'universe': 1, 'transform': 2}, 'name': 6,
-                'comment': ['comment 1', 'comment 2', 'comment 3']
+                'comment': ('comment 1', 'comment 2', 'comment 3')
             },
             7: {
                 'geometry': [19, 20, 'C', 'I', 21, 'I'], 'name': 7,
@@ -256,7 +245,7 @@ def test_mcnp_lexer(lex_file, expected):
             1: {'kind': 'PX', 'params': [1], 'modifier': '*', 'name': 1},
             2: {'kind': 'PY', 'params': [2], 'modifier': '+', 'name': 2},
             3: {'kind': 'PZ', 'params': [3], 'name': 3},
-            4: {'kind': 'P', 'params': [1, 2, -3, -5], 'name': 4, 'comment': ['comment 4',]},
+            4: {'kind': 'P', 'params': [1, 2, -3, -5], 'name': 4, 'comment': ('comment 4',)},
             5: {'kind': 'SO', 'params': [3], 'name': 5},
             6: {'kind': 'SX', 'params': [4, 5], 'name': 6},
             7: {'kind': 'SY', 'params': [-4, 5], 'name': 7},
@@ -279,11 +268,11 @@ def test_mcnp_lexer(lex_file, expected):
             24: {'kind': 'TZ', 'params': [1, 2, 3, 4, 5, 8], 'name': 24},
             25: {'kind': 'SQ', 'params': [1, 2, 3, 4, 5, 6, 7, 8, 9], 'name': 25},
             26: {'kind': 'GQ', 'params': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'name': 26,
-                 'comment': ['comment 5']}
+                 'comment': ('comment 5',)}
         },
         'data': {
             'TR': {
-                1: {'translation': [1, 2, 3], 'name': 1, 'comment': ['comment 6'],
+                1: {'translation': [1, 2, 3], 'name': 1, 'comment': ('comment 6',),
                     'rotation': [1, 1, 1, 2, 2, 2, 3, 3, 3], 'inverted': True},
                 2: {'translation': [1, 2, 3], 'indegrees': True, 'inverted': True,
                     'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'name': 2},
