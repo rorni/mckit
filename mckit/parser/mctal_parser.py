@@ -84,28 +84,28 @@ def parse_bins(text):
     bin_texts = deque(re.split('^[a-z]', text, flags=re.M+re.I))
     result = {'dims': [], 'bins': [], 'vars': []}
     # f: cells, surfaces, detector bins
-    dim_size, bin_values = parse_bin(bin_texts.popleft(), True, False, int)
+    dim_size, bin_values = parse_bin(bin_texts.popleft(), True, int)
     update_bins(result, dim_size, bin_values, 'f')
     # d: detectors
-    dim_size, bin_values = parse_bin(bin_texts.popleft(), False, False)
+    dim_size, bin_values = parse_bin(bin_texts.popleft(), False)
     update_bins(result, dim_size, bin_values, 'd')
     # u: user bins
-    dim_size, bin_values = parse_bin(bin_texts.popleft(), False, False)
+    dim_size, bin_values = parse_bin(bin_texts.popleft(), False)
     update_bins(result, dim_size, bin_values, 'u')
     # s: segment bins
-    dim_size, bin_values = parse_bin(bin_texts.popleft(), False, False)
+    dim_size, bin_values = parse_bin(bin_texts.popleft(), False)
     update_bins(result, dim_size, bin_values, 's')
     # m: multiplier bins
-    dim_size, bin_values = parse_bin(bin_texts.popleft(), False, False)
+    dim_size, bin_values = parse_bin(bin_texts.popleft(), False)
     update_bins(result, dim_size, bin_values, 'm')
     # c: cosine bins
-    dim_size, bin_values = parse_bin(bin_texts.popleft(), True, True, float)
+    dim_size, bin_values = parse_bin(bin_texts.popleft(), True, float)
     update_bins(result, dim_size, bin_values, 'c')
     # e: energy bins
-    dim_size, bin_values = parse_bin(bin_texts.popleft(), True, True, float)
+    dim_size, bin_values = parse_bin(bin_texts.popleft(), True, float)
     update_bins(result, dim_size, bin_values, 'e')
     # t: time bins
-    dim_size, bin_values = parse_bin(bin_texts.popleft(), True, True, float)
+    dim_size, bin_values = parse_bin(bin_texts.popleft(), True, float)
     update_bins(result, dim_size, bin_values, 't')
     return result
 
@@ -117,14 +117,18 @@ def update_bins(result, dim_size, bin_values, var):
         result['vars'].append(var)
 
 
-def parse_bin(text, read_values=True, extra=False, val_type=float):
-    tokens = deque(text.split())
+def parse_bin(text, read_values=True, val_type=float):
+    bin_header, values_list = text.split('\n', maxsplit=1)
+    tokens = deque(bin_header.split())
     t = tokens.popleft()
     if t.isdigit():
         tokens.appendleft(t)
     dim_size = int(tokens.popleft())
-    if extra:
-        tokens.popleft()
+    if dim_size == 1:
+        dim_size = 0
+    # if extra:
+    #     tokens.popleft()
+    tokens = deque(values_list.split())
     if read_values:
         bin_values = [val_type(t) for t in tokens]
     else:
