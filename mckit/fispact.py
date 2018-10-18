@@ -4,9 +4,12 @@ from functools import reduce
 from collections import defaultdict
 import random
 import re
-import subprocess
-import numpy as np
+import os
 from pathlib import Path
+import subprocess
+from concurrent.futures import ThreadPoolExecutor
+
+import numpy as np
 
 from .constants import TIME_UNITS
 from .parser.fispact_parser import read_fispact_tab
@@ -48,7 +51,121 @@ class FispactError(Exception):
     pass
 
 
-def fispact_fatal(text):
+class FispactSettings:
+    """FISPACT settings object.
+
+    Parameters
+    ----------
+    irr_profile : IrradiationProfile
+        Irradiation profile.
+    relax_profile : IrradiationProfile
+        Relaxation profile.
+    nat_reltol : float
+        Relative tolerance to believe that elements have natural abundance.
+        To force use of isotopic composition set nat_reltol to None.
+        Default: 1.e-8.
+    use_binary : bool
+        Use binary libraries rather then text. Default: False.
+    zero : bool
+        If True, then time value is reset to zero after an irradiation.
+    mind : float
+        Indicate the minimum number of atoms which are regarded as significant
+        for the output inventory. Default: 1.e+5
+    use_fission : bool
+        Causes to use fission reactions. If it is False - fission reactions are
+        omitted. Default: False - not to use fission.
+    half : bool
+        If True, causes the half-lije of each nuclide to be printed in the
+        output at all timesteps. Default: True.
+    hazards : bool
+        If True, causes data on potential ingestion and inhalation doses to be
+        read and dose due to individual nuclides to be printed at all timesteps.
+        Default: False.
+    tab1, tab2, tab3, tab4: bool
+        If True, causes output of the specific data into separate files.
+        tab1 - number of atoms and grams of each nuclide;
+        tab2 - activity (Bq) and dose rate (Sv per hour) of each nuclide;
+        tab3 - ingestion and inhalation dose (Sv) of each nuclide;
+        tab4 - gamma-ray spectrum (MeV per sec) and the number of gammas per group.
+        All defaults to False.
+    nostable : bool
+        If True, printing of stable nuclides in the inventory is suppressed.
+        Default: False
+    inv_tol : (float, float)
+        (atol, rtol) - absolute and relative tolerances for inventory
+        calculations. Default: None - means default values remain (1.e+4, 2.e-3).
+    path_tol : (float, float)
+        (atol, rtol) - absolute and relative tolerances for pathways calculations.
+        Default: None - means default values remain (1.e+4, 2.e-3).
+    uncertainty : int
+        Controls the uncertainty estimates and pathway information that are
+        calculated and output for each time interval. Default: 0.
+        0 - no pathways or estimates of uncertainty are calculated or output;
+        1 - only estimates of uncertainty are output;
+        2 - both estimates of uncertainty and the pathway information are output;
+        3 - only the pathway information is output;
+    """
+    def __init__(self, irr_profile, nat_reltol=1.e-8, use_binary=False,
+                 zero=True, mind=1.e+5, use_fission=False, half=True,
+                 hazards=False, tab1=False, tab2=False, tab3=False, tab4=False,
+                 nostable=False, inv_tol=None, path_tol=None, uncertainty=0):
+        self.irr_profile = irr_profile
+        self.nat_reltol = nat_reltol
+        self.use_binary = use_binary
+        self._kwargs = {
+            'ZERO': zero, 'MIND': mind, 'USEFISSION': use_fission, 'HALF': half,
+            'HAZARDS': hazards, 'TAB1': tab1, 'TAB2': tab2, 'TAB3': tab3,
+            'TAB4': tab4, 'NOSTABLE': nostable, 'INVENTORY_TOLERANCE': inv_tol,
+            'PATH_TOLERANCE': path_tol, 'UNCERTAINTY': uncertainty
+        }
+
+    def get_param(self, name):
+        """Gets FISPACT inventory parameter.
+
+        Parameters
+        ----------
+        name : str
+            Parameter name.
+
+        Returns
+        -------
+        value : object
+            Parameter's value.
+        """
+        return self._kwargs.get(name)
+
+
+def run_fispact(input_file, files='files', cwd=None, verbose=True):
+    """Runs FISPACT code.
+
+    If run ends with errors, then FispactError exception is raised.
+
+    Parameters
+    ----------
+    input_file : str
+        The name of input file.
+    files : str
+        The name of FISPACT files file. Default: 'files'.
+    cwd : Path-like or str
+        Working directory. Default: None.
+    verbose : bool
+        Whether to print calculation status to stdout.
+
+    Returns
+    -------
+    status : str
+        Run status message.
+    """
+    status = subprocess.check_output(
+        ['fispact', input_file, files], encoding='utf-8', cwd=cwd
+    )
+    if verbose:
+        print(status)
+    check_fispact_status(status)
+    return status
+
+
+def check_fispact_status(text):
     """Raises FispactError exception if FATAL ERROR presents in output.
 
     Parameters
@@ -61,7 +178,8 @@ def fispact_fatal(text):
         raise FispactError(match.group(0))
 
 
-def fispact_files(files='files', collapx='COLLAPX', fluxes='fluxes', arrayx='ARRAYX'):
+def create_files(files='files', collapx='COLLAPX', fluxes='fluxes',
+                 arrayx='ARRAYX', cwd=Path()):
     """Creates new files file, that specifies fispact names and data.
 
     Parameters
@@ -74,18 +192,28 @@ def fispact_files(files='files', collapx='COLLAPX', fluxes='fluxes', arrayx='ARR
         Name of file with flux data. Default: fluxes.
     arrayx : str
         Name of arrayx file. Usually it is needed to be calculated only once.
+    cwd : Path
+        Working directory. In this directory files will be created. The folder
+        must be exist. Default: current directory.
+
+    Returns
+    -------
+    files : str
+        Name of files file.
     """
-    with open(files, mode='w') as f:
+    with open(cwd / files, mode='w') as f:
         for k, v in LIBS.items():
             f.write(k + '  ' + DATA_PATH + v + '\n')
         f.write('fluxes  ' + fluxes + '\n')
         f.write('collapxi  ' + collapx + '\n')
         f.write('collapxo  ' + collapx + '\n')
         f.write('arrayx  ' + arrayx + '\n')
+    return files
 
 
-def fispact_convert(ebins, flux, convert='convert', fluxes='fluxes', arb_flux='arb_flux', files='files.convert'):
-    """Converts flux to the 709 groups.
+def create_convert(ebins, flux, convert='convert', fluxes='fluxes',
+                   arb_flux='arb_flux', files='files.convert', cwd=Path()):
+    """Creates file for fispact flux conversion to the 709 groups.
 
     Parameters
     ----------
@@ -101,19 +229,27 @@ def fispact_convert(ebins, flux, convert='convert', fluxes='fluxes', arb_flux='a
         File name for input neutron flux.
     files : str
         File name for conversion data.
+    cwd : Path
+        Working directory. In this directory files will be created. The folder
+        must be exist.
+
+    Returns
+    -------
+    args : tuple
+        Tuple of arguments for FISPACT.
     """
-    with open(files, mode='w') as f:
+    with open(cwd / files, mode='w') as f:
         f.write('ind_nuc  ' + DATA_PATH + LIBS['ind_nuc'] + '\n')
         f.write('fluxes  ' + fluxes + '\n')
         f.write('arb_flux  ' + arb_flux + '\n')
 
-    with open(arb_flux, mode='w') as f:
+    with open(cwd / arb_flux, mode='w') as f:
         ncols = 6
         text = []
         for i, e in enumerate(reversed(ebins)):
             s = '\n' if (i + 1) % ncols == 0 else ' '
-            text.append('{0:.6e}'.format(e * 1.e+6))  # Because fispact needs eV, not MeV
-            text.append(s)
+            text.append('{0:.6e}'.format(e * 1.e+6))  # Because fispact needs
+            text.append(s)                            # eV, not MeV
         text[-1] = '\n'
         f.write(''.join(text))
 
@@ -127,7 +263,7 @@ def fispact_convert(ebins, flux, convert='convert', fluxes='fluxes', arb_flux='a
         f.write('{0}\n'.format(1))
         f.write('total flux={0:.6e}'.format(np.sum(flux)))
 
-    with open(convert + '.i', mode='w') as f:
+    with open(str(cwd / convert) + '.i', mode='w') as f:
         text = [
             '<< convert flux to 709 grout structure >>',
             'CLOBBER',
@@ -138,26 +274,29 @@ def fispact_convert(ebins, flux, convert='convert', fluxes='fluxes', arb_flux='a
             '* END'
         ]
         f.write('\n'.join(text))
-
-    status = subprocess.check_output(['fispact', convert, files], encoding='utf-8')
-    print(status)
-    fispact_fatal(status)
+    return convert, files
 
 
-def fispact_collapse(collapse='collapse', files='files', use_binary=True):
-    """Collapses crossections with flux.
+def create_collapse(collapse='collapse', use_binary=True, cwd=Path()):
+    """Creates fispact file for cross-section collapse.
 
     Parameters
     ----------
     collapse : str
         Filename for collapse input file.
-    files : str
-        Filename for files input file.
     use_binary : bool
         Use binary data rather text data.
+    cwd : Path
+        Working directory. In this directory files will be created.
+        Default: current directory.
+
+    Returns
+    -------
+    collapse : str
+        Name of collapse file.
     """
     p = -1 if use_binary else +1
-    with open(collapse + '.i', mode='w') as f:
+    with open(str(cwd / collapse) + '.i', mode='w') as f:
         text = [
             '<< collapse cross section data >>',
             'CLOBBER',
@@ -168,23 +307,26 @@ def fispact_collapse(collapse='collapse', files='files', use_binary=True):
             '* END OF RUN'
         ]
         f.write('\n'.join(text))
-
-    status = subprocess.check_output(['fispact', collapse, files], encoding='utf-8')
-    print(status)
-    fispact_fatal(status)
+    return collapse
 
 
-def fispact_condense(condense='condense', files='files'):
-    """Condense the decay and fission data.
+def create_condense(condense='condense', cwd=Path()):
+    """Creates fispact file to condense the decay and fission data.
 
     Parameters
     ----------
     condense : str
         Name of condense input file.
-    files : str
-        Name of files input file.
+    cwd : Path
+        Working directory. In this directory files will be created. Default:
+        current directory.
+
+    Returns
+    -------
+    condense : str
+        Name of condense file.
     """
-    with open(condense + '.i', mode='w') as f:
+    with open(str(cwd / condense) + '.i', mode='w') as f:
         text = [
             '<< Condense decay data >>',
             'CLOBBER',
@@ -196,17 +338,12 @@ def fispact_condense(condense='condense', files='files'):
             '* END OF RUN'
         ]
         f.write('\n'.join(text))
-
-    status = subprocess.check_output(['fispact', condense, files], encoding='utf-8')
-    print(status)
-    fispact_fatal(status)
+    return condense
 
 
-def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile, inventory='inventory',
-                      files='files', nat_reltol=1.e-8, zero=True, mind=1.e+5, use_fission=False, half=True,
-                      hazards=False, tab1=False, tab2=False, tab3=False, tab4=False, nostable=False,
-                      inv_tol=None, path_tol=None, uncertainty=0):
-    """Runs inventory calculations.
+def create_inventory(title, material, volume, flux, inventory='inventory',
+                     settings=None, cwd=Path()):
+    """Creates fispact file for inventory calculations.
 
     Parameters
     ----------
@@ -218,54 +355,21 @@ def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile,
         Volume of the material.
     flux : float
         Total neutron flux.
-    irr_profile : IrradiationProfile
-        Irradiation profile.
-    relax_profile : IrradiationProfile
-        Relaxation profile.
     inventory : str
         File name for inventory input file.
-    files : str
-        File name for data file.
-    nat_reltol : float
-        Relative tolerance to believe that elements have natural abundance.
-        To force use of isotopic composition set nat_reltol to None. Default: 1.e-8.
-    zero : bool
-        If True, then time value is reset to zero after an irradiation.
-    mind : float
-        Indicate the minimum number of atoms which are regarded as significant
-        for the output inventory. Default: 1.e+5
-    use_fission : bool
-        Causes to use fission reactions. If it is False - fission reactions are omitted.
-        Default: False - not to use fission.
-    half : bool
-        If True, causes the half-lije of each nuclide to be printed in the
-        output at all timesteps. Default: True.
-    hazards : bool
-        If True, causes data on potential ingestion and inhalation doses to be read
-        and dose due to individual nuclides to be printed at all timesteps.
-        Default: False.
-    tab1, tab2, tab3, tab4: bool
-        If True, causes output of the specific data into separate files.
-        tab1 - number of atoms and grams of each nuclide, default: False;
-        tab2 - activity (Bq) and dose rate (Sv per hour) of each nuclide, default: False;
-        tab3 - ingestion and inhalation dose (Sv) of each nuclide, default: False;
-        tab4 - gamma-ray spectrum (MeV per sec) and the number of gammas per group, default: False.
-    nostable : bool
-        If True, printing of stable nuclides in the inventory is suppressed. Default: False
-    inv_tol : (float, float)
-        (atol, rtol) - absolute and relative tolerances for inventory calculations.
-        Default: None - means default values ramain (1.e+4, 2.e-3).
-    path_tol : (float, float)
-        (atol, rtol) - absolute and relative tolerances for pathways calculations.
-        Default: None - means default values remain (1.e+4, 2.e-3).
-    uncertainty : int
-        Controls the uncertainty estimates and pathway information that are
-        calculated and output for each time interval. Default: 0.
-        0 - no pathways or estimates of uncertainty are calculated or output;
-        1 - only estimates of uncertainty are output;
-        2 - both estimates of uncertainty and the pathway information are output;
-        3 - only the pathway information is output;
+    settings : FispactSettings
+        Object that represents FISPACT inventory calculations parameters.
+    cwd : Path
+        Working directory. In this directory files will be created.
+        Default: current directory.
+
+    Returns
+    -------
+    inventory : str
+        Name of inventory file.
     """
+    if settings is None:
+        settings = FispactSettings()
     # inventory header.
     text = [
         '<< {0} >>'.format(title),
@@ -278,51 +382,46 @@ def fispact_inventory(title, material, volume, flux, irr_profile, relax_profile,
     # Initial conditions.
     # ------------------
     # Material
-    text.extend(fispact_material(material, volume, tolerance=nat_reltol))
+    text.extend(print_material(material, volume, tolerance=settings.nat_reltol))
     # Calculation parameters.
-    text.append('MIND  {0:.5e}'.format(mind))
-    if use_fission:
+    text.append('MIND  {0:.5e}'.format(settings.get_param('MIND')))
+    if settings.get_param('USEFISSION'):
         text.append('USEFISSION')
-    if half:
+    if settings.get_param('HALF'):
         text.append('HALF')
-    if hazards:
+    if settings.get_param('HAZARDS'):
         text.append('HAZARDS')
-    if tab1:
+    if settings.get_param('TAB1'):
         text.append('TAB1 1')
-    if tab2:
+    if settings.get_param('TAB2'):
         text.append('TAB2 1')
-    if tab3:
+    if settings.get_param('TAB3'):
         text.append('TAB3 1')
-    if tab4:
+    if settings.get_param('TAB4'):
         text.append('TAB4 1')
-    if nostable:
+    if settings.get_param('NOSTABLE'):
         text.append('NOSTABLE')
+    inv_tol = settings.get_param('INVENTORY_TOLERANCE')
     if inv_tol:
         text.append('TOLERANCE  0  {0:.5e}  {1:.5e}'.format(*inv_tol))
+    path_tol = settings.get_param('PATH_TOLERANCE')
     if path_tol:
         text.append('TOLERANCE  1  {0:.5e}  {1:.5e}'.format(*path_tol))
+    uncertainty = settings.get_param('UNCERTAINTY')
     if uncertainty:
         text.append('UNCERTAINTY {0}'.format(uncertainty))
     # Irradiation and relaxation profiles
-    text.extend(irr_profile.output(flux))
-    if zero:
-       # text.append('ATOMS')
-        text.append('FLUX 0')
-        text.append('ZERO')
-    text.extend(relax_profile.output())
+    text.extend(settings.irr_profile.output(flux))
     # Footer
     text.append('END')
     text.append('* END of calculations')
     # Save to file
-    with open(inventory + '.i', mode='w') as f:
+    with open(str(cwd / inventory) + '.i', mode='w') as f:
         f.write('\n'.join(text))
-    # Run calculations.
-    status = subprocess.check_output(['fispact', inventory, files], encoding='utf-8')
-    print(status)
-    fispact_fatal(status)
+    return inventory
 
 
-def fispact_material(material, volume, tolerance=1.e-8):
+def print_material(material, volume, tolerance=1.e-8):
     """Produces FISPACT description of the material.
 
     Parameters
@@ -388,6 +487,25 @@ def irradiation_SA2():
     irr_prof.irradiate(6.3900E+12, 400, record='SPEC')
     irr_prof.relax(3920, record='SPEC')
     irr_prof.irradiate(6.3900E+12, 400, record='SPEC')
+    irr_prof.relax(1, record='ATOMS')
+    irr_prof.relax(299, record='ATOMS')
+    irr_prof.relax(25, units='MINS', record='ATOMS')
+    irr_prof.relax(30, units='MINS', record='ATOMS')
+    irr_prof.relax(2, units='HOURS', record='ATOMS')
+    irr_prof.relax(2, units='HOURS', record='ATOMS')
+    irr_prof.relax(5, units='HOURS', record='ATOMS')
+    irr_prof.relax(14, units='HOURS', record='ATOMS')
+    irr_prof.relax(2, units='DAYS', record='ATOMS')
+    irr_prof.relax(4, units='DAYS', record='ATOMS')
+    irr_prof.relax(23, units='DAYS', record='ATOMS')
+    irr_prof.relax(60, units='DAYS', record='ATOMS')
+    irr_prof.relax(275.25, units='DAYS', record='ATOMS')
+    irr_prof.relax(2, units='YEARS', record='ATOMS')
+    irr_prof.relax(7, units='YEARS', record='ATOMS')
+    irr_prof.relax(20, units='YEARS', record='ATOMS')
+    irr_prof.relax(20, units='YEARS', record='ATOMS')
+    irr_prof.relax(50, units='YEARS', record='ATOMS')
+    irr_prof.relax(900, units='YEARS', record='ATOMS')
     return irr_prof
 
 
@@ -422,6 +540,92 @@ def cooling_SA2():
     return cool_prof
 
 
+class TimeSeries:
+    """Represents an array of time points.
+
+    Methods
+    -------
+    append_interval(delta, units)
+        Appends a time moment after delta pass since last time point.
+    insert_point(time, units)
+        Inserts a time point.
+    durations()
+        Gets an iterator over time intervals between time points.
+    adjust_time(time)
+        Gets time in best suited time units.
+    """
+    _sort_units = ('YEARS', 'DAYS', 'HOURS', 'MINS', 'SECS')
+
+    def __init__(self):
+        self._points = []
+
+    def __iter__(self):
+        return iter(self._points)
+
+    def __len__(self):
+        return len(self._points)
+
+    def append_interval(self, delta, units='SECS'):
+        """Appends a new time point after delta time from last point.
+
+        Parameters
+        ----------
+        delta : float
+            Time interval which must be added.
+        units : str
+            Time units in which delta value is measured. Default: 'SECS'.
+        """
+        if delta <= 0:
+            raise ValueError('Duration cannot be less than zero')
+        if self._points:
+            last = self._points[-1]
+        else:
+            last = 0
+        self._points.append(last + delta * TIME_UNITS[units])
+
+    def insert_point(self, time, units='SECS'):
+        """Inserts a new time point into time series.
+
+        Parameters
+        ----------
+        time : float
+            Time point to be inserted.
+        units : str
+            Units in which time value is measured. Default: 'SECS'.
+
+        Returns
+        -------
+        index : int
+            Index of position, at which new time point is inserted.
+        """
+        time = time * TIME_UNITS[units]
+        index = np.searchsorted(self._points, time)
+        self._points.insert(index, time)
+        return index
+
+    def durations(self):
+        """Gets an iterator over time intervals.
+
+        Returns
+        -------
+        duration : float
+            Duration of time interval.
+        """
+        if self._points:
+            yield self._points[0]
+        for i in range(1, len(self._points)):
+            dur = self._points[i] - self._points[i-1]
+            yield dur
+
+    @classmethod
+    def adjust_time(cls, time):
+        for unit in cls._sort_units:
+            d = time / TIME_UNITS[unit]
+            if d >= 1:
+                return d, unit
+        return time, 'SECS'
+
+
 class IrradiationProfile:
     """Describes irradiation and relaxation.
 
@@ -430,13 +634,12 @@ class IrradiationProfile:
     norm_flux : float
         Flux value for normalization.
     """
-    _sort_units = ('YEARS', 'DAYS', 'HOURS', 'MINS', 'SECS')
-
     def __init__(self, norm_flux=None):
         self._norm = norm_flux
         self._flux = []
-        self._duration = []
+        self._times = TimeSeries()
         self._record = []
+        self._zero_index = 0
 
     def irradiate(self, flux, duration, units='SECS', record=None, nominal=False):
         """Adds irradiation step.
@@ -460,11 +663,10 @@ class IrradiationProfile:
             raise ValueError('Unknown record')
         if flux < 0:
             raise ValueError('Flux cannot be less than zero')
-        if duration <= 0:
-            raise ValueError('Duration cannot be less than zero')
         self._flux.append(flux)
-        self._duration.append(duration * TIME_UNITS[units])
+        self._times.append_interval(duration, units=units)
         self._record.append(record)
+        self._zero_index = len(self._times) - 1
         if nominal:
             self._norm = flux
 
@@ -476,13 +678,7 @@ class IrradiationProfile:
         times : list[float]
             Output times in seconds.
         """
-        result = []
-        time = 0
-        for d, r in zip(self._duration, self._record):
-            time += d
-            if r:
-                result.append(time)
-        return result
+        return list(self._times)
 
     def relax(self, duration, units='SECS', record=None):
         """Adds relaxation step.
@@ -503,16 +699,8 @@ class IrradiationProfile:
         if duration <= 0:
             raise ValueError('Duration cannot be less than zero')
         self._flux.append(0)
-        self._duration.append(duration * TIME_UNITS[units])
+        self._times.append_interval(duration, units=units)
         self._record.append(record)
-
-    @classmethod
-    def adjust_time(cls, time):
-        for unit in cls._sort_units:
-            d = time / TIME_UNITS[unit]
-            if d >= 1:
-                return d, unit
-        return time, 'SECS'
 
     def insert_record(self, record, time, units='SECS'):
         """Inserts extra observation point for specified time.
@@ -526,20 +714,11 @@ class IrradiationProfile:
         units : str
             Time units.
         """
-        time = time * TIME_UNITS[units]
-        cum_time = list(accumulate(self._duration))
-        index = np.searchsorted(cum_time, time)
+        index = self._times.insert_point(time, units=units)
         self._flux.insert(index, self._flux[index])
         self._record.insert(index, record)
-        if index < len(cum_time):
-            delta = cum_time[index] - time
-            self._duration.insert(index, self._duration[index] - delta)
-            self._duration[index + 1] = delta
-        elif index > 0:
-            delta = time - cum_time[index - 1]
-            self._duration.append(delta)
-        else:
-            self._duration.append(time)
+        if index <= self._zero_index:
+            self._zero_index += 1
 
     def output(self, nominal_flux=None):
         """Creates FISPACT output for the profile.
@@ -560,22 +739,24 @@ class IrradiationProfile:
             norm_factor = 1
         lines = []
         last_flux = 0
-        for flux, dur, rec in zip(self._flux, self._duration, self._record):
+        for i, (flux, dur, rec) in enumerate(zip(self._flux, self._times.durations(), self._record)):
             cur_flux = flux * norm_factor
             if cur_flux != last_flux:
                 lines.append('FLUX {0:.5}'.format(cur_flux))
-            time, unit = self.adjust_time(dur)
+            time, unit = self._times.adjust_time(dur)
             lines.append('TIME {0:.5} {1} {2}'.format(time, unit, rec))
             last_flux = cur_flux
-        #if last_flux > 0:
+            if i == self._zero_index:
+                lines.append('FLUX 0')
+                lines.append('ZERO')
+        # if last_flux > 0:
         #    lines.append('FLUX 0')
         return lines
 
 
-def activation(title, material, volume, spectrum, irr_profile, relax_profile, inventory='inventory',
-               files='files', fluxes='fluxes', collapx='COLLAPX', arrayx='ARRAYX', use_binary=False,
-               read_only=False, overwrite=True, **kwargs):
-    """Runs activation calculations.
+def run_activation(title, material, volume, spectrum, folder, verbose=True,
+                   settings=None):
+    """Runs activation calculations for single case.
 
     Parameters
     ----------
@@ -587,85 +768,61 @@ def activation(title, material, volume, spectrum, irr_profile, relax_profile, in
         Volume of the material.
     spectrum : (ebins, flux)
         Flux data. ebins - energy bins; flux - group fluxes for every bin.
-    irr_profile : IrradiationProfile
-        Irradiation profile.
-    relax_profile : IrradiationProfile
-        Relaxation profile.
+    folder : str
+        Folder, where input files have to be located. Calculations will be run
+        in this folder. If no such folder exists, it will be created.
+    verbose : bool
+        Verbose output of calculations status. Default: True
+    settings : FispactSettings
+        Fispact inventory settings. Defaul: None.
+    """
+    path, tasks = _create_case_files(
+        folder, spectrum[0], spectrum[1], {0: (material, volume)}, settings
+    )
+    _run_case(tasks, cwd=path, verbose=verbose)
+
+
+def fetch_result(folder, inventory='inventory'):
+    """Fetches results of a single inventory calculation.
+
+    Parameters
+    ----------
+    folder : str
+        Folder, where input files have to be located. Calculations will be run
+        in this folder. If no such folder exists, it will be created.
     inventory : str
-        File name for inventory input file.
-    files : str
-        File name for data file.
-    collapx : str
-        Name of file of the collapsed cross sections. Default: COLLAPX
-    fluxes : str
-        Name of file with flux data. Default: fluxes.
-    arrayx : str
-        Name of arrayx file. Usually it is needed to be calculated only once.
-    use_binary : bool
-        Use binary data rather text data.
-    read_only : bool
-        If the calculations have been already run and it is necessary only to read
-        results, set this flag to True.
-    overwrite : bool
-        Forces to overwrite files, collapx and arrayx. Default: True. False value
-        is mainly intended to be used in mesh calculations. If flag is set to False,
-        it is user responsibility to guarantee file existence and the consistency
-        of file content.
-    kwargs : dict
-        Paramters for fispact_inventory. See docs for fispact_inventory function.
+        Name of inventory. Default: 'inventory'.
 
     Returns
     -------
-    result : dict
-        A dictionary of calculation results. It contains the following keys:
-        'time' - a list of time moments in seconds;
-        'zero' - int - the starting index of relaxation phase.
-        'ebins' - a list of gamma energy bins;
-        All other data are lists - one item for each time moment.
-        'atoms' - a dict. isotope->concentration [atoms];
-        'activity' - a dict. isotope->activity [Bq];
-        'ingestion' - a dict. isotope->ingestion dose [Sv/hour];
-        'inhalation' - a dict. isotope->inhalation dose [Sv/hour]
-        'spectrum' - ndarray [gammas/sec];
-        'a-energy' - alpha-activity [MeV/sec];
-        'b-energy' - beta-activity [MeV/sec];
-        'g-energy' - gamma-activity [MeV/sec];
-        'fissions' - the number of spontaneous fission neutrons [neutrons/sec];
+    result : list
+        The result of calculations.
     """
-    if not read_only:
-        if overwrite:
-            fispact_files(files=files, collapx=collapx, fluxes=fluxes, arrayx=arrayx)
-            fispact_condense(files=files)
-            fispact_convert(spectrum[0], spectrum[1], fluxes=fluxes)
-            fispact_collapse(files=files, use_binary=use_binary)
-        fispact_inventory(title, material, volume, sum(spectrum[1]), irr_profile, relax_profile, inventory=inventory,
-                          files=files, **kwargs)
-    result = {
-        'time': irr_profile.measure_times() + relax_profile.measure_times(),
-        'zero': len(irr_profile.measure_times())
-        # Other are optional
-    }
-
-    if kwargs.get('tab1', False):
-        data = read_fispact_tab(inventory + '.tab1')
+    result = {}
+    path = _fetch_folder(folder)
+    filepath = path / '{0}.tab1'.format(inventory)
+    if filepath.exists():
+        data = read_fispact_tab(str(filepath))
         result['atoms'] = [d['atoms'] for d in data]
-    if kwargs.get('tab2', False):
-        data = read_fispact_tab(inventory + '.tab2')
+    filepath = path / '{0}.tab2'.format(inventory)
+    if filepath.exists():
+        data = read_fispact_tab(str(filepath))
         result['activity'] = [d['activity'] for d in data]
-    if kwargs.get('tab3', False):
-        data = read_fispact_tab(inventory + '.tab3')
+    filepath = path / '{0}.tab3'.format(inventory)
+    if filepath.exists():
+        data = read_fispact_tab(str(filepath))
         result['ingestion'] = [d['ingestion'] for d in data]
         result['inhalation'] = [d['inhalation'] for d in data]
-    if kwargs.get('tab4', False):
-        data = read_fispact_tab(inventory + '.tab4')
+    filepath = path / '{0}.tab4'.format(inventory)
+    if filepath.exists():
+        data = read_fispact_tab(str(filepath))
         # TODO: Consider possibility of usage of 22-bin gamma energy groups.
         result['ebins'] = EBINS_24
-        result['spectrum'] = [np.array(d['flux']) * volume for d in data]
+        result['spectrum'] = [np.array(d['flux']) for d in data]
         result['a-energy'] = [d['a-energy'] for d in data]
         result['b-energy'] = [d['b-energy'] for d in data]
         result['g-energy'] = [d['g-energy'] for d in data]
         result['fissions'] = [d['fissions'] for d in data]
-
     return result
 
 
@@ -757,6 +914,227 @@ def prepare_mesh_container(fmesh, volumes, irr_profile, relax_profile, folder,
     return path, result, element_keywords, value_keywords, indices
 
 
+def _encode_materials(cells):
+    """Enumerate all materials found in cells.
+
+    Parameters
+    ----------
+    cells : list
+        List of cells.
+
+    Returns
+    -------
+    mat_codes : dict
+        A dictionary of material codes (Material->int).
+    """
+    code = 1
+    mat_codes = {}
+    for c in sorted(cells, key=lambda x: x['name']):
+        mat = c.material()
+        if mat not in mat_codes.keys():
+            mat_codes[mat] = code
+            code += 1
+    return mat_codes
+
+
+def _create_case_files(folder, ebins, flux, materials, settings=None,
+                       arrayx=None):
+    """Creates a folder with inventory files for a particular flux.
+
+    Parameters
+    ----------
+    folder : str
+        Folder name.
+    ebins : list[float]
+        Energy bin boundaries.
+    flux : list[float]
+        Neutron flux.
+    materials : dict
+        A dictionary of name->(material, volume). name will be used in the
+        inventory file name.
+    settings : FispactSettings
+        FISPACT inventory calculations settings.
+    arrayx : str
+        Name of arrayx file. If None, condense file will be
+        created and shielded for calculations. Default: None.
+
+    Returns
+    -------
+    path : Path
+        Path to the folder with tasks.
+    tasks : list[tuple(str)]
+        A list of tuples (task_name, files). task_name - name of task to be
+        run by FISPACT. files - name of file with FISPACT settings.
+    """
+    path = _fetch_folder(folder)
+    tasks = []
+    # Create all input files
+    if arrayx is None:
+        arrayx = 'ARRAYX'
+        tasks.append((create_condense(cwd=path), arrayx))
+    else:
+        arrayx = os.path.relpath(arrayx, start=path)
+    files = create_files(cwd=path, arrayx=arrayx)
+    tasks.append(create_convert(ebins, flux, cwd=path))
+    tasks.append((
+        create_collapse(use_binary=settings.use_binary, cwd=path), files
+    ))
+    for name, (mat, vol) in materials.items():
+        title = 'case {0}'.format(name)
+        tasks.append((
+            create_inventory(
+                title, mat, vol, sum(flux), cwd=path, settings=settings,
+                inventory='inventory_{0}'.format(name)
+            ),
+            files
+        ))
+    return path, tasks
+
+
+def _run_case(tasks, cwd=None, verbose=True):
+    """Runs FISPACT calculations for the specific case.
+
+    Parameters
+    ----------
+    tasks : list[tuple[str]]
+        List of inventory names.
+    cwd : Path
+        Working path. Folder, where files are located.
+    verbose : bool
+        Turns on verbose output. Default: True.
+    """
+    for input_file, files in tasks:
+        run_fispact(input_file, files=files, cwd=cwd, verbose=verbose)
+
+
+def _run_mesh_cases(condense_task, flux_tasks, cwd=Path(), verbose=True,
+                    threads=1):
+    """Runs FISPACT calculations for the mesh.
+
+    Parameters
+    ----------
+    condense_task : tuple
+        A tuple, (condense_name, condense_files).
+    flux_tasks : list
+        A list of tasks to be run. Every item is a tuple: (path, tasks), where
+        path is a Path instance - working directory for tasks. tasks - a list
+        of tuples - tasks to be run.
+    cwd : Path
+        Working directory. Default: current folder.
+    verbose : bool
+        Output verbosity. Default: True.
+    threads : int
+        The number of threads to execute.
+    """
+    condense_name, condense_files = condense_task
+    run_fispact(condense_name, condense_files, cwd=cwd, verbose=verbose)
+
+    with ThreadPoolExecutor(max_workers=threads) as pool:
+        pool.map(lambda x: _run_case(x[1], cwd=x[0], verbose=verbose), flux_tasks)
+
+
+def _create_full_mesh_cases(fmesh, volumes, folder, settings=None):
+    """Runs activation calculations for every mesh voxel.
+
+    Parameters
+    ----------
+    fmesh : FMesh
+        FMesh data.
+    volumes : dict
+        A dictionary of cell volumes: cell->SparseData.
+    folder : str
+        Path to folder with calculation results.
+    settings : FispactSettings
+        Settings for FISPACT inventory.
+
+    Returns
+    -------
+    path : Path
+        Path to the folder with tasks.
+    condense_task : tuple
+        (condense_name, condense_files).
+    flux_tasks : list
+        A list of (flux_path, tasks).
+    """
+    path = _fetch_folder(folder)
+
+    files = create_files(cwd=path)
+    condense_task = (create_condense(cwd=path), files)
+
+    flux_tasks = []
+    indices = reduce(set.union, map(lambda x: set(x.keys()), volumes.values()))
+    for i, j, k in indices:
+        ebins, flux, err = fmesh.get_spectrum_by_index((i, j, k))
+        ebins[0] = 1.e-11
+
+        materials = _get_materials_filling_voxel(volumes, i, j, k)
+        folder = 'voxel_{0}_{1}_{2}'.format(i, j, k)
+
+        flux_tasks.append(
+            _create_case_files(
+                folder, ebins, flux, materials, settings, arrayx='ARRAYX'
+            )
+        )
+    return path, condense_task, flux_tasks
+
+
+def _create_simple_mesh_cases(fmesh, volumes, folder, settings=None):
+    """Creates files for superimposed activation calculations.
+
+    Parameters
+    ----------
+    fmesh : FMesh
+        FMesh data.
+    volumes : dict
+        A dictionary of cell volumes: cell->SparseData.
+    folder : str
+        Path to folder with calculation results.
+    settings : FispactSettings
+        Settings for FISPACT inventory.
+
+    Returns
+    -------
+    path : Path
+        Path to the folder with tasks.
+    condense_task : tuple
+        (condense_name, condense_files).
+    flux_tasks : list
+        A list of (flux_path, tasks).
+    """
+    path = _fetch_folder(folder)
+
+    files = create_files(cwd=path)
+    condense_task = (create_condense(cwd=path), files)
+
+    flux_tasks = []
+    ebins = fmesh._ebins
+    ebins[0] = 1.e-11
+    max_flux = np.max(fmesh._data, axis=(1, 2, 3))
+    max_volume = max([max(v._data.values()) for v in volumes.values() if v.size > 0])
+    material_codes = _encode_materials(volumes.keys())
+    materials = {name: (mat, max_volume) for mat, name in material_codes.items()}
+    for i, f in enumerate(max_flux):
+        flux = np.zeros_like(max_flux)
+        flux[i] = f
+
+        folder = 'ebin_{0}'.format(i)
+
+        flux_tasks.append(
+            _create_case_files(
+                folder, ebins, flux, materials, settings, arrayx='ARRAYX'
+            )
+        )
+    return path, condense_task, flux_tasks
+
+
+def _get_materials_filling_voxel(volumes, i, j, k):
+    materials = {}
+    for c, vol in volumes.items():
+        if vol[i, j, k] != 0 and c.material() is not None:
+            materials[c['name']] = (c.material(), vol[i, j, k])
+    return materials
+
+
 def full_mesh_activation(title, fmesh, volumes, irr_profile, relax_profile,
                          folder, read_only=False, use_indices=None,
                          use_binary=False, **kwargs):
@@ -819,7 +1197,7 @@ def full_mesh_activation(title, fmesh, volumes, irr_profile, relax_profile,
     if not read_only:
         arrayx = str(path / 'arrayx')
         files = str(path / 'files')
-        fispact_files(files=files, arrayx=arrayx)
+        create_files(files=files, arrayx=arrayx)
         fispact_condense(condense=str(path / 'condense'), files=files)
 
     for i, j, k in indices:
@@ -839,8 +1217,8 @@ def full_mesh_activation(title, fmesh, volumes, irr_profile, relax_profile,
             fluxes = str(path / 'fluxes_{0}_{1}_{2}'.format(i, j, k))
             collapx = str(path / 'collapx_{0}_{1}_{2}'.format(i, j, k))
 
-            fispact_files(files=files, collapx=collapx, fluxes=fluxes,
-                          arrayx=arrayx)
+            create_files(files=files, collapx=collapx, fluxes=fluxes,
+                         arrayx=arrayx)
             fispact_convert(ebins, flux, fluxes=fluxes)
             fispact_collapse(files=files, use_binary=use_binary)
 
@@ -928,7 +1306,7 @@ def simple_mesh_activation(title, fmesh, volumes, irr_profile, relax_profile,
     files = str(path / 'files')
     if not read_only:
         arrayx = str(path / 'arrayx')
-        fispact_files(files=files, arrayx=arrayx)
+        create_files(files=files, arrayx=arrayx)
         fispact_condense(condense=str(path / 'condense'), files=files)
 
     ebins = fmesh._ebins
@@ -946,8 +1324,8 @@ def simple_mesh_activation(title, fmesh, volumes, irr_profile, relax_profile,
             files = str(path / 'files_bin_{0}'.format(i))
             fluxes = str(path / 'fluxes_bin_{0}'.format(i))
             collapx = str(path / 'collapx_bin_{0}'.format(i))
-            fispact_files(files=files, collapx=collapx, fluxes=fluxes,
-                          arrayx=arrayx)
+            create_files(files=files, collapx=collapx, fluxes=fluxes,
+                         arrayx=arrayx)
             fispact_convert(ebins, flux, fluxes=fluxes)
             fispact_collapse(files=files, use_binary=use_binary)
 
@@ -1049,4 +1427,16 @@ def mesh_activation(title, fmesh, volumes, irr_profile, relax_profile, simple=Tr
                                         relax_profile, folder, read_only=read_only,
                                         check=checks, use_binary=use_binary, **kwargs)
     return result
+
+
+def _fetch_folder(folder, read_only=False):
+    path = Path(folder)
+    if path.exists() and not path.is_dir():
+        raise FileExistsError("Such file exists but it is not a folder.")
+    elif not path.exists():
+        if read_only:
+            raise FileNotFoundError("Data directory not found")
+        else:
+            path.mkdir()
+    return path
 

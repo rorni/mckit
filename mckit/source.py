@@ -1,4 +1,4 @@
-from .activation import EBINS_24
+from .fispact import EBINS_24
 from .fmesh import SparseData
 from .printer import print_card, separate
 
