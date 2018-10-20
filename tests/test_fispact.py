@@ -6,9 +6,8 @@ import numpy as np
 from itertools import accumulate
 import pickle
 
-from mckit.activation import FispactError, fispact_fatal, fispact_files, \
-                             fispact_convert, fispact_collapse, \
-                             IrradiationProfile, activation, \
+from mckit.fispact import FispactError, check_fispact_status, create_files, \
+                             IrradiationProfile, activation, TimeSeries, \
                              mesh_activation, LIBS, DATA_PATH
 from mckit.material import Material
 from mckit import read_meshtal, read_mcnp
@@ -26,7 +25,7 @@ from mckit.fmesh import SparseData
 def test_fispact_fatal(text, fatal):
     if fatal:
         with pytest.raises(FispactError):
-            fispact_fatal(text)
+            check_fispact_status(text)
 
 
 @pytest.mark.parametrize('input, expected_file, expected_names', [
@@ -37,7 +36,7 @@ def test_fispact_fatal(text, fatal):
 def test_files(input, expected_file, expected_names):
     expected_data = {k: DATA_PATH + v for k, v in LIBS.items()}
     expected_data.update(expected_names)
-    fispact_files(**input)
+    create_files(**input)
     assert Path(expected_file).exists()
     with open(expected_file) as f:
         content = {}
@@ -297,6 +296,29 @@ def test_convert(new_ebins, ebins, flux):
     shutil.rmtree('fluxes_convert')
 
 
+class TestTimeSeries:
+    @pytest.mark.parametrize('time, value, unit', [
+        (0.5, 0.5, 'SECS'),
+        (12, 12, 'SECS'),
+        (59, 59, 'SECS'),
+        (75, 1.25, 'MINS'),
+        (120, 2.0, 'MINS'),
+        (3540, 59, 'MINS'),
+        (3600, 1.0, 'HOURS'),
+        (7200, 2.0, 'HOURS'),
+        (23*3600, 23.0, 'HOURS'),
+        (24*3600, 1.0, 'DAYS'),
+        (36*3600, 1.5, 'DAYS'),
+        (363*24*3600, 363.0, 'DAYS'),
+        (365*24*3600, 1.0, 'YEARS'),
+        (2*365*24*3600, 2.0, 'YEARS')
+    ])
+    def test_adjust_time(self, time, value, unit):
+        adj_val, adj_unit = TimeSeries.adjust_time(time)
+        assert adj_unit == unit
+        assert adj_val == value
+
+
 class TestIrradiationProfile:
     @pytest.fixture
     def irr_prof(self):
@@ -319,7 +341,7 @@ class TestIrradiationProfile:
             irr_prof.irradiate(flux, duration, units, record)
 
     @pytest.mark.parametrize('times', [
-        list(accumulate([1920, 7200, 3600, 120]))
+        list(accumulate([720, 1200, 7200, 3600, 120]))
     ])
     def test_measure_times(self, irr_prof, times):
         measures = irr_prof.measure_times()
@@ -334,27 +356,6 @@ class TestIrradiationProfile:
         with pytest.raises(exception):
             irr_prof.relax(duration, units, record)
 
-    @pytest.mark.parametrize('time, value, unit', [
-        (0.5, 0.5, 'SECS'),
-        (12, 12, 'SECS'),
-        (59, 59, 'SECS'),
-        (75, 1.25, 'MINS'),
-        (120, 2.0, 'MINS'),
-        (3540, 59, 'MINS'),
-        (3600, 1.0, 'HOURS'),
-        (7200, 2.0, 'HOURS'),
-        (23*3600, 23.0, 'HOURS'),
-        (24*3600, 1.0, 'DAYS'),
-        (36*3600, 1.5, 'DAYS'),
-        (363*24*3600, 363.0, 'DAYS'),
-        (365*24*3600, 1.0, 'YEARS'),
-        (2*365*24*3600, 2.0, 'YEARS')
-    ])
-    def test_adjust_time(self, time, value, unit):
-        adj_val, adj_unit = IrradiationProfile.adjust_time(time)
-        assert adj_unit == unit
-        assert adj_val == value
-
     @pytest.mark.parametrize('input, times, flux, record', [
         (['SPEC', 20, 'MINS'], [720, 480, 720, 7200, 3600, 120], [5.0, 0, 0, 1.0, 0, 0], ['', 'SPEC', 'ATOMS', 'SPEC', 'SPEC', 'ATOMS']),
         (['ATOMS', 3, 'HOURS'], [720, 1200, 7200, 1680, 1920, 120], [5.0, 0, 1.0, 0, 0, 0], ['', 'ATOMS', 'SPEC', 'ATOMS', 'SPEC', 'ATOMS']),
@@ -364,7 +365,7 @@ class TestIrradiationProfile:
     ])
     def test_insert_record(self, irr_prof, input, times, flux, record):
         irr_prof.insert_record(*input)
-        assert irr_prof._duration == times
+        assert list(irr_prof._times.durations()) == times
         assert irr_prof._flux == flux
         assert irr_prof._record == record
 

@@ -1,5 +1,6 @@
 """Module for activation calculations and FISPACT coupling."""
 from itertools import accumulate
+from abc import ABC, abstractmethod
 from functools import reduce
 from collections import defaultdict
 import random
@@ -540,6 +541,98 @@ def cooling_SA2():
     return cool_prof
 
 
+class FispactResult(ABC):
+    """Represents a result of FISPACT calculations.
+
+    Methods
+    -------
+    add_frame(data, duration, units)
+        Adds new time frame with calculation results.
+    """
+    def __init__(self):
+        self._times = TimeSeries()
+        self._data = []
+
+    def add_frame(self, data, duration, units='SECS'):
+        """Adds new timeframe with calculation results.
+
+        Parameters
+        ----------
+        data : object
+            Data item.
+        duration : float
+            Duration of timeframe.
+        units : str
+            Units, in which duration is measured. Default: 'SECS'.
+        """
+        self._times.append_interval(duration, units=units)
+        self._data.append(data)
+
+    def __getitem__(self, index):
+        return self._times[index], self._data[index]
+
+    def __iter__(self):
+        return zip(self._times, self._data)
+
+    @abstractmethod
+    def as_matrix(self, encoding_rules=None):
+        """Gets representation of data as matrix.
+
+        If data is not a vector or float number, encoding_rules represents
+        rules which is used to order elements of data.
+
+        Parameters
+        ----------
+        encoding_rules : dict
+            A dictionary of pairs item->number.
+
+        Returns
+        -------
+        matrix : numpy.ndarray
+            Data represented as matrix. First axis is time.
+        """
+
+
+class GammaSpectra(FispactResult):
+    """Represents activation gamma source."""
+    def as_matrix(self, encoding_rules=None):
+        nt = len(self._times)
+        ne = len(self._data[0])
+        matrix = np.empty((nt, ne), dtype=float)
+        for i, flux in enumerate(self._data):
+            matrix[i, :] = flux
+        return matrix
+
+
+class IsotopeData(FispactResult):
+    """Represents any activation data for individual elements."""
+    def as_matrix(self, encoding_rules=None):
+        nt = len(self._times)
+        ne = len(encoding_rules.values())
+        matrix = np.zeros((nt, ne), dtype=float)
+        for i, data in enumerate(self._data):
+            if data:
+                for element, value in data.items():
+                    j = encoding_rules.get(element, None)
+                    if j:
+                        matrix[i, j] = value
+        return matrix
+
+    def get_isotopes(self):
+        """Gets all isotopes present in the inventory.
+
+        Returns
+        -------
+        isotopes : set
+            Set of isotopes (material.Element)
+        """
+        isotopes = set()
+        for data in self._data:
+            if data:
+                isotopes.update(data.keys())
+        return isotopes
+
+
 class TimeSeries:
     """Represents an array of time points.
 
@@ -800,29 +893,45 @@ def fetch_result(folder, inventory='inventory'):
     """
     result = {}
     path = _fetch_folder(folder)
-    filepath = path / '{0}.tab1'.format(inventory)
-    if filepath.exists():
-        data = read_fispact_tab(str(filepath))
-        result['atoms'] = [d['atoms'] for d in data]
-    filepath = path / '{0}.tab2'.format(inventory)
-    if filepath.exists():
-        data = read_fispact_tab(str(filepath))
-        result['activity'] = [d['activity'] for d in data]
-    filepath = path / '{0}.tab3'.format(inventory)
-    if filepath.exists():
-        data = read_fispact_tab(str(filepath))
-        result['ingestion'] = [d['ingestion'] for d in data]
-        result['inhalation'] = [d['inhalation'] for d in data]
-    filepath = path / '{0}.tab4'.format(inventory)
-    if filepath.exists():
-        data = read_fispact_tab(str(filepath))
+
+    def create_result_object(data_class, keyword, raw_data):
+        data = data_class()
+        for d in raw_data:
+            data.add_frame(d[keyword], d['duration'])
+        return data
+
+    file_path = path / '{0}.tab1'.format(inventory)
+    if file_path.exists():
+        raw_data = read_fispact_tab(str(file_path))
+        kwd = 'atoms'
+        result[kwd] = create_result_object(IsotopeData, kwd, raw_data)
+    file_path = path / '{0}.tab2'.format(inventory)
+    if file_path.exists():
+        raw_data = read_fispact_tab(str(file_path))
+        kwd = 'activity'
+        result[kwd] = create_result_object(IsotopeData, kwd, raw_data)
+    file_path = path / '{0}.tab3'.format(inventory)
+    if file_path.exists():
+        raw_data = read_fispact_tab(str(file_path))
+        kwd = 'ingestion'
+        result[kwd] = create_result_object(IsotopeData, kwd, raw_data)
+
+        raw_data = read_fispact_tab(str(file_path))
+        kwd = 'inhalation'
+        result[kwd] = create_result_object(IsotopeData, kwd, raw_data)
+    file_path = path / '{0}.tab4'.format(inventory)
+    if file_path.exists():
+        raw_data = read_fispact_tab(str(file_path))
+        kwd = 'spectrum'
+        result[kwd] = create_result_object(GammaSpectra, kwd, raw_data)
+
         # TODO: Consider possibility of usage of 22-bin gamma energy groups.
-        result['ebins'] = EBINS_24
-        result['spectrum'] = [np.array(d['flux']) for d in data]
-        result['a-energy'] = [d['a-energy'] for d in data]
-        result['b-energy'] = [d['b-energy'] for d in data]
-        result['g-energy'] = [d['g-energy'] for d in data]
-        result['fissions'] = [d['fissions'] for d in data]
+        # result['ebins'] = EBINS_24
+        # TODO: Add class to store scalar results.
+        # result['a-energy'] = [d['a-energy'] for d in data]
+        # result['b-energy'] = [d['b-energy'] for d in data]
+        # result['g-energy'] = [d['g-energy'] for d in data]
+        # result['fissions'] = [d['fissions'] for d in data]
     return result
 
 
