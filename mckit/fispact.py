@@ -1236,6 +1236,22 @@ def _create_simple_mesh_cases(fmesh, volumes, folder, settings=None):
     return path, condense_task, flux_tasks
 
 
+def fetch_full_mesh_result(folder, volumes):
+    """Fetches full mesh results.
+
+    Parameters
+    ----------
+    folder : str
+        Folder, that contains result.
+    volumes : SparseData
+        Cell volumes for every voxel.
+
+    Returns
+    -------
+    timeframes : list
+    """
+
+
 def _get_materials_filling_voxel(volumes, i, j, k):
     materials = {}
     for c, vol in volumes.items():
