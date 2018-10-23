@@ -391,6 +391,75 @@ class CylMesh:
         raise NotImplementedError
 
 
+class SparseFlattenData:
+    """Flattened data."""
+    def __init__(self):
+        pass
+
+
+def flatten_volume_index(volumes):
+    """Gets flatten volume index.
+
+    Parameters
+    ----------
+    volumes : dict
+        A dictionary of cell volumes.
+
+    Returns
+    -------
+    index : list
+        A list of (i, j, k, cell).
+    """
+    result = []
+    for c, data in volumes.items():
+        for (i, j, k), vol in data.items():
+            result.append((i, j, k, c))
+    return result
+
+
+def flatten_volume(volumes, index):
+    """Converts volumes to the flattened form.
+
+    Parameters
+    ----------
+    volumes : dict
+        A dictionary of cell volumes.
+    index : list
+        A list of (i, j, k, cell).
+
+    Returns
+    -------
+    flat_vol : numpy.ndarray
+        Flattened array of volumes.
+    """
+    result = np.empty(len(index))
+    for n, (i, j, k, c) in enumerate(index):
+        result[n] = volumes[c][i, j, k]
+    return result
+
+
+def flatten_flux(flux, index):
+    """Converts flux array to the flattened form.
+
+    Parameters
+    ----------
+    flux : numpy.ndarray
+        Input flux array.
+    index : list
+        A list of (i, j, k, cell).
+
+    Returns
+    -------
+    flat_flux : numpy.ndarray
+        Flattened array of fluxes.
+    """
+    e = flux.shape[0]
+    result = np.empty((len(index), e))
+    for n, (i, j, k, c) in enumerate(index):
+        result[n, :] = flux[:, i, j, k]
+    return result
+
+
 class SparseData:
     """Describes sparse spatial data.
 

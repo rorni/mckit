@@ -1250,6 +1250,32 @@ def fetch_full_mesh_result(folder, volumes):
     -------
     timeframes : list
     """
+    pass
+
+
+def _material_conversion_matrix(index, material_index):
+    """Creates material conversion matrix.
+
+    Parameters
+    ----------
+    index : list
+        A list of (i, j, k, cell).
+    material_index : dict
+        A dictionary of material indices. material->mi.
+
+    Returns
+    -------
+    mfm : numpy.ndarray
+        material index to flatten array conversion matrix. Rows - material
+        indices, columns - indices in flatten array. 1 if material mi present
+        at index i.
+    """
+    mfm = np.zeros((len(dict), len(index)))
+    for i, flat_ind in enumerate(index):
+        material = flat_ind[3].material()
+        j = material_index[material]
+        mfm[j, i] = 1
+    return mfm
 
 
 def _get_materials_filling_voxel(volumes, i, j, k):
