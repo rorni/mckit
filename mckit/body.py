@@ -78,6 +78,14 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
+    def __getstate__(self):
+        return self.opc, self.args, self._hash
+
+    def __setstate__(self, state):
+        opc, args, hash_value = state
+        _Shape.__init__(self, opc, *args)
+        self._hash = hash_value
+
     def __hash__(self):
         return self._hash
 
