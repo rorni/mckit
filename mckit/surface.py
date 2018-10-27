@@ -317,6 +317,14 @@ class Sphere(Surface, _Sphere):
         Surface.__init__(self, **options)
         _Sphere.__init__(self, center, radius)
 
+    def __getstate__(self):
+        return self._center, self._radius, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        c, r, options = state
+        _Sphere.__init__(self, c, r)
+        Surface.__setstate__(self, options)
+
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         raise NotImplementedError
         if not isinstance(other, Sphere):
@@ -382,6 +390,14 @@ class Cylinder(Surface, _Cylinder):
         axis = axis / np.linalg.norm(axis)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
+
+    def __getstate__(self):
+        return self._pt, self._axis, self._radius, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        pt, axis, radius, options = state
+        _Cylinder.__init__(self, pt, axis, radius)
+        Surface.__setstate__(self, options)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison
@@ -455,6 +471,14 @@ class Cone(Surface, _Cone):
         Surface.__init__(self, **options)
         # TODO: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
         _Cone.__init__(self, apex, axis, ta, sheet)
+
+    def __getstate__(self):
+        return self._apex, self._axis, self._t2, self._sheet, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        apex, axis, ta, sheet, options = state
+        _Cone.__init__(self, apex, axis, np.sqrt(ta), sheet)
+        Surface.__setstate__(self, options)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison
@@ -541,6 +565,14 @@ class GQuadratic(Surface, _GQuadratic):
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k)
 
+    def __getstate__(self):
+        return self._m, self._v, self._k, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        m, v, k, options = state
+        _GQuadratic.__init__(self, m, v, k)
+        Surface.__setstate__(self, options)
+
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison
         return 0
@@ -594,6 +626,14 @@ class Torus(Surface, _Torus):
         axis = axis / np.linalg.norm(axis)
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, R, a, b)
+
+    def __getstate__(self):
+        return self._center, self._axis, self._R, self._a, self._b, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        center, axis, R, a, b, options = state
+        _Torus.__init__(self, center, axis, R, a, b)
+        Surface.__setstate__(self, options)
 
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         # TODO: add comparison
