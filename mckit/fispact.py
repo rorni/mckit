@@ -1253,6 +1253,44 @@ def fetch_full_mesh_result(folder, volumes):
     pass
 
 
+def save_configuration(fluxes, volumes, filename='config'):
+    """Saves activation configuration.
+
+    Parameters
+    ----------
+    fluxes : np.ndarray
+        Neutron fluxes in voxels.
+    volumes : dict
+        A dictionary of volumes of each cell. cell->SparseData.
+    """
+    pass
+
+
+def _combine_fispact_results(data, volumes, fluxes):
+    """Makes a superposition of single FISPACT results.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        Result of FISPACT calculations. Tensor T x N x E x F.
+    volumes : numpy.ndarray
+        Volumes of cells in voxels. Vector N.
+    fluxes : numpy.ndarray
+        Neutron fluxes. Matrix N x F.
+
+    Returns
+    -------
+    fp_result : numpy.ndarray
+        FISPACT result. Tensor T x N x E.
+    """
+    max_flux = np.max(fluxes, axis=0)
+    max_volume = np.max(volumes)
+    fluxes = fluxes / max_flux / max_volume
+    fluxes = np.broadcast_to(fluxes, data.shape)
+    volumes = np.broadcast_to(volumes, data.shape[:-1])
+    return np.sum(fluxes * data, axis=3) * volumes
+
+
 def _material_conversion_matrix(index, material_index):
     """Creates material conversion matrix.
 

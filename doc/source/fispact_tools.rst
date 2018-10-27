@@ -102,7 +102,7 @@ FISPACT и рассчитать эволюцию какой-то величин�
 означает поэлементное умножение):
 
 .. math::
-    G_{tne}=\frac{1}{F_0 V_0}V_{tne}\cdot\sum\limits_f{\tilde{D}_{tnef}\cdot
+    G_{tne}=\frac{1}{V_0}V_{tne}\cdot\sum\limits_f{\tilde{D}_{tnef}\cdot
     F_{tnef}}
 
 

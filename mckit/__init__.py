@@ -6,7 +6,7 @@ from .surface import create_surface, Plane, Sphere, Cylinder, Cone, Torus, \
 from .body import Shape, Body
 from .transformation import Transformation
 from .material import AVOGADRO, Element, Composition, Material
-from .activation import activation, mesh_activation
+from .fispact import activation, mesh_activation
 from .fmesh import FMesh
 from .parser.mcnp_input_parser import read_mcnp
 from .parser.meshtal_parser import read_meshtal
@@ -14,6 +14,6 @@ from .parser.meshtal_parser import read_meshtal
 __all__ = [
     'Universe', 'create_surface', 'Plane', 'Sphere', 'Cylinder', 'Cone',
     'Torus', 'GQuadratic', 'Shape', 'Body', 'Transformation', 'AVOGADRO',
-    'Element', 'Composition', 'Material', 'activation', 'mesh_activation',
+    'Element', 'Composition', 'Material', 'mesh_activation',
     'FMesh', 'read_mcnp'
 ]
