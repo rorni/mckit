@@ -184,6 +184,12 @@ class Surface(ABC):
     def __eq__(self, other):
         return id(self) == id(other)
 
+    def __getstate__(self):
+        return self.options
+
+    def __setstate__(self, state):
+        self.options = state
+
     @abstractmethod
     def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
         """Checks if this surface equals other one inside the box.
@@ -280,6 +286,14 @@ class Plane(Surface, _Plane):
         words.append(' ')
         words.append('{0:.12e}'.format(-self._k))
         return print_card(words)
+
+    def __getstate__(self):
+        return self._v, self._k, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        v, k, options = state
+        _Plane.__init__(self, v, k)
+        Surface.__setstate__(self, options)
 
 
 class Sphere(Surface, _Sphere):

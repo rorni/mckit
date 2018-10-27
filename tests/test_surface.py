@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pickle
 
 from mckit.transformation import Transformation
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
@@ -151,6 +152,21 @@ class TestPlane:
         surf_tr = surf.transform(transform)
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
+
+    @pytest.mark.parametrize('norm, offset, options', [
+        ([0, 0, 1], -2, {}),
+        ([1, 0, 0], -2, {'name': 3}),
+        ([0, 1, 0], -2, {'name': 4, 'comments': ['abc', 'def']}),
+    ])
+    def test_pickle(self, norm, offset, options):
+        surf = Plane(norm, offset, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        np.testing.assert_array_almost_equal(surf._v, surf_un._v)
+        np.testing.assert_almost_equal(surf._k, surf_un._k)
+        assert surf.options == surf_un.options
 
 
 class TestSphere:
