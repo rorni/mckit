@@ -129,7 +129,7 @@ class Transformation:
         for v in self._t:
             words.append(' ')
             words.append('{0:.12e}'.format(v))
-        for v in self._u.ravel():
+        for v in self._u.transpose().ravel():
             words.append(' ')
             words.append('{0:.12e}'.format(np.arccos(v) * 180 / np.pi))
         return words
