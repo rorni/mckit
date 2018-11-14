@@ -278,6 +278,69 @@ class TestSphere:
         np.testing.assert_array_almost_equal(ans_surf._center, surf_tr._center)
         np.testing.assert_almost_equal(ans_surf._radius, surf_tr._radius)
 
+    surfs = [
+        create_surface('SO', 1.0, name=1),                                  # 0
+        create_surface('SO', 1.0 + 5.e-13, name=1),                         # 1
+        create_surface('SO', 2.0, name=1),                                  # 2
+        create_surface('SX', 5.0, 4.0, name=2),                             # 3
+        create_surface('SX', 5.0 + 1.e-12, 4.0, name=2),                    # 4
+        create_surface('SX', 5.0 - 1.e-12, 4.0 + 1.e-12, name=2),           # 5
+        create_surface('SY', 5.0, 4.0, name=2),                             # 6
+        create_surface('SY', 5.0 + 1.e-12, 4.0, name=2),                    # 7
+        create_surface('SY', 5.0 - 1.e-12, 4.0 + 1.e-12, name=2),           # 8
+        create_surface('SZ', 5.0, 4.0, name=2),                             # 9
+        create_surface('SZ', 5.0 + 1.e-12, 4.0, name=2),                    # 10
+        create_surface('SZ', 5.0 - 1.e-12, 4.0 + 1.e-12, name=2),           # 11
+        create_surface('S', 5.0, 1.e-13, -1.e-13, 4.0 + 1.e-12, name=3),    # 12
+        create_surface('S', 1.e-13, 5.0, -1.e-13, 4.0 - 1.e-12, name=3),    # 13
+        create_surface('S', 1.e-13, -1.e-13, 5.0, 4.0 + 1.e-12, name=3),    # 14
+        create_surface('S', 4.3, 8.2, -1.4, 3.5, name=4),                   # 15
+        create_surface('S', 4.3 - 1.e-12, 8.2 + 1.e-12, -1.4 -1.e-12, 3.5 + 1.e-12, name=4) # 16
+    ]
+
+    eq_matrix = [
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 SO 1.0', '1 SO 1.0', '1 SO 2.0', '2 SX 5.0 4.0', '2 SX 5.0 4.0',
+        '2 SX 5.0 4.0', '2 SY 5.0 4.0', '2 SY 5.0 4.0', '2 SY 5.0 4.0',
+        '2 SZ 5.0 4.0', '2 SZ 5.0 4.0', '2 SZ 5.0 4.0', '3 SX 5.0 4.0',
+        '3 SY 5.0 4.0', '3 SZ 5.0 4.0', '4 S 4.3 8.2 -1.4 3.5',
+        '4 S 4.3 8.2 -1.4 3.5'
+    ]))
+    def test_str(self, surface, answer):
+        desc = str(surface)
+        assert desc == answer
+
 
 class TestCylinder:
     @pytest.mark.parametrize('point, axis, radius, pt, ax, rad', [

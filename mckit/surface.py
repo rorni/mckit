@@ -291,19 +291,26 @@ class Sphere(Surface, _Sphere):
             tr = options.pop('transform')
             center = tr.apply2point(center)
         Surface.__init__(self, **options)
+        center = round_array(np.array(center), FLOAT_TOLERANCE,
+                             resolution=FLOAT_TOLERANCE)
+        radius = round_scalar(radius, FLOAT_TOLERANCE,
+                              resolution=FLOAT_TOLERANCE)
         _Sphere.__init__(self, center, radius)
 
-    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
-        raise NotImplementedError
+    def __hash__(self):
+        result = hash(self._radius)
+        for c in self._center:
+            result ^= hash(c)
+        return result
+
+    def __eq__(self, other):
         if not isinstance(other, Sphere):
-            return 0
-        delta_center = np.linalg.norm(self._center - other._center)
-        delta_radius = np.linalg.norm(self._radius - other._radius)
-        check = (delta_center + delta_radius) / np.linalg.norm(self._center)
-        if check < tol:
-            return +1
+            return False
         else:
-            return 0
+            for x, y in zip(self._center, other._center):
+                if x != y:
+                    return False
+            return self._radius == other._radius
 
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr, **self.options)
@@ -315,22 +322,31 @@ class Sphere(Surface, _Sphere):
         elif self._center[0] == 0.0 and self._center[1] == 0.0:
             words.append('SZ')
             words.append(' ')
-            words.append('{0:.12e}'.format(self._center[2]))
+            v = self._center[2]
+            p = significant_digits(v, FLOAT_TOLERANCE)
+            words.append(pretty_float(v, p))
         elif self._center[1] == 0.0 and self._center[2] == 0.0:
             words.append('SX')
             words.append(' ')
-            words.append('{0:.12e}'.format(self._center[0]))
+            v = self._center[0]
+            p = significant_digits(v, FLOAT_TOLERANCE)
+            words.append(pretty_float(v, p))
         elif self._center[0] == 0.0 and self._center[2] == 0.0:
             words.append('SY')
             words.append(' ')
-            words.append('{0:.12e}'.format(self._center[1]))
+            v = self._center[1]
+            p = significant_digits(v, FLOAT_TOLERANCE)
+            words.append(pretty_float(v, p))
         else:
             words.append('S')
             for v in self._center:
                 words.append(' ')
-                words.append('{0:.12e}'.format(v))
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
         words.append(' ')
-        words.append('{0:.12e}'.format(self._radius))
+        v = self._radius
+        p = significant_digits(v, FLOAT_TOLERANCE)
+        words.append(pretty_float(v, p))
         return print_card(words)
 
 
