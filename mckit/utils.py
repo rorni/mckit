@@ -30,3 +30,51 @@ def significant_digits(value, reltol=1.e-12):
         else:
             high = p
     return high
+
+
+def round_scalar(value, reltol=1.e-12, resolution=None):
+    """Rounds scalar value to represent the value in minimal form.
+
+    Parameters
+    ----------
+    value : float
+        The value to be rounded.
+    reltol : float
+        The relative tolerance.
+    resolution : float
+        The threshold value, below which numbers are believed to be zero.
+        Default: None - not applied.
+
+    Returns
+    -------
+    result : float
+        Rounded value.
+    """
+    if resolution and abs(value) < resolution:
+        return 0
+    prec = significant_digits(value, reltol)
+    return round(value, prec)
+
+
+def round_array(array, reltol=1.e-12, resolution=None):
+    """Rounds array to desired precision.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Array of values.
+    reltol : float
+        The relative tolerance.
+    resolution : float
+        The threshold value, below which numbers are believed to be zero.
+        Default: None - not applied.
+
+    Returns
+    -------
+    result : numpy.ndarray
+        Rounded array.
+    """
+    result = np.empty_like(array)
+    for index in zip(*map(np.ravel, np.indices(array.shape))):
+        result[index] = round_scalar(array[index], reltol, resolution)
+    return result
