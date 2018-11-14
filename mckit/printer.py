@@ -112,7 +112,7 @@ def pretty_float(value, precision):
         The number of significant digits.
     """
     if value != 0:
-        decpow = math.log10(value)
+        decpow = math.log10(abs(value))
     else:
         decpow = 0
     decades = math.trunc(decpow)
