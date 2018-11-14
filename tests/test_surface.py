@@ -152,6 +152,78 @@ class TestPlane:
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
 
+    surfs = [
+        create_surface('PX', 5.0, name=1),                                 # 0
+        create_surface('PX', 5.0 + 1.e-12, name=1),                        # 1
+        create_surface('PX', 5.0 - 1.e-12, name=1),                        # 2
+        create_surface('PX', 5.0 + 1.e-11, name=1),                        # 3
+        create_surface('PY', 5.0, name=2),                                 # 4
+        create_surface('PY', 5.0 + 1.e-12, name=2),                        # 5
+        create_surface('PY', 5.0 - 1.e-12, name=2),                        # 6
+        create_surface('PY', 5.0 + 1.e-11, name=2),                        # 7
+        create_surface('PZ', 5.0, name=3),                                 # 8
+        create_surface('PZ', 5.0 + 1.e-12, name=3),                        # 9
+        create_surface('PZ', 5.0 - 1.e-12, name=3),                        # 10
+        create_surface('PZ', 5.0 + 1.e-11, name=3),                        # 11
+        create_surface('P', 1, 5.e-13, -5.e-13, 5.0, name=4),              # 12
+        create_surface('P', -5.e-13, 1, 5.e-13, 5.0 + 1.e-12, name=4),     # 13
+        create_surface('P', 5.e-13, -5.e-13, 1, 5.0 - 1.e-12, name=4),     # 14
+        create_surface('P', 1, 1, 0, -4, name=5),                          # 15
+        create_surface('P', 2, 2, 0, -8, name=5),                          # 16
+    ]
+
+    eq_matrix = [
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_eq(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('coeffs', [
+        [0, 2, 1, 3], [4, -1, 2, 0], [-1, 0, 0, 5], [-4, -4, 3, 3]
+    ])
+    def test_reverse(self, coeffs):
+        plane = create_surface('P', *coeffs)
+        answer = create_surface('P', *[-c for c in coeffs])
+        assert plane.reverse() == answer
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 PX 5.0', '1 PX 5.0', '1 PX 5.0', '1 PX 5.00000000001',
+        '2 PY 5.0', '2 PY 5.0', '2 PY 5.0', '2 PY 5.00000000001',
+        '3 PZ 5.0', '3 PZ 5.0', '3 PZ 5.0', '3 PZ 5.00000000001',
+        '4 PX 5.0', '4 PY 5.0', '4 PZ 5.0',
+        '5 P 0.7071067811870 0.7071067811870 0.0 -2.828427124746',
+        '5 P 0.7071067811870 0.7071067811870 0.0 -2.828427124746'
+    ]))
+    def test_str(self, surface, answer):
+        desc = str(surface)
+        assert desc == answer
+
 
 class TestSphere:
     @pytest.mark.parametrize('center, radius, c, r', [
@@ -535,3 +607,4 @@ class TestGQuadratic:
         np.testing.assert_array_almost_equal(ans_surf._m, surf_tr._m)
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
+

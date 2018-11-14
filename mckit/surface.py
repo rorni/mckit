@@ -12,8 +12,9 @@ from .geometry import Plane      as _Plane,    \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
                       GLOBAL_BOX, ORIGIN, EX, EY, EZ
-from .printer import print_card
+from .printer import print_card, pretty_float
 from .transformation import Transformation
+from .utils import *
 
 __all__ = [
     'create_surface', 'Plane', 'Sphere', 'Cone', 'Torus', 'GQuadratic',
@@ -185,28 +186,6 @@ class Surface(ABC):
         return id(self) == id(other)
 
     @abstractmethod
-    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
-        """Checks if this surface equals other one inside the box.
-
-        Parameters
-        ----------
-        other : Surface
-            Other surface.
-        box : Box
-            A box inside which surfaces are considered.
-        tol : float
-            Relative tolerance with respect to the origin of global coordinate
-            system.
-
-        Returns
-        -------
-        result : int
-            The result of comparison. +1, if surfaces are equal, -1, if they
-            are equal, but direction of normals is opposite. 0 - if they are
-            not equal.
-        """
-
-    @abstractmethod
     def transform(self, tr):
         """Applies transformation to this surface.
 
@@ -243,23 +222,32 @@ class Plane(Surface, _Plane):
         else:
             v = np.array(normal)
             k = offset
+        length = np.linalg.norm(v)
+        v = v / length
+        k /= length
+        k = round_scalar(k, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        v = round_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
 
-    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
-        raise NotImplementedError
+    def __hash__(self):
+        result = hash(self._k)
+        for v in self._v:
+            result ^= hash(v)
+        return result
+
+    def __eq__(self, other):
         if not isinstance(other, Plane):
-            return 0
-        corners = box.corners()
-        proj_self = self.projection(corners)
-        proj_other = other.projection(corners)
-        delta = np.linalg.norm(proj_other - proj_self, axis=1)
-        abs_norm = np.linalg.norm(proj_self, axis=1)
-        check = delta / abs_norm
-        if np.nanmax(check) < tol:
-            return int(np.sign(np.dot(self._v, other._v)))
+            return False
         else:
-            return 0
+            for x, y in zip(self._v, other._v):
+                if x != y:
+                    return False
+            return self._k == other._k
+
+    def reverse(self):
+        """Gets the surface with reversed normal."""
+        return Plane(-self._v, -self._k)
 
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr, **self.options)
@@ -275,10 +263,12 @@ class Plane(Surface, _Plane):
         else:
             words.append('P')
             for v in self._v:
+                p = significant_digits(v, FLOAT_TOLERANCE)
                 words.append(' ')
-                words.append('{0:.12e}'.format(v))
+                words.append(pretty_float(v, p))
         words.append(' ')
-        words.append('{0:.12e}'.format(-self._k))
+        p = significant_digits(self._k, FLOAT_TOLERANCE)
+        words.append(pretty_float(-self._k, p))
         return print_card(words)
 
 
