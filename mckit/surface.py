@@ -372,6 +372,9 @@ class Cylinder(Surface, _Cylinder):
             pt = tr.apply2point(pt)
             axis = tr.apply2vector(axis)
         axis = np.array(axis) / np.linalg.norm(axis)
+        maxdir = np.argmax(np.abs(axis))
+        if axis[maxdir] < 0:
+            axis *= -1
         pt = np.array(pt)
         axis = round_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         pt = pt - axis * np.dot(pt, axis)
