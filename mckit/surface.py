@@ -371,13 +371,34 @@ class Cylinder(Surface, _Cylinder):
             tr = options.pop('transform')
             pt = tr.apply2point(pt)
             axis = tr.apply2vector(axis)
-        axis = axis / np.linalg.norm(axis)
+        axis = np.array(axis) / np.linalg.norm(axis)
+        pt = np.array(pt)
+        axis = round_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        pt = pt - axis * np.dot(pt, axis)
+        pt = round_array(pt, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        radius = round_scalar(radius, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
 
-    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
-        # TODO: add comparison
-        return 0
+    def __hash__(self):
+        result = hash(self._radius)
+        for c in self._pt:
+            result ^= hash(c)
+        for a in self._axis:
+            result ^= hash(a)
+        return result
+
+    def __eq__(self, other):
+        if not isinstance(other, Cylinder):
+            return False
+        else:
+            for x, y in zip(self._pt, other._pt):
+                if x != y:
+                    return False
+            for x, y in zip(self._axis, other._axis):
+                if x != y:
+                    return False
+            return self._radius == other._radius
 
     def transform(self, tr):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr,
@@ -390,22 +411,40 @@ class Cylinder(Surface, _Cylinder):
                 words.append('CX')
             else:
                 words.append('C/X')
-                words.extend([' ', '{0:.12e}'.format(self._pt[1]), ' ',
-                              '{0:.12e}'.format(self._pt[2])])
+                words.append(' ')
+                v = self._pt[1]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
+                words.append(' ')
+                v = self._pt[2]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
         elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
             if self._pt[0] == 0.0 and self._pt[2] == 0.0:
                 words.append('CY')
             else:
                 words.append('C/Y')
-                words.extend([' ', '{0:.12e}'.format(self._pt[0]), ' ',
-                              '{0:.12e}'.format(self._pt[2])])
+                words.append(' ')
+                v = self._pt[0]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
+                words.append(' ')
+                v = self._pt[2]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
         elif np.all(self._axis == np.array([0.0, 0.0, 1.0])):
             if self._pt[0] == 0.0 and self._pt[1] == 0.0:
                 words.append('CZ')
             else:
                 words.append('C/Z')
-                words.extend([' ', '{0:.12e}'.format(self._pt[0]), ' ',
-                              '{0:.12e}'.format(self._pt[1])])
+                words.append(' ')
+                v = self._pt[0]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
+                words.append(' ')
+                v = self._pt[1]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
         else:
             nx, ny, nz = self._axis
             m = np.array([[1-nx**2, -nx*ny, -nx*nz],
@@ -416,7 +455,9 @@ class Cylinder(Surface, _Cylinder):
             m, v, k = Transformation(translation=self._pt).apply2gq(m, v, k)
             return str(GQuadratic(m, v, k, **self.options))
         words.append(' ')
-        words.append('{0:.12e}'.format(self._radius))
+        v = self._radius
+        p = significant_digits(v, FLOAT_TOLERANCE)
+        words.append(pretty_float(v, p))
         return print_card(words)
 
 

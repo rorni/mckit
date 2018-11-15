@@ -344,13 +344,14 @@ class TestSphere:
 
 class TestCylinder:
     @pytest.mark.parametrize('point, axis, radius, pt, ax, rad', [
-        ([1, 2, 3], [1, 2, 3], 5, [1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14),
+        ([1, 2, 3], [1, 2, 3], 5, [0, 0, 0], np.array([1, 2, 3]) / np.sqrt(14),
           5)
     ])
     def test_init(self, transform, point, axis, radius, pt, ax, rad):
         surf = Cylinder(point, axis, radius, transform=transform)
         pt = transform.apply2point(pt)
         ax = transform.apply2vector(ax)
+        pt = pt - ax * np.dot(ax, pt)
         np.testing.assert_array_almost_equal(pt, surf._pt)
         np.testing.assert_array_almost_equal(ax, surf._axis)
         np.testing.assert_array_almost_equal(rad, surf._radius)
@@ -395,6 +396,71 @@ class TestCylinder:
         np.testing.assert_array_almost_equal(ans_surf._pt, surf_tr._pt)
         np.testing.assert_array_almost_equal(ans_surf._axis, surf_tr._axis)
         np.testing.assert_almost_equal(ans_surf._radius, surf_tr._radius)
+
+    surfs = [
+        create_surface('CX', 1.0, name=1),                                  # 0
+        create_surface('CX', 1.0 + 5.e-13, name=1),                         # 1
+        create_surface('CY', 1.0, name=1),                                  # 2
+        create_surface('CY', 1.0 + 5.e-13, name=1),                         # 3
+        create_surface('CZ', 1.0, name=1),                                  # 4
+        create_surface('CZ', 1.0 + 5.e-13, name=1),                         # 5
+        create_surface('C/X', 1, -2, 3, name=2),                            # 6
+        create_surface('C/X', 1 - 5.e-13, -2 + 1.e-12, 3 - 1.e-12, name=2), # 7
+        create_surface('C/Y', 1, -2, 3, name=2),                            # 8
+        create_surface('C/Y', 1 - 5.e-13, -2 + 1.e-12, 3 - 1.e-12, name=2), # 9
+        create_surface('C/Z', 1, -2, 3, name=2),                            # 10
+        create_surface('C/Z', 1 - 5.e-13, -2 + 1.e-12, 3 - 1.e-12, name=2), # 11
+        Cylinder([0, 1, -2], [2, 5.e-13, -5.e-13], 3, name=3),              # 12
+        Cylinder([5, 1, -2], [1 + 5.e-13, -5.e-13, 5.e-13], 3, name=3),     # 13
+        Cylinder([1, 0, -2], [5.e-13, 2, -5.e-13], 3, name=3),              # 14
+        Cylinder([1, 5, -2], [-5.e-13, 1 + 5.e-13, 5.e-13], 3, name=3),     # 15
+        Cylinder([1, -2, 0], [5.e-13, -5.e-13, 2], 3, name=3),              # 16
+        Cylinder([1, -2, 5], [-5.e-13, 5.e-13, 1 + 5.e-13], 3, name=3),     # 17
+    ]
+
+    eq_matrix = [
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 CX 1.0', '1 CX 1.0', '1 CY 1.0', '1 CY 1.0', '1 CZ 1.0', '1 CZ 1.0',
+        '2 C/X 1.0 -2.0 3.0', '2 C/X 1.0 -2.0 3.0', '2 C/Y 1.0 -2.0 3.0',
+        '2 C/Y 1.0 -2.0 3.0', '2 C/Z 1.0 -2.0 3.0', '2 C/Z 1.0 -2.0 3.0',
+        '3 C/X 1.0 -2.0 3.0', '3 C/X 1.0 -2.0 3.0', '3 C/Y 1.0 -2.0 3.0',
+        '3 C/Y 1.0 -2.0 3.0', '3 C/Z 1.0 -2.0 3.0', '3 C/Z 1.0 -2.0 3.0'
+    ]))
+    def test_str(self, surface, answer):
+        desc = str(surface)
+        assert desc == answer
 
 
 class TestCone:
