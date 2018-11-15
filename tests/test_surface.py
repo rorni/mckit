@@ -894,3 +894,41 @@ class TestGQuadratic:
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
 
+    surfs = [
+        GQuadratic(np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), 3, name=1),
+        GQuadratic(np.diag([1, 1, 1]) + 1.e-13, -2 * np.array([1, 1, 1]) + 1.e-13, 3 - 1.e-13, name=1),
+        GQuadratic(-np.diag([1, 1, 1]), 2 * np.array([1, 1, 1]), -3, name=1),
+        GQuadratic([[1, 0.25, 0.3], [0.25, 2, 0.4], [0.3, 0.4, 3]], [1, 2, 3], -4, name=2),
+        GQuadratic([[-1, -0.25, -0.3], [-0.25, -2, -0.4], [-0.3, -0.4, -3]], [-1, -2, -3], 4, name=2),
+        GQuadratic(np.array([[1, 0.25, 0.3], [0.25, 2, 0.4], [0.3, 0.4, 3]]) - 1.e-13,
+                   np.array([1, 2, 3]) + 5.e-13, -4+2e-12, name=2),
+    ]
+
+    eq_matrix = [
+        [1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 GQ 1.0 1.0 1.0 0.0 0.0 0.0 -2.0 -2.0 -2.0 3.0',
+        '1 GQ 1.0 1.0 1.0 0.0 0.0 0.0 -2.0 -2.0 -2.0 3.0',
+        '1 GQ 1.0 1.0 1.0 0.0 0.0 0.0 -2.0 -2.0 -2.0 3.0',
+        '2 GQ 1.0 2.0 3.0 0.50 0.80 0.60 1.0 2.0 3.0 -4.0',
+        '2 GQ 1.0 2.0 3.0 0.50 0.80 0.60 1.0 2.0 3.0 -4.0',
+        '2 GQ 1.0 2.0 3.0 0.50 0.80 0.60 1.0 2.0 3.0 -4.0'
+    ]))
+    def test_str(self, surface, answer):
+        desc = str(surface)
+        assert desc == answer

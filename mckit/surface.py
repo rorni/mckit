@@ -614,12 +614,37 @@ class GQuadratic(Surface, _GQuadratic):
             m = np.array(m)
             v = np.array(v)
             k = k
+        maxdir = np.argmax(np.abs(np.diag(m)))
+        if np.diag(m)[maxdir] < 0:
+            m *= -1
+            v *= -1
+            k *= -1
+        m = round_array(m, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        v = round_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        k = round_scalar(k, FLOAT_TOLERANCE)
+
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k)
 
-    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
-        # TODO: add comparison
-        return 0
+    def __hash__(self):
+        result = hash(self._k)
+        for v in self._v:
+            result ^= hash(v)
+        for x in self._m.ravel():
+            result ^= hash(x)
+        return result
+
+    def __eq__(self, other):
+        if not isinstance(other, GQuadratic):
+            return False
+        else:
+            for x, y in zip(self._v, other._v):
+                if x != y:
+                    return False
+            for x, y in zip(self._m.ravel(), other._m.ravel()):
+                if x != y:
+                    return False
+            return self._k == other._k
 
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr,
@@ -635,7 +660,8 @@ class GQuadratic(Surface, _GQuadratic):
         k = self._k
         for v in [a, b, c, d, e, f, g, h, j, k]:
             words.append(' ')
-            words.append('{0:.12e}'.format(v))
+            p = significant_digits(v, FLOAT_TOLERANCE)
+            words.append(pretty_float(v, p))
         return print_card(words)
 
 
@@ -673,9 +699,9 @@ class Torus(Surface, _Torus):
             axis *= -1
         axis = round_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         center = round_array(center, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        R = round_scalar(R, np.sqrt(FLOAT_TOLERANCE))
-        a = round_scalar(a, np.sqrt(FLOAT_TOLERANCE))
-        b = round_scalar(b, np.sqrt(FLOAT_TOLERANCE))
+        R = round_scalar(R, FLOAT_TOLERANCE)
+        a = round_scalar(a, FLOAT_TOLERANCE)
+        b = round_scalar(b, FLOAT_TOLERANCE)
 
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, R, a, b)
