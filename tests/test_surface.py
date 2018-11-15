@@ -793,6 +793,53 @@ class TestTorus:
         np.testing.assert_almost_equal(ans_surf._a, surf_tr._a)
         np.testing.assert_almost_equal(ans_surf._b, surf_tr._b)
 
+    surfs = [
+        Torus([1, 2, 3], [1, 0, 0], 4, 2, 1, name=1),
+        Torus([1-1.e-13, 2+1.e-12, 3-1.e-12], [1, 1.e-13, -3e-13], 4-1.e-12, 2+1.e-13, 1-5.e-13, name=1),
+        Torus([1, 2, 3], [-1, 0, 0], 4, 2, 1, name=1),
+        Torus([1, 2, 3], [0, 2, 0], 4, 2, 1, name=2),
+        Torus([1 - 1.e-13, 2 + 1.e-12, 3 - 1.e-12], [1.e-13, 1, -3e-13], 4 - 1.e-12, 2 + 1.e-13, 1 - 5.e-13, name=2),
+        Torus([1, 2, 3], [0, -1, 0], 4, 2, 1, name=2),
+        Torus([1, 2, 3], [0, 0, 1], 4, 2, 1, name=3),
+        Torus([1 - 1.e-13, 2 + 1.e-12, 3 - 1.e-12], [1.e-13, -3e-13, 3], 4 - 1.e-12, 2 + 1.e-13, 1 - 5.e-13, name=3),
+        Torus([1, 2, 3], [0, 0, -1], 4, 2, 1, name=3),
+    ]
+
+    eq_matrix = [
+        [1, 1, 1, 0, 0, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 TX 1.0 2.0 3.0 4.0 2.0 1.0', '1 TX 1.0 2.0 3.0 4.0 2.0 1.0',
+        '1 TX 1.0 2.0 3.0 4.0 2.0 1.0', '2 TY 1.0 2.0 3.0 4.0 2.0 1.0',
+        '2 TY 1.0 2.0 3.0 4.0 2.0 1.0', '2 TY 1.0 2.0 3.0 4.0 2.0 1.0',
+        '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0', '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0',
+        '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0'
+    ]))
+    def test_str(self, surface, answer):
+        desc = str(surface)
+        assert desc == answer
+
 
 class TestGQuadratic:
     @pytest.mark.parametrize('m, v, k, _m, _v, _k', [

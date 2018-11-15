@@ -668,12 +668,37 @@ class Torus(Surface, _Torus):
             center = np.array(center)
             axis = np.array(axis)
         axis = axis / np.linalg.norm(axis)
+        maxdir = np.argmax(np.abs(axis))
+        if axis[maxdir] < 0:
+            axis *= -1
+        axis = round_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        center = round_array(center, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        R = round_scalar(R, np.sqrt(FLOAT_TOLERANCE))
+        a = round_scalar(a, np.sqrt(FLOAT_TOLERANCE))
+        b = round_scalar(b, np.sqrt(FLOAT_TOLERANCE))
+
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, R, a, b)
 
-    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
-        # TODO: add comparison
-        return 0
+    def __hash__(self):
+        result = hash(self._R) ^ hash(self._a) ^ hash(self._b)
+        for c in self._center:
+            result ^= hash(c)
+        for a in self._axis:
+            result ^= hash(a)
+        return result
+
+    def __eq__(self, other):
+        if not isinstance(other, Torus):
+            return False
+        else:
+            for x, y in zip(self._center, other._center):
+                if x != y:
+                    return False
+            for x, y in zip(self._axis, other._axis):
+                if x != y:
+                    return False
+            return self._R == other._R and self._a == other._a and self._b == other._b
 
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b,
@@ -690,5 +715,6 @@ class Torus(Surface, _Torus):
         x, y, z = self._center
         for v in [x, y, z, self._R, self._a, self._b]:
             words.append(' ')
-            words.append('{0:.12e}'.format(v))
+            p = significant_digits(v, FLOAT_TOLERANCE)
+            words.append(pretty_float(v, p))
         return print_card(words)
