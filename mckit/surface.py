@@ -484,14 +484,43 @@ class Cone(Surface, _Cone):
             tr = options.pop('transform')
             apex = tr.apply2point(apex)
             axis = tr.apply2vector(axis)
-        axis = axis / np.linalg.norm(axis)
+        axis = np.array(axis) / np.linalg.norm(axis)
+        maxdir = np.argmax(np.abs(axis))
+        if axis[maxdir] < 0:
+            axis *= -1
+            sheet *= -1
+        apex = np.array(apex)
+        axis = round_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        apex = round_array(apex, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        ta = round_scalar(ta, np.sqrt(FLOAT_TOLERANCE))
+
         Surface.__init__(self, **options)
         # TODO: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
         _Cone.__init__(self, apex, axis, ta, sheet)
 
-    def equals(self, other, box=GLOBAL_BOX, tol=1.e-10):
-        # TODO: add comparison
-        return 0
+    def __hash__(self):
+        result = hash(self._t2) ^ hash(self._sheet)
+        for c in self._apex:
+            result ^= hash(c)
+        for a in self._axis:
+            result ^= hash(a)
+        return result
+
+    def __eq__(self, other):
+        if not isinstance(other, Cone):
+            return False
+        else:
+            for x, y in zip(self._apex, other._apex):
+                print('{0:.15e}  {1:.15e}'.format(x, y))
+                if x != y:
+                    return False
+            for x, y in zip(self._axis, other._axis):
+                print('{0:.15e}  {1:.15e}'.format(x, y))
+                if x != y:
+                    return False
+            print('{0:.15e}  {1:.15e}'.format(self._t2, other._t2))
+            print('{0:.15e}  {1:.15e}'.format(self._sheet, other._sheet))
+            return self._t2 == other._t2 and self._sheet == other._sheet
 
     def transform(self, tr):
         return Cone(self._apex, self._axis, np.sqrt(self._t2),
@@ -503,32 +532,41 @@ class Cone(Surface, _Cone):
             if self._apex[1] == 0.0 and self._apex[2] == 0.0:
                 words.append('KX')
                 words.append(' ')
-                words.append('{0:.12e}'.format(self._apex[0]))
+                v = self._apex[0]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
             else:
                 words.append('K/X')
                 for v in self._apex:
                     words.append(' ')
-                    words.append('{0:.12e}'.format(v))
+                    p = significant_digits(v, FLOAT_TOLERANCE)
+                    words.append(pretty_float(v, p))
         elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
             if self._apex[0] == 0.0 and self._apex[2] == 0.0:
                 words.append('KY')
                 words.append(' ')
-                words.append('{0:.12e}'.format(self._apex[1]))
+                v = self._apex[1]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
             else:
                 words.append('K/Y')
                 for v in self._apex:
                     words.append(' ')
-                    words.append('{0:.12e}'.format(v))
+                    p = significant_digits(v, FLOAT_TOLERANCE)
+                    words.append(pretty_float(v, p))
         elif np.all(self._axis == np.array([0.0, 0.0, 1.0])):
             if self._apex[0] == 0.0 and self._apex[1] == 0.0:
                 words.append('KZ')
                 words.append(' ')
-                words.append('{0:.12e}'.format(self._apex[2]))
+                v = self._apex[2]
+                p = significant_digits(v, FLOAT_TOLERANCE)
+                words.append(pretty_float(v, p))
             else:
                 words.append('K/Z')
                 for v in self._apex:
                     words.append(' ')
-                    words.append('{0:.12e}'.format(v))
+                    p = significant_digits(v, FLOAT_TOLERANCE)
+                    words.append(pretty_float(v, p))
         else:
             nx, ny, nz = self._axis
             a = 1 + self._t2
@@ -536,11 +574,13 @@ class Cone(Surface, _Cone):
                           [-a*nx*ny, 1-a*ny**2, -a*ny*nz],
                           [-a*nx*nz, -a*ny*nz, 1-a*nz**2]])
             v = np.zeros(3)
-            k = -self._radius**2
+            k = 0
             m, v, k = Transformation(translation=self._apex).apply2gq(m, v, k)
             return str(GQuadratic(m, v, k, **self.options))
         words.append(' ')
-        words.append('{0:.12e}'.format(self._t2))
+        v = self._t2
+        p = significant_digits(v, np.sqrt(FLOAT_TOLERANCE))
+        words.append(pretty_float(v, p))
         if self._sheet != 0:
             words.append(' ')
             words.append('{0:d}'.format(self._sheet))
