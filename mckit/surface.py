@@ -12,8 +12,9 @@ from .geometry import Plane      as _Plane,    \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
                       GLOBAL_BOX, ORIGIN, EX, EY, EZ
-from .printer import print_card
 from .transformation import Transformation
+from .card import Card
+
 
 __all__ = [
     'create_surface', 'Plane', 'Sphere', 'Cone', 'Torus', 'GQuadratic',
@@ -159,7 +160,7 @@ def create_replace_dictionary(surfaces, unique=None, box=GLOBAL_BOX, tol=1.e-10)
     return replace
 
 
-class Surface(ABC):
+class Surface(Card):
     """Base class for all surface classes.
 
     Methods
@@ -176,7 +177,7 @@ class Surface(ABC):
         Gets projection of point p on the surface.
     """
     def __init__(self, **options):
-        self.options = options.copy()
+        Card.__init__(self, **options)
 
     def __hash__(self):
         return id(self)
@@ -221,6 +222,15 @@ class Surface(ABC):
             The result of this surface transformation.
         """
 
+    def mcnp_words(self):
+        words = []
+        mod = self.options.get('modifier', None)
+        if mod:
+            words.append(mod)
+        words.append(str(self.name()))
+        words.append('  ')
+        return words 
+
 
 class Plane(Surface, _Plane):
     """Plane surface class.
@@ -264,13 +274,13 @@ class Plane(Surface, _Plane):
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr, **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
-        if np.all(self._v == np.array([1.0, 0.0, 0.0])):
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
+        if np.all(self._v == EX):
             words.append('PX')
-        elif np.all(self._v == np.array([0.0, 1.0, 0.0])):
+        elif np.all(self._v == EY):
             words.append('PY')
-        elif np.all(self._v == np.array([0.0, 0.0, 1.0])):
+        elif np.all(self._v == EZ):
             words.append('PZ')
         else:
             words.append('P')
@@ -279,7 +289,7 @@ class Plane(Surface, _Plane):
                 words.append('{0:.12e}'.format(v))
         words.append(' ')
         words.append('{0:.12e}'.format(-self._k))
-        return print_card(words)
+        return words
 
 
 class Sphere(Surface, _Sphere):
@@ -318,8 +328,8 @@ class Sphere(Surface, _Sphere):
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr, **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         if np.all(self._center == np.array([0.0, 0.0, 0.0])):
             words.append('SO')
         elif self._center[0] == 0.0 and self._center[1] == 0.0:
@@ -341,7 +351,7 @@ class Sphere(Surface, _Sphere):
                 words.append('{0:.12e}'.format(v))
         words.append(' ')
         words.append('{0:.12e}'.format(self._radius))
-        return print_card(words)
+        return words
 
 
 class Cylinder(Surface, _Cylinder):
@@ -377,8 +387,8 @@ class Cylinder(Surface, _Cylinder):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr,
                         **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
             if self._pt[1] == 0.0 and self._pt[2] == 0.0:
                 words.append('CX')
@@ -411,7 +421,7 @@ class Cylinder(Surface, _Cylinder):
             return str(GQuadratic(m, v, k, **self.options))
         words.append(' ')
         words.append('{0:.12e}'.format(self._radius))
-        return print_card(words)
+        return words
 
 
 class Cone(Surface, _Cone):
@@ -450,8 +460,8 @@ class Cone(Surface, _Cone):
         return Cone(self._apex, self._axis, np.sqrt(self._t2),
                     sheet=self._sheet, transform=tr, **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
             if self._apex[1] == 0.0 and self._apex[2] == 0.0:
                 words.append('KX')
@@ -497,7 +507,7 @@ class Cone(Surface, _Cone):
         if self._sheet != 0:
             words.append(' ')
             words.append('{0:d}'.format(self._sheet))
-        return print_card(words)
+        return words
 
 
 class GQuadratic(Surface, _GQuadratic):
@@ -535,8 +545,8 @@ class GQuadratic(Surface, _GQuadratic):
         return GQuadratic(self._m, self._v, self._k, transform=tr,
                           **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ', 'GQ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         a, b, c = np.diag(self._m)
         d = self._m[0, 1] + self._m[1, 0]
         e = self._m[1, 2] + self._m[2, 1]
@@ -546,7 +556,7 @@ class GQuadratic(Surface, _GQuadratic):
         for v in [a, b, c, d, e, f, g, h, j, k]:
             words.append(' ')
             words.append('{0:.12e}'.format(v))
-        return print_card(words)
+        return words
 
 
 class Torus(Surface, _Torus):
@@ -589,8 +599,8 @@ class Torus(Surface, _Torus):
         return Torus(self._center, self._axis, self._R, self._a, self._b,
                      transform=tr, **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
             words.append('TX')
         elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
@@ -601,4 +611,5 @@ class Torus(Surface, _Torus):
         for v in [x, y, z, self._R, self._a, self._b]:
             words.append(' ')
             words.append('{0:.12e}'.format(v))
-        return print_card(words)
+        return words
+

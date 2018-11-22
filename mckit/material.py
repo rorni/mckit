@@ -8,6 +8,7 @@ from operator import xor
 import numpy as np
 
 from .printer import print_card, MCNP_FORMATS
+from .card import Card
 
 __all__ = ['AVOGADRO', 'Element', 'Composition', 'Material']
 
@@ -36,7 +37,7 @@ with open(_path + '/data/isotopes.dat') as f:
                 _NATURAL_ABUNDANCE[number][isotope] = float(abun) / 100.0
 
 
-class Composition:
+class Composition(Card):
     """Represents composition.
 
     Composition is not a material. It specifies only isotopes and their
@@ -86,6 +87,7 @@ class Composition:
         return cls._tolerance
 
     def __init__(self, atomic=(), weight=(), **options):
+        Card.__init__(self, **options)
         self._composition = {}
         elem_w = []
         frac_w = []
@@ -129,7 +131,6 @@ class Composition:
                 self._composition[el] += frac / norm_factor
         else:
             raise ValueError('Incorrect set of parameters.')
-        self._options = options.copy()
         self._hash = reduce(xor, map(hash, self._composition.keys()))
         self._object_count += 1
 
@@ -150,14 +151,14 @@ class Composition:
     def __hash__(self):
         return reduce(xor, map(hash, self._composition.keys()))
 
-    def __str__(self):
-        text = ['M' + str(self['name']), ' ']
+    def mcnp_words(self):
+        words = ['M{0}'.format(self.name)]
         for elem, frac in self._composition.items():
-            text.append(elem.mcnp_repr())
-            text.append('  ')
-            text.append(MCNP_FORMATS['material_fraction'].format(frac))
-            text.append('\n')
-        return print_card(text)
+            words.append(elem.mcnp_repr())
+            words.append('  ')
+            words.append(MCNP_FORMATS['material_fraction'].format(frac))
+            words.append('\n')
+        return words
 
     def __getitem__(self, key):
         return self._options[key]

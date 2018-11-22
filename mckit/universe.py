@@ -10,12 +10,13 @@ from .constants import MIN_BOX_VOLUME
 from .geometry import GLOBAL_BOX, Box
 from .material import Composition, Material
 from .transformation import Transformation
+from .card import Card
 
 
 __all__ = ['Universe']
 
 
-class Universe:
+class Universe(Card):
     """Describes universe - a set of cells.
     
     Universe is a set of cells from which it consist of. Each cell can be filled
@@ -71,7 +72,7 @@ class Universe:
         Saves the universe to file.
     """
     def __init__(self, cells, name=0, verbose_name=None, comment=None, universes=None):
-        self._name = name
+        Card.__init__(self, name=name)
         self._comment = comment
         self._verbose_name = name if verbose_name is None else verbose_name
         if universes is None:
@@ -104,10 +105,6 @@ class Universe:
                      comment=self._comment)
         u._cells = self._cells.copy()
         return u
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def verbose_name(self):
@@ -508,4 +505,126 @@ class Universe:
             for item in items:
                 f.write(item)
                 f.write('\n')
+
+
+class EntityManager:
+    """Manages universe entities and names.
+    
+    Parameters
+    ----------
+    start : int
+        Starting name.
+    length : int
+        The length of name range. Default: None - no limitation. 
+    parent : EntityManager
+        Global entity manager, which is checked if the entity does not registered yet.
+        Default: None.
+
+    Methods
+    -------
+    register(entity, preserve)
+        Returns new registerd entity.
+    """
+    def __init__(self, start=1, length=None, parent=None):
+        self._start = start
+        self._length = length
+        self._used_names = set()
+        self._entities = {}
+        self._references = {}
+        self._parent = parent
+
+    def is_registered(self, entity):
+        """Checks if the entity is already registered.
+
+        Parameters
+        ----------
+        entity : Card
+            The object to be checked.
+
+        Returns
+        -------
+        reg_entity : Card
+            If the entity is already registered, its registered version is returned.
+            Otherwise, None is returned.
+        """
+        reg_entity = self._entities.get(entity, None)
+        if not reg_entity and parent:
+            reg_entity = parent.is_registered(entity)
+        return reg_entity
+
+    def set_name(self, entity, preserve=False):
+        """Finds and sets new name to the entity.
+        
+        Parameters
+        ----------
+        entity : Card
+            Entity, for which name must be set.
+        preserve : bool
+            Whether to keep origin name.
+        """
+        if preserve:
+            name = entity.name()
+            if not (self._start <= name < self._start + self._length):
+                raise EntityNamingError('Name {0} is out of universe range'.format(name))
+            elif name in self._used_names:
+                raise EntityNamingError('Name {0} is already exists'.format(name))
+        else:
+            last_name = self._start - 1
+            for used_name in sorted(self._used_names):
+                if used_name - last_name == 1:
+                    last_name = used_name
+                else:
+                    name = last_name + 1
+                    break
+            else:
+                raise EntityNamingError('There is no free name available')
+        self._used_names.add(name)
+        entity.rename(name)
+
+    def register(self, entity, preserve=False, predicate=None, creator=None):
+        """Registers the entity.
+
+        First, it checks if such entity (or equal) is already registered.
+        If yes, the registered instance is returned. Otherwise the entity
+        will be registered and returned. 
+
+        Parameters
+        ----------
+        entity : Card
+            Model entity.
+        preserve : bool
+            Whether to preserve entity's name.
+        predicate : callable
+            An alternative function that checks an alternative object representation.
+            If True, creator is called then.
+        creator : callable
+            A function that creates entity pair
+
+        Returns
+        -------
+        reg_entity : Card
+            Registered entity that is equal to the input one. 
+        """
+        reg_entity = self.is_registered(entity)
+        if not reg_entity:
+            reg_entity = entity.copy()
+            self.set_name(reg_entity, preserve=preserve)
+            self._entities[reg_entity] = reg_entity
+            self._references[reg_entity] = 1
+        else:
+            self._references[reg_entity] += 1
+        return reg_entity
+
+    def unregister(self, entity):
+        """Removes entity."""
+        if entity in self._entities.keys():
+            self._references[entity] -= 1
+            if self._references[entity] == 0:
+                self._references.pop(entity)
+                reg_entity = self._entities.pop(entity)
+                self._used_names.pop(reg_entity.name())
+
+
+class EntityNamingError(Exception):
+    pass
 

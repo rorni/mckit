@@ -444,7 +444,7 @@ class Shape(_Shape):
         return operands.pop()
 
 
-class Body(dict):
+class Body(Card):
     """Represents MCNP's cell.
 
     Parameters
@@ -475,7 +475,7 @@ class Body(dict):
             geometry = geometry.shape
         elif not isinstance(geometry, Shape):
             raise TypeError("Geometry list or Shape is expected.")
-        dict.__init__(self, options)
+        Card.__init__(self, **options)
         self._shape = geometry
 
     def __hash__(self):
@@ -484,32 +484,32 @@ class Body(dict):
     def __eq__(self, other):
         return id(self) == id(other)
 
-    def __str__(self):
-        text = [str(self['name']), ' ']
-        if 'MAT' in self.keys():
-            text.append(str(self['MAT'].composition['name']))
-            text.append(' ')
-            text.append(str(-self['MAT'].density))
-            text.append(' ')
+    def mcnp_words(self):
+        words = [str(self.name()), ' ']
+        if 'MAT' in self.options.keys():
+            words.append(str(self.options['MAT'].composition.name()))
+            words.append(' ')
+            words.append(str(-self.options['MAT'].density))
+            words.append(' ')
         else:
-            text.append('0')
-            text.append(' ')
-        text.extend(self._shape._get_words())
-        text.append('\n')
+            words.append('0')
+            words.append(' ')
+        words.extend(self._shape._get_words())
+        words.append('\n')
         # insert options printing
-        text.extend(self._options_list())
+        words.extend(self._options_list())
         for line in self.get('comment', []):
-            text.append('$ ' + str(line))
-            text.append('\n')
-        return print_card(text)
+            words.append('$ ' + str(line))
+            words.append('\n')
+        return words
 
     def _options_list(self):
         """Generates a list of option words. For __str__ method."""
         text = []
         for opt_group in CELL_OPTION_GROUPS:
             for key in opt_group:
-                if key in self.keys():
-                    text.extend(print_option(key, self[key]))
+                if key in self.options.keys():
+                    text.extend(print_option(key, self.options[key]))
                     text.append(' ')
             text.append('\n')
         return text
@@ -521,7 +521,7 @@ class Body(dict):
 
     def material(self):
         """Gets body's material. None is returned if no material present."""
-        return self.get('MAT', None)
+        return self.options.get('MAT', None)
 
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
@@ -540,7 +540,7 @@ class Body(dict):
             The result.
         """
         geometry = self._shape.intersection(other)
-        return Body(geometry, **self)
+        return Body(geometry, **self.options)
 
     def union(self, other):
         """Gets an union if this cell with the other.
@@ -558,7 +558,7 @@ class Body(dict):
             The result.
         """
         geometry = self._shape.union(other)
-        return Body(geometry, **self)
+        return Body(geometry, **self.options)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
                  min_volume=MIN_BOX_VOLUME, trim_size=1):
@@ -590,7 +590,7 @@ class Body(dict):
         # print('finding optimal solution...')
         variants = self._shape.get_simplest(trim_size)
         # print(len(variants))
-        return Body(variants[0], **self)
+        return Body(variants[0], **self.options)
 
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
         """Fills this cell by filling universe.
@@ -621,9 +621,9 @@ class Body(dict):
             Resulting cells.
         """
         if universe is None:
-            if 'FILL' in self.keys():
-                universe = self['FILL']['universe']
-                tr = self['FILL'].get('transform', None)
+            if 'FILL' in self.options.keys():
+                universe = self.options['FILL']['universe']
+                tr = self.options['FILL'].get('transform', None)
                 if tr:
                     universe = universe.transform(tr)
             else:
@@ -637,7 +637,7 @@ class Body(dict):
             new_cell = c.intersection(self)  # because properties like MAT, etc
                                              # must be as in filling cell.
             if 'U' in self.keys():
-                new_cell['U'] = self['U']    # except universe.
+                new_cell.options['U'] = self.options['U']    # except universe.
             if simplify:
                 new_cell = new_cell.simplify(**kwargs)
             cells.append(new_cell)
@@ -657,7 +657,7 @@ class Body(dict):
             The result of this cell transformation.
         """
         geometry = self._shape.transform(tr)
-        cell = Body(geometry, **self)
+        cell = Body(geometry, **self.options)
         fill = cell.get('FILL', None)
         if fill:
             tr_in = fill.get('transform', Transformation())
