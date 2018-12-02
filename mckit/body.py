@@ -373,7 +373,10 @@ class Shape(_Shape):
                 return [Shape('R')]
         arg_results = np.delete(stat, drop_index, axis=0)
         if arg_results.shape[0] == 0:
-            return [Shape('E')]
+            if self.opc == 'I':
+                return [Shape('R')]
+            if self.opc == 'U':
+                return [Shape('E')]
         cases = self._find_coverages(arg_results, value=val)
         final_cases = set(tuple(c) for c in cases)
         if len(final_cases) == 0:
