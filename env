@@ -1,0 +1,3 @@
+# Setup local enviroment variables and pathes
+. ./build_configs/utils.env
+. ./build_configs/python.env
