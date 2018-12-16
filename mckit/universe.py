@@ -548,8 +548,8 @@ class EntityManager:
             Otherwise, None is returned.
         """
         reg_entity = self._entities.get(entity, None)
-        if not reg_entity and parent:
-            reg_entity = parent.is_registered(entity)
+        if not reg_entity and self._parent:
+            reg_entity = self._parent.is_registered(entity)
         return reg_entity
 
     def set_name(self, entity, preserve=False):
