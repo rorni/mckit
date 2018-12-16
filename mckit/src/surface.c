@@ -105,6 +105,11 @@ double gq_func(
     return cblas_ddot(NDIM, y, 1, x, 1) + data->k;
 }
 
+double clip_negative_values(double value)
+{
+    return (value > 0.0) ? value : 0.0;
+}
+
 double torus_func(
     unsigned int n,
     const double * x,
@@ -118,7 +123,7 @@ double torus_func(
     cblas_daxpy(NDIM, -1, data->center, 1, p, 1);
     double pn = cblas_ddot(NDIM, p, 1, data->axis, 1);
     double pp = cblas_ddot(NDIM, p, 1, p, 1);
-    double sq = sqrt(max(pp - pow(pn, 2), 0));
+    double sq = sqrt(clip_negative_values(pp - pow(pn, 2)));
     if (grad != NULL) {
         double add = 0;
         if (sq > 1.e-100) add = data->radius / sq;

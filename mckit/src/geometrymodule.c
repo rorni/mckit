@@ -758,7 +758,7 @@ static int        shapeobj_init(ShapeObject * self, PyObject * args, PyObject * 
 static PyObject * shapeobj_test_box(ShapeObject * self, PyObject * args, PyObject * kwds);
 static PyObject * shapeobj_ultimate_test_box(ShapeObject * self, PyObject * args, PyObject * kwds);
 static PyObject * shapeobj_test_points(ShapeObject * self, PyObject * points);
-static PyObject * shapeobj_bounding_box(ShapeObject * self, PyObject * args);
+static PyObject * shapeobj_bounding_box(ShapeObject * self, PyObject * args, PyObject * kwds);
 static PyObject * shapeobj_volume(ShapeObject * self, PyObject * args, PyObject * kwds);
 static PyObject * shapeobj_collect_statistics(ShapeObject * self, PyObject * args);
 static PyObject * shapeobj_get_stat_table(ShapeObject * self);
