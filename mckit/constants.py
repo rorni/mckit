@@ -6,7 +6,7 @@ from .geometry import MIN_VOLUME
 
 __all__ = [
     'MIN_BOX_VOLUME',
-    'RESOLUTION', 'TIME_UNITS'
+    'RESOLUTION', 'TIME_UNITS', 'FLOAT_TOLERANCE'
 ]
 
 
@@ -15,6 +15,7 @@ MIN_BOX_VOLUME = MIN_VOLUME
 # Resolution of float number
 RESOLUTION = np.finfo(float).resolution
 
+FLOAT_TOLERANCE = 1.e-12
 
 _TOLERANCE = 1.e-3
 
