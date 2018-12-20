@@ -361,6 +361,11 @@ class TestShape:
         surfs = geometry[case_no].get_surfaces()
         assert surfs == expected
 
+    @pytest.mark.parametrize('case_no', range(len(basic_geoms)))
+    def test_replace_surf(self, geometry, case_no):
+        surfs = geometry[case_no].get_surfaces()
+        for
+
 
 class TestBody:
     kwarg_data = [
