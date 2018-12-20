@@ -201,6 +201,7 @@ def test_rename(universe, case_no, u_name, expected):
     assert comp_names == expected['compositions']
 
 
+@pytest.mark.skip
 def test_save():
     raise NotImplementedError
 
