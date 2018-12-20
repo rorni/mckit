@@ -1,5 +1,6 @@
 """Functions for printing."""
 import warnings
+import math
 
 
 MCNP_FORMATS = {
@@ -98,6 +99,33 @@ def print_option(option, value):
         return words
     else:
         raise ValueError("Incorrect option name: {0}".format(option))
+
+
+def pretty_float(value, precision):
+    """Pretty print of the float number.
+
+    Parameters
+    ----------
+    value : float
+        Value to be printed.
+    precision : int
+        The number of significant digits.
+    """
+    if value != 0:
+        decpow = math.log10(abs(value))
+    else:
+        decpow = 0
+    decades = math.trunc(decpow)
+    if decpow < 0:
+        decades -= 1
+    format_f = '{{0:.{0}f}}'.format(max(precision - decades, min(precision, 1)))
+    format_e = '{{0:.{0}e}}'.format(precision)
+    text_f = format_f.format(value)
+    text_e = format_e.format(value)
+    if len(text_f) <= len(text_e):
+        return text_f
+    else:
+        return text_e
 
 
 CELL_OPTION_GROUPS = (
