@@ -178,6 +178,8 @@ class Shape(_Shape):
             return True
         if self.opc != other.opc:
             return False
+        if self.opc == 'E' or self.opc == 'R':
+            return True
         if len(self.args) != len(other.args):
             return False
         self_groups = {k: list(v) for k, v in groupby(self.args, key=hash)}
