@@ -107,7 +107,6 @@ class TestShape:
         args = [self.filter_arg(a, surfaces) for a in args]
         ans_args = sorted([self.filter_arg(a, surfaces) for a in ans_args], key=hash)
         shape = Shape(opc, *args)
-        print(shape)
         assert shape.opc == ans_opc
         assert shape.args == tuple(ans_args)
 
@@ -361,10 +360,11 @@ class TestShape:
         surfs = geometry[case_no].get_surfaces()
         assert surfs == expected
 
+    @pytest.mark.skip
     @pytest.mark.parametrize('case_no', range(len(basic_geoms)))
     def test_replace_surf(self, geometry, case_no):
         surfs = geometry[case_no].get_surfaces()
-        for
+        # for
 
 
 class TestBody:

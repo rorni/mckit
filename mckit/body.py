@@ -1,5 +1,5 @@
 from functools import reduce
-from itertools import product
+from itertools import product, groupby, permutations
 
 import numpy as np
 
@@ -180,10 +180,20 @@ class Shape(_Shape):
             return False
         if len(self.args) != len(other.args):
             return False
-        for a, o in zip(self.args, other.args):
-            if not (a == o):
+        self_groups = {k: list(v) for k, v in groupby(self.args, key=hash)}
+        other_groups = {k: list(v) for k, v in groupby(other.args, key=hash)}
+        for hval, entities in self_groups.items():
+            if hval not in other_groups.keys():
                 return False
-        return True
+            if len(entities) != len(other_groups[hval]):
+                return False
+            for other_entities in permutations(other_groups[hval]):
+                for se, oe in zip(entities, other_entities):
+                    if not (se == oe):
+                        break
+                else:
+                    return True
+        return False
 
     def complement(self):
         """Gets complement to the shape.
@@ -239,9 +249,9 @@ class Shape(_Shape):
         Hash is 'xor' for hash values of all arguments together with opc hash.
         """
         if opc == 'C':  # C and S can be present only with Surface instance.
-            self._hash = ~hash(args[0])
+            self._hash = ~hash(args[0]) # ^ self._opc_hash[opc]
         elif opc == 'S':
-            self._hash = hash(args[0])
+            self._hash = hash(args[0]) # ^ self._opc_hash[opc]
         else:
             self._hash = self._opc_hash[opc]
             for a in args:
