@@ -4,7 +4,7 @@
 import numpy as np
 
 from .geometry import ORIGIN
-from .printer import print_card
+from .card import Card
 
 __all__ = ['Transformation', 'IDENTITY_ROTATION']
 
@@ -13,7 +13,7 @@ IDENTITY_ROTATION = np.eye(3)
 ANGLE_TOLERANCE = 0.001
 
 
-class Transformation:
+class Transformation(Card):
     """Geometry transformation object.
 
     Parameters
@@ -60,6 +60,7 @@ class Transformation:
     def __init__(self, translation=ORIGIN, rotation=None,
                  indegrees=False, inverted=False, **options):
 
+        Card.__init__(self, **options)
         translation = np.array(translation, dtype=float)
         if translation.shape != (3,):
             raise ValueError('Wrong length of translation vector.')
@@ -95,7 +96,6 @@ class Transformation:
                 u[:, i] = u[:, i] * np.sign(r[i, i])
         self._u = u
         self._t = -np.dot(u, translation) if inverted else translation.copy()
-        self._options = options
 
     @staticmethod
     def _get_precision(u, t, box, tol):
@@ -121,8 +121,10 @@ class Transformation:
         for v in u.ravel():
             self._hash ^= hash(v)
 
-    def __str__(self):
-        return print_card(['*TR{0}'.format(self['name'])] + self.get_words())
+    def mcnp_words(self):
+        words = ['*', 'TR{0}'.format(self.name())]
+        words.extend(self.get_words())
+        return words
 
     def get_words(self):
         words = []

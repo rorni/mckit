@@ -15,6 +15,8 @@ from .geometry import Plane      as _Plane,    \
 from .printer import print_card, pretty_float
 from .transformation import Transformation
 from .utils import *
+from .card import Card
+
 
 __all__ = [
     'create_surface', 'Plane', 'Sphere', 'Cone', 'Torus', 'GQuadratic',
@@ -160,7 +162,7 @@ def create_replace_dictionary(surfaces, unique=None, box=GLOBAL_BOX, tol=1.e-10)
     return replace
 
 
-class Surface(ABC):
+class Surface(Card):
     """Base class for all surface classes.
 
     Methods
@@ -177,7 +179,7 @@ class Surface(ABC):
         Gets projection of point p on the surface.
     """
     def __init__(self, **options):
-        self.options = options.copy()
+        Card.__init__(self, **options)
 
     def __hash__(self):
         return id(self)
@@ -199,6 +201,15 @@ class Surface(ABC):
         surf : Surface
             The result of this surface transformation.
         """
+
+    def mcnp_words(self):
+        words = []
+        mod = self.options.get('modifier', None)
+        if mod:
+            words.append(mod)
+        words.append(str(self.name()))
+        words.append('  ')
+        return words
 
 
 class Plane(Surface, _Plane):
@@ -252,13 +263,13 @@ class Plane(Surface, _Plane):
     def transform(self, tr):
         return Plane(self._v, self._k, transform=tr, **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
-        if np.all(self._v == np.array([1.0, 0.0, 0.0])):
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
+        if np.all(self._v == EX):
             words.append('PX')
-        elif np.all(self._v == np.array([0.0, 1.0, 0.0])):
+        elif np.all(self._v == EY):
             words.append('PY')
-        elif np.all(self._v == np.array([0.0, 0.0, 1.0])):
+        elif np.all(self._v == EZ):
             words.append('PZ')
         else:
             words.append('P')
@@ -315,8 +326,8 @@ class Sphere(Surface, _Sphere):
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr, **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         if np.all(self._center == np.array([0.0, 0.0, 0.0])):
             words.append('SO')
         elif self._center[0] == 0.0 and self._center[1] == 0.0:
@@ -407,8 +418,8 @@ class Cylinder(Surface, _Cylinder):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr,
                         **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
             if self._pt[1] == 0.0 and self._pt[2] == 0.0:
                 words.append('CX')
@@ -529,8 +540,8 @@ class Cone(Surface, _Cone):
         return Cone(self._apex, self._axis, np.sqrt(self._t2),
                     sheet=self._sheet, transform=tr, **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
             if self._apex[1] == 0.0 and self._apex[2] == 0.0:
                 words.append('KX')
@@ -587,7 +598,7 @@ class Cone(Surface, _Cone):
         if self._sheet != 0:
             words.append(' ')
             words.append('{0:d}'.format(self._sheet))
-        return print_card(words)
+        return words
 
 
 class GQuadratic(Surface, _GQuadratic):
@@ -650,8 +661,8 @@ class GQuadratic(Surface, _GQuadratic):
         return GQuadratic(self._m, self._v, self._k, transform=tr,
                           **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ', 'GQ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         a, b, c = np.diag(self._m)
         d = self._m[0, 1] + self._m[1, 0]
         e = self._m[1, 2] + self._m[2, 1]
@@ -730,8 +741,8 @@ class Torus(Surface, _Torus):
         return Torus(self._center, self._axis, self._R, self._a, self._b,
                      transform=tr, **self.options)
 
-    def __str__(self):
-        words = [str(self.options['name']), ' ']
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
         if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
             words.append('TX')
         elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
