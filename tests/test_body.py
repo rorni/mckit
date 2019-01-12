@@ -353,18 +353,41 @@ class TestShape:
         [3, 8, 5, 4, 6, 2],
         [1, 5],
         [1, 5],
-        [2, 11, 12]
+        [2, 11, 12],
+        [1, 6],
+        [2, 11, 12],
+        [13, 12]
     ]))
     def test_get_surface(self, geometry, surfaces, case_no, expected):
         expected = set(surfaces[s] for s in expected)
         surfs = geometry[case_no].get_surfaces()
         assert surfs == expected
 
-    @pytest.mark.skip
-    @pytest.mark.parametrize('case_no', range(len(basic_geoms)))
-    def test_replace_surf(self, geometry, case_no):
-        surfs = geometry[case_no].get_surfaces()
-        # for
+    @pytest.mark.parametrize('case_no, replace_names', enumerate([
+        [2, 3, 1, 5, 4],
+        [],
+        [6],
+        [1, 5, 7, 10],
+        [5, 3, 2],
+        [3, 8, 5, 4, 6, 2],
+        [1, 5],
+        [5],
+        [12],
+        [1, 6],
+        [2, 11, 12],
+        [13, 12]
+    ]))
+    def test_replace_surf(self, geometry, case_no, replace_names):
+        surfs = {s.name(): s for s in geometry[case_no].get_surfaces()}
+        replace_dict = {}
+        for name in replace_names:
+            s = surfs[name]
+            replace_dict[s] = s.transform(Transformation())
+        new_shape = geometry[case_no].replace_surfaces(replace_dict)
+        new_surfs = new_shape.get_surfaces()
+        ids = {id(s) for s in new_surfs}
+        ids_ans = {id(s) if n not in replace_names else id(replace_dict[s]) for n, s in surfs.items()}
+        assert ids == ids_ans
 
 
 class TestBody:

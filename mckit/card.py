@@ -7,11 +7,11 @@ from .printer import print_card
 class Card(ABC):
     """Features, common for all cards."""
     def __init__(self, **options):
-        self.options = options.copy()
+        self.options = options
 
     def name(self):
         """Returns card's name."""
-        self.options.get('name', 1)
+        return self.options.get('name', None)
 
     def rename(self, new_name):
         """Renames the card.

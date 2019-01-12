@@ -8,6 +8,7 @@ from .geometry import Shape as _Shape, GLOBAL_BOX
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
+from .card import Card
 
 
 __all__ = ['Shape', 'Body']
@@ -70,6 +71,8 @@ class Shape(_Shape):
         Gets the complexity of the shape description.
     get_simplest()
         Gets the simplest description of the shape.
+    replace_surfaces(replace_dict)
+        Creates new Shape object by replacing surfaces.
     """
     _opc_hash = {'I': hash('I'), 'U': ~hash('I'), 'E': hash('E'), 'R': ~hash('E'), 'S': hash('S'), 'C': ~hash('S')}
 
@@ -431,6 +434,29 @@ class Shape(_Shape):
         for c in cases:
             c.sort()
         return cases
+
+    def replace_surfaces(self, replace_dict):
+        """Creates new Shape instance by replacing surfaces.
+
+        Parameters
+        ----------
+        replace_dict : dict
+            A dictionary of surfaces to be replaced.
+
+        Returns
+        -------
+        shape : Shape
+            New Shape object obtained by replacing certain surfaces.
+        """
+        if self.opc == 'C' or self.opc == 'S':
+            arg = self.args[0]
+            surf = replace_dict.get(arg, arg)
+            return Shape(self.opc, surf)
+        elif self.opc == 'I' or self.opc == 'U':
+            args = [arg.replace_surfaces(replace_dict) for arg in self.args]
+            return Shape(self.opc, *args)
+        else:
+            return self
 
     @staticmethod
     def from_polish_notation(polish):
