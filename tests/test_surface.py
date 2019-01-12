@@ -90,6 +90,17 @@ def test_surface_creation(cls, kind, params, expected):
         np.testing.assert_array_almost_equal(surf_attr, attr_value)
 
 
+@pytest.mark.parametrize('kind, params, name', [
+    ('PX', [1], 2),
+    ('CX', [1], 3),
+    ('SO', [1], 4),
+    ('KX', [1, 2], 5)
+])
+def test_surface_name(kind, params, name):
+    surf = create_surface(kind, *params, name=name)
+    assert surf.name() == name
+
+
 class TestPlane:
     @pytest.mark.parametrize('norm, offset, v, k', [
         ([0, 0, 1], -2, np.array([0, 0, 1]), -2),
