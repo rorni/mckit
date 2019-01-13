@@ -187,6 +187,9 @@ class Surface(Card):
     def __eq__(self, other):
         return id(self) == id(other)
 
+    def copy(self):
+        return self.transform(Transformation())
+
     @abstractmethod
     def transform(self, tr):
         """Applies transformation to this surface.

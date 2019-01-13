@@ -90,6 +90,62 @@ def test_surface_creation(cls, kind, params, expected):
         np.testing.assert_array_almost_equal(surf_attr, attr_value)
 
 
+@pytest.mark.parametrize('cls, kind, params', [
+    (Plane, 'P', [3.2, -1.4, 5.7, -4.8]),
+    (Sphere, 'S', [3.7, -3.8, 3.9, 6.5]),
+    (Cylinder, 'CX', [6.6]),
+    (Cylinder, 'CY', [6.7]),
+    (Cylinder, 'CZ', [6.8]),
+    (Cylinder, 'C/X', [4.0, -4.1, 6.9]),
+    (Cylinder, 'C/Y', [-4.2, 4.3, 7.0]),
+    (Cylinder, 'C/Z', [4.4, 4.5, 7.1]),
+    (Cylinder, 'X', [1.2, 3.4, 8.4, 3.4]),
+    (Cylinder, 'Y', [1.2, 3.4, 8.4, 3.4]),
+    (Cylinder, 'Z', [1.2, 3.4, 8.4, 3.4]),
+    (Cone, 'KX', [4.6, 0.33]),
+    (Cone, 'KY', [4.7, 0.33]),
+    (Cone, 'KZ', [-4.8, 0.33]),
+    (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33]),
+    (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33]),
+    (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33]),
+    (Cone, 'KX', [4.6, 0.33, +1]),
+    (Cone, 'KY', [4.7, 0.33, +1]),
+    (Cone, 'KZ', [-4.8, 0.33, +1]),
+    (Cone, 'X', [-1.0, 1.0, 1.0, 2.0]),
+    (Cone, 'X', [-2.5, 4.5, -0.5, 3.5]),
+    (Cone, 'X', [1.0, 2.0, -1.0, 1.0]),
+    (Cone, 'X', [-0.5, 3.5, -2.5, 4.5]),
+    (Cone, 'Y', [-1.0, 1.0, 1.0, 2.0]),
+    (Cone, 'Y', [-2.5, 4.5, -0.5, 3.5]),
+    (Cone, 'Y', [1.0, 2.0, -1.0, 1.0]),
+    (Cone, 'Y', [-0.5, 3.5, -2.5, 4.5]),
+    (Cone, 'Z', [-1.0, 1.0, 1.0, 2.0]),
+    (Cone, 'Z', [-2.5, 4.5, -0.5, 3.5]),
+    (Cone, 'Z', [1.0, 2.0, -1.0, 1.0]),
+    (Cone, 'Z', [-0.5, 3.5, -2.5, 4.5]),
+    (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33, +1]),
+    (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33, +1]),
+    (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33, +1]),
+    (Cone, 'KX', [4.6, 0.33, -1]),
+    (Cone, 'KY', [4.7, 0.33, -1]),
+    (Cone, 'KZ', [-4.8, 0.33, -1]),
+    (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33, -1]),
+    (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33, -1]),
+    (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33, -1]),
+    (Torus, 'TX', [1, 2, -3, 5, 0.5, 0.8]),
+    (Torus, 'TY', [-4, 5, -6, 3, 0.9, 0.2]),
+    (Torus, 'TZ', [0, -3, 5, 1, 0.1, 0.2]),
+    (GQuadratic, 'SQ', [0.5, -2.5, 3.0, 1.1, -1.3, -5.4, -7.0, 3.2, -1.7, 8.4]),
+    (GQuadratic, 'GQ', [1, 2, 3, 4, 5, 6, 7, 8, 9, -10])
+])
+def test_surface_copy(cls, kind, params):
+    surf = create_surface(kind, *params)
+    surf_cpy = surf.copy()
+    assert id(surf) != id(surf_cpy)
+    assert isinstance(surf_cpy, surf.__class__)
+    assert surf == surf_cpy
+
+
 @pytest.mark.parametrize('kind, params, name', [
     ('PX', [1], 2),
     ('CX', [1], 3),
