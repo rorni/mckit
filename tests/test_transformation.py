@@ -79,6 +79,23 @@ def test_words(args, answer):
     np.testing.assert_array_almost_equal(words, answer)
 
 
+@pytest.mark.parametrize('args, options, answer', [
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True},
+     {}, None),
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True, 'translation': [1, 2, 3]},
+     {'name': 1}, 1),
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True,
+      'translation': [1, 2, 3]},
+     {'name': 2}, 2),
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True,
+      'translation': [1, 2, 3]},
+     {'name': 3}, 3),
+])
+def test_name(args, options, answer):
+    tr = Transformation(**args, **options)
+    assert tr.name() == answer
+
+
 @pytest.mark.parametrize('args', [
     {'rotation': [30.057, 59.943, 90, 120, 30, 90, 90, 90, 0],
      'indegrees': True},
