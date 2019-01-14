@@ -16,7 +16,7 @@ from .card import Card
 __all__ = ['Universe']
 
 
-class Universe(Card):
+class Universe:
     """Describes universe - a set of cells.
     
     Universe is a set of cells from which it consist of. Each cell can be filled
@@ -72,7 +72,7 @@ class Universe(Card):
         Saves the universe to file.
     """
     def __init__(self, cells, name=0, verbose_name=None, comment=None, universes=None):
-        Card.__init__(self, name=name)
+        self._name = name
         self._comment = comment
         self._verbose_name = name if verbose_name is None else verbose_name
         if universes is None:
@@ -82,7 +82,7 @@ class Universe(Card):
         for c in cells:
             u = c.get('U', 0)
             if isinstance(u, Universe):
-                u = u.name
+                u = u.name()
             if u != name:
                 continue
             fill = c.get('FILL')
@@ -94,14 +94,17 @@ class Universe(Card):
                     fill['universe'] = universes[uname]
             if not c.shape.is_empty():
                 c['U'] = self
-                self._cells.append(c)
+                self._cells.append(self._register_cell(c, keep_name=True))
+
+    def name(self):
+        return self._name
 
     def __iter__(self):
         return iter(self._cells)
 
     def copy(self):
         """Makes a shallow copy of this universe."""
-        u = Universe([], name=self.name, verbose_name=self.verbose_name,
+        u = Universe([], name=self.name(), verbose_name=self.verbose_name,
                      comment=self._comment)
         u._cells = self._cells.copy()
         return u
@@ -505,6 +508,74 @@ class Universe(Card):
             for item in items:
                 f.write(item)
                 f.write('\n')
+
+    def _get_last_cell_name(self):
+        """Gets last used cell name.
+
+        Returns
+        -------
+        name : int
+            Last cell name of the universe.
+        """
+        names = [c.name() for c in self._cells]
+        if not names:
+            return None
+        return np.max(names)
+
+    def _get_surf_replace_dictionary(self, surfaces, keep_name=False):
+        """Gets replace dictionary for surfaces.
+
+        Parameters
+        ----------
+        surfaces : iterable
+            Surfaces for which replace dictionary have to be created.
+        keep_name : bool
+            Whether to keep origin surface names. Default: False.
+
+        Returns
+        -------
+        replace_dict : dict
+            Replace dictionary.
+        """
+        universe_surfaces = {s: s for s in self.get_surfaces()}
+        replace_dict = {}
+        last_surf_name = np.max([s.name() for s in universe_surfaces.keys()])
+        for s in surfaces:
+            rep_sur = universe_surfaces.get(s, None)
+            if rep_sur is None:
+                rep_sur = s.copy()
+                if not keep_name:
+                    rep_sur.rename(last_surf_name + 1)
+                    last_surf_name += 1
+            replace_dict[s] = rep_sur
+        return replace_dict
+
+    def _register_cell(self, cell, keep_name=False):
+        """Registers new cell in the universe.
+
+        Parameters
+        ----------
+        cell : Body
+            Cell to be registered.
+        keep_name : bool
+            Whether to keep cell's name.
+
+        Returns
+        -------
+        new_cell : Body
+            New registered version of the cell.
+        """
+        last_name = self._get_last_cell_name()
+        replace_dict = self._get_surf_replace_dictionary(
+            cell.shape.get_surfaces(), keep_name=keep_name
+        )
+        new_cell = Body(
+            cell.shape.replace_surfaces(replace_dict),
+            **cell.options
+        )
+        if not keep_name:
+            new_cell.rename(last_name + 1)
+        return new_cell
 
 
 class EntityNamingError(Exception):

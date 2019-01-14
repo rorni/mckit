@@ -438,6 +438,10 @@ class Shape(_Shape):
     def replace_surfaces(self, replace_dict):
         """Creates new Shape instance by replacing surfaces.
 
+        If shape's surface is in replace dict, it is replaced by surface in
+        dictionary values. Otherwise, the original surface is used. But new
+        shape is created anyway.
+
         Parameters
         ----------
         replace_dict : dict
