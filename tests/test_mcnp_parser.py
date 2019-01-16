@@ -1007,7 +1007,7 @@ def test_mcnp_parser(parse_file, expected):
             {
                 'name': 14, 'particle': 'PHOTON', 'geom': 'XYZ',
                 'bins': {
-                    'TIMES': np.array([1.00E+00, 2.00E+00, 3.00E+00, 4.00E+00]),
+                    'TIME': np.array([1.00E+00, 2.00E+00, 3.00E+00, 4.00E+00]),
                     'X': np.array([-5.00, -3.00, -1.00, 1.00, 3.00, 5.00]), 
                     'Y': np.array([-5.00, -3.00, -1.00, 1.00, 3.00, 5.00]),
                     'Z': np.array([-5.00, -3.00, -1.00, 1.00, 3.00, 5.00])
@@ -1314,7 +1314,7 @@ def test_mcnp_parser(parse_file, expected):
             {
                 'name': 24, 'particle': 'PHOTON', 'geom': 'XYZ',
                 'bins': {
-                    'TIMES': np.array([1.00E+00, 2.00E+00, 3.00E+00, 4.00E+00]),
+                    'TIME': np.array([1.00E+00, 2.00E+00, 3.00E+00, 4.00E+00]),
                     'X': np.array([-5.00, -3.00, -1.00, 1.00, 3.00, 5.00]), 
                     'Y': np.array([-5.00, -3.00, -1.00, 1.00, 3.00, 5.00]),
                     'Z': np.array([-5.00, -3.00, -1.00, 1.00, 3.00, 5.00])
@@ -1625,7 +1625,7 @@ def test_mcnp_parser(parse_file, expected):
 ])
 def test_meshtal_parser(mesh_file, expected):
     with open(mesh_file) as f:
-        text = f.read()
+        text = f.read() + '\n'
     meshtal_lexer.begin('INITIAL')
     tallies = meshtal_parser.parse(text, lexer=meshtal_lexer)
     assert tallies.keys() == expected.keys()
