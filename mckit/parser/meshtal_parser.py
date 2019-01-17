@@ -182,13 +182,18 @@ def p_header(p):
 
 def p_tallies(p):
     """tallies : tallies tally
+               | tallies tally separator
+               | tally separator
                | tally
     """
     if len(p) == 2:
         p[0] = [p[1]]
     else:
-        p[1].append(p[2])
-        p[0] = p[1]
+        if isinstance(p[1], list):
+            p[1].append(p[2])
+            p[0] = p[1]
+        else:
+            p[0] = [p[1]]
 
 
 def p_tally(p):
@@ -452,7 +457,7 @@ def p_error(p):
 meshtal_parser = yacc.yacc(tabmodule="meshtal_tab", debug=True)
 
 
-_BIN_NAMES = {'ENERGY': 'ebins', 'X': 'xbins', 'Y': 'ybins', 'Z': 'zbins', 'R': 'rbins', 'THETA': 'tbins', 'TIME': ''}
+_BIN_NAMES = {'ENERGY': 'ebins', 'X': 'xbins', 'Y': 'ybins', 'Z': 'zbins', 'R': 'rbins', 'THETA': 'tbins', 'TIME': 'dtbins'}
 
 
 def read_meshtal(filename):
