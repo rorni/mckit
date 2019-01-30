@@ -390,14 +390,14 @@ class Universe:
         u_tr : Universe
             New transformed universe.
         """
+        new_cells = [c.transform(tr) for c in self]
+        return Universe(new_cells, name=self._name,
+                        verbose_name=self._verbose_name, comment=self._comment)
 
     def verbose_name(self):
         """Gets verbose name of the universe."""
         return self._verbose_name
 
-#     def __iter__(self):
-#         return iter(self._cells)
-#
 #     def copy(self):
 #         """Makes a shallow copy of this universe."""
 #         u = Universe([], name=self.name(), verbose_name=self.verbose_name,
@@ -529,26 +529,6 @@ class Universe:
 #                 cells.append(new_cell)
 #         u = self.copy()
 #         u._cells = cells
-#         return u
-#
-#     def transform(self, tr):
-#         """Applies transformation tr to this universe.
-#
-#         Parameters
-#         ----------
-#         tr : Transformation
-#             Transformation to be applied.
-#
-#         Returns
-#         -------
-#         universe : Universe
-#             New transformed universe.
-#         """
-#         tr_cells = []
-#         for cell in self._cells:
-#             tr_cells.append(cell.transform(tr))
-#         u = self.copy()
-#         u._cells = tr_cells
 #         return u
 #
 #     def get_surfaces(self):

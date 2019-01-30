@@ -705,7 +705,7 @@ class Body(Card):
         """
         geometry = self._shape.transform(tr)
         cell = Body(geometry, **self.options)
-        fill = cell.get('FILL', None)
+        fill = cell.options.get('FILL', None)
         if fill:
             tr_in = fill.get('transform', Transformation())
             new_tr = tr.apply2transform(tr_in)

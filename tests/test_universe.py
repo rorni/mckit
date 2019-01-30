@@ -106,46 +106,38 @@ def test_get_surfaces(universe, case, recursive, answer_data):
     assert surfaces == answer
 
 
-# @pytest.mark.parametrize('tr', [
-#     Transformation(translation=[-3, 2, 0.5]),
-#     Transformation(translation=[1, 2, 3]),
-#     Transformation(translation=[-4, 2, -3]),
-#     Transformation(translation=[3, 0, 9],
-#                    rotation=[30, 60, 90, 120, 30, 90, 90, 90, 0],
-#                    indegrees=True),
-#     Transformation(translation=[1, 4, -2],
-#                    rotation=[0, 90, 90, 90, 30, 60, 90, 120, 30],
-#                    indegrees=True),
-#     Transformation(translation=[-2, 5, 3],
-#                    rotation=[30, 90, 60, 90, 0, 90, 120, 90, 30],
-#                    indegrees=True)
-# ])
-# @pytest.mark.parametrize('case_no, u_name, extent', [
-#     (0, 0, [20, 10, 10]),
-#     (0, 1, [20, 10, 10]),
-#     (0, 2, [20, 10, 10]),
-#     (1, 0, [20, 10, 10]),
-#     (1, 2, [20, 10, 10])
-# ])
-# def test_transform(universe, case_no, u_name, tr, extent):
-#     base_u = universe[case_no]
-#     if u_name == 0:
-#         u = base_u
-#     else:
-#         u = base_u.select_universe(u_name)
-#     points = np.random.random((50000, 3))
-#     points -= np.array([0.5, 0.5, 0.5])
-#     points *= np.array(extent)
-#     test_results = [c.shape.test_points(points) for c in u]
-#
-#     tr_u = u.transform(tr)
-#     tr_points = tr.apply2point(points)
-#     tr_results = [c.shape.test_points(tr_points) for c in tr_u]
-#     assert len(u._cells) == len(tr_u._cells)
-#     for r, r_tr in zip(test_results, tr_results):
-#         np.testing.assert_array_equal(r, r_tr)
-#
-#
+@pytest.mark.parametrize('tr', [
+    Transformation(translation=[-3, 2, 0.5]),
+    Transformation(translation=[1, 2, 3]),
+    Transformation(translation=[-4, 2, -3]),
+    Transformation(translation=[3, 0, 9],
+                   rotation=[30, 60, 90, 120, 30, 90, 90, 90, 0],
+                   indegrees=True),
+    Transformation(translation=[1, 4, -2],
+                   rotation=[0, 90, 90, 90, 30, 60, 90, 120, 30],
+                   indegrees=True),
+    Transformation(translation=[-2, 5, 3],
+                   rotation=[30, 90, 60, 90, 0, 90, 120, 90, 30],
+                   indegrees=True)
+])
+@pytest.mark.parametrize('case, extent', [
+    (1, [20, 10, 10])
+])
+def test_transform(universe, case, tr, extent):
+    u = universe(case)
+    points = np.random.random((50000, 3))
+    points -= np.array([0.5, 0.5, 0.5])
+    points *= np.array(extent)
+    test_results = [c.shape.test_points(points) for c in u]
+
+    tr_u = u.transform(tr)
+    tr_points = tr.apply2point(points)
+    tr_results = [c.shape.test_points(tr_points) for c in tr_u]
+    assert len(u._cells) == len(tr_u._cells)
+    for r, r_tr in zip(test_results, tr_results):
+        np.testing.assert_array_equal(r, r_tr)
+
+
 # @pytest.mark.parametrize('case_no, cells, recur, simp, complexity', [
 #     (0, 1, False, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
 #     (0, 2, False, False, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
