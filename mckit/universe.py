@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import numpy as np
 
@@ -13,7 +13,38 @@ from .transformation import Transformation
 from .card import Card
 
 
-__all__ = ['Universe']
+__all__ = ['Universe', 'produce_universes', 'NameClashError']
+
+
+class NameClashError(Exception):
+    pass
+
+
+def produce_universes(cells):
+    """Creates universes from cells.
+
+    The function groups all cells that have equal value of 'universe' option,
+    and the creates corresponding universes. Universe with name 0 is returned
+    only.
+
+    Parameters
+    ----------
+    cells : list[Body]
+        A list of cells.
+
+    Returns
+    -------
+    universe : Universe
+        Main universe.
+    """
+    universes = defaultdict(lambda: Universe([]))
+    for c in cells:
+        uname = c.options.get('U', 0)
+        universes[uname].add_cell(c, name_rule='keep')
+        fill = c.options.get('FILL', None)
+        if fill:
+            fill['universe'] = universes[fill['universe']]
+    return universes[0]
 
 
 class Universe:
@@ -67,6 +98,8 @@ class Universe:
         Selects specified entities.
     simplify(box, split_disjoint, min_volume)
         Simplifies all cells of the universe.
+    test_points(points)
+        Tests to which cell each point belongs.
     transform(tr)
         Applies transformation tr to this universe. Returns a new universe.
     verbose_name()
@@ -76,26 +109,13 @@ class Universe:
         self._name = name
         self._comment = comment
         self._verbose_name = name if verbose_name is None else verbose_name
-        if universes is None:
-            universes = {}
         self._cells = []
 
         for c in cells:
-            u = c.get('U', 0)
-            if isinstance(u, Universe):
-                u = u.name()
-            if u != name:
-                continue
-            fill = c.get('FILL')
-            if fill is not None:
-                uname = fill['universe']
-                if not isinstance(uname, Universe):
-                    if uname not in universes.keys():
-                        universes[uname] = Universe(cells, name=uname, universes=universes)
-                    fill['universe'] = universes[uname]
-            if not c.shape.is_empty():
-                c['U'] = self
-                self._cells.append(self._register_cell(c, keep_name=True))
+            self.add_cell(c, name_rule='keep')
+
+    def __iter__(self):
+        return iter(self._cells)
 
     def add_cell(self, cell, name_rule='new'):
         """Adds new cell to the universe.
@@ -108,11 +128,36 @@ class Universe:
             Cell to be added to the universe.
         name_rule : str
             Rule, what to do with entities' names. 'keep' - keep all names; in
-            case of clashes an exception is raised. 'clash' - rename entity
-            only in case of name clashes. 'new' - set new sequential name to
-            all inserted entities.
+            case of clashes NameClashError exception is raised. 'clash' - rename
+            entity only in case of name clashes. 'new' - set new sequential name
+            to all inserted entities.
         """
-        pass
+        surfs = self.get_surfaces()
+        new_name = max(surfs.keys(), default=0) + 1
+        surf_replace = {s: s for s in surfs.values()}
+        cell_surfs = cell.shape.get_surfaces()
+        for s in cell_surfs:
+            if s not in surf_replace.keys():
+                new_surf = s.copy()
+                if name_rule == 'keep' and new_surf.name() in surfs.keys():
+                    raise NameClashError("Surface name clash: {0}".format(s.name()))
+                elif name_rule == 'new':
+                    new_surf.rename(new_name)
+                    new_name += 1
+                elif name_rule == 'clash' and new_surf.name() in surfs.keys():
+                    new_surf.rename(new_name)
+                    new_name += 1
+                surfs[new_surf.name()] = new_surf
+                surf_replace[new_surf] = new_surf
+        cell_names = {c.name() for c in self}
+        new_cell = Body(cell.shape.replace_surfaces(surf_replace),
+                        **cell.options)
+        if name_rule == 'keep' and cell.name() in cell_names:
+            raise NameClashError("Cell name clash: {0}".format(cell.name()))
+        elif name_rule == 'new' or name_rule == 'clash' and cell.name() in cell_names:
+            new_cell.rename(max(cell_names, default=0) + 1)
+        new_cell.options['U'] = self
+        self._cells.append(new_cell)
 
     def apply_fill(self, cell=None, universe=None, predicate=None):
         """Applies fill operations to all or selected cells or universes.
@@ -181,7 +226,12 @@ class Universe:
         surfs : dict
             A dictionary of name->Surface.
         """
-        pass
+        surfs_set = set()
+        for c in self:
+            surfs_set.update(c.shape.get_surfaces())
+            if recursive and 'FILL' in c.options.keys():
+                surfs_set.update(c.options['FILL']['universe'].get_surfaces(recursive).values())
+        return {s.name(): s for s in surfs_set}
 
     def get_materials(self, recursive=False):
         """Gets all materials of the universe.
@@ -225,7 +275,7 @@ class Universe:
 
     def name(self):
         """Gets numeric name of the universe."""
-        pass
+        return self._name
 
     def rename(self, start_cell=None, start_surf=None, start_mat=None,
                start_tr=None, name=None):
@@ -305,6 +355,28 @@ class Universe:
         """
         pass
 
+    def test_points(self, points):
+        """Finds cell to which each point belongs to.
+
+        Parameters
+        ----------
+        points : array_like[float]
+            An array of point coordinates. If there is only one point it has
+            shape (3,); if there are n points, it has shape (n, 3).
+
+        Returns
+        -------
+        result : np.ndarray[int]
+            An array of cell indices to which a particular point belongs to.
+            Its length equals to the number of points.
+        """
+        points = np.array(points)
+        result = np.empty(points.size // 3)
+        for i, c in enumerate(self._cells):
+            test = c.shape.test_points(points)
+            result[test == +1] = i
+        return result
+
     def transform(self, tr):
         """Applies transformation tr to this universe. Returns a new universe.
 
@@ -321,7 +393,7 @@ class Universe:
 
     def verbose_name(self):
         """Gets verbose name of the universe."""
-        pass
+        return self._verbose_name
 
 #     def __iter__(self):
 #         return iter(self._cells)

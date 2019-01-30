@@ -10,7 +10,7 @@ from ..material import Element, Composition, Material
 from ..transformation import Transformation
 from ..surface import create_surface
 from ..body import Body
-from ..universe import Universe
+from ..universe import produce_universes
 
 
 literals = ['+', '-', ':', '*', '(', ')', '#', '.']
@@ -706,7 +706,7 @@ def read_mcnp(filename, encoding='utf-8'):
     bodies = []
     for name in list(cells.keys()):
         bodies.append(_get_cell(name, cells, surfaces, data))
-    return Universe(bodies, comment=title)
+    return produce_universes(bodies)
 
 
 def _get_transformation(name, data):
