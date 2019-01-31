@@ -210,7 +210,10 @@ class Universe:
 
     def copy(self):
         """Makes a copy of the universe."""
-        pass
+        return Universe(
+            self._cells, name=self._name, verbose_name=self._verbose_name,
+            comment=self._comment
+        )
 
     def get_surfaces(self, recursive=False):
         """Gets all surfaces of the universe.

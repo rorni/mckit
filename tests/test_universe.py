@@ -83,7 +83,7 @@ def test_add(universe, case, cell, name_rule, new_name, new_surfs):
         s_after = u.get_surfaces()
         acell = u._cells[-1]
         assert acell.shape == cell.shape
-        assert not (acell is cell)
+        assert acell is not cell
         assert acell.name() == new_name
         for k, v in s_before.items():
             assert v is s_after[k]
@@ -136,6 +136,27 @@ def test_transform(universe, case, tr, extent):
     assert len(u._cells) == len(tr_u._cells)
     for r, r_tr in zip(test_results, tr_results):
         np.testing.assert_array_equal(r, r_tr)
+
+
+@pytest.mark.parametrize('case', [1])
+def test_copy(universe, case):
+    u = universe(case)
+    uc = u.copy()
+    assert uc is not u
+    assert u.name() == uc.name()
+    assert u.verbose_name() == uc.verbose_name()
+    assert u._comment == uc._comment
+    assert len(u._cells) == len(uc._cells)
+    for c, cc in zip(u, uc):
+        assert cc is not c
+        assert c.name() == cc.name()
+        assert c.shape == cc.shape
+    surfs = u.get_surfaces()
+    csurfs = uc.get_surfaces()
+    assert surfs == csurfs
+    for k, v in surfs.items():
+        assert csurfs[k] is not v
+        assert csurfs[k] == v
 
 
 # @pytest.mark.parametrize('case_no, cells, recur, simp, complexity', [
