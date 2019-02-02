@@ -12,11 +12,64 @@ from .material import Composition, Material
 from .transformation import Transformation
 from .card import Card
 
-__all__ = ['Universe', 'produce_universes', 'NameClashError']
+__all__ = [
+    'Universe', 'produce_universes', 'NameClashError', 'get_cell_selector',
+    'get_surface_selector'
+]
 
 
 class NameClashError(Exception):
     pass
+
+
+def get_cell_selector(cell_names):
+    """Produces cell selector function for specific cell names.
+
+    Parameters
+    ----------
+    cell_names : int or iterable
+        Names of cells to be selected.
+
+    Returns
+    -------
+    selector : func
+        Selector function.
+    """
+    if isinstance(cell_names, int):
+        cell_names = {cell_names}
+    else:
+        cell_names = set(cell_names)
+
+    def selector(cell):
+        if cell.name() in cell_names:
+            return [cell]
+        else:
+            return []
+    return selector
+
+
+def get_surface_selector(surface_names):
+    """Produces surface selector function for specific surface names.
+
+    Parameters
+    ----------
+    surface_names : int or iterable
+        Names of surfaces to be selected.
+
+    Returns
+    -------
+    selector : func
+        Selector function
+    """
+    if isinstance(surface_names, int):
+        surface_names = {surface_names}
+    else:
+        surface_names = set(surface_names)
+
+    def selector(cell):
+        surfs = cell.shape.get_surfaces()
+        return [s for s in surfs if s.name() in surface_names]
+    return selector
 
 
 def produce_universes(cells):
@@ -362,6 +415,10 @@ class Universe:
         taken_ids = set()
         for c in self:
             portion = selector(c)
+            if inner:
+                u = c.options.get('FILL', {}).get('universe', None)
+                if u:
+                    portion.extend(u.select(selector, True))
             for item in portion:
                 if id(item) not in taken_ids:
                     taken_ids.add(id(item))

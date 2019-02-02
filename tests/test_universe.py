@@ -5,7 +5,7 @@ from mckit.material import Material, Element
 from mckit.parser.mcnp_input_parser import read_mcnp
 from mckit.transformation import Transformation
 from mckit.geometry import Box
-from mckit.universe import produce_universes, Universe, NameClashError
+from mckit.universe import *
 from mckit.body import Body, Shape
 from mckit.surface import Sphere, Surface, create_surface
 
@@ -182,16 +182,19 @@ def test_bounding_box(universe, tol, case, expected):
         assert bb.center[j] + bbdim <= high + tol
 
 
-@pytest.mark.parametrize('case, condition, answer', [
-    (1, lambda c: [c] if c.name() == 1 else [], [(Body, 1)]),
-    (1, lambda c: [c] if c.name() in {1, 3} else [], [(Body, 1), (Body, 3)]),
-    (1, lambda c: [s for s in c.shape.get_surfaces() if s.name() == 1], [(Surface, 1)]),
-    (1, lambda c: [s for s in c.shape.get_surfaces() if s.name() in {1, 4}], [(Surface, 1), (Surface, 4)]),
-    (1, lambda c: [c] if c.material() else [], [(Body, 1), (Body, 2)])
+@pytest.mark.parametrize('case, condition, inner, answer', [
+    (1, get_cell_selector(1), False, [(Body, 1)]),
+    (1, get_cell_selector([1, 3]), False, [(Body, 1), (Body, 3)]),
+    (1, get_surface_selector(1), False, [(Surface, 1)]),
+    (1, get_surface_selector([1, 4]), False, [(Surface, 1), (Surface, 4)]),
+    (1, lambda c: [c] if c.material() else [], False, [(Body, 1), (Body, 2)]),
+    (2, get_cell_selector(3), False, [(Body, 3)]),
+    (2, get_cell_selector(11), False, []),
+    (2, get_cell_selector(11), True, [(Body, 11)])
 ])
-def test_select(universe, case, condition, answer):
+def test_select(universe, case, condition, inner, answer):
     u = universe(case)
-    result = u.select(condition)
+    result = u.select(condition, inner=inner)
     assert len(result) == len(answer)
     for r, (cls, name) in zip(result, answer):
         assert isinstance(r, cls)

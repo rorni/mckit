@@ -771,7 +771,7 @@ def _get_cell(name, cells, surfaces, data):
                 if i + 1 < len(geometry) and geometry[i+1] == '#':
                     comp_cell = _get_cell(g, cells, surfaces, data)
                     shape = comp_cell.shape
-                    tr = comp_cell.get('TRCL', None)
+                    tr = comp_cell.options.get('TRCL', None)
                     if tr:
                         shape = shape.transform(tr)
                     geometry[i] = shape
