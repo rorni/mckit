@@ -179,22 +179,46 @@ class Universe:
         """
         pass
 
-    def bounding_box(self, tol=10, box=GLOBAL_BOX):
-        """Finds a box bounding the universe.
+    def bounding_box(self, tol=100, box=GLOBAL_BOX):
+        """Gets bounding box for the universe.
+
+        It finds all bounding boxes for universe cells and then constructs
+        box, that covers all cells' bounding boxes. The main purpose of this
+        method is to find boundaries of the model geometry to compare
+        transformation and surface objects for equality. It is recommended to
+        choose tol value not too small to reduce computation time.
 
         Parameters
         ----------
         tol : float
-            Linear tolerance in cm, to find bounding box edges. Default: 10 cm.
+            Linear tolerance for the bounding box. The distance [in cm] between
+            every box's surface and universe in every direction won't exceed
+            this value. Default: 100 cm.
         box : Box
-            Starting box for the search. Default: GLOBAL_BOX.
+            Starting box for the search. The user must be sure that box covers
+            all geometry, because cells, that already contains corners of the
+            box will be considered as infinite and will be excluded from
+            analysis.
 
         Returns
         -------
         bbox : Box
-            Universe's bounding box.
+            Universe bounding box.
         """
-        pass
+        boxes = []
+        for c in self._cells:
+            test = c.shape.test_points(box.corners)
+            if np.any(test == +1):
+                continue
+            boxes.append(c.shape.bounding_box(tol=tol, box=box))
+        all_corners = np.empty((8 * len(boxes), 3))
+        for i, b in enumerate(boxes):
+            all_corners[i * 8: (i + 1) * 8, :] = b.corners
+        min_pt = np.min(all_corners, axis=0)
+        max_pt = np.max(all_corners, axis=0)
+        center = 0.5 * (min_pt + max_pt)
+        dims = max_pt - min_pt
+        return Box(center, *dims)
 
     def check_names(self):
         """Checks, if there is name clashes.

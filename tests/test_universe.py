@@ -159,6 +159,28 @@ def test_copy(universe, case):
         assert csurfs[k] == v
 
 
+@pytest.mark.slow
+@pytest.mark.parametrize('tol', [0.2, None])
+@pytest.mark.parametrize('case, expected', [
+    (1, [[-10, 10], [-10, 10], [-6.5, 13.5]]),
+])
+def test_bounding_box(universe, tol, case, expected):
+    u = universe(case)
+    base = [0, 0, 0]
+    dims = [30, 30, 30]
+    gb = Box(base, dims[0], dims[1], dims[2])
+    if tol is not None:
+        bb = u.bounding_box(box=gb, tol=tol)
+    else:
+        tol = 100.0
+        bb = u.bounding_box()
+    for j, (low, high) in enumerate(expected):
+        bbdim = 0.5 * bb.dimensions[j]
+        assert bb.center[j] - bbdim <= low
+        assert bb.center[j] - bbdim >= low - tol
+        assert bb.center[j] + bbdim >= high
+        assert bb.center[j] + bbdim <= high + tol
+
 # @pytest.mark.parametrize('case_no, cells, recur, simp, complexity', [
 #     (0, 1, False, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
 #     (0, 2, False, False, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
