@@ -7,7 +7,7 @@ from mckit.transformation import Transformation
 from mckit.geometry import Box
 from mckit.universe import produce_universes, Universe, NameClashError
 from mckit.body import Body, Shape
-from mckit.surface import Sphere, Plane, create_surface
+from mckit.surface import Sphere, Surface, create_surface
 
 
 @pytest.fixture(scope='module')
@@ -180,6 +180,23 @@ def test_bounding_box(universe, tol, case, expected):
         assert bb.center[j] - bbdim >= low - tol
         assert bb.center[j] + bbdim >= high
         assert bb.center[j] + bbdim <= high + tol
+
+
+@pytest.mark.parametrize('case, condition, answer', [
+    (1, lambda c: [c] if c.name() == 1 else [], [(Body, 1)]),
+    (1, lambda c: [c] if c.name() in {1, 3} else [], [(Body, 1), (Body, 3)]),
+    (1, lambda c: [s for s in c.shape.get_surfaces() if s.name() == 1], [(Surface, 1)]),
+    (1, lambda c: [s for s in c.shape.get_surfaces() if s.name() in {1, 4}], [(Surface, 1), (Surface, 4)]),
+    (1, lambda c: [c] if c.material() else [], [(Body, 1), (Body, 2)])
+])
+def test_select(universe, case, condition, answer):
+    u = universe(case)
+    result = u.select(condition)
+    assert len(result) == len(answer)
+    for r, (cls, name) in zip(result, answer):
+        assert isinstance(r, cls)
+        assert r.name() == name
+
 
 # @pytest.mark.parametrize('case_no, cells, recur, simp, complexity', [
 #     (0, 1, False, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),

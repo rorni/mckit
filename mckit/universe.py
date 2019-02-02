@@ -12,7 +12,6 @@ from .material import Composition, Material
 from .transformation import Transformation
 from .card import Card
 
-
 __all__ = ['Universe', 'produce_universes', 'NameClashError']
 
 
@@ -94,7 +93,7 @@ class Universe:
         Renames all entities contained in the universe.
     save(filename)
         Saves the universe to file.
-    select(cell, universe, surface, predicate)
+    select(cell, selector)
         Selects specified entities.
     simplify(box, split_disjoint, min_volume)
         Simplifies all cells of the universe.
@@ -105,6 +104,7 @@ class Universe:
     verbose_name()
         Gets verbose name of the universe.
     """
+
     def __init__(self, cells, name=0, verbose_name=None, comment=None):
         self._name = name
         self._comment = comment
@@ -140,7 +140,8 @@ class Universe:
             if s not in surf_replace.keys():
                 new_surf = s.copy()
                 if name_rule == 'keep' and new_surf.name() in surfs.keys():
-                    raise NameClashError("Surface name clash: {0}".format(s.name()))
+                    raise NameClashError(
+                        "Surface name clash: {0}".format(s.name()))
                 elif name_rule == 'new':
                     new_surf.rename(new_name)
                     new_name += 1
@@ -257,7 +258,8 @@ class Universe:
         for c in self:
             surfs_set.update(c.shape.get_surfaces())
             if recursive and 'FILL' in c.options.keys():
-                surfs_set.update(c.options['FILL']['universe'].get_surfaces(recursive).values())
+                surfs_set.update(c.options['FILL']['universe'].get_surfaces(
+                    recursive).values())
         return {s.name(): s for s in surfs_set}
 
     def get_materials(self, recursive=False):
@@ -339,32 +341,32 @@ class Universe:
         """
         pass
 
-    def select(self, cell=None, universe=None, surface=None, selector=None):
+    def select(self, selector=None, inner=False):
         """Selects specified entities.
-
-        Instead of one name (int number) an iterable of names can be supplied.
-        In this case more than one item will be returned. If specific approach
-        is needed, selector function can be supplied. It provides more flexible
-        approach to selecting.
 
         Parameters
         ----------
-        cell : int
-            Name of cell to be selected. Default: None.
-        universe : int
-            Name of universe to be selected. Default: None.
-        surface : int
-            Name of surface to be selected. Default: None.
         selector : func
             A function that accepts 1 argument, Body instance, and returns
             selected entities.
+        inner : bool
+            Whether to consider inner universes. Default: False - only this
+            universe will be taken into account.
 
         Returns
         -------
         items : list
             List of selected items.
         """
-        pass
+        items = []
+        taken_ids = set()
+        for c in self:
+            portion = selector(c)
+            for item in portion:
+                if id(item) not in taken_ids:
+                    taken_ids.add(id(item))
+                    items.append(item)
+        return items
 
     def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False):
         """Simplifies all cells of the universe.
@@ -883,4 +885,3 @@ class Universe:
 #
 # class EntityNamingError(Exception):
 #     pass
-
