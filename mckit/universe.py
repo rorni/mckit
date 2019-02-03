@@ -487,7 +487,14 @@ class Universe:
         split_disjoint : bool
             Whether to split disjoint cells.
         """
-        pass
+        i = 0
+        while i < len(self._cells):
+            cs = self._cells[i].simplify(box=box, min_volume=min_volume)
+            if cs.shape.is_empty():
+                self._cells.pop(i)
+            else:
+                self._cells[i] = cs
+                i += 1
 
     def test_points(self, points):
         """Finds cell to which each point belongs to.

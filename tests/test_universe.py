@@ -15,6 +15,7 @@ def universe():
     cases = {
         1: 'tests/universe_test_data/universe1.i',
         2: 'tests/universe_test_data/universe2.i',
+        3: 'tests/universe_test_data/universe3.i',
         1002: 'tests/universe_test_data/universe1002.i',
         1012: 'tests/universe_test_data/universe1012.i',
         1022: 'tests/universe_test_data/universe1022.i'
@@ -250,91 +251,19 @@ def test_rename(universe, case, start, answer):
     assert cnames == answer['cell']
     assert snames == answer['surface']
 
-# @pytest.mark.parametrize('case_no, cells, recur, simp, complexity', [
-#     (0, 1, False, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
-#     (0, 2, False, False, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
-#     (0, None, False, False, {10: 6, 11: 6, 12: 9, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
-#     (0, 1, True, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
-#     (0, 2, True, False, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
-#     (0, None, True, False, {10: 6, 11: 6, 12: 9, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
-#     pytest.param(0, 1, False, True, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}, marks=pytest.mark.xfail(reason='need full simplification approach')),
-#     pytest.param(0, 2, False, True, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}, marks=pytest.mark.xfail(reason='need full simplification approach')),
-#     pytest.param(0, None, False, True, {10: 6, 11: 6, 12: 9, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}, marks=pytest.mark.xfail(reason='need full simplification approach')),
-#     pytest.param(0, 1, True, True, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}, marks=pytest.mark.xfail(reason='need full simplification approach')),
-#     pytest.param(0, 2, True, True, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}, marks=pytest.mark.xfail(reason='need full simplification approach')),
-#     pytest.param(0, None, True, True, {10: 6, 11: 6, 12: 9, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}, marks=pytest.mark.xfail(reason='need full simplification approach')),
-# ])
-# def test_fill(universe, case_no, cells, recur, simp, complexity):
-#     u = universe[case_no]
-#     u = u.fill(cells=cells, recurrent=recur, simplify=simp)
-#     assert len(u._cells) == len(complexity.keys())
-#     for c in u:
-#         print(c['name'], c.shape.complexity())
-#         assert c.shape.complexity() == complexity[c['name']]
-#
-#
-# @pytest.mark.slow
-# @pytest.mark.parametrize('case_no, u_name, complexity', [
-#     pytest.param(0, 0, {1: 2, 2: 3, 3: 4}, marks=pytest.mark.xfail(reason='need full simplification approach')),
-#     pytest.param(0, 1, {10: 3, 11: 3, 12: 4}, marks=pytest.mark.xfail(reason='need full simplification approach')),
-#     pytest.param(0, 2, {21: 3, 22: 4, 23: 3, 24: 4}, marks=pytest.mark.xfail(reason='need full simplification approach'))
-# ])
-# def test_simplify(universe, case_no, u_name, complexity):
-#     base_u = universe[case_no]
-#     if u_name == 0:
-#         u = base_u
-#     else:
-#         u = base_u.select_universe(u_name)
-#     u.simplify(trim_size=5)
-#     assert len(u._cells) == len(complexity.keys())
-#     for c in u:
-#         assert c.shape.complexity() == complexity[c['name']]
-#
-#
-# @pytest.mark.slow
-# @pytest.mark.parametrize('tol', [0.2, None])
-# @pytest.mark.parametrize('case_no, u_name, expected', [
-#     (0, 0, [[-5, 6], [-3, 3], [-3, 3]]),
-#     (0, 1, [[3, 9], [-1, 1], [-1, 1]]),
-#     (0, 2, [[-6, -1], [-4, 4], [-4, 4]])
-# ])
-# def test_bounding_box(universe, tol, case_no, u_name, expected):
-#     base_u = universe[case_no]
-#     if u_name == 0:
-#         u = base_u
-#     else:
-#         u = base_u.select_universe(u_name)
-#     base = [0, 0, 0]
-#     dims = [30, 30, 30]
-#     gb = Box(base, dims[0], dims[1], dims[2])
-#     if tol is not None:
-#         bb = u.bounding_box(box=gb, tol=tol)
-#     else:
-#         tol = 100.0
-#         bb = u.bounding_box()
-#     for j, (low, high) in enumerate(expected):
-#         bbdim = 0.5 * bb.dimensions[j]
-#         assert bb.center[j] - bbdim <= low
-#         assert bb.center[j] - bbdim >= low - tol
-#         assert bb.center[j] + bbdim >= high
-#         assert bb.center[j] + bbdim <= high + tol
-#
-#
-# @pytest.mark.parametrize('case_no, u_name, sur_names', [
-#     (0, 0, {1, 2, 3, 4}),
-#     (0, 1, {10, 11, 12, 13}),
-#     (0, 2, {20, 21, 22, 23, 24})
-# ])
-# def test_get_surfaces(universe, case_no, u_name, sur_names):
-#     base_u = universe[case_no]
-#     if u_name == 0:
-#         u = base_u
-#     else:
-#         u = base_u.select_universe(u_name)
-#     surfs = u.get_surfaces()
-#     sn = set(s.options['name'] for s in surfs)
-#     assert sn == sur_names
-#
+
+@pytest.mark.parametrize('case, complexities', [
+    (1, {1: 1, 2: 3, 3: 5, 4: 1}),
+    (3, {1: 1, 2: 3, 4: 5, 5: 1})
+])
+def test_simplify(universe, case, complexities):
+    u = universe(case)
+    u.simplify(min_volume=0.1)
+    assert len(u._cells) == len(complexities.keys())
+    for c in u:
+        assert c.shape.complexity() == complexities[c.name()]
+
+
 #
 # @pytest.mark.parametrize('case_no, u_name, materials', [
 #     (0, 0, set()),
@@ -355,44 +284,6 @@ def test_rename(universe, case, start, answer):
 #     mats = u.get_materials()
 #     assert mats == materials
 #
-#
-# @pytest.mark.parametrize('case_no, rec, expected', [
-#     (0, False, {1, 2}),
-#     (0, True, {1, 2}),
-#     (1, False, {2}),
-#     (1, True, {2})
-# ])
-# def test_get_universes(universe, case_no, rec, expected):
-#     u = universe[case_no].get_universes(recurrent=rec)
-#     assert u == expected
-#
-#
-# @pytest.mark.parametrize('case_no, u_name, expected', [
-#     (0, 0, {'cells': {1, 2, 3}, 'surfaces': {1, 2, 3, 4},
-#             'compositions': set(), 'transformations': set()}),
-#     (0, 1, {'cells': {1, 2, 3}, 'surfaces': {1, 2, 3, 4},
-#             'compositions': {1, 2}, 'transformations': set()}),
-#     (0, 2, {'cells': {1, 2, 3, 4}, 'surfaces': {1, 2, 3, 4, 5},
-#             'compositions': {1, 2, 3}, 'transoformations': set()})
-# ])
-# def test_rename(universe, case_no, u_name, expected):
-#     base_u = universe[case_no]
-#     if u_name == 0:
-#         u = base_u.copy()
-#     else:
-#         u = base_u.select_universe(u_name).copy()
-#     u.rename()
-#     surf_names = {s.options['name'] for s in u.get_surfaces()}
-#     comp_names = {m.composition['name'] for m in u.get_materials()}
-#     cell_names = {c['name'] for c in u if 'name' in c.keys()}
-#     assert surf_names == expected['surfaces']
-#     assert cell_names == expected['cells']
-#     assert comp_names == expected['compositions']
-#
-#
-# @pytest.mark.skip
-# def test_save():
-#     raise NotImplementedError
 #
 #
 # @pytest.mark.parametrize('case_no, cells, status, output', [
