@@ -102,7 +102,7 @@ def test_add(universe, case, cell, name_rule, new_name, new_surfs):
 def test_get_surfaces(universe, case, recursive, answer_data):
     answer = {n: create_surface(k, *p, name=n) for n, k, p in answer_data}
     u = universe(case)
-    surfaces = u.get_surfaces(recursive=recursive)
+    surfaces = u.get_surfaces(inner=recursive)
     assert surfaces == answer
 
 
@@ -200,6 +200,25 @@ def test_select(universe, case, condition, inner, answer):
         assert isinstance(r, cls)
         assert r.name() == name
 
+
+@pytest.mark.parametrize('case, answer', [
+    (1, {0: {1, 2, 3, 4}}),
+    (2, {0: {1, 2, 3}, 1: {10, 11, 12}, 2: {21, 22, 23, 24}})
+])
+def test_get_universes(universe, case, answer):
+    u = universe(case)
+    unvs = u.get_universes()
+    assert len(unvs.keys()) == len(answer.keys())
+    for k, v in unvs.items():
+        names = {c.name() for c in v}
+        assert names == answer[k]
+
+
+@pytest.mark.parametrize('case', [
+
+])
+def test_apply_fill(universe, case):
+    pass
 
 # @pytest.mark.parametrize('case_no, cells, recur, simp, complexity', [
 #     (0, 1, False, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),

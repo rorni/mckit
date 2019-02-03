@@ -89,12 +89,13 @@ def produce_universes(cells):
     universe : Universe
         Main universe.
     """
-    universes = defaultdict(lambda: Universe([]))
+    universes = defaultdict(lambda: Universe([], name=uname))
     for c in cells:
         uname = c.options.get('U', 0)
         universes[uname].add_cell(c, name_rule='keep')
         fill = c.options.get('FILL', None)
         if fill:
+            uname = fill['universe']
             fill['universe'] = universes[fill['universe']]
     return universes[0]
 
@@ -293,12 +294,12 @@ class Universe:
             comment=self._comment
         )
 
-    def get_surfaces(self, recursive=False):
+    def get_surfaces(self, inner=False):
         """Gets all surfaces of the universe.
 
         Parameters
         ----------
-        recursive : bool
+        inner : bool
             Whether to take surfaces of inner universes. Default: False -
             return surfaces of this universe only.
 
@@ -310,9 +311,9 @@ class Universe:
         surfs_set = set()
         for c in self:
             surfs_set.update(c.shape.get_surfaces())
-            if recursive and 'FILL' in c.options.keys():
+            if inner and 'FILL' in c.options.keys():
                 surfs_set.update(c.options['FILL']['universe'].get_surfaces(
-                    recursive).values())
+                    inner).values())
         return {s.name(): s for s in surfs_set}
 
     def get_materials(self, recursive=False):
@@ -352,8 +353,19 @@ class Universe:
         pass
 
     def get_universes(self):
-        """Gets all inner universes."""
-        pass
+        """Gets all inner universes.
+
+        Returns
+        -------
+        universes : dict
+            A dictionary of name->Universe.
+        """
+        universes = {self._name: self}
+        for c in self:
+            u = c.options.get('FILL', {}).get('universe', None)
+            if u:
+                universes.update(u.get_universes())
+        return universes
 
     def name(self):
         """Gets numeric name of the universe."""
