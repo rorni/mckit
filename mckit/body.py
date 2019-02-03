@@ -683,7 +683,7 @@ class Body(Card):
         for c in universe:
             new_cell = c.intersection(self)  # because properties like MAT, etc
                                              # must be as in filling cell.
-            if 'U' in self.keys():
+            if 'U' in self.options.keys():
                 new_cell.options['U'] = self.options['U']    # except universe.
             if simplify:
                 new_cell = new_cell.simplify(**kwargs)

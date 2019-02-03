@@ -214,6 +214,16 @@ class Universe:
         new_cell.options['U'] = self
         self._cells.append(new_cell)
 
+    @staticmethod
+    def _fill_check(predicate):
+        def _predicate(cell):
+            fill = cell.options.get('FILL', None)
+            if fill:
+                return predicate(cell)
+            else:
+                return False
+        return _predicate
+
     def apply_fill(self, cell=None, universe=None, predicate=None):
         """Applies fill operations to all or selected cells or universes.
 
@@ -232,7 +242,23 @@ class Universe:
             Function that accepts Body instance and return True, if this cell
             must be filled.
         """
-        pass
+        if not cell and not universe and not predicate:
+            predicate = lambda c: True
+        elif cell:
+            predicate = lambda c: c.name() == cell
+        elif universe:
+            predicate = lambda c: c.options['FILL']['universe'].name() == universe
+        predicate = self._fill_check(predicate)
+        extra_cells = []
+        del_indices = []
+        for i, c in enumerate(self):
+            if predicate(c):
+                extra_cells.extend(c.fill())
+                del_indices.append(i)
+        for i in reversed(del_indices):
+            self._cells.pop(i)
+        for c in extra_cells:
+            self.add_cell(c, name_rule='new')
 
     def bounding_box(self, tol=100, box=GLOBAL_BOX):
         """Gets bounding box for the universe.

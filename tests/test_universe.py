@@ -14,7 +14,10 @@ from mckit.surface import Sphere, Surface, create_surface
 def universe():
     cases = {
         1: 'tests/universe_test_data/universe1.i',
-        2: 'tests/universe_test_data/universe2.i'
+        2: 'tests/universe_test_data/universe2.i',
+        1002: 'tests/universe_test_data/universe1002.i',
+        1012: 'tests/universe_test_data/universe1012.i',
+        1022: 'tests/universe_test_data/universe1022.i'
     }
 
     def _universe(case):
@@ -214,11 +217,22 @@ def test_get_universes(universe, case, answer):
         assert names == answer[k]
 
 
-@pytest.mark.parametrize('case', [
-
+@pytest.mark.parametrize('case, condition, answer_case, box', [
+    (2, {}, 1002, Box([0, 0, 0], 20, 20, 20)),
+    (2, {'cell': 1}, 1012, Box([0, 0, 0], 20, 20, 20)),
+    (2, {'cell': 2}, 1022, Box([0, 0, 0], 20, 20, 20)),
+    (2, {'universe': 1}, 1022, Box([0, 0, 0], 20, 20, 20)),
+    (2, {'universe': 2}, 1012, Box([0, 0, 0], 20, 20, 20)),
+    (2, {'predicate': lambda c: 'transform' in c.options['FILL'].keys()}, 1022, Box([0, 0, 0], 20, 20, 20))
 ])
-def test_apply_fill(universe, case):
-    pass
+def test_apply_fill(universe, case, condition, answer_case, box):
+    u = universe(case)
+    ua = universe(answer_case)
+    u.apply_fill(**condition)
+    points = box.generate_random_points(1000000)
+    test_f = u.test_points(points)
+    test_a = ua.test_points(points)
+    np.testing.assert_array_equal(test_f, test_a)
 
 
 @pytest.mark.parametrize('case, start, answer', [
