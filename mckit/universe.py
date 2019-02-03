@@ -391,7 +391,17 @@ class Universe:
         name : int
             Name for the universe. Default: None.
         """
-        pass
+        if name:
+            self._name = name
+        if start_cell:
+            for c in self:
+                c.rename(start_cell)
+                start_cell += 1
+        if start_surf:
+            surfs = self.get_surfaces()
+            for s in sorted(surfs.values(), key=Card.name):
+                s.rename(start_surf)
+                start_surf += 1
 
     def save(self, filename, inner=True):
         """Saves the universe into file.

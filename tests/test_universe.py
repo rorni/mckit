@@ -220,6 +220,22 @@ def test_get_universes(universe, case, answer):
 def test_apply_fill(universe, case):
     pass
 
+
+@pytest.mark.parametrize('case, start, answer', [
+    (1, {'name': 4}, {'name': 4, 'cell': [1, 2, 3, 4], 'surface': [1, 2, 3, 4, 5]}),
+    (1, {'start_cell': 6}, {'name': 0, 'cell': [6, 7, 8, 9], 'surface': [1, 2, 3, 4, 5]}),
+    (1, {'start_surf': 7}, {'name': 0, 'cell': [1, 2, 3, 4], 'surface': [7, 8, 9, 10, 11]}),
+    (1, {'name': 4, 'start_cell': 6, 'start_surf': 7}, {'name': 4, 'cell': [6, 7, 8, 9], 'surface': [7, 8, 9, 10, 11]})
+])
+def test_rename(universe, case, start, answer):
+    u = universe(case)
+    u.rename(**start)
+    assert u.name() == answer['name']
+    cnames = sorted(c.name() for c in u)
+    snames = sorted(u.get_surfaces().keys())
+    assert cnames == answer['cell']
+    assert snames == answer['surface']
+
 # @pytest.mark.parametrize('case_no, cells, recur, simp, complexity', [
 #     (0, 1, False, False, {2: 3, 3: 5, 21: 5, 22: 6, 23: 5, 24: 12}),
 #     (0, 2, False, False, {10: 6, 11: 6, 12: 9, 3: 5, 1: 2}),
