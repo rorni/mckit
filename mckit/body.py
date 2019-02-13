@@ -154,7 +154,8 @@ class Shape(_Shape):
                             return 'R', []
                 i += 1
             args.sort(key=hash)
-
+            if len(args) == 0:
+                opc = 'E' if opc == 'U' else 'R'
         if len(args) == 1 and isinstance(args[0], Shape) and (opc == 'S' or opc == 'I' or opc == 'U'):
             return args[0].opc, args[0].args
         elif len(args) == 1 and isinstance(args[0], Shape) and opc == 'C':
