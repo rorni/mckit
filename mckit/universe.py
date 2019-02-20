@@ -135,7 +135,7 @@ class Universe:
         Gets all surfaces of the universe.
     get_materials()
         Gets all materials of the universe.
-    get_composition()
+    get_compositions()
         Gets all compositions of the universe.
     get_transformations()
         Gets all transformations of the universe.
@@ -358,7 +358,7 @@ class Universe:
         """
         pass
 
-    def get_composition(self, recursive=False):
+    def get_compositions(self):
         """Gets all compositions of the unvierse.
 
         Parameters
@@ -372,7 +372,13 @@ class Universe:
         comps : dict
             A dictionary of name->Composition.
         """
-        pass
+        comps = {}
+        for c in self:
+            mat = c.material()
+            if mat:
+                comp = mat.composition
+                comps[comp.name()] = comp
+        return comps
 
     def get_transformations(self):
         """Gets all transformations of the universe."""

@@ -8,6 +8,7 @@ from mckit.geometry import Box
 from mckit.universe import *
 from mckit.body import Body, Shape
 from mckit.surface import Sphere, Surface, create_surface
+from mckit.material import Composition
 
 
 @pytest.fixture(scope='module')
@@ -108,6 +109,17 @@ def test_get_surfaces(universe, case, recursive, answer_data):
     u = universe(case)
     surfaces = u.get_surfaces(inner=recursive)
     assert surfaces == answer
+
+
+@pytest.mark.parametrize('case, answer', [
+    (1, {1: Composition(atomic=[(Element('C-12', lib='31c'), 1)]), 2: Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)])}),
+    (2, {}),
+    (3, {4: Composition(atomic=[(Element('C-12', lib='31c'), 1)]), 3: Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)])}),
+])
+def test_get_compositions(universe, case, answer):
+    u = universe(case)
+    comps = u.get_compositions()
+    assert comps == answer
 
 
 @pytest.mark.parametrize('tr', [
