@@ -276,6 +276,12 @@ def test_simplify(universe, case, complexities):
         assert c.shape.complexity() == complexities[c.name()]
 
 
+@pytest.mark.parametrize('case', [
+    1, 2, 3
+])
+def test_save(universe, case):
+    pass
+
 #
 # @pytest.mark.parametrize('case_no, u_name, materials', [
 #     (0, 0, set()),
