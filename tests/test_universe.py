@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import tempfile
 
 from mckit.material import Material, Element
 from mckit.parser.mcnp_input_parser import read_mcnp
@@ -276,11 +277,27 @@ def test_simplify(universe, case, complexities):
         assert c.shape.complexity() == complexities[c.name()]
 
 
-@pytest.mark.parametrize('case', [
-    1, 2, 3
+@pytest.mark.parametrize('case, box', [
+    (1, Box([0, 0, 0], 20, 20, 20)),
+    (2, Box([0, 0, 0], 20, 20, 20)),
+    (3, Box([0, 0, 0], 20, 20, 20))
 ])
-def test_save(universe, case):
-    pass
+def test_save(universe, case, box):
+    u = universe(case)
+    out = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
+    u.save(out.name)
+    print(out.read().decode())
+    out.close()
+    ur = read_mcnp(out.name)
+
+    points = box.generate_random_points(100000)
+    universes_orig = u.get_universes()
+    universes_answ = ur.get_universes()
+    assert universes_orig.keys() == universes_answ.keys()
+    for k, univ in universes_orig.items():
+        test_a = univ.test_points(points)
+        test_f = universes_answ[k].test_points(points)
+        np.testing.assert_array_equal(test_f, test_a)
 
 #
 # @pytest.mark.parametrize('case_no, u_name, materials', [

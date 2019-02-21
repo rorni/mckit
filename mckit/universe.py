@@ -186,6 +186,8 @@ class Universe:
             entity only in case of name clashes. 'new' - set new sequential name
             to all inserted entities.
         """
+        if cell.shape.is_empty():
+            return
         surfs = self.get_surfaces()
         new_name = max(surfs.keys(), default=0) + 1
         surf_replace = {s: s for s in surfs.values()}
@@ -446,7 +448,24 @@ class Universe:
             Whether to save inner universes too. If False, only this universe
             itself without fillers will be saved. Default: True.
         """
-        pass
+        universes = self.get_universes()
+        cells = []
+        surfaces = []
+        materials = []
+        for u_name in sorted(universes.keys()):
+            u = universes[u_name]
+            cells.extend(sorted(u, key=Card.name))
+            surfaces.extend(sorted(u.get_surfaces().values(), key=Card.name))
+            materials.extend(sorted(u.get_compositions().values(), key=Card.name))
+        cards = [str(self.verbose_name())]
+        cards.extend(map(Card.mcnp_repr, cells))
+        cards.append('')
+        cards.extend(map(Card.mcnp_repr, surfaces))
+        cards.append('')
+        cards.extend(map(Card.mcnp_repr, materials))
+        cards.append('')
+        with open(filename, mode='w') as f:
+            f.write('\n'.join(cards))
 
     def select(self, selector=None, inner=False):
         """Selects specified entities.

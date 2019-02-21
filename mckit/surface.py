@@ -470,7 +470,7 @@ class Cylinder(Surface, _Cylinder):
             v = np.zeros(3)
             k = -self._radius**2
             m, v, k = Transformation(translation=self._pt).apply2gq(m, v, k)
-            return str(GQuadratic(m, v, k, **self.options))
+            return GQuadratic(m, v, k, **self.options).mcnp_repr()
         words.append(' ')
         v = self._radius
         p = significant_digits(v, FLOAT_TOLERANCE)
@@ -593,7 +593,7 @@ class Cone(Surface, _Cone):
             v = np.zeros(3)
             k = 0
             m, v, k = Transformation(translation=self._apex).apply2gq(m, v, k)
-            return str(GQuadratic(m, v, k, **self.options))
+            return GQuadratic(m, v, k, **self.options).mcnp_repr()
         words.append(' ')
         v = self._t2
         p = significant_digits(v, np.sqrt(FLOAT_TOLERANCE))
@@ -666,6 +666,7 @@ class GQuadratic(Surface, _GQuadratic):
 
     def mcnp_words(self):
         words = Surface.mcnp_words(self)
+        words.append('GQ')
         a, b, c = np.diag(self._m)
         d = self._m[0, 1] + self._m[1, 0]
         e = self._m[1, 2] + self._m[2, 1]

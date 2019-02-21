@@ -545,7 +545,7 @@ class Body(Card):
         words.append('\n')
         # insert options printing
         words.extend(self._options_list())
-        for line in self.get('comment', []):
+        for line in self.options.get('comment', []):
             words.append('$ ' + str(line))
             words.append('\n')
         return words

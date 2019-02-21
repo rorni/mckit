@@ -152,7 +152,7 @@ class Composition(Card):
         return reduce(xor, map(hash, self._composition.keys()))
 
     def mcnp_words(self):
-        words = ['M{0}'.format(self.name)]
+        words = ['M{0} '.format(self.name())]
         for elem, frac in self._composition.items():
             words.append(elem.mcnp_repr())
             words.append('  ')

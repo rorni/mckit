@@ -86,11 +86,11 @@ def print_option(option, value):
     elif option == 'VOL':
         return ['VOL={0}'.format(value)]
     elif option == 'U':
-        return ['U={0}'.format(value.name)]
+        return ['U={0}'.format(value.name())]
     elif option == 'FILL':
         universe = value['universe']
         tr = value.get('transform', None)
-        words = ['FILL={0}'.format(universe.name)]
+        words = ['FILL={0}'.format(universe.name())]
         if tr:
             words[0] = '*' + words[0]
             words.append('(')
