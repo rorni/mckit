@@ -92,6 +92,7 @@ def test_surface_creation(cls, kind, params, expected):
 
 @pytest.mark.parametrize('cls, kind, params', [
     (Plane, 'P', [3.2, -1.4, 5.7, -4.8]),
+    (Plane, 'P', [3.28434343457632, -1.48888888888888, 5.7341411411414, -4.8]),
     (Sphere, 'S', [3.7, -3.8, 3.9, 6.5]),
     (Cylinder, 'CX', [6.6]),
     (Cylinder, 'CY', [6.7]),
@@ -104,6 +105,7 @@ def test_surface_creation(cls, kind, params, expected):
     (Cylinder, 'Z', [1.2, 3.4, 8.4, 3.4]),
     (Cone, 'KX', [4.6, 0.33]),
     (Cone, 'KY', [4.7, 0.33]),
+    (Cone, 'KX', [4.77777777777777777, 0.333333333333333]),
     (Cone, 'KZ', [-4.8, 0.33]),
     (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33]),
     (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33]),
@@ -118,7 +120,7 @@ def test_surface_creation(cls, kind, params, expected):
     (Cone, 'Y', [-1.0, 1.0, 1.0, 2.0]),
     (Cone, 'Y', [-2.5, 4.5, -0.5, 3.5]),
     (Cone, 'Y', [1.0, 2.0, -1.0, 1.0]),
-    (Cone, 'Y', [-0.5, 3.5, -2.5, 4.5]),
+    (Cone, 'Y', [-0.52222989232331345, 3.5, -2.5, 4.5]),
     (Cone, 'Z', [-1.0, 1.0, 1.0, 2.0]),
     (Cone, 'Z', [-2.5, 4.5, -0.5, 3.5]),
     (Cone, 'Z', [1.0, 2.0, -1.0, 1.0]),
@@ -135,7 +137,7 @@ def test_surface_creation(cls, kind, params, expected):
     (Torus, 'TX', [1, 2, -3, 5, 0.5, 0.8]),
     (Torus, 'TY', [-4, 5, -6, 3, 0.9, 0.2]),
     (Torus, 'TZ', [0, -3, 5, 1, 0.1, 0.2]),
-    (GQuadratic, 'SQ', [0.5, -2.5, 3.0, 1.1, -1.3, -5.4, -7.0, 3.2, -1.7, 8.4]),
+    (GQuadratic, 'SQ', [0.5, -2.5841834141234512351, 3.0, 1.1, -1.3, -5.4, -7.0, 3.2, -1.7, 8.4]),
     (GQuadratic, 'GQ', [1, 2, 3, 4, 5, 6, 7, 8, 9, -10])
 ])
 def test_surface_copy(cls, kind, params):
@@ -284,11 +286,11 @@ class TestPlane:
         '2 PY 5.0', '2 PY 5.0', '2 PY 5.0', '2 PY 5.00000000001',
         '3 PZ 5.0', '3 PZ 5.0', '3 PZ 5.0', '3 PZ 5.00000000001',
         '4 PX 5.0', '4 PY 5.0', '4 PZ 5.0',
-        '5 P 0.7071067811870 0.7071067811870 0.0 -2.828427124746',
-        '5 P 0.7071067811870 0.7071067811870 0.0 -2.828427124746'
+        '5 P 0.7071067811870 0.7071067811870 0 -2.828427124746',
+        '5 P 0.7071067811870 0.7071067811870 0 -2.828427124746'
     ]))
-    def test_str(self, surface, answer):
-        desc = str(surface)
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
         assert desc == answer
 
 
@@ -404,8 +406,8 @@ class TestSphere:
         '3 SY 5.0 4.0', '3 SZ 5.0 4.0', '4 S 4.3 8.2 -1.4 3.5',
         '4 S 4.3 8.2 -1.4 3.5'
     ]))
-    def test_str(self, surface, answer):
-        desc = str(surface)
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
         assert desc == answer
 
 
@@ -477,15 +479,15 @@ class TestCylinder:
         create_surface('C/Y', 1 - 5.e-13, -2 + 1.e-12, 3 - 1.e-12, name=2), # 9
         create_surface('C/Z', 1, -2, 3, name=2),                            # 10
         create_surface('C/Z', 1 - 5.e-13, -2 + 1.e-12, 3 - 1.e-12, name=2), # 11
-        Cylinder([0, 1, -2], [2, 5.e-13, -5.e-13], 3, name=3),              # 12
-        Cylinder([5, 1, -2], [1 + 5.e-13, -5.e-13, 5.e-13], 3, name=3),     # 13
-        Cylinder([1, 0, -2], [5.e-13, 2, -5.e-13], 3, name=3),              # 14
-        Cylinder([1, 5, -2], [-5.e-13, 1 + 5.e-13, 5.e-13], 3, name=3),     # 15
-        Cylinder([1, -2, 0], [5.e-13, -5.e-13, 2], 3, name=3),              # 16
-        Cylinder([1, -2, 5], [-5.e-13, 5.e-13, 1 + 5.e-13], 3, name=3),     # 17
-        Cylinder([0, 1, -2], [-2, 5.e-13, -5.e-13], 3, name=4),             # 18
-        Cylinder([1, 0, -2], [5.e-13, -2, -5.e-13], 3, name=4),             # 19
-        Cylinder([1, -2, 0], [5.e-13, 5.e-13, -2], 3, name=4)               # 20
+        Cylinder([0, 1, -2], [2, 1.e-13, -1.e-13], 3, name=3),              # 12
+        Cylinder([5, 1, -2], [1 + 1.e-13, -1.e-13, 2.e-13], 3, name=3),     # 13
+        Cylinder([1, 0, -2], [1.e-13, 2, -1.e-13], 3, name=3),              # 14
+        Cylinder([1, 5, -2], [-1.e-13, 1 + 1.e-13, 2.e-13], 3, name=3),     # 15
+        Cylinder([1, -2, 0], [1.e-13, -1.e-13, 2], 3, name=3),              # 16
+        Cylinder([1, -2, 5], [-1.e-13, 1.e-13, 1 + 2.e-13], 3, name=3),     # 17
+        Cylinder([0, 1, -2], [-1, 1.e-13, -1.e-13], 3, name=4),             # 18
+        Cylinder([1, 0, -2], [1.e-13, -2, -1.e-13], 3, name=4),             # 19
+        Cylinder([1, -2, 0], [1.e-13, 1.e-13, -2], 3, name=4)               # 20
     ]
 
     eq_matrix = [
@@ -531,8 +533,11 @@ class TestCylinder:
         '3 C/X 1.0 -2.0 3.0', '3 C/X 1.0 -2.0 3.0', '3 C/Y 1.0 -2.0 3.0',
         '3 C/Y 1.0 -2.0 3.0', '3 C/Z 1.0 -2.0 3.0', '3 C/Z 1.0 -2.0 3.0'
     ]))
-    def test_str(self, surface, answer):
-        desc = str(surface)
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        print(surface.mcnp_repr())
+        print(surface._pt_digits, surface._pt, pretty_float(surface._pt[0], 1))
+        print("{0:.15e}".format(surface._pt[0]))
         assert desc == answer
 
 
@@ -668,9 +673,9 @@ class TestCone:
         create_surface('KX', 4, 0.5, name=1),                                    # 0
         create_surface('KX', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 1
         create_surface('KY', 4, 0.5, name=1),                                    # 2
-        create_surface('KY', 4 - 1.e-12, 0.5 + 1.e-12, name=1),                  # 3
+        create_surface('KY', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 3
         create_surface('KZ', 4, 0.5, name=1),                                    # 4
-        create_surface('KZ', 4 - 1.e-12, 0.5 + 1.e-12, name=1),                  # 5
+        create_surface('KZ', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 5
         create_surface('K/X', 3, 2, -4, 0.5, name=2),                            # 6
         create_surface('K/X', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 7
                        name=2),
@@ -764,8 +769,8 @@ class TestCone:
         '7 K/X 3.0 2.0 -4.0 0.50 -1', '7 K/Y 3.0 2.0 -4.0 0.50 -1',
         '7 K/Z 3.0 2.0 -4.0 0.50 -1'
     ]))
-    def test_str(self, surface, answer):
-        desc = str(surface)
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
         assert desc == answer
 
 
@@ -903,8 +908,8 @@ class TestTorus:
         '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0', '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0',
         '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0'
     ]))
-    def test_str(self, surface, answer):
-        desc = str(surface)
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
         assert desc == answer
 
 
@@ -996,6 +1001,6 @@ class TestGQuadratic:
         '2 GQ 1.0 2.0 3.0 0.50 0.80 0.60 1.0 2.0 3.0 -4.0',
         '2 GQ 1.0 2.0 3.0 0.50 0.80 0.60 1.0 2.0 3.0 -4.0'
     ]))
-    def test_str(self, surface, answer):
-        desc = str(surface)
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
         assert desc == answer

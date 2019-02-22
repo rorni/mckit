@@ -3,17 +3,18 @@ import pytest
 from mckit.utils import *
 
 
-@pytest.mark.parametrize('tol', [
-    1.e-2, 1.e-4, 1.e-6, 1.e-8
-])
+@pytest.mark.parametrize('res', [None, 1.e-2, 1.e-4, 1.e-6, 1.e-8])
+@pytest.mark.parametrize('tol', [1.e-2, 1.e-4, 1.e-6, 1.e-8])
 @pytest.mark.parametrize('value', [
     5.0000000000001, 3.45, -6.986574864, -4, 8, 0.0, 0.00000000000,
     3.48e-8, 4.8700001e+6, 0, 0.00000000000001, 1.e-12, -1.e-12, -1.e-3
 ])
-def test_significant_digits(value, tol):
-    prec = significant_digits(value, tol)
+def test_significant_digits(value, tol, res):
+    prec = significant_digits(value, tol, res)
     approx = round(value, prec)
-    if value != approx:
+    if res and abs(value) < res:
+        assert approx == 0
+    elif value != approx:
         rel = abs(value - approx) / max(abs(value), abs(approx))
         assert rel <= tol
         if prec > 1:
@@ -36,7 +37,8 @@ def test_significant_digits(value, tol):
     (-1.e-15, 1.e-4, 1.e-14, 0),
 ])
 def test_round_scalar(value, reltol, resolution, answer):
-    result = round_scalar(value, reltol, resolution)
+    p = significant_digits(value, reltol, resolution)
+    result = round_scalar(value, p)
     assert result == answer
 
 
@@ -70,6 +72,7 @@ def test_round_scalar(value, reltol, resolution, answer):
      np.array([[5.4320, 1.e-12, 0], [-5.4320, -1.e-12, -0]])),
 ])
 def test_round_array(array, reltol, resolution, answer):
-    result = round_array(array, reltol, resolution)
+    digarr = significant_array(array, reltol, resolution)
+    result = round_array(array, digarr)
     assert result.shape == answer.shape
     assert np.all(result == answer)

@@ -211,7 +211,7 @@ class Surface(Card):
         if mod:
             words.append(mod)
         words.append(str(self.name()))
-        words.append('  ')
+        words.append(' ')
         return words
 
 
@@ -239,14 +239,14 @@ class Plane(Surface, _Plane):
         length = np.linalg.norm(v)
         v = v / length
         k /= length
-        k = round_scalar(k, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        v = round_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._k_digits = significant_digits(k, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._v_digits = significant_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
 
     def __hash__(self):
-        result = hash(self._k)
-        for v in self._v:
+        result = hash(self._get_k())
+        for v in self._get_v():
             result ^= hash(v)
         return result
 
@@ -254,10 +254,16 @@ class Plane(Surface, _Plane):
         if not isinstance(other, Plane):
             return False
         else:
-            for x, y in zip(self._v, other._v):
+            for x, y in zip(self._get_v(), other._get_v()):
                 if x != y:
                     return False
-            return self._k == other._k
+            return self._get_k() == other._get_k()
+
+    def _get_k(self):
+        return round_scalar(self._k, self._k_digits)
+
+    def _get_v(self):
+        return round_array(self._v, self._v_digits)
 
     def reverse(self):
         """Gets the surface with reversed normal."""
@@ -268,21 +274,19 @@ class Plane(Surface, _Plane):
 
     def mcnp_words(self):
         words = Surface.mcnp_words(self)
-        if np.all(self._v == EX):
+        if np.all(self._get_v() == EX):
             words.append('PX')
-        elif np.all(self._v == EY):
+        elif np.all(self._get_v() == EY):
             words.append('PY')
-        elif np.all(self._v == EZ):
+        elif np.all(self._get_v() == EZ):
             words.append('PZ')
         else:
             words.append('P')
-            for v in self._v:
-                p = significant_digits(v, FLOAT_TOLERANCE)
+            for v, p in zip(self._get_v(), self._v_digits):
                 words.append(' ')
                 words.append(pretty_float(v, p))
         words.append(' ')
-        p = significant_digits(self._k, FLOAT_TOLERANCE)
-        words.append(pretty_float(-self._k, p))
+        words.append(pretty_float(-self._get_k(), self._k_digits))
         return print_card(words)
 
 
@@ -305,15 +309,15 @@ class Sphere(Surface, _Sphere):
             tr = options.pop('transform')
             center = tr.apply2point(center)
         Surface.__init__(self, **options)
-        center = round_array(np.array(center), FLOAT_TOLERANCE,
-                             resolution=FLOAT_TOLERANCE)
-        radius = round_scalar(radius, FLOAT_TOLERANCE,
-                              resolution=FLOAT_TOLERANCE)
+        self._center_digits = significant_array(np.array(center), FLOAT_TOLERANCE,
+                                                resolution=FLOAT_TOLERANCE)
+        self._radius_digits = significant_digits(radius, FLOAT_TOLERANCE,
+                                                 resolution=FLOAT_TOLERANCE)
         _Sphere.__init__(self, center, radius)
 
     def __hash__(self):
-        result = hash(self._radius)
-        for c in self._center:
+        result = hash(self._get_radius())
+        for c in self._get_center():
             result ^= hash(c)
         return result
 
@@ -321,45 +325,50 @@ class Sphere(Surface, _Sphere):
         if not isinstance(other, Sphere):
             return False
         else:
-            for x, y in zip(self._center, other._center):
+            for x, y in zip(self._get_center(), other._get_center()):
                 if x != y:
                     return False
-            return self._radius == other._radius
+            return self._get_radius() == other._get_radius()
+
+    def _get_center(self):
+        return round_array(self._center, self._center_digits)
+
+    def _get_radius(self):
+        return round_scalar(self._radius, self._radius_digits)
 
     def transform(self, tr):
         return Sphere(self._center, self._radius, transform=tr, **self.options)
 
     def mcnp_words(self):
         words = Surface.mcnp_words(self)
-        if np.all(self._center == np.array([0.0, 0.0, 0.0])):
+        if np.all(self._get_center() == np.array([0.0, 0.0, 0.0])):
             words.append('SO')
-        elif self._center[0] == 0.0 and self._center[1] == 0.0:
+        elif self._get_center()[0] == 0.0 and self._get_center()[1] == 0.0:
             words.append('SZ')
             words.append(' ')
-            v = self._center[2]
-            p = significant_digits(v, FLOAT_TOLERANCE)
+            v = self._get_center()[2]
+            p = self._center_digits[2]
             words.append(pretty_float(v, p))
-        elif self._center[1] == 0.0 and self._center[2] == 0.0:
+        elif self._get_center()[1] == 0.0 and self._get_center()[2] == 0.0:
             words.append('SX')
             words.append(' ')
-            v = self._center[0]
-            p = significant_digits(v, FLOAT_TOLERANCE)
+            v = self._get_center()[0]
+            p = self._center_digits[0]
             words.append(pretty_float(v, p))
-        elif self._center[0] == 0.0 and self._center[2] == 0.0:
+        elif self._get_center()[0] == 0.0 and self._get_center()[2] == 0.0:
             words.append('SY')
             words.append(' ')
-            v = self._center[1]
-            p = significant_digits(v, FLOAT_TOLERANCE)
+            v = self._get_center()[1]
+            p = self._center_digits[1]
             words.append(pretty_float(v, p))
         else:
             words.append('S')
-            for v in self._center:
+            for v, p in zip(self._center, self._center_digits):
                 words.append(' ')
-                p = significant_digits(v, FLOAT_TOLERANCE)
                 words.append(pretty_float(v, p))
         words.append(' ')
-        v = self._radius
-        p = significant_digits(v, FLOAT_TOLERANCE)
+        v = self._get_radius()
+        p = self._radius_digits
         words.append(pretty_float(v, p))
         return print_card(words)
 
@@ -390,18 +399,18 @@ class Cylinder(Surface, _Cylinder):
         if axis[maxdir] < 0:
             axis *= -1
         pt = np.array(pt)
-        axis = round_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._axis_digits = significant_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         pt = pt - axis * np.dot(pt, axis)
-        pt = round_array(pt, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        radius = round_scalar(radius, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._pt_digits = significant_array(pt, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._radius_digits = significant_digits(radius, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
 
     def __hash__(self):
-        result = hash(self._radius)
-        for c in self._pt:
+        result = hash(self._get_radius())
+        for c in self._get_pt():
             result ^= hash(c)
-        for a in self._axis:
+        for a in self._get_axis():
             result ^= hash(a)
         return result
 
@@ -409,13 +418,22 @@ class Cylinder(Surface, _Cylinder):
         if not isinstance(other, Cylinder):
             return False
         else:
-            for x, y in zip(self._pt, other._pt):
+            for x, y in zip(self._get_pt(), other._get_pt()):
                 if x != y:
                     return False
-            for x, y in zip(self._axis, other._axis):
+            for x, y in zip(self._get_axis(), other._get_axis()):
                 if x != y:
                     return False
-            return self._radius == other._radius
+            return self._get_radius() == other._get_radius()
+
+    def _get_pt(self):
+        return round_array(self._pt, self._pt_digits)
+
+    def _get_axis(self):
+        return round_array(self._axis, self._axis_digits)
+
+    def _get_radius(self):
+        return round_scalar(self._radius, self._radius_digits)
 
     def transform(self, tr):
         return Cylinder(self._pt, self._axis, self._radius, transform=tr,
@@ -423,44 +441,44 @@ class Cylinder(Surface, _Cylinder):
 
     def mcnp_words(self):
         words = Surface.mcnp_words(self)
-        if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
-            if self._pt[1] == 0.0 and self._pt[2] == 0.0:
+        if np.all(self._get_axis() == np.array([1.0, 0.0, 0.0])):
+            if self._get_pt()[1] == 0.0 and self._get_pt()[2] == 0.0:
                 words.append('CX')
             else:
                 words.append('C/X')
                 words.append(' ')
-                v = self._pt[1]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                v = self._get_pt()[1]
+                p = self._pt_digits[1]
                 words.append(pretty_float(v, p))
                 words.append(' ')
-                v = self._pt[2]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                v = self._get_pt()[2]
+                p = self._pt_digits[2]
                 words.append(pretty_float(v, p))
-        elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
-            if self._pt[0] == 0.0 and self._pt[2] == 0.0:
+        elif np.all(self._get_axis() == np.array([0.0, 1.0, 0.0])):
+            if self._get_pt()[0] == 0.0 and self._get_pt()[2] == 0.0:
                 words.append('CY')
             else:
                 words.append('C/Y')
                 words.append(' ')
-                v = self._pt[0]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                v = self._get_pt()[0]
+                p = self._pt_digits[0]
                 words.append(pretty_float(v, p))
                 words.append(' ')
-                v = self._pt[2]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                v = self._get_pt()[2]
+                p = self._pt_digits[2]
                 words.append(pretty_float(v, p))
-        elif np.all(self._axis == np.array([0.0, 0.0, 1.0])):
-            if self._pt[0] == 0.0 and self._pt[1] == 0.0:
+        elif np.all(self._get_axis() == np.array([0.0, 0.0, 1.0])):
+            if self._get_pt()[0] == 0.0 and self._get_pt()[1] == 0.0:
                 words.append('CZ')
             else:
                 words.append('C/Z')
                 words.append(' ')
-                v = self._pt[0]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                v = self._get_pt()[0]
+                p = self._pt_digits[0]
                 words.append(pretty_float(v, p))
                 words.append(' ')
-                v = self._pt[1]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                v = self._get_pt()[1]
+                p = self._pt_digits[1]
                 words.append(pretty_float(v, p))
         else:
             nx, ny, nz = self._axis
@@ -472,8 +490,8 @@ class Cylinder(Surface, _Cylinder):
             m, v, k = Transformation(translation=self._pt).apply2gq(m, v, k)
             return GQuadratic(m, v, k, **self.options).mcnp_repr()
         words.append(' ')
-        v = self._radius
-        p = significant_digits(v, FLOAT_TOLERANCE)
+        v = self._get_radius()
+        p = self._radius_digits
         words.append(pretty_float(v, p))
         return print_card(words)
 
@@ -507,19 +525,19 @@ class Cone(Surface, _Cone):
             axis *= -1
             sheet *= -1
         apex = np.array(apex)
-        axis = round_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        apex = round_array(apex, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        ta = round_scalar(ta, np.sqrt(FLOAT_TOLERANCE))
+        self._axis_digits = significant_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._apex_digits = significant_array(apex, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
 
         Surface.__init__(self, **options)
         # TODO: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
         _Cone.__init__(self, apex, axis, ta, sheet)
+        self._t2_digits = significant_digits(self._t2, FLOAT_TOLERANCE)
 
     def __hash__(self):
-        result = hash(self._t2) ^ hash(self._sheet)
-        for c in self._apex:
+        result = hash(self._get_t2()) ^ hash(self._sheet)
+        for c in self._get_apex():
             result ^= hash(c)
-        for a in self._axis:
+        for a in self._get_axis():
             result ^= hash(a)
         return result
 
@@ -527,17 +545,22 @@ class Cone(Surface, _Cone):
         if not isinstance(other, Cone):
             return False
         else:
-            for x, y in zip(self._apex, other._apex):
-                print('{0:.15e}  {1:.15e}'.format(x, y))
+            for x, y in zip(self._get_apex(), other._get_apex()):
                 if x != y:
                     return False
-            for x, y in zip(self._axis, other._axis):
-                print('{0:.15e}  {1:.15e}'.format(x, y))
+            for x, y in zip(self._get_axis(), other._get_axis()):
                 if x != y:
                     return False
-            print('{0:.15e}  {1:.15e}'.format(self._t2, other._t2))
-            print('{0:.15e}  {1:.15e}'.format(self._sheet, other._sheet))
-            return self._t2 == other._t2 and self._sheet == other._sheet
+            return self._get_t2() == other._get_t2() and self._sheet == other._sheet
+
+    def _get_axis(self):
+        return round_array(self._axis, self._axis_digits)
+
+    def _get_apex(self):
+        return round_array(self._apex, self._apex_digits)
+
+    def _get_t2(self):
+        return round_scalar(self._t2, self._t2_digits)
 
     def transform(self, tr):
         return Cone(self._apex, self._axis, np.sqrt(self._t2),
@@ -545,44 +568,41 @@ class Cone(Surface, _Cone):
 
     def mcnp_words(self):
         words = Surface.mcnp_words(self)
-        if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
-            if self._apex[1] == 0.0 and self._apex[2] == 0.0:
+        if np.all(self._get_axis() == np.array([1.0, 0.0, 0.0])):
+            if self._get_apex()[1] == 0.0 and self._get_apex()[2] == 0.0:
                 words.append('KX')
                 words.append(' ')
                 v = self._apex[0]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                p = self._apex_digits[0]
                 words.append(pretty_float(v, p))
             else:
                 words.append('K/X')
-                for v in self._apex:
+                for v, p in zip(self._apex, self._apex_digits):
                     words.append(' ')
-                    p = significant_digits(v, FLOAT_TOLERANCE)
                     words.append(pretty_float(v, p))
-        elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
-            if self._apex[0] == 0.0 and self._apex[2] == 0.0:
+        elif np.all(self._get_axis() == np.array([0.0, 1.0, 0.0])):
+            if self._get_apex()[0] == 0.0 and self._get_apex()[2] == 0.0:
                 words.append('KY')
                 words.append(' ')
                 v = self._apex[1]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                p = self._apex_digits[1]
                 words.append(pretty_float(v, p))
             else:
                 words.append('K/Y')
-                for v in self._apex:
+                for v, p in zip(self._apex, self._apex_digits):
                     words.append(' ')
-                    p = significant_digits(v, FLOAT_TOLERANCE)
                     words.append(pretty_float(v, p))
-        elif np.all(self._axis == np.array([0.0, 0.0, 1.0])):
-            if self._apex[0] == 0.0 and self._apex[1] == 0.0:
+        elif np.all(self._get_axis() == np.array([0.0, 0.0, 1.0])):
+            if self._get_apex()[0] == 0.0 and self._get_apex()[1] == 0.0:
                 words.append('KZ')
                 words.append(' ')
                 v = self._apex[2]
-                p = significant_digits(v, FLOAT_TOLERANCE)
+                p = self._apex_digits[2]
                 words.append(pretty_float(v, p))
             else:
                 words.append('K/Z')
-                for v in self._apex:
+                for v, p in zip(self._apex, self._apex_digits):
                     words.append(' ')
-                    p = significant_digits(v, FLOAT_TOLERANCE)
                     words.append(pretty_float(v, p))
         else:
             nx, ny, nz = self._axis
@@ -596,7 +616,7 @@ class Cone(Surface, _Cone):
             return GQuadratic(m, v, k, **self.options).mcnp_repr()
         words.append(' ')
         v = self._t2
-        p = significant_digits(v, np.sqrt(FLOAT_TOLERANCE))
+        p = self._t2_digits
         words.append(pretty_float(v, p))
         if self._sheet != 0:
             words.append(' ')
@@ -633,18 +653,18 @@ class GQuadratic(Surface, _GQuadratic):
             m *= -1
             v *= -1
             k *= -1
-        m = round_array(m, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        v = round_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        k = round_scalar(k, FLOAT_TOLERANCE)
+        self._m_digits = significant_array(m, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._v_digits = significant_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._k_digits = significant_digits(k, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
 
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k)
 
     def __hash__(self):
-        result = hash(self._k)
-        for v in self._v:
+        result = hash(self._get_k())
+        for v in self._get_v():
             result ^= hash(v)
-        for x in self._m.ravel():
+        for x in self._get_m().ravel():
             result ^= hash(x)
         return result
 
@@ -652,13 +672,22 @@ class GQuadratic(Surface, _GQuadratic):
         if not isinstance(other, GQuadratic):
             return False
         else:
-            for x, y in zip(self._v, other._v):
+            for x, y in zip(self._get_v(), other._get_v()):
                 if x != y:
                     return False
-            for x, y in zip(self._m.ravel(), other._m.ravel()):
+            for x, y in zip(self._get_m().ravel(), other._get_m().ravel()):
                 if x != y:
                     return False
-            return self._k == other._k
+            return self._get_k() == other._get_k()
+
+    def _get_m(self):
+        return round_array(self._m, self._m_digits)
+
+    def _get_v(self):
+        return round_array(self._v, self._v_digits)
+
+    def _get_k(self):
+        return round_scalar(self._k, self._k_digits)
 
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr,
@@ -667,12 +696,13 @@ class GQuadratic(Surface, _GQuadratic):
     def mcnp_words(self):
         words = Surface.mcnp_words(self)
         words.append('GQ')
-        a, b, c = np.diag(self._m)
-        d = self._m[0, 1] + self._m[1, 0]
-        e = self._m[1, 2] + self._m[2, 1]
-        f = self._m[0, 2] + self._m[2, 0]
-        g, h, j = self._v
-        k = self._k
+        m = self._get_m()
+        a, b, c = np.diag(m)
+        d = m[0, 1] + m[1, 0]
+        e = m[1, 2] + m[2, 1]
+        f = m[0, 2] + m[2, 0]
+        g, h, j = self._get_v()
+        k = self._get_k()
         for v in [a, b, c, d, e, f, g, h, j, k]:
             words.append(' ')
             p = significant_digits(v, FLOAT_TOLERANCE)
@@ -712,20 +742,20 @@ class Torus(Surface, _Torus):
         maxdir = np.argmax(np.abs(axis))
         if axis[maxdir] < 0:
             axis *= -1
-        axis = round_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        center = round_array(center, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        R = round_scalar(R, FLOAT_TOLERANCE)
-        a = round_scalar(a, FLOAT_TOLERANCE)
-        b = round_scalar(b, FLOAT_TOLERANCE)
+        self._axis_digits = significant_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._center_digits = significant_array(center, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._R_digits = significant_digits(R, FLOAT_TOLERANCE)
+        self._a_digits = significant_digits(a, FLOAT_TOLERANCE)
+        self._b_digits = significant_digits(b, FLOAT_TOLERANCE)
 
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, R, a, b)
 
     def __hash__(self):
-        result = hash(self._R) ^ hash(self._a) ^ hash(self._b)
-        for c in self._center:
+        result = hash(self._get_R()) ^ hash(self._get_a()) ^ hash(self._get_b())
+        for c in self._get_center():
             result ^= hash(c)
-        for a in self._axis:
+        for a in self._get_axis():
             result ^= hash(a)
         return result
 
@@ -733,13 +763,28 @@ class Torus(Surface, _Torus):
         if not isinstance(other, Torus):
             return False
         else:
-            for x, y in zip(self._center, other._center):
+            for x, y in zip(self._get_center(), other._get_center()):
                 if x != y:
                     return False
-            for x, y in zip(self._axis, other._axis):
+            for x, y in zip(self._get_axis(), other._get_axis()):
                 if x != y:
                     return False
-            return self._R == other._R and self._a == other._a and self._b == other._b
+            return self._get_R() == other._get_R() and self._get_a() == other._get_a() and self._get_b() == other._get_b()
+
+    def _get_axis(self):
+        return round_array(self._axis, self._axis_digits)
+
+    def _get_center(self):
+        return round_array(self._center, self._center_digits)
+
+    def _get_R(self):
+        return round_scalar(self._R, self._R_digits)
+
+    def _get_a(self):
+        return round_scalar(self._a, self._a_digits)
+
+    def _get_b(self):
+        return round_scalar(self._b, self._b_digits)
 
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b,
@@ -747,15 +792,16 @@ class Torus(Surface, _Torus):
 
     def mcnp_words(self):
         words = Surface.mcnp_words(self)
-        if np.all(self._axis == np.array([1.0, 0.0, 0.0])):
+        if np.all(self._get_axis() == np.array([1.0, 0.0, 0.0])):
             words.append('TX')
-        elif np.all(self._axis == np.array([0.0, 1.0, 0.0])):
+        elif np.all(self._get_axis() == np.array([0.0, 1.0, 0.0])):
             words.append('TY')
-        elif np.all(self._axis == np.array([0.0, 0.0, 1.0])):
+        elif np.all(self._get_axis() == np.array([0.0, 0.0, 1.0])):
             words.append('TZ')
-        x, y, z = self._center
-        for v in [x, y, z, self._R, self._a, self._b]:
+        x, y, z = self._get_center()
+        values = [x, y, z, self._get_R(), self._get_a(), self._get_b()]
+        digits = [*self._center_digits, self._R_digits, self._a_digits, self._b_digits]
+        for v, p in zip(values, digits):
             words.append(' ')
-            p = significant_digits(v, FLOAT_TOLERANCE)
             words.append(pretty_float(v, p))
         return print_card(words)
