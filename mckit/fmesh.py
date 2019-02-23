@@ -610,7 +610,7 @@ class FMesh:
         Gets average flux for every energy bin.
     """
     def __init__(self, name, particle, data, error, ebins=None, xbins=None, ybins=None, zbins=None, rbins=None,
-                 tbins=None, transform=None, modifier=None, origin=None, axis=None, vec=None, histories=None):
+                 tbins=None, dtbins=None, transform=None, modifier=None, origin=None, axis=None, vec=None, histories=None):
         self._data = np.array(data)
         self._error = np.array(error)
         self._name = name
@@ -620,6 +620,8 @@ class FMesh:
             self._ebins = np.array(ebins)
         else:
             self._ebins = np.array([0, 1.e+36])
+        if dtbins is not None:
+            self._dtbins = np.array(dtbins)
         self._modifier = modifier
         if rbins is None and tbins is None:
             self._mesh = RectMesh(xbins, ybins, zbins, transform=transform)

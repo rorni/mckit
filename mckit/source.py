@@ -299,8 +299,8 @@ def activation_gamma_source(data, mesh, ebins=EBINS_24):
     cell_dist = Distribution(1, cd, probs, 'CEL')
     e_dist = Distribution(2, ed, cell_dist, 'ERG')
     x_dist = Distribution(3, xd, cell_dist, 'X')
-    y_dist = Distribution(3, yd, cell_dist, 'Y')
-    z_dist = Distribution(3, zd, cell_dist, 'Z')
+    y_dist = Distribution(4, yd, cell_dist, 'Y')
+    z_dist = Distribution(5, zd, cell_dist, 'Z')
 
     src_params = {
         'PAR': 2, 'EFF': 1.e-2, 'CEL': cell_dist, 'ERG': e_dist,
