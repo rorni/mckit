@@ -143,10 +143,10 @@ class Transformation(Card):
         return id(self) == id(other)
 
     def __getitem__(self, key):
-        return self._options.get(key, None)
+        return self.options.get(key, None)
 
     def __setitem__(self, key, value):
-        self._options[key] = value
+        self.options[key] = value
 
     def apply2gq(self, m1, v1, k1):
         """Gets parameters of generic quadratic surface in the main CS.
