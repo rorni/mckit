@@ -161,7 +161,7 @@ class Composition(Card):
         return words
 
     def __getitem__(self, key):
-        return self._options[key]
+        return self.options[key]
 
     def __iter__(self):
         return iter(self._composition.items())
@@ -247,7 +247,7 @@ class Composition(Card):
         if already:
             return self
         else:
-            return Composition(atomic=composition.items(), **self._options)
+            return Composition(atomic=composition.items(), **self.options)
 
     def natural(self, tolerance=1.e-8):
         """Tries to replace detailed isotope composition by natural elements.
@@ -295,7 +295,7 @@ class Composition(Card):
             composition[elem] = tot_frac
             if frac_0:
                 composition[elem] += frac_0
-        return Composition(atomic=composition.items(), **self._options)
+        return Composition(atomic=composition.items(), **self.options)
 
     def elements(self):
         """Gets iterator over composition's elements."""

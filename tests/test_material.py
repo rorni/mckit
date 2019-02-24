@@ -535,23 +535,25 @@ class TestComposition:
         comp2 = compositions[case2]
         assert (comp1 == comp2) == bool(self.eq_matrix[case1][case2])
 
-    @pytest.mark.parametrize('case_no, expected_kw', enumerate([
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'}
-    ]))
-    def test_get_option(self, compositions, case_no, expected_kw):
+    @pytest.mark.parametrize('case_no, name, expected_kw', [
+        (0, 1, {'lib': '21c'}),
+        (1, 2, {'lib': '21c'}),
+        (2, 3, {'lib': '21c'}),
+        (3, 4, {'lib': '21c'}),
+        (4, 5, {'lib': '21c'}),
+        (5, 6, {'lib': '21c'}),
+        (6, 7, {'lib': '21c'}),
+        (7, 8, {'lib': '21c'}),
+        (8, 9, {'lib': '21c'}),
+        (9, 10, {'lib': '21c'}),
+        (10, 11, {'lib': '21c'}),
+        (11, 12, {'lib': '21c'}),
+        (12, 13, {'lib': '21c'})
+    ])
+    def test_get_option(self, compositions, case_no, name, expected_kw):
         comp = compositions[case_no]
+        print(comp.name(), name)
+        assert comp.name() == name
         for key, value in expected_kw.items():
             assert comp[key] == value
 
