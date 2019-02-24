@@ -39,7 +39,7 @@ def test_points(universe, case, points, answer):
     np.testing.assert_array_equal(result, answer)
 
 
-_emp = Shape('E')
+_emp = Shape('R')
 
 
 @pytest.mark.parametrize('kwargs', [
@@ -63,40 +63,53 @@ def test_init(cells, kwargs):
     assert u._comment == kwargs.get('comment', None)
 
 
-@pytest.mark.parametrize('case, cell, name_rule, new_name, new_surfs', [
+@pytest.mark.parametrize('case, cells, name_rule, new_name, new_surfs', [
     (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'keep', None, []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'keep', 8, None),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'keep', 7, [Sphere([0, 3, 0], 0.5, name=8)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'clash', 5, [Sphere([0, 3, 0], 0.5, name=8)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'clash', 8, [Sphere([0, 3, 0], 0.5, name=6)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'clash', 7, [Sphere([0, 3, 0], 0.5, name=8)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'new', 5, [Sphere([0, 3, 0], 0.5, name=6)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'new', 5, [Sphere([0, 3, 0], 0.5, name=6)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'new', 5, [Sphere([0, 3, 0], 0.5, name=6)]),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=2), 'new', 5, []),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=2)), name=8), 'keep', 8, []),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=7), 'new', 5, []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'keep', [8], None),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)]),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'clash', [5], [Sphere([0, 3, 0], 0.5, name=8)]),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'clash', [8], [Sphere([0, 3, 0], 0.5, name=6)]),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)]),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)]),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)]),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)]),
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=2), 'new', [5], []),
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=2)), name=8), 'keep', [8], []),
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=7), 'new', [5], []),
+    (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=8),
+         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=8)), name=9)], 'keep', [8, 9], None),
+    (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=9),
+         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=9)), name=9)], 'keep', None, [8, 9]),
+    (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=2),
+         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=2)), name=2)], 'clash',
+     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)]),
+    (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=9),
+         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=9)), name=9)], 'new',
+     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)]),
 
 ])
-def test_add(universe, case, cell, name_rule, new_name, new_surfs):
+def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs):
     u = universe(case)
     s_before = u.get_surfaces()
     if new_surfs is None or new_name is None:
         with pytest.raises(NameClashError):
-            u.add_cell(cell, name_rule=name_rule)
+            u.add_cells(cells, name_rule=name_rule)
     else:
-        u.add_cell(cell, name_rule=name_rule)
+        u.add_cells(cells, name_rule=name_rule)
         s_after = u.get_surfaces()
-        acell = u._cells[-1]
-        assert acell.shape == cell.shape
-        assert acell is not cell
-        assert acell.name() == new_name
+        acells = u._cells[-len(new_name):]
+        if isinstance(cells, Body):
+            cells = [cells]
+        for acell, cell, name in zip(acells, cells, new_name):
+            assert acell.shape == cell.shape
+            assert acell is not cell
+            assert acell.name() == name
+            assert acell.options['U'] is u
         for k, v in s_before.items():
             assert v is s_after[k]
         assert len(s_after.keys()) - len(s_before.keys()) == len(new_surfs)
         for s in new_surfs:
             assert s_after[s.name()] == s
-        assert acell.options['U'] is u
 
 
 @pytest.mark.parametrize('case, recursive, answer_data', [
