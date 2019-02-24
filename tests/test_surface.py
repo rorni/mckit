@@ -536,7 +536,6 @@ class TestCylinder:
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
         print(surface.mcnp_repr())
-        print(surface._pt_digits, surface._pt, pretty_float(surface._pt[0], 1))
         print("{0:.15e}".format(surface._pt[0]))
         assert desc == answer
 
