@@ -24,17 +24,33 @@ def significant_digits(value, reltol=1.e-12, resolution=None):
     """
     if resolution and abs(value) < resolution:
         return 0
-    low = 0
+    dec = get_decades(value)
+    low = min(dec, 0)
     high = MAX_DIGITS
     while high - low > 1:
         p = round(0.5 * (high + low))
-        v = np.round(value, p)
+        v = round(value, p)
         d = max(abs(value), abs(v))
-        if d != 0 and abs(value - v) / d > reltol:
+        if abs(value - v) > reltol * d:
             low = p
         else:
             high = p
-    return high
+    v = round(value, low)
+    if abs(value - v) < reltol * d:
+        return low
+    else:
+        return high
+
+
+def get_decades(value):
+    if value != 0:
+        decpow = np.log10(abs(value))
+    else:
+        decpow = 0
+    decades = np.trunc(decpow)
+    if decpow < 0:
+        decades -= 1
+    return int(decades)
 
 
 def significant_array(array, reltol=1.e-12, resolution=None):

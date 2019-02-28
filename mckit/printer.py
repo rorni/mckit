@@ -1,6 +1,7 @@
 """Functions for printing."""
 import warnings
-import math
+
+from mckit.utils import get_decades
 
 
 MCNP_FORMATS = {
@@ -101,25 +102,19 @@ def print_option(option, value):
         raise ValueError("Incorrect option name: {0}".format(option))
 
 
-def pretty_float(value, precision):
+def pretty_float(value, sig_digits):
     """Pretty print of the float number.
 
     Parameters
     ----------
     value : float
         Value to be printed.
-    precision : int
+    sig_digits : int
         The number of significant digits.
     """
-    if value != 0:
-        decpow = math.log10(abs(value))
-    else:
-        decpow = 0
-    decades = math.trunc(decpow)
-    if decpow < 0:
-        decades -= 1
-    format_f = '{{0:.{0}f}}'.format(max(precision - decades, min(precision, 1)))
-    format_e = '{{0:.{0}e}}'.format(precision)
+    decades = get_decades(value)
+    format_f = '{{0:.{0}f}}'.format(max(sig_digits - decades, min(sig_digits, 1)) - 1)
+    format_e = '{{0:.{0}e}}'.format(sig_digits - 1)
     text_f = format_f.format(value)
     text_e = format_e.format(value)
     if len(text_f) <= len(text_e):
