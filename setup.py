@@ -5,21 +5,21 @@ import sys
 import numpy as np
 from setuptools import Extension, find_packages, setup
 
+
 def get_dirs(environment_variable):
-    
     include_dirs = os.environ.get(environment_variable, "")
 
     if include_dirs:
         include_dirs = include_dirs.split(os.pathsep)
     else:
         include_dirs = []
-    
+
     return include_dirs
 
-def append_if_not_present(destination, value):
-    if not value in destination:
-        destination.append(value)
 
+def append_if_not_present(destination, value):
+    if value not in destination:
+        destination.append(value)
 
 
 include_dirs = get_dirs("INCLUDE_PATH")
@@ -27,9 +27,8 @@ append_if_not_present(include_dirs, np.get_include())
 
 library_dirs = get_dirs("LIBRARY_PATH")
 
-machine_info = os.uname()
 
-if machine_info.sysname == "Linux":
+if sys.platform.startswith('linux'):
     geometry_dependencies = [
         'mkl_intel_lp64',
         'mkl_core',
@@ -54,7 +53,6 @@ else:
     append_if_not_present(include_dirs, mkl_inc)
     mkl_lib = sys.prefix + '\\Library\\lib'
     append_if_not_present(library_dirs, mkl_lib)
-
 
 geometry_sources = [path.join("mckit", "src", src) for src in [
     "geometrymodule.c",
@@ -87,5 +85,3 @@ setup(
     install_requires=['numpy', 'scipy', 'ply'],
     ext_modules=extensions,
 )
-
-
