@@ -2,12 +2,11 @@ Sample for universe test
 c cell section
 c main universe cells
 1 0   -1 -3     FILL=2  IMP:N=1 IMP:P=1
-2 0   -2  3 -4  FILL=2 (+5 0 0) IMP:N=1 IMP:P=1
-3 0   #1 #2     IMP:N=0 IMP:P=0
+3 0   #1 #(-2  3 -4)     IMP:N=0 IMP:P=0
 c universe 1 cells
-10 10 -2.7   -10 11  12 U=1 IMP:N=1 IMP:P=1
-11 11 0.1003 -11 12 -13 U=1 IMP:N=1 IMP:P=1
-12 0          #10 #11   U=1 IMP:N=1 IMP:P=1
+4 10 -2.7   -2  3 -4 -5 6  7 IMP:N=1 IMP:P=1
+5 11 0.1003 -2  3 -4 -6 7 -8 IMP:N=1 IMP:P=1
+6 0         -2  3 -4  #(-5 6  7) #(-6 7 -8)  IMP:N=1 IMP:P=1
 c universe 2 cells
 21 21 -0.9   21 -22 -23    U=2 IMP:N=1 IMP:P=1
 22 22 -7.8   21 -22 23 -24 U=2 IMP:N=1 IMP:P=1
@@ -21,10 +20,10 @@ c surfaces of main universe
 3 PX 0
 4 PX 6
 c universe 1 surfaces
-10 1 SX 6 1
-11 1 PX 4
-12 1 PX 1
-13 1 CX 1
+5  SX 6 1
+6  PX 4
+7  PX 1
+8  CX 1
 c universe 2 surfaces
 20 PX -6
 21 PX -3

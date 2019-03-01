@@ -67,6 +67,35 @@ def test_creation_failure(args):
         Transformation(**args)
 
 
+@pytest.mark.parametrize('args, answer', [
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True},
+     [0, 0, 0, 30, 60, 90, 120, 30, 90, 90, 90, 0]),
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True, 'translation': [1, 2, 3]},
+     [1, 2, 3, 30, 60, 90, 120, 30, 90, 90, 90, 0]),
+])
+def test_words(args, answer):
+    tr = Transformation(**args)
+    words = [float(w) for w in ''.join(tr.get_words()).split()]
+    np.testing.assert_array_almost_equal(words, answer)
+
+
+@pytest.mark.parametrize('args, options, answer', [
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True},
+     {}, None),
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True, 'translation': [1, 2, 3]},
+     {'name': 1}, 1),
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True,
+      'translation': [1, 2, 3]},
+     {'name': 2}, 2),
+    ({'rotation': [30, 60, 90, 120, 30, 90, 90, 90, 0], 'indegrees': True,
+      'translation': [1, 2, 3]},
+     {'name': 3}, 3),
+])
+def test_name(args, options, answer):
+    tr = Transformation(**args, **options)
+    assert tr.name() == answer
+
+
 @pytest.mark.parametrize('args', [
     {'rotation': [30.057, 59.943, 90, 120, 30, 90, 90, 90, 0],
      'indegrees': True},
@@ -81,7 +110,7 @@ def test_creation_failure(args):
     {'rotation': [30, 60, 90, 120, 30, 90, 89.943, 90, 0.057],
      'indegrees': True}
 ])
-def test_orthogonalizstion(args):
+def test_orthogonalization(args):
     tr = Transformation(**args)
     result = np.dot(tr._u.transpose(), tr._u)
     np.testing.assert_array_almost_equal(result, IDENTITY_ROTATION)

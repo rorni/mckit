@@ -11,12 +11,12 @@ literals = ['+', '-', ':', '/']
 
 KEYWORDS = [
     'MCNP', 'VERSION', 'LD', 'PROBID', 'NEUTRON', 'PHOTON', 'ELECTRON', 'RESULT', 'RESULTS', 'ERROR', 'ERRORS',
-    'CYLINDER', 'ORIGIN', 'AXIS', 'TALLY',
-    'X', 'Y', 'Z', 'R', 'THETA', 'ENERGY', 'TH', 'TOTAL'
+    'CYLINDER', 'ORIGIN', 'AXIS', 'TALLY', 'MPI', 
+    'X', 'Y', 'Z', 'R', 'THETA', 'ENERGY', 'TIME', 'TH', 'TOTAL'
 ]
 
-BIN_REC_ORDER = {'ENERGY': 0, 'X': 1, 'Y': 2, 'Z': 3}
-BIN_CYL_ORDER = {'ENERGY': 0, 'R': 1, 'Z': 2, 'THETA': 3}
+BIN_REC_ORDER = {'ENERGY': 0, 'X': 1, 'Y': 2, 'Z': 3, 'TIME': 0}
+BIN_CYL_ORDER = {'ENERGY': 0, 'R': 1, 'Z': 2, 'THETA': 3, 'TIME': 0}
 
 # List of token names
 tokens = [
@@ -28,8 +28,8 @@ tokens = [
     'title',
     'stamp',
     'MCNP', 'VERSION', 'LD', 'PROBID', 'NEUTRON', 'PHOTON', 'ELECTRON', 'RESULT',  'ERROR',
-    'CYLINDER', 'ORIGIN', 'AXIS', 'TALLY',
-    'X', 'Y', 'Z', 'R', 'THETA', 'ENERGY', 'TOTAL'
+    'CYLINDER', 'ORIGIN', 'AXIS', 'TALLY', 'MPI',
+    'X', 'Y', 'Z', 'R', 'THETA', 'ENERGY', 'TIME', 'TOTAL'
 ]
 
 #precedence = (
@@ -130,6 +130,8 @@ def t_keyword(t):
 @lex.TOKEN(KEYWORD)
 def t_norm_tally_keyword(t):
     value = t.value.upper()
+    if value == 'TIMES':
+        value = 'TIME'
     if value in KEYWORDS:
         if value == 'RESULTS':
             value = 'RESULT'
@@ -171,19 +173,27 @@ def p_meshtal(p):
 
 
 def p_header(p):
-    """header : MCNP VERSION stamp LD stamp PROBID stamp stamp"""
-    p[0] = {'PROBID': p[7] + p[8], 'VERSION': p[3]}
+    """header : MCNP VERSION stamp LD stamp PROBID stamp stamp
+              | MCNP VERSION stamp MPI LD stamp PROBID stamp stamp 
+    """
+    l = len(p)
+    p[0] = {'PROBID': p[l-2] + p[l-1], 'VERSION': p[3]}
 
 
 def p_tallies(p):
     """tallies : tallies tally
+               | tallies tally separator
+               | tally separator
                | tally
     """
     if len(p) == 2:
         p[0] = [p[1]]
     else:
-        p[1].append(p[2])
-        p[0] = p[1]
+        if isinstance(p[1], list):
+            p[1].append(p[2])
+            p[0] = p[1]
+        else:
+            p[0] = [p[1]]
 
 
 def p_tally(p):
@@ -207,13 +217,17 @@ def p_tally(p):
         header = data['header']
         data = np.array(data['data'])
         shape = [0, 0, 0, 0]
-        for k, v in od.items():
-            shape[v] = boundaries[k].size - 1
-        boundaries['ENERGY'] = 0.5 * (boundaries['ENERGY'][1:] + boundaries['ENERGY'][:-1])
+        for k in tally['bins'].keys():
+            v = od[k]
+            shape[v] = boundaries[k].size
+            if k != 'TIME':
+                shape[v] -= 1
+        if 'ENERGY' in boundaries.keys():
+            boundaries['ENERGY'] = 0.5 * (boundaries['ENERGY'][1:] + boundaries['ENERGY'][:-1])
         result = np.empty(shape)
         error = np.empty(shape)
         indices = np.empty((data.shape[0], 4), dtype=int)
-        for k in od.keys():
+        for k in boundaries.keys():
             if k in header:
                 indices[:, od[k]] = np.searchsorted(boundaries[k], data[:, header.index(k)]) - 1
             else:
@@ -229,7 +243,11 @@ def p_tally(p):
 
 
 def p_tallY_header(p):
-    """tally_header : TALLY integer newline particle TALLY newline"""
+    """tally_header : TALLY integer newline particle TALLY newline
+                    | TALLY integer newline particle TALLY newline ENERGY newline
+                    | TALLY integer newline particle TALLY newline TALLY newline 
+                    | TALLY integer newline particle TALLY newline TALLY newline ENERGY newline
+    """
     p[0] = {'name': p[2], 'particle': p[4]}
 
 
@@ -279,7 +297,9 @@ def p_direction(p):
 
 
 def p_energies(p):
-    """energies : ENERGY ':' vector"""
+    """energies : ENERGY ':' vector
+                | TIME ':' vector
+    """
     p[0] = p[1], p[3]
 
 
@@ -377,7 +397,8 @@ def p_matrix_data(p):
 
 def p_energy_bins(p):
     """energy_bins : energy_bins energy_bin separator
-                   | energy_bin separator"""
+                   | energy_bin separator
+    """
     if len(p) == 3:
         order, result, error = p[1]
         p[0] = order, [result], [error]
@@ -389,9 +410,12 @@ def p_energy_bins(p):
 
 
 def p_energy_bin(p):
-    """energy_bin : ENERGY ':' float '-' float newline separator spatial_bins"""
-    order = [p[1]] + p[8][0]
-    p[0] = order, p[8][1], p[8][2]
+    """energy_bin : ENERGY ':' float '-' float newline separator spatial_bins
+                  | TIME ':' float newline separator spatial_bins
+    """
+    l = len(p) - 1
+    order = [p[1]] + p[l][0]
+    p[0] = order, p[l][1], p[l][2]
 
 
 def p_total_energy_bin(p):
@@ -433,7 +457,7 @@ def p_error(p):
 meshtal_parser = yacc.yacc(tabmodule="meshtal_tab", debug=True)
 
 
-_BIN_NAMES = {'ENERGY': 'ebins', 'X': 'xbins', 'Y': 'ybins', 'Z': 'zbins', 'R': 'rbins', 'THETA': 'tbins'}
+_BIN_NAMES = {'ENERGY': 'ebins', 'X': 'xbins', 'Y': 'ybins', 'Z': 'zbins', 'R': 'rbins', 'THETA': 'tbins', 'TIME': 'dtbins'}
 
 
 def read_meshtal(filename):
@@ -451,7 +475,7 @@ def read_meshtal(filename):
         tally_name -> Fmesh pairs.
     """
     with open(filename) as f:
-        text = f.read()
+        text = f.read() + '\n'
     meshtal_lexer.begin('INITIAL')
     meshtal_data = meshtal_parser.parse(text, lexer=meshtal_lexer)
     histories = meshtal_data['histories']

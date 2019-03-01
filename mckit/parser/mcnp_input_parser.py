@@ -10,7 +10,7 @@ from ..material import Element, Composition, Material
 from ..transformation import Transformation
 from ..surface import create_surface
 from ..body import Body
-from ..universe import Universe
+from ..universe import produce_universes
 
 
 literals = ['+', '-', ':', '*', '(', ')', '#', '.']
@@ -269,7 +269,7 @@ def extract_comments(line):
         _card_comments.popleft()
     while _card_comments and _card_comments[0] is not None:
         comment.append(_card_comments.popleft().value.lstrip('$ '))
-    return tuple(comment)
+    return comment
 
 
 def p_model(p):
@@ -674,7 +674,7 @@ def p_material_option(p):
 mcnp_input_parser = yacc.yacc(tabmodule="mcnp_input_tab", debug=False)
 
 
-def read_mcnp(filename):
+def read_mcnp(filename, encoding='utf-8'):
     """Reads MCNP model from file and creates corresponding objects.
 
     Parameters
@@ -696,7 +696,7 @@ def read_mcnp(filename):
         Dictionary of data cards. data_type -> data_name -> data. The later is
         again a dict.
     """
-    with open(filename) as f:
+    with open(filename, encoding=encoding) as f:
         text = f.read()
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(
@@ -706,7 +706,7 @@ def read_mcnp(filename):
     bodies = []
     for name in list(cells.keys()):
         bodies.append(_get_cell(name, cells, surfaces, data))
-    return Universe(bodies, comment=title)
+    return produce_universes(bodies)
 
 
 def _get_transformation(name, data):
@@ -771,7 +771,7 @@ def _get_cell(name, cells, surfaces, data):
                 if i + 1 < len(geometry) and geometry[i+1] == '#':
                     comp_cell = _get_cell(g, cells, surfaces, data)
                     shape = comp_cell.shape
-                    tr = comp_cell.get('TRCL', None)
+                    tr = comp_cell.options.get('TRCL', None)
                     if tr:
                         shape = shape.transform(tr)
                     geometry[i] = shape

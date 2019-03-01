@@ -25,7 +25,7 @@ def box():
       (Plane, 'PX', [5.3], {'_v': [1, 0, 0], '_k': -5.3}),
       (Plane, 'PY', [5.4], {'_v': [0, 1, 0], '_k': -5.4}),
       (Plane, 'PZ', [5.5], {'_v': [0, 0, 1], '_k': -5.5}),
-      (Plane, 'P', [3.2, -1.4, 5.7, -4.8], {'_v': [3.2, -1.4, 5.7], '_k': 4.8}),
+      (Plane, 'P', [3.2, -1.4, 5.7, -4.8], {'_v': [0.47867947, -0.20942227, 0.8526478], '_k': 0.7180192041541256}),
       (Plane, 'X', [5.6, 6.7], {'_v': [1, 0, 0], '_k': -5.6}),
       (Plane, 'Y', [5.7, 6.8], {'_v': [0, 1, 0], '_k': -5.7}),
       (Plane, 'Z', [5.8, -6.9], {'_v': [0, 0, 1], '_k': -5.8}),
@@ -43,6 +43,9 @@ def box():
       (Cylinder, 'C/X', [4.0, -4.1, 6.9], {'_pt': [0, 4.0, -4.1], '_axis': [1, 0, 0], '_radius': 6.9}),
       (Cylinder, 'C/Y', [-4.2, 4.3, 7.0], {'_pt': [-4.2, 0, 4.3], '_axis': [0, 1, 0], '_radius': 7.0}),
       (Cylinder, 'C/Z', [4.4, 4.5, 7.1], {'_pt': [4.4, 4.5, 0], '_axis': [0, 0, 1], '_radius': 7.1}),
+      (Cylinder, 'X', [1.2, 3.4, 8.4, 3.4], {'_pt': [0, 0, 0], '_axis': [1, 0, 0], '_radius': 3.4}),
+      (Cylinder, 'Y', [1.2, 3.4, 8.4, 3.4], {'_pt': [0, 0, 0], '_axis': [0, 1, 0], '_radius': 3.4}),
+      (Cylinder, 'Z', [1.2, 3.4, 8.4, 3.4], {'_pt': [0, 0, 0], '_axis': [0, 0, 1], '_radius': 3.4}),
       (Cone, 'KX', [4.6, 0.33], {'_apex': [4.6, 0, 0], '_axis': [1, 0, 0], '_t2': 0.33, '_sheet': 0}),
       (Cone, 'KY', [4.7, 0.33], {'_apex': [0, 4.7, 0], '_axis': [0, 1, 0], '_t2': 0.33, '_sheet': 0}),
       (Cone, 'KZ', [-4.8, 0.33], {'_apex': [0, 0, -4.8], '_axis': [0, 0, 1], '_t2': 0.33, '_sheet': 0}),
@@ -52,6 +55,18 @@ def box():
       (Cone, 'KX', [4.6, 0.33, +1], {'_apex': [4.6, 0, 0], '_axis': [1, 0, 0], '_t2': 0.33, '_sheet': +1}),
       (Cone, 'KY', [4.7, 0.33, +1], {'_apex': [0, 4.7, 0], '_axis': [0, 1, 0], '_t2': 0.33, '_sheet': +1}),
       (Cone, 'KZ', [-4.8, 0.33, +1], {'_apex': [0, 0, -4.8], '_axis': [0, 0, 1], '_t2': 0.33, '_sheet': +1}),
+      (Cone, 'X', [-1.0, 1.0, 1.0, 2.0], {'_apex': [-3.0, 0, 0], '_axis': [1, 0, 0], '_t2': 0.25, '_sheet': +1}),
+      (Cone, 'X', [-2.5, 4.5, -0.5, 3.5], {'_apex': [6.5, 0, 0], '_axis': [1, 0, 0], '_t2': 0.25, '_sheet': -1}),
+      (Cone, 'X', [1.0, 2.0, -1.0, 1.0], {'_apex': [-3.0, 0, 0], '_axis': [1, 0, 0], '_t2': 0.25, '_sheet': +1}),
+      (Cone, 'X', [-0.5, 3.5, -2.5, 4.5], {'_apex': [6.5, 0, 0], '_axis': [1, 0, 0], '_t2': 0.25, '_sheet': -1}),
+      (Cone, 'Y', [-1.0, 1.0, 1.0, 2.0], {'_apex': [0, -3.0, 0], '_axis': [0, 1, 0], '_t2': 0.25, '_sheet': +1}),
+      (Cone, 'Y', [-2.5, 4.5, -0.5, 3.5], {'_apex': [0, 6.5, 0], '_axis': [0, 1, 0], '_t2': 0.25, '_sheet': -1}),
+      (Cone, 'Y', [1.0, 2.0, -1.0, 1.0], {'_apex': [0, -3.0, 0], '_axis': [0, 1, 0], '_t2': 0.25, '_sheet': +1}),
+      (Cone, 'Y', [-0.5, 3.5, -2.5, 4.5], {'_apex': [0, 6.5, 0], '_axis': [0, 1, 0], '_t2': 0.25, '_sheet': -1}),
+      (Cone, 'Z', [-1.0, 1.0, 1.0, 2.0], {'_apex': [0, 0, -3.0], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': +1}),
+      (Cone, 'Z', [-2.5, 4.5, -0.5, 3.5], {'_apex': [0, 0, 6.5], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': -1}),
+      (Cone, 'Z', [1.0, 2.0, -1.0, 1.0], {'_apex': [0, 0, -3.0], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': +1}),
+      (Cone, 'Z', [-0.5, 3.5, -2.5, 4.5], {'_apex': [0, 0, 6.5], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': -1}),
       (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33, +1], {'_apex': [4.9, -5.0, 5.1], '_axis': [1, 0, 0], '_t2': 0.33, '_sheet': +1}),
       (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33, +1], {'_apex': [-5.0, -5.1, 5.2], '_axis': [0, 1, 0], '_t2': 0.33, '_sheet': +1}),
       (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33, +1], {'_apex': [5.3, 5.4, 5.5], '_axis': [0, 0, 1], '_t2': 0.33, '_sheet': +1}),
@@ -66,12 +81,6 @@ def box():
       (Torus, 'TZ', [0, -3, 5, 1, 0.1, 0.2], {'_center': [0, -3, 5], '_axis': [0, 0, 1], '_R': 1, '_a': 0.1, '_b': 0.2}),
       (GQuadratic, 'SQ', [0.5, -2.5, 3.0, 1.1, -1.3, -5.4, -7.0, 3.2, -1.7, 8.4], {'_m': np.diag([0.5, -2.5, 3.0]), '_v': 2 * np.array([1.1 - 0.5 * 3.2, -1.3 - 2.5 * 1.7, -5.4 - 3.0 * 8.4]), '_k': 0.5 * 3.2 ** 2 - 2.5 * 1.7 ** 2 + 3.0 * 8.4 ** 2 - 7.0 - 2 * ( 1.1 * 3.2 + 1.3 * 1.7 - 5.4 * 8.4)}),
       (GQuadratic, 'GQ', [1, 2, 3, 4, 5, 6, 7, 8, 9, -10], {'_m': [[1, 2, 3], [2, 2, 2.5], [3, 2.5, 3]], '_v': [7, 8, 9], '_k': -10}),
-      (GQuadratic, 'X', [1, 3.2, -2, 3.2], {'_m': np.diag([0, 1, 1]), '_v': [0, 0, 0], '_k': -3.2 ** 2}),
-      (GQuadratic, 'Y', [-1, 3.3, -2, 3.3], {'_m': np.diag([1, 0, 1]), '_v': [0, 0, 0], '_k': -3.3 ** 2}),
-      (GQuadratic, 'Z', [1, 3.4, 2, 3.4], {'_m': np.diag([1, 1, 0]), '_v': [0, 0, 0], '_k': -3.4 ** 2}),
-      (GQuadratic, 'X', [1, 3, 2, 2], {'_m': np.diag([-1, 1, 1]), '_v': [8, 0, 0], '_k': -16}),
-      (GQuadratic, 'Y', [1, 1, 2, 2], {'_m': np.diag([1, -1, 1]), '_v': [0, 0, 0], '_k': 0}),
-      (GQuadratic, 'Z', [0, 1, 1, 2], {'_m': np.diag([1, 1, -1]), '_v': [0, 0, -2], '_k': -1})
 ])
 def test_surface_creation(cls, kind, params, expected):
     surf = create_surface(kind, *params)
@@ -79,6 +88,75 @@ def test_surface_creation(cls, kind, params, expected):
     for attr_name, attr_value in expected.items():
         surf_attr = getattr(surf, attr_name)
         np.testing.assert_array_almost_equal(surf_attr, attr_value)
+
+
+@pytest.mark.parametrize('cls, kind, params', [
+    (Plane, 'P', [3.2, -1.4, 5.7, -4.8]),
+    (Plane, 'P', [3.28434343457632, -1.48888888888888, 5.7341411411414, -4.8]),
+    (Sphere, 'S', [3.7, -3.8, 3.9, 6.5]),
+    (Cylinder, 'CX', [6.6]),
+    (Cylinder, 'CY', [6.7]),
+    (Cylinder, 'CZ', [6.8]),
+    (Cylinder, 'C/X', [4.0, -4.1, 6.9]),
+    (Cylinder, 'C/Y', [-4.2, 4.3, 7.0]),
+    (Cylinder, 'C/Z', [4.4, 4.5, 7.1]),
+    (Cylinder, 'X', [1.2, 3.4, 8.4, 3.4]),
+    (Cylinder, 'Y', [1.2, 3.4, 8.4, 3.4]),
+    (Cylinder, 'Z', [1.2, 3.4, 8.4, 3.4]),
+    (Cone, 'KX', [4.6, 0.33]),
+    (Cone, 'KY', [4.7, 0.33]),
+    (Cone, 'KX', [4.77777777777777777, 0.333333333333333]),
+    (Cone, 'KZ', [-4.8, 0.33]),
+    (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33]),
+    (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33]),
+    (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33]),
+    (Cone, 'KX', [4.6, 0.33, +1]),
+    (Cone, 'KY', [4.7, 0.33, +1]),
+    (Cone, 'KZ', [-4.8, 0.33, +1]),
+    (Cone, 'X', [-1.0, 1.0, 1.0, 2.0]),
+    (Cone, 'X', [-2.5, 4.5, -0.5, 3.5]),
+    (Cone, 'X', [1.0, 2.0, -1.0, 1.0]),
+    (Cone, 'X', [-0.5, 3.5, -2.5, 4.5]),
+    (Cone, 'Y', [-1.0, 1.0, 1.0, 2.0]),
+    (Cone, 'Y', [-2.5, 4.5, -0.5, 3.5]),
+    (Cone, 'Y', [1.0, 2.0, -1.0, 1.0]),
+    (Cone, 'Y', [-0.52222989232331345, 3.5, -2.5, 4.5]),
+    (Cone, 'Z', [-1.0, 1.0, 1.0, 2.0]),
+    (Cone, 'Z', [-2.5, 4.5, -0.5, 3.5]),
+    (Cone, 'Z', [1.0, 2.0, -1.0, 1.0]),
+    (Cone, 'Z', [-0.5, 3.5, -2.5, 4.5]),
+    (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33, +1]),
+    (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33, +1]),
+    (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33, +1]),
+    (Cone, 'KX', [4.6, 0.33, -1]),
+    (Cone, 'KY', [4.7, 0.33, -1]),
+    (Cone, 'KZ', [-4.8, 0.33, -1]),
+    (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33, -1]),
+    (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33, -1]),
+    (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33, -1]),
+    (Torus, 'TX', [1, 2, -3, 5, 0.5, 0.8]),
+    (Torus, 'TY', [-4, 5, -6, 3, 0.9, 0.2]),
+    (Torus, 'TZ', [0, -3, 5, 1, 0.1, 0.2]),
+    (GQuadratic, 'SQ', [0.5, -2.5841834141234512351, 3.0, 1.1, -1.3, -5.4, -7.0, 3.2, -1.7, 8.4]),
+    (GQuadratic, 'GQ', [1, 2, 3, 4, 5, 6, 7, 8, 9, -10])
+])
+def test_surface_copy(cls, kind, params):
+    surf = create_surface(kind, *params)
+    surf_cpy = surf.copy()
+    assert id(surf) != id(surf_cpy)
+    assert isinstance(surf_cpy, surf.__class__)
+    assert surf == surf_cpy
+
+
+@pytest.mark.parametrize('kind, params, name', [
+    ('PX', [1], 2),
+    ('CX', [1], 3),
+    ('SO', [1], 4),
+    ('KX', [1, 2], 5)
+])
+def test_surface_name(kind, params, name):
+    surf = create_surface(kind, *params, name=name)
+    assert surf.name() == name
 
 
 class TestPlane:
@@ -143,6 +221,78 @@ class TestPlane:
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
 
+    surfs = [
+        create_surface('PX', 5.0, name=1),                                 # 0
+        create_surface('PX', 5.0 + 1.e-12, name=1),                        # 1
+        create_surface('PX', 5.0 - 1.e-12, name=1),                        # 2
+        create_surface('PX', 5.0 + 1.e-11, name=1),                        # 3
+        create_surface('PY', 5.0, name=2),                                 # 4
+        create_surface('PY', 5.0 + 1.e-12, name=2),                        # 5
+        create_surface('PY', 5.0 - 1.e-12, name=2),                        # 6
+        create_surface('PY', 5.0 + 1.e-11, name=2),                        # 7
+        create_surface('PZ', 5.0, name=3),                                 # 8
+        create_surface('PZ', 5.0 + 1.e-12, name=3),                        # 9
+        create_surface('PZ', 5.0 - 1.e-12, name=3),                        # 10
+        create_surface('PZ', 5.0 + 1.e-11, name=3),                        # 11
+        create_surface('P', 1, 5.e-13, -5.e-13, 5.0, name=4),              # 12
+        create_surface('P', -5.e-13, 1, 5.e-13, 5.0 + 1.e-12, name=4),     # 13
+        create_surface('P', 5.e-13, -5.e-13, 1, 5.0 - 1.e-12, name=4),     # 14
+        create_surface('P', 1, 1, 0, -4, name=5),                          # 15
+        create_surface('P', 2, 2, 0, -8, name=5),                          # 16
+    ]
+
+    eq_matrix = [
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_eq(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('coeffs', [
+        [0, 2, 1, 3], [4, -1, 2, 0], [-1, 0, 0, 5], [-4, -4, 3, 3]
+    ])
+    def test_reverse(self, coeffs):
+        plane = create_surface('P', *coeffs)
+        answer = create_surface('P', *[-c for c in coeffs])
+        assert plane.reverse() == answer
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 PX 5.0', '1 PX 5.0', '1 PX 5.0', '1 PX 5.00000000001',
+        '2 PY 5.0', '2 PY 5.0', '2 PY 5.0', '2 PY 5.00000000001',
+        '3 PZ 5.0', '3 PZ 5.0', '3 PZ 5.0', '3 PZ 5.00000000001',
+        '4 PX 5.0', '4 PY 5.0', '4 PZ 5.0',
+        '5 P 0.7071067811870 0.7071067811870 0 -2.828427124746',
+        '5 P 0.7071067811870 0.7071067811870 0 -2.828427124746'
+    ]))
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        assert desc == answer
+
 
 class TestSphere:
     @pytest.mark.parametrize('center, radius, c, r', [
@@ -197,16 +347,80 @@ class TestSphere:
         np.testing.assert_array_almost_equal(ans_surf._center, surf_tr._center)
         np.testing.assert_almost_equal(ans_surf._radius, surf_tr._radius)
 
+    surfs = [
+        create_surface('SO', 1.0, name=1),                                  # 0
+        create_surface('SO', 1.0 + 5.e-13, name=1),                         # 1
+        create_surface('SO', 2.0, name=1),                                  # 2
+        create_surface('SX', 5.0, 4.0, name=2),                             # 3
+        create_surface('SX', 5.0 + 1.e-12, 4.0, name=2),                    # 4
+        create_surface('SX', 5.0 - 1.e-12, 4.0 + 1.e-12, name=2),           # 5
+        create_surface('SY', 5.0, 4.0, name=2),                             # 6
+        create_surface('SY', 5.0 + 1.e-12, 4.0, name=2),                    # 7
+        create_surface('SY', 5.0 - 1.e-12, 4.0 + 1.e-12, name=2),           # 8
+        create_surface('SZ', 5.0, 4.0, name=2),                             # 9
+        create_surface('SZ', 5.0 + 1.e-12, 4.0, name=2),                    # 10
+        create_surface('SZ', 5.0 - 1.e-12, 4.0 + 1.e-12, name=2),           # 11
+        create_surface('S', 5.0, 1.e-13, -1.e-13, 4.0 + 1.e-12, name=3),    # 12
+        create_surface('S', 1.e-13, 5.0, -1.e-13, 4.0 - 1.e-12, name=3),    # 13
+        create_surface('S', 1.e-13, -1.e-13, 5.0, 4.0 + 1.e-12, name=3),    # 14
+        create_surface('S', 4.3, 8.2, -1.4, 3.5, name=4),                   # 15
+        create_surface('S', 4.3 - 1.e-12, 8.2 + 1.e-12, -1.4 -1.e-12, 3.5 + 1.e-12, name=4) # 16
+    ]
+
+    eq_matrix = [
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 SO 1.0', '1 SO 1.0', '1 SO 2.0', '2 SX 5.0 4.0', '2 SX 5.0 4.0',
+        '2 SX 5.0 4.0', '2 SY 5.0 4.0', '2 SY 5.0 4.0', '2 SY 5.0 4.0',
+        '2 SZ 5.0 4.0', '2 SZ 5.0 4.0', '2 SZ 5.0 4.0', '3 SX 5.0 4.0',
+        '3 SY 5.0 4.0', '3 SZ 5.0 4.0', '4 S 4.3 8.2 -1.4 3.5',
+        '4 S 4.3 8.2 -1.4 3.5'
+    ]))
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        assert desc == answer
+
 
 class TestCylinder:
     @pytest.mark.parametrize('point, axis, radius, pt, ax, rad', [
-        ([1, 2, 3], [1, 2, 3], 5, [1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14),
+        ([1, 2, 3], [1, 2, 3], 5, [0, 0, 0], np.array([1, 2, 3]) / np.sqrt(14),
           5)
     ])
     def test_init(self, transform, point, axis, radius, pt, ax, rad):
         surf = Cylinder(point, axis, radius, transform=transform)
         pt = transform.apply2point(pt)
         ax = transform.apply2vector(ax)
+        pt = pt - ax * np.dot(ax, pt)
         np.testing.assert_array_almost_equal(pt, surf._pt)
         np.testing.assert_array_almost_equal(ax, surf._axis)
         np.testing.assert_array_almost_equal(rad, surf._radius)
@@ -251,6 +465,79 @@ class TestCylinder:
         np.testing.assert_array_almost_equal(ans_surf._pt, surf_tr._pt)
         np.testing.assert_array_almost_equal(ans_surf._axis, surf_tr._axis)
         np.testing.assert_almost_equal(ans_surf._radius, surf_tr._radius)
+
+    surfs = [
+        create_surface('CX', 1.0, name=1),                                  # 0
+        create_surface('CX', 1.0 + 5.e-13, name=1),                         # 1
+        create_surface('CY', 1.0, name=1),                                  # 2
+        create_surface('CY', 1.0 + 5.e-13, name=1),                         # 3
+        create_surface('CZ', 1.0, name=1),                                  # 4
+        create_surface('CZ', 1.0 + 5.e-13, name=1),                         # 5
+        create_surface('C/X', 1, -2, 3, name=2),                            # 6
+        create_surface('C/X', 1 - 5.e-13, -2 + 1.e-12, 3 - 1.e-12, name=2), # 7
+        create_surface('C/Y', 1, -2, 3, name=2),                            # 8
+        create_surface('C/Y', 1 - 5.e-13, -2 + 1.e-12, 3 - 1.e-12, name=2), # 9
+        create_surface('C/Z', 1, -2, 3, name=2),                            # 10
+        create_surface('C/Z', 1 - 5.e-13, -2 + 1.e-12, 3 - 1.e-12, name=2), # 11
+        Cylinder([0, 1, -2], [2, 1.e-13, -1.e-13], 3, name=3),              # 12
+        Cylinder([5, 1, -2], [1 + 1.e-13, -1.e-13, 2.e-13], 3, name=3),     # 13
+        Cylinder([1, 0, -2], [1.e-13, 2, -1.e-13], 3, name=3),              # 14
+        Cylinder([1, 5, -2], [-1.e-13, 1 + 1.e-13, 2.e-13], 3, name=3),     # 15
+        Cylinder([1, -2, 0], [1.e-13, -1.e-13, 2], 3, name=3),              # 16
+        Cylinder([1, -2, 5], [-1.e-13, 1.e-13, 1 + 2.e-13], 3, name=3),     # 17
+        Cylinder([0, 1, -2], [-1, 1.e-13, -1.e-13], 3, name=4),             # 18
+        Cylinder([1, 0, -2], [1.e-13, -2, -1.e-13], 3, name=4),             # 19
+        Cylinder([1, -2, 0], [1.e-13, 1.e-13, -2], 3, name=4)               # 20
+    ]
+
+    eq_matrix = [
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 CX 1.0', '1 CX 1.0', '1 CY 1.0', '1 CY 1.0', '1 CZ 1.0', '1 CZ 1.0',
+        '2 C/X 1.0 -2.0 3.0', '2 C/X 1.0 -2.0 3.0', '2 C/Y 1.0 -2.0 3.0',
+        '2 C/Y 1.0 -2.0 3.0', '2 C/Z 1.0 -2.0 3.0', '2 C/Z 1.0 -2.0 3.0',
+        '3 C/X 1.0 -2.0 3.0', '3 C/X 1.0 -2.0 3.0', '3 C/Y 1.0 -2.0 3.0',
+        '3 C/Y 1.0 -2.0 3.0', '3 C/Z 1.0 -2.0 3.0', '3 C/Z 1.0 -2.0 3.0'
+    ]))
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        print(surface.mcnp_repr())
+        print("{0:.15e}".format(surface._pt[0]))
+        assert desc == answer
 
 
 class TestCone:
@@ -381,6 +668,110 @@ class TestCone:
         np.testing.assert_array_almost_equal(ans_surf._axis, surf_tr._axis)
         np.testing.assert_almost_equal(ans_surf._t2, surf_tr._t2)
 
+    surfs = [
+        create_surface('KX', 4, 0.5, name=1),                                    # 0
+        create_surface('KX', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 1
+        create_surface('KY', 4, 0.5, name=1),                                    # 2
+        create_surface('KY', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 3
+        create_surface('KZ', 4, 0.5, name=1),                                    # 4
+        create_surface('KZ', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 5
+        create_surface('K/X', 3, 2, -4, 0.5, name=2),                            # 6
+        create_surface('K/X', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 7
+                       name=2),
+        create_surface('K/Y', 3, 2, -4, 0.5, name=2),                            # 8
+        create_surface('K/Y', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 9
+                       name=2),
+        create_surface('K/Z', 3, 2, -4, 0.5, name=2),                            # 10
+        create_surface('K/Z', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 11
+                       name=2),
+        Cone([3, 2, -4], [1, 1.e-13, -1.e-13], np.sqrt(0.5), name=3),            # 12
+        Cone([3, 2, -4], [1.e-13, 1, -1.e-13], np.sqrt(0.5), name=3),            # 13
+        Cone([3, 2, -4], [1.e-13, -1.e-13, 1], np.sqrt(0.5), name=3),            # 14
+        Cone([3, 2, -4], [-1, 1.e-13, -1.e-13], np.sqrt(0.5), name=4),           # 15
+        Cone([3, 2, -4], [1.e-13, -1, -1.e-13], np.sqrt(0.5), name=4),           # 16
+        Cone([3, 2, -4], [1.e-13, -1.e-13, -1], np.sqrt(0.5), name=4),           # 17
+        create_surface('K/X', 3, 2, -4, 0.5, 1, name=5),                         # 18
+        create_surface('K/X', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 19
+                       1, name=5),
+        create_surface('K/Y', 3, 2, -4, 0.5, 1, name=5),                         # 20
+        create_surface('K/Y', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 21
+                       1, name=5),
+        create_surface('K/Z', 3, 2, -4, 0.5, 1, name=5),                         # 22
+        create_surface('K/Z', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 23
+                       1, name=5),
+        Cone([3, 2, -4], [1, 1.e-13, -1.e-13], np.sqrt(0.5), sheet=1, name=6),   # 24
+        Cone([3, 2, -4], [1.e-13, 1, -1.e-13], np.sqrt(0.5), sheet=1, name=6),   # 25
+        Cone([3, 2, -4], [1.e-13, -1.e-13, 1], np.sqrt(0.5), sheet=1, name=6),   # 26
+        Cone([3, 2, -4], [-1, 1.e-13, -1.e-13], np.sqrt(0.5), sheet=1, name=7),  # 27
+        Cone([3, 2, -4], [1.e-13, -1, -1.e-13], np.sqrt(0.5), sheet=1, name=7),  # 28
+        Cone([3, 2, -4], [1.e-13, -1.e-13, -1], np.sqrt(0.5), sheet=1, name=7)   # 29
+    ]
+
+    eq_matrix = [
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 KX 4.0 0.50', '1 KX 4.0 0.50', '1 KY 4.0 0.50', '1 KY 4.0 0.50',
+        '1 KZ 4.0 0.50', '1 KZ 4.0 0.50', '2 K/X 3.0 2.0 -4.0 0.50',
+        '2 K/X 3.0 2.0 -4.0 0.50', '2 K/Y 3.0 2.0 -4.0 0.50',
+        '2 K/Y 3.0 2.0 -4.0 0.50', '2 K/Z 3.0 2.0 -4.0 0.50',
+        '2 K/Z 3.0 2.0 -4.0 0.50', '3 K/X 3.0 2.0 -4.0 0.50',
+        '3 K/Y 3.0 2.0 -4.0 0.50', '3 K/Z 3.0 2.0 -4.0 0.50',
+        '4 K/X 3.0 2.0 -4.0 0.50', '4 K/Y 3.0 2.0 -4.0 0.50',
+        '4 K/Z 3.0 2.0 -4.0 0.50', '5 K/X 3.0 2.0 -4.0 0.50 1',
+        '5 K/X 3.0 2.0 -4.0 0.50 1', '5 K/Y 3.0 2.0 -4.0 0.50 1',
+        '5 K/Y 3.0 2.0 -4.0 0.50 1', '5 K/Z 3.0 2.0 -4.0 0.50 1',
+        '5 K/Z 3.0 2.0 -4.0 0.50 1', '6 K/X 3.0 2.0 -4.0 0.50 1',
+        '6 K/Y 3.0 2.0 -4.0 0.50 1', '6 K/Z 3.0 2.0 -4.0 0.50 1',
+        '7 K/X 3.0 2.0 -4.0 0.50 -1', '7 K/Y 3.0 2.0 -4.0 0.50 -1',
+        '7 K/Z 3.0 2.0 -4.0 0.50 -1'
+    ]))
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        assert desc == answer
+
 
 class TestTorus:
     @pytest.mark.parametrize('center, axis, R, A, B, c, ax, r, a, b', [
@@ -473,6 +864,53 @@ class TestTorus:
         np.testing.assert_almost_equal(ans_surf._a, surf_tr._a)
         np.testing.assert_almost_equal(ans_surf._b, surf_tr._b)
 
+    surfs = [
+        Torus([1, 2, 3], [1, 0, 0], 4, 2, 1, name=1),
+        Torus([1-1.e-13, 2+1.e-12, 3-1.e-12], [1, 1.e-13, -3e-13], 4-1.e-12, 2+1.e-13, 1-5.e-13, name=1),
+        Torus([1, 2, 3], [-1, 0, 0], 4, 2, 1, name=1),
+        Torus([1, 2, 3], [0, 2, 0], 4, 2, 1, name=2),
+        Torus([1 - 1.e-13, 2 + 1.e-12, 3 - 1.e-12], [1.e-13, 1, -3e-13], 4 - 1.e-12, 2 + 1.e-13, 1 - 5.e-13, name=2),
+        Torus([1, 2, 3], [0, -1, 0], 4, 2, 1, name=2),
+        Torus([1, 2, 3], [0, 0, 1], 4, 2, 1, name=3),
+        Torus([1 - 1.e-13, 2 + 1.e-12, 3 - 1.e-12], [1.e-13, -3e-13, 3], 4 - 1.e-12, 2 + 1.e-13, 1 - 5.e-13, name=3),
+        Torus([1, 2, 3], [0, 0, -1], 4, 2, 1, name=3),
+    ]
+
+    eq_matrix = [
+        [1, 1, 1, 0, 0, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 TX 1.0 2.0 3.0 4.0 2.0 1.0', '1 TX 1.0 2.0 3.0 4.0 2.0 1.0',
+        '1 TX 1.0 2.0 3.0 4.0 2.0 1.0', '2 TY 1.0 2.0 3.0 4.0 2.0 1.0',
+        '2 TY 1.0 2.0 3.0 4.0 2.0 1.0', '2 TY 1.0 2.0 3.0 4.0 2.0 1.0',
+        '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0', '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0',
+        '3 TZ 1.0 2.0 3.0 4.0 2.0 1.0'
+    ]))
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        assert desc == answer
+
 
 class TestGQuadratic:
     @pytest.mark.parametrize('m, v, k, _m, _v, _k', [
@@ -526,3 +964,42 @@ class TestGQuadratic:
         np.testing.assert_array_almost_equal(ans_surf._m, surf_tr._m)
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
+
+    surfs = [
+        GQuadratic(np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), 3, name=1),
+        GQuadratic(np.diag([1, 1, 1]) + 1.e-13, -2 * np.array([1, 1, 1]) + 1.e-13, 3 - 1.e-13, name=1),
+        GQuadratic(-np.diag([1, 1, 1]), 2 * np.array([1, 1, 1]), -3, name=1),
+        GQuadratic([[1, 0.25, 0.3], [0.25, 2, 0.4], [0.3, 0.4, 3]], [1, 2, 3], -4, name=2),
+        GQuadratic([[-1, -0.25, -0.3], [-0.25, -2, -0.4], [-0.3, -0.4, -3]], [-1, -2, -3], 4, name=2),
+        GQuadratic(np.array([[1, 0.25, 0.3], [0.25, 2, 0.4], [0.3, 0.4, 3]]) - 1.e-13,
+                   np.array([1, 2, 3]) + 5.e-13, -4+2e-12, name=2),
+    ]
+
+    eq_matrix = [
+        [1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 1, 1]
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_equality(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 GQ 1.0 1.0 1.0 0.0 0.0 0.0 -2.0 -2.0 -2.0 3.0',
+        '1 GQ 1.0 1.0 1.0 0.0 0.0 0.0 -2.0 -2.0 -2.0 3.0',
+        '1 GQ 1.0 1.0 1.0 0.0 0.0 0.0 -2.0 -2.0 -2.0 3.0',
+        '2 GQ 1.0 2.0 3.0 0.50 0.80 0.60 1.0 2.0 3.0 -4.0',
+        '2 GQ 1.0 2.0 3.0 0.50 0.80 0.60 1.0 2.0 3.0 -4.0',
+        '2 GQ 1.0 2.0 3.0 0.50 0.80 0.60 1.0 2.0 3.0 -4.0'
+    ]))
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        assert desc == answer

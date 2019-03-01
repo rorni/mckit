@@ -1,5 +1,5 @@
 from functools import reduce
-from itertools import product
+from itertools import product, groupby, permutations
 
 import numpy as np
 
@@ -8,6 +8,7 @@ from .geometry import Shape as _Shape, GLOBAL_BOX
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
+from .card import Card
 
 
 __all__ = ['Shape', 'Body']
@@ -70,6 +71,8 @@ class Shape(_Shape):
         Gets the complexity of the shape description.
     get_simplest()
         Gets the simplest description of the shape.
+    replace_surfaces(replace_dict)
+        Creates new Shape object by replacing surfaces.
     """
     _opc_hash = {'I': hash('I'), 'U': ~hash('I'), 'E': hash('E'), 'R': ~hash('E'), 'S': hash('S'), 'C': ~hash('S')}
 
@@ -154,7 +157,8 @@ class Shape(_Shape):
                             return 'R', []
                 i += 1
             args.sort(key=hash)
-
+            if len(args) == 0:
+                opc = 'E' if opc == 'U' else 'R'
         if len(args) == 1 and isinstance(args[0], Shape) and (opc == 'S' or opc == 'I' or opc == 'U'):
             return args[0].opc, args[0].args
         elif len(args) == 1 and isinstance(args[0], Shape) and opc == 'C':
@@ -178,12 +182,24 @@ class Shape(_Shape):
             return True
         if self.opc != other.opc:
             return False
+        if self.opc == 'E' or self.opc == 'R':
+            return True
         if len(self.args) != len(other.args):
             return False
-        for a, o in zip(self.args, other.args):
-            if not (a == o):
+        self_groups = {k: list(v) for k, v in groupby(self.args, key=hash)}
+        other_groups = {k: list(v) for k, v in groupby(other.args, key=hash)}
+        for hval, entities in self_groups.items():
+            if hval not in other_groups.keys():
                 return False
-        return True
+            if len(entities) != len(other_groups[hval]):
+                return False
+            for other_entities in permutations(other_groups[hval]):
+                for se, oe in zip(entities, other_entities):
+                    if not (se == oe):
+                        break
+                else:
+                    return True
+        return False
 
     def complement(self):
         """Gets complement to the shape.
@@ -239,9 +255,9 @@ class Shape(_Shape):
         Hash is 'xor' for hash values of all arguments together with opc hash.
         """
         if opc == 'C':  # C and S can be present only with Surface instance.
-            self._hash = ~hash(args[0])
+            self._hash = ~hash(args[0]) # ^ self._opc_hash[opc]
         elif opc == 'S':
-            self._hash = hash(args[0])
+            self._hash = hash(args[0]) # ^ self._opc_hash[opc]
         else:
             self._hash = self._opc_hash[opc]
             for a in args:
@@ -372,6 +388,11 @@ class Shape(_Shape):
             if self.opc == 'U':
                 return [Shape('R')]
         arg_results = np.delete(stat, drop_index, axis=0)
+        if arg_results.shape[0] == 0:
+            if self.opc == 'I':
+                return [Shape('R')]
+            if self.opc == 'U':
+                return [Shape('E')]
         cases = self._find_coverages(arg_results, value=val)
         final_cases = set(tuple(c) for c in cases)
         if len(final_cases) == 0:
@@ -415,6 +436,33 @@ class Shape(_Shape):
             c.sort()
         return cases
 
+    def replace_surfaces(self, replace_dict):
+        """Creates new Shape instance by replacing surfaces.
+
+        If shape's surface is in replace dict, it is replaced by surface in
+        dictionary values. Otherwise, the original surface is used. But new
+        shape is created anyway.
+
+        Parameters
+        ----------
+        replace_dict : dict
+            A dictionary of surfaces to be replaced.
+
+        Returns
+        -------
+        shape : Shape
+            New Shape object obtained by replacing certain surfaces.
+        """
+        if self.opc == 'C' or self.opc == 'S':
+            arg = self.args[0]
+            surf = replace_dict.get(arg, arg)
+            return Shape(self.opc, surf)
+        elif self.opc == 'I' or self.opc == 'U':
+            args = [arg.replace_surfaces(replace_dict) for arg in self.args]
+            return Shape(self.opc, *args)
+        else:
+            return self
+
     @staticmethod
     def from_polish_notation(polish):
         """Creates Shape instance from reversed Polish notation.
@@ -444,7 +492,7 @@ class Shape(_Shape):
         return operands.pop()
 
 
-class Body(dict):
+class Body(Card):
     """Represents MCNP's cell.
 
     Parameters
@@ -475,7 +523,7 @@ class Body(dict):
             geometry = geometry.shape
         elif not isinstance(geometry, Shape):
             raise TypeError("Geometry list or Shape is expected.")
-        dict.__init__(self, options)
+        Card.__init__(self, **options)
         self._shape = geometry
 
     def __hash__(self):
@@ -484,29 +532,32 @@ class Body(dict):
     def __eq__(self, other):
         return id(self) == id(other)
 
-    def __str__(self):
-        text = [str(self['name']), ' ']
-        if 'MAT' in self.keys():
-            text.append(str(self['MAT'].composition['name']))
-            text.append(' ')
-            text.append(str(-self['MAT'].density))
-            text.append(' ')
+    def mcnp_words(self):
+        words = [str(self.name()), ' ']
+        if 'MAT' in self.options.keys():
+            words.append(str(self.options['MAT'].composition.name()))
+            words.append(' ')
+            words.append(str(-self.options['MAT'].density))
+            words.append(' ')
         else:
-            text.append('0')
-            text.append(' ')
-        text.extend(self._shape._get_words())
-        text.append('\n')
+            words.append('0')
+            words.append(' ')
+        words.extend(self._shape._get_words())
+        words.append('\n')
         # insert options printing
-        text.extend(self._options_list())
-        return print_card(text)
+        words.extend(self._options_list())
+        for line in self.options.get('comment', []):
+            words.append('$ ' + str(line))
+            words.append('\n')
+        return words
 
     def _options_list(self):
         """Generates a list of option words. For __str__ method."""
         text = []
         for opt_group in CELL_OPTION_GROUPS:
             for key in opt_group:
-                if key in self.keys():
-                    text.extend(print_option(key, self[key]))
+                if key in self.options.keys():
+                    text.extend(print_option(key, self.options[key]))
                     text.append(' ')
             text.append('\n')
         return text
@@ -518,7 +569,7 @@ class Body(dict):
 
     def material(self):
         """Gets body's material. None is returned if no material present."""
-        return self.get('MAT', None)
+        return self.options.get('MAT', None)
 
     def intersection(self, other):
         """Gets an intersection if this cell with the other.
@@ -537,7 +588,7 @@ class Body(dict):
             The result.
         """
         geometry = self._shape.intersection(other)
-        return Body(geometry, **self)
+        return Body(geometry, **self.options)
 
     def union(self, other):
         """Gets an union if this cell with the other.
@@ -555,7 +606,7 @@ class Body(dict):
             The result.
         """
         geometry = self._shape.union(other)
-        return Body(geometry, **self)
+        return Body(geometry, **self.options)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
                  min_volume=MIN_BOX_VOLUME, trim_size=1):
@@ -587,7 +638,7 @@ class Body(dict):
         # print('finding optimal solution...')
         variants = self._shape.get_simplest(trim_size)
         # print(len(variants))
-        return Body(variants[0], **self)
+        return Body(variants[0], **self.options)
 
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
         """Fills this cell by filling universe.
@@ -618,9 +669,9 @@ class Body(dict):
             Resulting cells.
         """
         if universe is None:
-            if 'FILL' in self.keys():
-                universe = self['FILL']['universe']
-                tr = self['FILL'].get('transform', None)
+            if 'FILL' in self.options.keys():
+                universe = self.options['FILL']['universe']
+                tr = self.options['FILL'].get('transform', None)
                 if tr:
                     universe = universe.transform(tr)
             else:
@@ -633,8 +684,8 @@ class Body(dict):
         for c in universe:
             new_cell = c.intersection(self)  # because properties like MAT, etc
                                              # must be as in filling cell.
-            if 'U' in self.keys():
-                new_cell['U'] = self['U']    # except universe.
+            if 'U' in self.options.keys():
+                new_cell.options['U'] = self.options['U']    # except universe.
             if simplify:
                 new_cell = new_cell.simplify(**kwargs)
             cells.append(new_cell)
@@ -654,8 +705,8 @@ class Body(dict):
             The result of this cell transformation.
         """
         geometry = self._shape.transform(tr)
-        cell = Body(geometry, **self)
-        fill = cell.get('FILL', None)
+        cell = Body(geometry, **self.options)
+        fill = cell.options.get('FILL', None)
         if fill:
             tr_in = fill.get('transform', Transformation())
             new_tr = tr.apply2transform(tr_in)

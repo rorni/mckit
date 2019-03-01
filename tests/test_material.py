@@ -238,34 +238,34 @@ class TestElement:
 class TestComposition:
     cases = [
         {'atomic': [('H', 1)], 'name': 1, 'lib': '21c'},
-        {'atomic': [('O', 5)], 'name': 1, 'lib': '21c'},
-        {'atomic': [('H', 2), ('O', 1)], 'name': 1, 'lib': '21c'},
-        {'weight': [('H', 1)], 'name': 1, 'lib': '21c'},
-        {'weight': [('H', 0.11189), ('O', 0.888109)], 'name': 1, 'lib': '21c'},
-        {'weight': [('H', 11.189), ('O', 88.8109)], 'name': 1, 'lib': '21c'},
-        {'weight': [('H', 0.11189)], 'atomic': [('O', 0.33333)], 'name': 1,
+        {'atomic': [('O', 5)], 'name': 2, 'lib': '21c'},
+        {'atomic': [('H', 2), ('O', 1)], 'name': 3, 'lib': '21c'},
+        {'weight': [('H', 1)], 'name': 4, 'lib': '21c'},
+        {'weight': [('H', 0.11189), ('O', 0.888109)], 'name': 5, 'lib': '21c'},
+        {'weight': [('H', 11.189), ('O', 88.8109)], 'name': 6, 'lib': '21c'},
+        {'weight': [('H', 0.11189)], 'atomic': [('O', 0.33333)], 'name': 7,
          'lib': '21c'},
 
         {'atomic': [('Ni-58', 68.077), ('Ni-60', 26.223), ('Ni-61', 1.140),
-                    ('Ni-62', 3.635), ('Ni-64', 0.926)], 'name': 1,
+                    ('Ni-62', 3.635), ('Ni-64', 0.926)], 'name': 8,
          'lib': '21c'},
         {'weight': [('N', 0.755465), ('O', 0.23148), ('AR', 0.012886)],
-         'name': 1, 'lib': '21c'},
+         'name': 9, 'lib': '21c'},
         {'atomic': [('N', 0.78479)],
-         'weight': [('O', 0.23148), ('AR', 0.012886)], 'name': 1, 'lib': '21c'},
+         'weight': [('O', 0.23148), ('AR', 0.012886)], 'name': 10, 'lib': '21c'},
         {'atomic': [('N', 0.78479), ('O', 0.21052)],
-         'weight': [('AR', 0.012886)], 'name': 1, 'lib': '21c'},
+         'weight': [('AR', 0.012886)], 'name': 11, 'lib': '21c'},
         {'atomic': [('N', 0.78479), ('Ar', 0.0046936)],
-         'weight': [('O', 0.23148)], 'name': 1, 'lib': '21c'},
+         'weight': [('O', 0.23148)], 'name': 12, 'lib': '21c'},
         {'atomic': [('Ni-58', 68.277), ('Ni-60', 26.023), ('Ni-61', 1.140),
-                    ('Ni-62', 3.635), ('Ni-64', 0.926)], 'name': 1,
+                    ('Ni-62', 3.635), ('Ni-64', 0.926)], 'name': 13,
          'lib': '21c'},
         {'atomic': [('Ni-58', 68.077), ('Ni-60', 26.223), ('Ni-61', 1.140),
-                    ('Ni-62', 3.635), ('Ni-64', 0.926), ('O', 100.)], 'name': 1,
+                    ('Ni-62', 3.635), ('Ni-64', 0.926), ('O', 100.)], 'name': 14,
          'lib': '21c'},
         {'atomic': [('Ni-58', 68.077), ('Ni-60', 26.223), ('Ni-61', 1.140),
                     ('Ni-62', 3.635), ('Ni-64', 0.926), ('Ni', 100.)],
-         'name': 1, 'lib': '21c'}
+         'name': 15, 'lib': '21c'}
     ]
 
     hash_eq_matrix = [
@@ -297,6 +297,11 @@ class TestComposition:
     def compositions(self):
         comp = [Composition(**params) for params in self.cases]
         return comp
+
+    @pytest.mark.parametrize('case_no', range(len(cases)))
+    def test_name(self, case_no):
+        comp = Composition(**self.cases[case_no])
+        assert comp.name() == case_no + 1
 
     @pytest.mark.parametrize('case_no, expected', enumerate([
         {'H': 1.0},
@@ -530,23 +535,25 @@ class TestComposition:
         comp2 = compositions[case2]
         assert (comp1 == comp2) == bool(self.eq_matrix[case1][case2])
 
-    @pytest.mark.parametrize('case_no, expected_kw', enumerate([
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'},
-        {'name': 1, 'lib': '21c'}
-    ]))
-    def test_get_option(self, compositions, case_no, expected_kw):
+    @pytest.mark.parametrize('case_no, name, expected_kw', [
+        (0, 1, {'lib': '21c'}),
+        (1, 2, {'lib': '21c'}),
+        (2, 3, {'lib': '21c'}),
+        (3, 4, {'lib': '21c'}),
+        (4, 5, {'lib': '21c'}),
+        (5, 6, {'lib': '21c'}),
+        (6, 7, {'lib': '21c'}),
+        (7, 8, {'lib': '21c'}),
+        (8, 9, {'lib': '21c'}),
+        (9, 10, {'lib': '21c'}),
+        (10, 11, {'lib': '21c'}),
+        (11, 12, {'lib': '21c'}),
+        (12, 13, {'lib': '21c'})
+    ])
+    def test_get_option(self, compositions, case_no, name, expected_kw):
         comp = compositions[case_no]
+        print(comp.name(), name)
+        assert comp.name() == name
         for key, value in expected_kw.items():
             assert comp[key] == value
 

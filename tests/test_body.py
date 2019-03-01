@@ -20,7 +20,10 @@ def surfaces():
         7: ('cx', [3]),
         8: ('cx', [1]),
         9: ('px', [-5]),
-        10: ('px', [8])
+        10: ('px', [8]),
+        11: ('px', [20]),
+        12: ('px', [22]),
+        13: ('so', [100])
     }
     surfs = {}
     for name, (kind, params) in surf_data.items():
@@ -47,7 +50,11 @@ basic_geoms = [
     ('U', [('C', [1]), ('I', [('C', [5]), ('S', [3]), ('C', [2])])]),
     ('I', [('C', [2]), ('U', [('C', [6]), ('C', [4]), ('I', [('S', [3]), ('C', [8]), ('C', [5])])])]),
     ('U', [('I', [('C', [1]), ('C', [5])]), ('I', [('C', [1]), ('S', [5])])]),
-    ('I', [('U', [('S', [1]), ('S', [5])]), ('U', [('S', [1]), ('C', [5])])])
+    ('I', [('U', [('S', [1]), ('S', [5])]), ('U', [('S', [1]), ('C', [5])])]),
+    ('I', [('C', [2]), ('S', [11]), ('C', [12])]),
+    ('I', [('S', [1]), ('C', [6])]),
+    ('U', [('I', [('C', [2]), ('S', [11])]), ('I', [('C', [2]), ('S', [12])])]),
+    ('I', [('C', [13]), ('C', [12])])
 ]
 
 
@@ -95,12 +102,19 @@ class TestShape:
         ('I', [('S', [1]), ('R', [])], 'S', [1]),
         ('U', [('S', [1]), ('E', [])], 'S', [1]),
         ('U', [('S', [1]), ('R', [])], 'R', []),
+        ('I', [('E', []), ('S', [1])], 'E', []),
+        ('I', [('R', []), ('S', [1])], 'S', [1]),
+        ('U', [('E', []), ('S', [1])], 'S', [1]),
+        ('U', [('R', []), ('S', [1])], 'R', []),
+        ('I', [('E', []), ('E', [])], 'E', []),
+        ('I', [('R', []), ('R', [])], 'R', []),
+        ('U', [('E', []), ('E', [])], 'E', []),
+        ('U', [('R', []), ('R', [])], 'R', []),
     ])
     def test_create(self, surfaces, opc, args, ans_opc, ans_args):
         args = [self.filter_arg(a, surfaces) for a in args]
         ans_args = sorted([self.filter_arg(a, surfaces) for a in ans_args], key=hash)
         shape = Shape(opc, *args)
-        print(shape)
         assert shape.opc == ans_opc
         assert shape.args == tuple(ans_args)
 
@@ -128,7 +142,11 @@ class TestShape:
         [5, 'C', 3, 'I', 2, 'C', 'I', 1, 'C', 'U'],
         [3, 8, 'C', 'I', 5, 'C', 'I', 4, 'C', 'U', 6, 'C', 'U', 2, 'C', 'I'],
         [1, 'C', 5, 'C', 'I', 1, 'C', 5, 'I', 'U'],
-        [1, 5, 'U', 1, 5, 'C', 'U', 'I']
+        [1, 5, 'U', 1, 5, 'C', 'U', 'I'],
+        [2, 'C', 11, 'I', 12, 'C', 'I'],
+        [1, 6, 'C', 'I'],
+        [2, 'C', 11, 'I', 2, 'C', 12, 'I', 'U'],
+        [13, 'C', 12, 'C', 'I']
     ]
 
     @pytest.mark.parametrize('case_no, polish', enumerate(polish_cases))
@@ -145,7 +163,11 @@ class TestShape:
         ('I', [('S', [1]), ('U', [('S', [5]), ('C', [3]), ('S', [2])])]),
         ('U', [('S', [2]), ('I', [('S', [6]), ('S', [4]), ('U', [('C', [3]), ('S', [8]), ('S', [5])])])]),
         ('I', [('U', [('S', [1]), ('S', [5])]), ('U', [('S', [1]), ('C', [5])])]),
-        ('U', [('I', [('C', [1]), ('C', [5])]), ('I', [('C', [1]), ('S', [5])])])
+        ('U', [('I', [('C', [1]), ('C', [5])]), ('I', [('C', [1]), ('S', [5])])]),
+        ('U', [('S', [2]), ('C', [11]), ('S', [12])]),
+        ('U', [('C', [1]), ('S', [6])]),
+        ('I', [('U', [('S', [2]), ('C', [11])]), ('U', [('S', [2]), ('C', [12])])]),
+        ('U', [('S', [13]), ('S', [12])])
     ]))
     def test_complement(self, geometry, surfaces, case_no, expected):
         expected = create_node(expected[0], expected[1], surfaces)
@@ -226,17 +248,17 @@ class TestShape:
 
     @pytest.mark.parametrize('geom_no', range(len(basic_geoms)))
     @pytest.mark.parametrize('point, ans', [
-        ([-6, 0, 0],     [-1, -1, -1, -1, -1, -1, -1, +1]),
-        ([-3.5, 0, 0],   [+1, -1, -1, +1, -1, +1, -1, +1]),
-        ([-3.5, 1.5, 0], [-1, -1, -1, -1, -1, -1, -1, +1]),
-        ([-2.5, 1.5, 0], [+1, -1, -1, +1, +1, -1, -1, +1]),
-        ([-1, 2.5, 0],   [-1, -1, -1, -1, -1, -1, -1, +1]),
-        ([1, -1.5, 0],   [+1, -1, -1, +1, +1, -1, -1, +1]),
-        ([1, -0.5, 0],   [+1, -1, -1, +1, +1, +1, -1, +1]),
-        ([2.5, 0.5, 0],  [-1, -1, +1, -1, +1, +1, +1, -1]),
-        ([4, -0.5, 0],   [-1, +1, +1, -1, +1, +1, +1, -1]),
-        ([5.5, 0.5, 0],  [-1, -1, +1, -1, +1, -1, +1, -1]),
-        ([7, -0.5, 0],   [-1, -1, -1, -1, -1, -1, -1, +1]),
+        ([-6, 0, 0],     [-1, -1, -1, -1, -1, -1, -1, +1, -1, -1, -1, +1]),
+        ([-3.5, 0, 0],   [+1, -1, -1, +1, -1, +1, -1, +1, -1, -1, -1, +1]),
+        ([-3.5, 1.5, 0], [-1, -1, -1, -1, -1, -1, -1, +1, -1, -1, -1, +1]),
+        ([-2.5, 1.5, 0], [+1, -1, -1, +1, +1, -1, -1, +1, -1, -1, -1, +1]),
+        ([-1, 2.5, 0],   [-1, -1, -1, -1, -1, -1, -1, +1, -1, -1, -1, +1]),
+        ([1, -1.5, 0],   [+1, -1, -1, +1, +1, -1, -1, +1, -1, -1, -1, +1]),
+        ([1, -0.5, 0],   [+1, -1, -1, +1, +1, +1, -1, +1, -1, -1, -1, +1]),
+        ([2.5, 0.5, 0],  [-1, -1, +1, -1, +1, +1, +1, -1, -1, -1, -1, +1]),
+        ([4, -0.5, 0],   [-1, +1, +1, -1, +1, +1, +1, -1, -1, -1, -1, +1]),
+        ([5.5, 0.5, 0],  [-1, -1, +1, -1, +1, -1, +1, -1, -1, -1, -1, +1]),
+        ([7, -0.5, 0],   [-1, -1, -1, -1, -1, -1, -1, +1, -1, -1, -1, +1]),
         ([[-6, 0, 0], [-3.5, 0, 0], [-3.5, 1.5, 0], [-2.5, 1.5, 0],
           [-1, 2.5, 0], [1, -1.5, 0], [1, -0.5, 0], [2.5, 0.5, 0],
           [4, -0.5, 0], [5.5, 0.5, 0], [7, -0.5, 0]],
@@ -247,7 +269,11 @@ class TestShape:
           [-1, -1, -1, +1, -1, +1, +1, +1, +1, +1, -1],
           [-1, +1, -1, -1, -1, -1, +1, +1, +1, -1, -1],
           [-1, -1, -1, -1, -1, -1, -1, +1, +1, +1, -1],
-          [+1, +1, +1, +1, +1, +1, +1, -1, -1, -1, +1]]
+          [+1, +1, +1, +1, +1, +1, +1, -1, -1, -1, +1],
+          [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+          [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+          [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+          [+1, +1, +1, +1, +1, +1, +1, +1, +1, +1, +1]]
          )
     ])
     def test_points(self, geometry, geom_no, point, ans):
@@ -256,7 +282,7 @@ class TestShape:
         np.testing.assert_array_equal(result, ans)
 
     @pytest.mark.parametrize('case_no, expected', enumerate([
-        5, 2, 2, 13, 4, 6, 4, 4
+        5, 2, 2, 13, 4, 6, 4, 4, 3, 2
     ]))
     def test_complexity(self, geometry, case_no, expected):
         assert geometry[case_no].complexity() == expected
@@ -334,12 +360,42 @@ class TestShape:
         [5, 3, 2, 1],
         [3, 8, 5, 4, 6, 2],
         [1, 5],
-        [1, 5]
+        [1, 5],
+        [2, 11, 12],
+        [1, 6],
+        [2, 11, 12],
+        [13, 12]
     ]))
     def test_get_surface(self, geometry, surfaces, case_no, expected):
         expected = set(surfaces[s] for s in expected)
         surfs = geometry[case_no].get_surfaces()
         assert surfs == expected
+
+    @pytest.mark.parametrize('case_no, replace_names', enumerate([
+        [2, 3, 1, 5, 4],
+        [],
+        [6],
+        [1, 5, 7, 10],
+        [5, 3, 2],
+        [3, 8, 5, 4, 6, 2],
+        [1, 5],
+        [5],
+        [12],
+        [1, 6],
+        [2, 11, 12],
+        [13, 12]
+    ]))
+    def test_replace_surf(self, geometry, case_no, replace_names):
+        surfs = {s.name(): s for s in geometry[case_no].get_surfaces()}
+        replace_dict = {}
+        for name in replace_names:
+            s = surfs[name]
+            replace_dict[s] = s.transform(Transformation())
+        new_shape = geometry[case_no].replace_surfaces(replace_dict)
+        new_surfs = new_shape.get_surfaces()
+        ids = {id(s) for s in new_surfs}
+        ids_ans = {id(s) if n not in replace_names else id(replace_dict[s]) for n, s in surfs.items()}
+        assert ids == ids_ans
 
 
 class TestBody:
@@ -357,7 +413,7 @@ class TestBody:
         body = Body(shape, **kwargs)
         assert body.shape == shape
         for k, v in kwargs.items():
-            assert body[k] == v
+            assert body.options[k] == v
         assert body.material() == kwargs.get('MAT', None)
 
     @pytest.mark.parametrize('case_no, polish', enumerate(TestShape.polish_cases))
@@ -377,7 +433,7 @@ class TestBody:
         body = body1.intersection(body2)
         assert body.shape == body1.shape.intersection(body2.shape)
         for k, v in kwargs.items():
-            assert body[k] == v
+            assert body.options[k] == v
 
     @pytest.mark.parametrize('kwargs', kwarg_data)
     @pytest.mark.parametrize('no1, no2',
@@ -390,7 +446,7 @@ class TestBody:
         body = body1.union(body2)
         assert body.shape == body1.shape.union(body2.shape)
         for k, v in kwargs.items():
-            assert body[k] == v
+            assert body.options[k] == v
 
     @pytest.mark.slow
     @pytest.mark.parametrize('kwarg', kwarg_data)
@@ -402,7 +458,11 @@ class TestBody:
         (4, [5, 'C', 3, 'I', 2, 'C', 'I', 1, 'C', 'U']),
         (5, [3, 8, 'C', 'I', 5, 'C', 'I', 4, 'C', 'U', 6, 'C', 'U']),
         pytest.param(6, [4, 'C'], marks=pytest.mark.xfail(reason="need full simplification approach")),
-        pytest.param(7, [4], marks=pytest.mark.xfail(reason="need full simplification approach"))
+        pytest.param(7, [4], marks=pytest.mark.xfail(reason="need full simplification approach")),
+        (8, [Shape('E')]),
+        (9, [Shape('E')]),
+        (10, [Shape('E')]),
+        (11, [Shape('R')])
     ])
     def test_simplify(self, geometry, surfaces, case_no, expected, kwarg):
         expected = [TestShape.filter_arg(a, surfaces) for a in expected]
@@ -412,7 +472,7 @@ class TestBody:
         simple_body = body.simplify(min_volume=0.001, box=gb)
         assert simple_body.shape == expected_shape
         for k, v in kwarg.items():
-            assert simple_body[k] == v
+            assert simple_body.options[k] == v
         assert simple_body.material() == kwarg.get('MAT', None)
 
     @pytest.mark.parametrize('fill_tr', [
@@ -464,16 +524,17 @@ class TestBody:
 
         new_body = body.transform(tr)
         if fill_tr:
-            points2 = new_body['FILL']['transform'].apply2point(points)
+            points2 = new_body.options['FILL']['transform'].apply2point(points)
         else:
             points2 = tr.apply2point(points)
         new_results = new_body.shape.test_points(points2)
-
+        # TODO: Check testing of FILL without 'transform' case
         np.testing.assert_array_equal(results, new_results)
 
     @pytest.mark.skip
     def test_print(self):
         raise NotImplementedError
 
+    @pytest.mark.skip
     def test_fill(self):
         raise NotImplementedError

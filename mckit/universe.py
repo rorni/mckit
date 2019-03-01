@@ -1,18 +1,102 @@
 # -*- coding: utf-8 -*-
 
-from collections import OrderedDict
+from collections import defaultdict
 
 import numpy as np
 
 from .body import Body
-from .surface import create_surface
-from .constants import MIN_BOX_VOLUME
+from .card import Card
 from .geometry import GLOBAL_BOX, Box
-from .material import Composition, Material
 from .transformation import Transformation
 
+__all__ = [
+    'Universe', 'produce_universes', 'NameClashError', 'get_cell_selector',
+    'get_surface_selector'
+]
 
-__all__ = ['Universe']
+
+class NameClashError(Exception):
+    pass
+
+
+def get_cell_selector(cell_names):
+    """Produces cell selector function for specific cell names.
+
+    Parameters
+    ----------
+    cell_names : int or iterable
+        Names of cells to be selected.
+
+    Returns
+    -------
+    selector : func
+        Selector function.
+    """
+    if isinstance(cell_names, int):
+        cell_names = {cell_names}
+    else:
+        cell_names = set(cell_names)
+
+    def selector(cell):
+        if cell.name() in cell_names:
+            return [cell]
+        else:
+            return []
+    return selector
+
+
+def get_surface_selector(surface_names):
+    """Produces surface selector function for specific surface names.
+
+    Parameters
+    ----------
+    surface_names : int or iterable
+        Names of surfaces to be selected.
+
+    Returns
+    -------
+    selector : func
+        Selector function
+    """
+    if isinstance(surface_names, int):
+        surface_names = {surface_names}
+    else:
+        surface_names = set(surface_names)
+
+    def selector(cell):
+        surfs = cell.shape.get_surfaces()
+        return [s for s in surfs if s.name() in surface_names]
+    return selector
+
+
+def produce_universes(cells):
+    """Creates universes from cells.
+
+    The function groups all cells that have equal value of 'universe' option,
+    and the creates corresponding universes. Universe with name 0 is returned
+    only.
+
+    Parameters
+    ----------
+    cells : list[Body]
+        A list of cells.
+
+    Returns
+    -------
+    universe : Universe
+        Main universe.
+    """
+    universes = defaultdict(lambda: (Universe([], name=uname), list()))
+    for c in cells:
+        uname = c.options.get('U', 0)
+        universes[uname][1].append(c)
+        fill = c.options.get('FILL', None)
+        if fill:
+            uname = fill['universe']
+            fill['universe'] = universes[fill['universe']][0]
+    for u, u_cells in universes.values():
+        u.add_cells(u_cells, name_rule='keep')
+    return universes[0][0]
 
 
 class Universe:
@@ -25,92 +109,174 @@ class Universe:
     Parameters
     ----------
     cells : iterable
-        A list of cells this universe consist of. Among these cells can be
-        cells of other universes. The most outer universe will be created.
-        Inner universes will be created either, but they will be accessed
-        via the outer.
+        A list of cells this universe consist of.
     name : int
         Name of the universe, usually used in MCNP. 0 - means global universe.
     verbose_name : str
-        Optional verbose name. This name also can be used to retrieve inner universe.
+        Optional verbose name. This name also can be used to retrieve inner
+        universe.
     comment : list[str] or str
         String or list of strings that describes the universe.
-    universes : dict
-        A dictionary of already created universes: universe_name -> universe.
-        Default: None.
-        
+
     Methods
     -------
+    add_cells(cell)
+        Adds new cell to the universe.
+    apply_fill(cell, universe)
+        Applies fill operations to all or selected cells or universes.
     bounding_box(tol, box)
         Gets bounding box of the universe.
-    fill(cell)
-        Fills every cell that has fill option by cells of filling universe.
+    check_names()
+        Checks if there is name clashes.
     copy()
         Makes a copy of the universe.
-    transform(tr)
-        Applies transformation tr to this universe. Returns a new universe.
-    simplify(box, split_disjoint, min_volume, trim_size)
-        Simplifies all cells of the universe.
     get_surfaces()
         Gets all surfaces of the universe.
     get_materials()
         Gets all materials of the universe.
+    get_compositions()
+        Gets all compositions of the universe.
     get_transformations()
         Gets all transformations of the universe.
     get_universes()
         Gets all inner universes.
-    select_universe(name)
-        Gets specified inner universe.
-    select_cell(name)
-        Gets specified cell.
+    name()
+        Gets numeric name of the universe.
     rename(start_cell, start_surf, start_mat, start_tr)
         Renames all entities contained in the universe.
-    check_names()
-        Checks if there is name clashes.
     save(filename)
         Saves the universe to file.
+    select(cell, selector)
+        Selects specified entities.
+    simplify(box, split_disjoint, min_volume)
+        Simplifies all cells of the universe.
+    test_points(points)
+        Tests to which cell each point belongs.
+    transform(tr)
+        Applies transformation tr to this universe. Returns a new universe.
+    verbose_name()
+        Gets verbose name of the universe.
     """
-    def __init__(self, cells, name=0, verbose_name=None, comment=None, universes=None):
+
+    def __init__(self, cells, name=0, verbose_name=None, comment=None,
+                 name_rule='keep'):
         self._name = name
         self._comment = comment
         self._verbose_name = name if verbose_name is None else verbose_name
-        if universes is None:
-            universes = {}
         self._cells = []
 
-        for c in cells:
-            u = c.get('U', 0)
-            if isinstance(u, Universe):
-                u = u.name
-            if u != name:
-                continue
-            fill = c.get('FILL')
-            if fill is not None:
-                uname = fill['universe']
-                if not isinstance(uname, Universe):
-                    if uname not in universes.keys():
-                        universes[uname] = Universe(cells, name=uname, universes=universes)
-                    fill['universe'] = universes[uname]
-            c['U'] = self
-            self._cells.append(c)
+        self.add_cells(cells, name_rule=name_rule)
 
     def __iter__(self):
         return iter(self._cells)
 
-    def copy(self):
-        """Makes a shallow copy of this universe."""
-        u = Universe([], name=self.name, verbose_name=self.verbose_name,
-                     comment=self._comment)
-        u._cells = self._cells.copy()
-        return u
+    def add_cells(self, cells, name_rule='new'):
+        """Adds new cell to the universe.
 
-    @property
-    def name(self):
-        return self._name
+        Modifies current universe.
 
-    @property
-    def verbose_name(self):
-        return self._verbose_name
+        Parameters
+        ----------
+        cells : Body or list[Body]
+            An array of cells to be added to the universe.
+        name_rule : str
+            Rule, what to do with entities' names. 'keep' - keep all names; in
+            case of clashes NameClashError exception is raised. 'clash' - rename
+            entity only in case of name clashes. 'new' - set new sequential name
+            to all inserted entities.
+        """
+        if isinstance(cells, Body):
+            cells = [cells]
+        surfs = self.get_surfaces()
+        surf_replace = {s: s for s in surfs.values()}
+        cell_names = {c.name() for c in self}
+        surf_names = set(surfs.keys())
+        for cell in cells:
+            if cell.shape.is_empty():
+                continue
+
+            new_shape = self._get_cell_replaced_shape(
+                cell, surf_replace, surf_names, name_rule
+            )
+
+            new_cell = Body(new_shape, **cell.options)
+            if name_rule == 'keep' and cell.name() in cell_names:
+                raise NameClashError("Cell name clash: {0}".format(cell.name()))
+            elif name_rule == 'new' or name_rule == 'clash' and cell.name() in cell_names:
+                new_name = max(cell_names, default=0) + 1
+                new_cell.rename(new_name)
+            cell_names.add(new_cell.name())
+            new_cell.options['U'] = self
+            self._cells.append(new_cell)
+
+    @staticmethod
+    def _get_cell_replaced_shape(cell, surf_replace, surf_names, name_rule):
+        cell_surfs = cell.shape.get_surfaces()
+        new_name = max(surf_names, default=0) + 1
+        replace_dict = {}
+        for s in cell_surfs:
+            if s not in surf_replace.keys():
+                new_surf = s.copy()
+                if name_rule == 'keep' and new_surf.name() in surf_names:
+                    raise NameClashError(
+                        "Surface name clash: {0}".format(s.name()))
+                elif name_rule == 'new':
+                    new_surf.rename(new_name)
+                    new_name += 1
+                elif name_rule == 'clash' and new_surf.name() in surf_names:
+                    new_surf.rename(new_name)
+                    new_name += 1
+                replace_dict[new_surf] = new_surf
+                surf_replace[new_surf] = new_surf
+                surf_names.add(new_surf.name())
+            else:
+                replace_dict[s] = surf_replace[s]
+        return cell.shape.replace_surfaces(surf_replace)
+
+    @staticmethod
+    def _fill_check(predicate):
+        def _predicate(cell):
+            fill = cell.options.get('FILL', None)
+            if fill:
+                return predicate(cell)
+            else:
+                return False
+        return _predicate
+
+    def apply_fill(self, cell=None, universe=None, predicate=None):
+        """Applies fill operations to all or selected cells or universes.
+
+        Modifies current universe.
+
+        Parameters
+        ----------
+        cell : Body or int
+            Cell or name of cell which is filled by filling universe. The cell
+            can only belong to this universe. Cells of inner universes are not
+            taken into account.
+        universe : Universe or int
+            Filler-universe or its name. Cells, that have this universe as a
+            filler will be filled. Only cells of this universe will be checked.
+        predicate : func
+            Function that accepts Body instance and return True, if this cell
+            must be filled.
+        """
+        if not cell and not universe and not predicate:
+            predicate = lambda c: True
+        elif cell:
+            predicate = lambda c: c.name() == cell
+        elif universe:
+            predicate = lambda c: c.options['FILL']['universe'].name() == universe
+        predicate = self._fill_check(predicate)
+        extra_cells = []
+        del_indices = []
+        for i, c in enumerate(self):
+            if predicate(c):
+                extra_cells.extend(c.fill())
+                del_indices.append(i)
+        for i in reversed(del_indices):
+            self._cells.pop(i)
+        self.add_cells(extra_cells, name_rule='new')
 
     def bounding_box(self, tol=100, box=GLOBAL_BOX):
         """Gets bounding box for the universe.
@@ -153,350 +319,266 @@ class Universe:
         dims = max_pt - min_pt
         return Box(center, *dims)
 
-    def fill(self, cells=None, recurrent=False, simplify=False, **kwargs):
-        """Fills cells that have fill option by filling universe cells.
+    def check_names(self):
+        """Checks, if there is name clashes.
 
-        The cells that initially were in this universe and had fill option
-        are replaced by filling universe. Geometry of the cell being filled
-        is used to bound cells of filler universe. Simplification won't be
-        done by default.
+        Returns
+        -------
+        result : bool
+            True, if there is no name clashes.
+        stat : dict
+            Description of found clashes.
+        """
+        pass
+
+    def copy(self):
+        """Makes a copy of the universe."""
+        return Universe(
+            self._cells, name=self._name, verbose_name=self._verbose_name,
+            comment=self._comment
+        )
+
+    def get_surfaces(self, inner=False):
+        """Gets all surfaces of the universe.
 
         Parameters
         ----------
-        cells : int or list[int]
-            Names of cell or cells, which must be filled. Default: None - all
-            universe cells will be considered.
-        recurrent : bool
-            Indicates if apply_fill of inner universes should be also invoked.
-            In this case, apply_fill is first invoked for inner universes.
-            Default: False.
-        simplify : bool
-            Whether to simplify universe cells after filling. Default: False.
-        kwargs : dict
-            Parameters for simplify method. See Body.simplify.
+        inner : bool
+            Whether to take surfaces of inner universes. Default: False -
+            return surfaces of this universe only.
 
         Returns
         -------
-        new_universe : Universe
-            New filled universe.
+        surfs : dict
+            A dictionary of name->Surface.
         """
-        if isinstance(cells, int):
-            cells = [cells]
-        new_cells = []
-        for c in self._cells:
-            name = c.get('name', 0)
-            if cells and name not in cells:
-                new_cells.append(c)
-            else:
-                new_cells.extend(
-                    c.fill(recurrent=recurrent, simplify=simplify, **kwargs)
-                )
-        new_universe = self.copy()
-        new_universe._cells = new_cells
-        if simplify:
-            new_universe = new_universe.simplify(**kwargs)
-        return new_universe
+        surfs_set = set()
+        for c in self:
+            surfs_set.update(c.shape.get_surfaces())
+            if inner and 'FILL' in c.options.keys():
+                surfs_set.update(c.options['FILL']['universe'].get_surfaces(
+                    inner).values())
+        return {s.name(): s for s in surfs_set}
 
-    def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
-                 min_volume=MIN_BOX_VOLUME, trim_size=1):
-        """Simplifies this universe by simplifying all cells.
-
-        The simplification procedure goes in the following way.
-        # TODO: insert brief description!
+    def get_materials(self, recursive=False):
+        """Gets all materials of the universe.
 
         Parameters
         ----------
-        box : Box
-            Box where geometry should be simplified.
-        split_disjoint : bool
-            Whether to split disjoint geometries into separate geometries.
-        min_volume : float
-            The smallest value of box's volume when the process of box splitting
-            must be stopped.
-        trim_size : int
-            Max size of set to return. It is used to prevent unlimited growth
-            of the variant set.
+        recursive : bool
+            Whether to take materials of inner universes. Default: False -
+            returns materials of this universe only.
 
         Returns
         -------
-        universe : Universe
-            Simplified version of this universe.
+        mats : dict
+            A dictionary of name->Material.
         """
-        cells = []
-        for c in self._cells:
-            new_cell = c.simplify(
-                box=box, split_disjoint=split_disjoint, min_volume=min_volume,
-                trim_size=trim_size
-            )
-            if not new_cell.shape.is_empty():
-                cells.append(new_cell)
-        u = self.copy()
-        u._cells = cells
+        pass
 
-    def transform(self, tr):
-        """Applies transformation tr to this universe. 
-        
-        Parameters
-        ----------
-        tr : Transformation
-            Transformation to be applied.
-            
-        Returns
-        -------
-        universe : Universe
-            New transformed universe.
-        """
-        tr_cells = []
-        for cell in self._cells:
-            tr_cells.append(cell.transform(tr))
-        u = self.copy()
-        u._cells = tr_cells
-        return u
-
-    def get_surfaces(self):
-        """Gets all surfaces that discribe this universe.
-
-        Returns
-        -------
-        surfaces : set[Surface]
-            A set of all contained surfaces.
-        """
-        surfaces = set()
-        for c in self._cells:
-            cs = c.shape.get_surfaces()
-            surfaces.update(cs)
-        return surfaces
-
-    def get_materials(self):
-        """Gets all materials that belong to the universe.
-
-        Returns
-        -------
-        materials : set[Material]
-            A set of all materials that are contained in the universe.
-        """
-        materials = set()
-        for c in self._cells:
-            m = c.material()
-            if m is not None:
-                materials.add(m)
-        return materials
-
-    def get_universes(self, recurrent=True):
-        """Gets names of all universes that are included in the universe.
+    def get_compositions(self):
+        """Gets all compositions of the unvierse.
 
         Parameters
         ----------
-        recurrent : bool
-            Whether to list universes that are not directly included in this one.
-            Default: True.
+        recursive : bool
+            Whether to take composition of inner universes. Default: False -
+            returns compositions of this universe only.
 
         Returns
         -------
-        universes : set[int or str]
-            A set of universe names. It can be either MCNP name or verbose name.
+        comps : dict
+            A dictionary of name->Composition.
         """
-        universes = set()
-        for c in self._cells:
-            fill = c.get('FILL')
-            if fill:
-                universes.add(fill['universe'].verbose_name)
-                if recurrent:
-                    universes.update(fill['universe'].get_universes(recurrent=True))
+        comps = {}
+        for c in self:
+            mat = c.material()
+            if mat:
+                comp = mat.composition
+                comps[comp.name()] = comp
+        return comps
+
+    def get_transformations(self):
+        """Gets all transformations of the universe."""
+        pass
+
+    def get_universes(self):
+        """Gets all inner universes.
+
+        Returns
+        -------
+        universes : dict
+            A dictionary of name->Universe.
+        """
+        universes = {self._name: self}
+        for c in self:
+            u = c.options.get('FILL', {}).get('universe', None)
+            if u:
+                universes.update(u.get_universes())
         return universes
 
-    def select_universe(self, name):
-        """Selects given universe.
+    def name(self):
+        """Gets numeric name of the universe."""
+        return self._name
 
-        If no such universe present, KeyError is raised.
+    def rename(self, start_cell=None, start_surf=None, start_mat=None,
+               start_tr=None, name=None):
+        """Renames all entities contained in the universe.
 
-        Parameters
-        ----------
-        name : int or str
-            Numeric or verbose name of universe to be selected.
-
-        Returns
-        -------
-        universe : Universe
-            Requested universe.
-        """
-        if name == self.name or name == self.verbose_name:
-            return self
-        for c in self._cells:
-            fill = c.get('FILL')
-            if fill:
-                u = fill['universe']
-                try:
-                    return u.select_universe(name)
-                except KeyError:
-                    pass
-        raise KeyError("No such universe: {0}".format(name))
-
-    def select_cell(self, name):
-        """Selects given cell.
-
-        Cell must belong this universe.
-        If no such cell present, KeyError is raised.
-
-        Parameters
-        ----------
-        name : int
-            Name of cell.
-
-        Returns
-        -------
-        cell : Body
-            Requested cell.
-        """
-        for c in self._cells:
-            if c.get('name', None) == name:
-                return c
-        raise KeyError("No such cell: {0}".format(name))
-
-    def rename(self, start_cell=1, start_surf=1, start_mat=1, start_tr=1,
-               name=None, verbose_name=None):
-        """Renames universe entities.
-
-        Modifies current universe. All nested universes must be renamed
-        separately if needed.
+        All new names are sequential starting from the specified name. If name
+        is None, than names of entities are leaved untouched.
 
         Parameters
         ----------
         start_cell : int
-            Starting name for cells. Default: 1.
+            Starting name for cells. Default: None.
         start_surf : int
-            Starting name for surfaces. Default: 1.
+            Starting name for surfaces. Default: None.
         start_mat : int
-            Starting name for compositions (MCNP materials). Default: 1.
+            Starting name for materials. Default: None.
         start_tr : int
-            Starting name for transformations. Default: 1.
+            Starting name for transformations. Default: None.
         name : int
-            Name of this universe. Only needed if name must be changed.
-            Default: None.
-        verbose_name : str
-            Verbose name of this universe. Only needed if verbose name of the
-            universe must be changed. Default: None.
+            Name for the universe. Default: None.
         """
-        for s in self.get_surfaces():
-            s.options['name'] = start_surf
-            start_surf += 1
-        for comp in set(m.composition for m in self.get_materials()):
-            comp._options['name'] = start_mat
-            start_mat += 1
-        transformations = set()
-        for c in self._cells:
-            c['name'] = start_cell
-            start_cell += 1
-            tr = c.get('TRCL', None)
-            if tr and tr['name']:
-                transformations.add(tr)
-            fill = c.get('FILL', {})
-            tr = fill.get('transform', None)
-            if tr and tr['name']:
-                transformations.add(tr)
-        for tr in transformations:
-            tr['name'] = start_tr
-            start_tr += 1
-        if name is not None:
+        if name:
             self._name = name
-        if verbose_name is not None:
-            self._verbose_name = verbose_name
+        if start_cell:
+            for c in self:
+                c.rename(start_cell)
+                start_cell += 1
+        if start_surf:
+            surfs = self.get_surfaces()
+            for s in sorted(surfs.values(), key=Card.name):
+                s.rename(start_surf)
+                start_surf += 1
 
-    def check_names(self):
-        """Checks if the universe entities have name clashes.
-
-        First it checks if there is name clashes in cells, surfaces, materials
-        and transformations that belong to the universe itself, and then with
-        all other nested universes.
-
-        Returns
-        -------
-        status : bool
-            Status of the check. True if everything is OK, False, otherwise.
-        report : dict
-            Dictionary of check results. Here found clashes are reported.
-        """
-        names = {}
-        self._collect_names(names)
-
-    def _collect_names(self, results):
-        if id(self) in results.keys():
-            return
-        names = {'cells': [], 'surfaces': [], 'compositions': [],
-                 'transformations': [], 'name': self._name}
-        for s in self.get_surfaces():
-            names['surfaces'].append(s.options.get('name', 0))
-        compositions = {m.composition for m in self.get_materials()}
-        for c in compositions:
-            names['compositions'].append(compositions._options.get('name', 0))
-        transformations = set()
-        for c in self:
-            names['cells'].append(c.get('name', 0))
-            tr = c.get('TRCL', None)
-            if tr is not None:
-                transformations.add(tr)
-            fill = c.get('FILL', None)
-            if fill:
-                u = fill['universe']
-                tr = fill.get('transform', None)
-                if tr:
-                    transformations.add(tr)
-                u._collect_names(results)
-        for tr in transformations:
-            names['transformations'].append(tr._options.get('name', 0))
-        results[id(self)] = names
-
-    def save(self, filename, format_rules=None):
-        """Saves the universe to file.
+    def save(self, filename, inner=True):
+        """Saves the universe into file.
 
         Parameters
         ----------
         filename : str
-            Name of file.
-        format_rules : dict
-            A dictionary of format rules.
+            File name, universe to be saved to.
+        inner : bool
+            Whether to save inner universes too. If False, only this universe
+            itself without fillers will be saved. Default: True.
         """
-        universe = [self.select_universe(name) for name in self.get_universes()]
-        items = [str(self._verbose_name)]
-        items.append('C cell section. Main universe.')
-        for c in self._cells:
-            u = c.pop('U')
-            items.append(str(c))
-            c['U'] = u
-        for u in universe:
-            items.append('C start of universe {0}'.format(u.name))
-            for c in u:
-                items.append(str(c))
-            items.append('C end of universe {0}'.format(u.name))
-        items.append('')
-        items.append('C Surface section')
-        for s in self.get_surfaces():
-            items.append(str(s))
-        for u in universe:
-            items.append('C start of surfaces of universe {0}'.format(u.name))
-            for s in u.get_surfaces():
-                items.append(str(s))
-            items.append('C end of surfaces of universe {0}'.format(u.name))
-        items.append('')
-        items.append('C data section')
-        compositions = {}
-        for mat in self.get_materials():
-            cc = mat.composition
-            compositions[cc['name']] = cc
-        for c in sorted(compositions.keys()):
-            items.append(str(compositions[c]))
-        for u in universe:
-            items.append('C start of surfaces of universe {0}'.format(u.name))
-            for m in u.get_materials():
-                cc = m.composition
-                if cc not in compositions.keys():
-                    compositions[cc['name']] = cc
-                    items.append(str(cc))
-            items.append('C end of surfaces of universe {0}'.format(u.name))
-        items.append('')
+        universes = self.get_universes()
+        cells = []
+        surfaces = []
+        materials = []
+        for u_name in sorted(universes.keys()):
+            u = universes[u_name]
+            cells.extend(sorted(u, key=Card.name))
+            surfaces.extend(sorted(u.get_surfaces().values(), key=Card.name))
+            materials.extend(sorted(u.get_compositions().values(), key=Card.name))
+        cards = [str(self.verbose_name())]
+        cards.extend(map(Card.mcnp_repr, cells))
+        cards.append('')
+        cards.extend(map(Card.mcnp_repr, surfaces))
+        cards.append('')
+        cards.extend(map(Card.mcnp_repr, materials))
+        cards.append('')
+        with open(filename, mode='w') as f:
+            f.write('\n'.join(cards))
 
-        with open(filename, 'w') as f:
-            for item in items:
-                f.write(item)
-                f.write('\n')
+    def select(self, selector=None, inner=False):
+        """Selects specified entities.
+
+        Parameters
+        ----------
+        selector : func
+            A function that accepts 1 argument, Body instance, and returns
+            selected entities.
+        inner : bool
+            Whether to consider inner universes. Default: False - only this
+            universe will be taken into account.
+
+        Returns
+        -------
+        items : list
+            List of selected items.
+        """
+        items = []
+        taken_ids = set()
+        for c in self:
+            portion = selector(c)
+            if inner:
+                u = c.options.get('FILL', {}).get('universe', None)
+                if u:
+                    portion.extend(u.select(selector, True))
+            for item in portion:
+                if id(item) not in taken_ids:
+                    taken_ids.add(id(item))
+                    items.append(item)
+        return items
+
+    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False):
+        """Simplifies all cells of the universe.
+
+        Modifies current universe.
+
+        Parameters
+        ----------
+        box : Box
+            Box, from which simplification process starts. Default: GLOBAL_BOX.
+        min_volume : float
+            Minimal volume of the box, when splitting process terminates.
+        split_disjoint : bool
+            Whether to split disjoint cells.
+        """
+        i = 0
+        while i < len(self._cells):
+            cs = self._cells[i].simplify(box=box, min_volume=min_volume)
+            if cs.shape.is_empty():
+                self._cells.pop(i)
+            else:
+                self._cells[i] = cs
+                i += 1
+
+    def test_points(self, points):
+        """Finds cell to which each point belongs to.
+
+        Parameters
+        ----------
+        points : array_like[float]
+            An array of point coordinates. If there is only one point it has
+            shape (3,); if there are n points, it has shape (n, 3).
+
+        Returns
+        -------
+        result : np.ndarray[int]
+            An array of cell indices to which a particular point belongs to.
+            Its length equals to the number of points.
+        """
+        points = np.array(points)
+        result = np.empty(points.size // 3)
+        for i, c in enumerate(self._cells):
+            test = c.shape.test_points(points)
+            result[test == +1] = i
+        return result
+
+    def transform(self, tr):
+        """Applies transformation tr to this universe. Returns a new universe.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+
+        Returns
+        -------
+        u_tr : Universe
+            New transformed universe.
+        """
+        new_cells = [c.transform(tr) for c in self]
+        return Universe(new_cells, name=self._name, name_rule='clash',
+                        verbose_name=self._verbose_name, comment=self._comment)
+
+
+    def verbose_name(self):
+        """Gets verbose name of the universe."""
+        return self._verbose_name
+
 
