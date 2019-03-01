@@ -102,20 +102,20 @@ def print_option(option, value):
         raise ValueError("Incorrect option name: {0}".format(option))
 
 
-def pretty_float(value, sig_digits):
+def pretty_float(value, frac_digits):
     """Pretty print of the float number.
 
     Parameters
     ----------
     value : float
         Value to be printed.
-    sig_digits : int
-        The number of significant digits.
+    frac_digits : int
+        The number of digits after decimal point.
     """
     decades = get_decades(value)
-    format_f = '{{0:.{0}f}}'.format(max(sig_digits - decades, min(sig_digits, 1)) - 1)
-    format_e = '{{0:.{0}e}}'.format(sig_digits - 1)
-    text_f = format_f.format(value)
+    format_f = '{{0:.{0}f}}'.format(max(frac_digits, 0))
+    format_e = '{{0:.{0}e}}'.format(max(frac_digits + decades, 0))
+    text_f = format_f.format(round(value, frac_digits))
     text_e = format_e.format(value)
     if len(text_f) <= len(text_e):
         return text_f
