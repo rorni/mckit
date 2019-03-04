@@ -18,7 +18,9 @@ def get_dirs(environment_variable):
 
 
 def append_if_not_present(destination, value):
-    if value not in destination:
+    if isinstance(value, list):
+        destination.extend(value)
+    elif value not in destination:
         destination.append(value)
 
 
@@ -45,9 +47,9 @@ else:
         'mkl_sequential_dll',
         'libnlopt-0',
     ]
-    nlopt_inc = "C:\\ProgramData\\Libs\\nlopt"
+    nlopt_inc = get_dirs("NLOPT_INC")
     append_if_not_present(include_dirs, nlopt_inc)
-    nlopt_lib = "C:\\ProgramData\\Libs\\nlopt"
+    nlopt_lib = get_dirs("NLOPT_LIB")  
     append_if_not_present(library_dirs, nlopt_lib)
     mkl_inc = sys.prefix + '\\Library\\include'
     append_if_not_present(include_dirs, mkl_inc)
