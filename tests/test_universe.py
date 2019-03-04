@@ -244,6 +244,24 @@ def test_get_universes(universe, case, answer):
         assert names == answer[k]
 
 
+@pytest.mark.parametrize('case, rename, stat', [
+    (1, {}, {}),
+    (2, {}, {}),
+    (2, {2: {'start_cell': 2}}, {'cell': {2: [0, 2], 3: [0, 2]}}),
+    (2, {2: {'start_surf': 2}}, {'surf': {2: [0, 2], 3: [0, 2], 4: [0, 2]}}),
+    (2, {2: {'start_cell': 2, 'start_surf': 3}}, {'cell': {2: [0, 2], 3: [0, 2]}, 'surf': {3: [0, 2], 4: [0, 2]}}),
+    (2, {2: {'start_cell': 2}, 1: {'start_cell': 1}}, {'cell': {1: [0, 1], 2: [0, 1, 2], 3: [0, 1, 2]}}),
+    (3, {}, {})
+])
+def test_name_clashes(universe, case, rename, stat):
+    u = universe(case)
+    unvs = u.get_universes()
+    for uname, ren_dict in rename.items():
+        unvs[uname].rename(**ren_dict)
+    s = u.name_clashes()
+    assert s == stat
+
+
 @pytest.mark.parametrize('case, condition, answer_case, box', [
     (2, {}, 1002, Box([0, 0, 0], 20, 20, 20)),
     (2, {'cell': 1}, 1012, Box([0, 0, 0], 20, 20, 20)),
@@ -299,7 +317,6 @@ def test_save(universe, case, box):
     u = universe(case)
     out = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
     u.save(out.name)
-    print(out.read().decode())
     out.close()
     ur = read_mcnp(out.name)
 
@@ -351,7 +368,7 @@ def test_save(universe, case, box):
 # def test_check_names(universe, case_no, cells, status, output):
 #     u = universe[case_no]
 #     u = u.fill(cells=cells)
-#     s, r = u.check_names()
+#     s, r = u.name_clashes()
 #     assert s == status
 #     # assert r == output
 #

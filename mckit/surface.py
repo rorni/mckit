@@ -705,7 +705,7 @@ class GQuadratic(Surface, _GQuadratic):
         k = self._get_k()
         for v in [a, b, c, d, e, f, g, h, j, k]:
             words.append(' ')
-            p = significant_digits(v, FLOAT_TOLERANCE)
+            p = significant_digits(v, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
             words.append(pretty_float(v, p))
         return print_card(words)
 

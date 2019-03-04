@@ -126,8 +126,6 @@ class Universe:
         Applies fill operations to all or selected cells or universes.
     bounding_box(tol, box)
         Gets bounding box of the universe.
-    check_names()
-        Checks if there is name clashes.
     copy()
         Makes a copy of the universe.
     get_surfaces()
@@ -142,6 +140,8 @@ class Universe:
         Gets all inner universes.
     name()
         Gets numeric name of the universe.
+    name_clashes()
+        Checks if there is name clashes.
     rename(start_cell, start_surf, start_mat, start_tr)
         Renames all entities contained in the universe.
     save(filename)
@@ -319,18 +319,6 @@ class Universe:
         dims = max_pt - min_pt
         return Box(center, *dims)
 
-    def check_names(self):
-        """Checks, if there is name clashes.
-
-        Returns
-        -------
-        result : bool
-            True, if there is no name clashes.
-        stat : dict
-            Description of found clashes.
-        """
-        pass
-
     def copy(self):
         """Makes a copy of the universe."""
         return Universe(
@@ -420,6 +408,44 @@ class Universe:
     def name(self):
         """Gets numeric name of the universe."""
         return self._name
+
+    def name_clashes(self):
+        """Checks, if there is name clashes.
+
+        Returns
+        -------
+        stat : dict
+            Description of found clashes. If no clashes - the dictionary is
+            empty.
+        """
+        univ = self.get_universes()
+        stat = {}
+        cells = {uname: list(map(Card.name, u)) for uname, u in univ.items()}
+        surfs = {uname: list(u.get_surfaces().keys()) for uname, u in univ.items()}
+        cstat = Universe._produce_stat(cells)
+        if cstat:
+            stat['cell'] = cstat
+        sstat = Universe._produce_stat(surfs)
+        if sstat:
+            stat['surf'] = sstat
+        return stat
+
+    @staticmethod
+    def _produce_stat(names):
+        stat = defaultdict(list)
+        for u, u_names in names.items():
+            for name in u_names:
+                stat[name].append(u)
+        return Universe._clean_stat_dict(stat)
+
+    @staticmethod
+    def _clean_stat_dict(stat):
+        new_stat = {}
+        for k, v in stat.items():
+            if len(v) > 1:
+                v.sort()
+                new_stat[k] = v
+        return new_stat
 
     def rename(self, start_cell=None, start_surf=None, start_mat=None,
                start_tr=None, name=None):

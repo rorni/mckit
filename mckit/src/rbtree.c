@@ -114,7 +114,7 @@ int rbtree_add(RBTree * rbt, const void * key)
 void * rbtree_pop(RBTree * rbt, const void * key)
 {
     void * result;
-    RBNode *parent, *balance, *del_node, *node;
+    RBNode *parent, *node;
     if (key == NULL) node = rbt->root;
     else node = *node_find(rbt, key, &parent);
     
