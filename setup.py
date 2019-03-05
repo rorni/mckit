@@ -4,6 +4,12 @@ import sys
 
 import numpy as np
 from setuptools import Extension, find_packages, setup
+from setuptools.dist import Distribution
+
+
+class BinaryDistribution(Distribution):
+    def is_pure(self):
+        return False
 
 
 def get_dirs(environment_variable):
@@ -49,7 +55,7 @@ else:
     ]
     nlopt_inc = get_dirs("NLOPT_INC")
     append_if_not_present(include_dirs, nlopt_inc)
-    nlopt_lib = get_dirs("NLOPT_LIB")  
+    nlopt_lib = get_dirs("NLOPT_LIB")
     append_if_not_present(library_dirs, nlopt_lib)
     mkl_inc = sys.prefix + '\\Library\\include'
     append_if_not_present(include_dirs, mkl_inc)
@@ -70,7 +76,7 @@ extensions = [
         geometry_sources,
         include_dirs=include_dirs,
         libraries=geometry_dependencies,
-        library_dirs=library_dirs,
+        library_dirs=library_dirs
     )
 ]
 
@@ -78,7 +84,7 @@ setup(
     name='mckit',
     version='0.1.1',
     packages=find_packages(),
-    package_data={'mckit': ['data/isotopes.dat']},
+    package_data={'mckit': ['data/isotopes.dat', 'libnlopt-0.dll']},
     url='https://gitlab.iterrf.ru/Rodionov/mckit',
     license='',
     author='Roman Rodionov',
@@ -86,4 +92,5 @@ setup(
     description='Tool for handling neutronic models and results',
     install_requires=['numpy', 'scipy', 'ply'],
     ext_modules=extensions,
+    # data_files=[('.', ['libnlopt-0.dll'])]
 )
