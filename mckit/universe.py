@@ -604,7 +604,9 @@ class Universe:
         return Universe(new_cells, name=self._name, name_rule='clash',
                         verbose_name=self._verbose_name, comment=self._comment)
 
+
     def verbose_name(self):
         """Gets verbose name of the universe."""
         return self._verbose_name
+
 
