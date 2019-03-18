@@ -188,9 +188,9 @@ class Universe:
         if isinstance(cells, Body):
             cells = [cells]
         surfs = self.get_surfaces()
-        surf_replace = {s: s for s in surfs.values()}
+        surf_replace = {s: s for s in surfs}
         cell_names = {c.name() for c in self}
-        surf_names = set(surfs.keys())
+        surf_names = {s.name() for s in surfs}
         for cell in cells:
             if cell.shape.is_empty():
                 continue
@@ -337,16 +337,16 @@ class Universe:
 
         Returns
         -------
-        surfs : dict
-            A dictionary of name->Surface.
+        surfs : set
+            A set of surfaces that belong to the universe.
         """
-        surfs_set = set()
+        surfs = set()
         for c in self:
-            surfs_set.update(c.shape.get_surfaces())
+            surfs.update(c.shape.get_surfaces())
             if inner and 'FILL' in c.options.keys():
-                surfs_set.update(c.options['FILL']['universe'].get_surfaces(
+                surfs.update(c.options['FILL']['universe'].get_surfaces(
                     inner).values())
-        return {s.name(): s for s in surfs_set}
+        return surfs
 
     def get_materials(self, recursive=False):
         """Gets all materials of the universe.
@@ -364,26 +364,25 @@ class Universe:
         """
         pass
 
-    def get_compositions(self):
+    def get_compositions(self, inner=False):
         """Gets all compositions of the unvierse.
 
         Parameters
         ----------
-        recursive : bool
+        inner : bool
             Whether to take composition of inner universes. Default: False -
             returns compositions of this universe only.
 
         Returns
         -------
-        comps : dict
-            A dictionary of name->Composition.
+        comps : set
+            A set of Composition objects.
         """
-        comps = {}
+        comps = set()
         for c in self:
             mat = c.material()
             if mat:
-                comp = mat.composition
-                comps[comp.name()] = comp
+                comps.add(mat.composition)
         return comps
 
     def get_transformations(self):
@@ -395,10 +394,10 @@ class Universe:
 
         Returns
         -------
-        universes : dict
-            A dictionary of name->Universe.
+        universes : set
+            A set of universes.
         """
-        universes = {self._name: self}
+        universes = {self}
         for c in self:
             u = c.options.get('FILL', {}).get('universe', None)
             if u:
@@ -420,14 +419,18 @@ class Universe:
         """
         univ = self.get_universes()
         stat = {}
-        cells = {uname: list(map(Card.name, u)) for uname, u in univ.items()}
-        surfs = {uname: list(u.get_surfaces().keys()) for uname, u in univ.items()}
+        cells = {u: list(map(Card.name, u)) for u in univ}
+        surfs = {u: list(map(Card.name, u.get_surfaces())) for u in univ}
+        univs = {u: [u.name()] for u in univ}
         cstat = Universe._produce_stat(cells)
         if cstat:
             stat['cell'] = cstat
         sstat = Universe._produce_stat(surfs)
         if sstat:
             stat['surf'] = sstat
+        ustat = Universe._produce_stat(univs)
+        if ustat:
+            stat['universe'] = ustat
         return stat
 
     @staticmethod
@@ -443,8 +446,8 @@ class Universe:
         new_stat = {}
         for k, v in stat.items():
             if len(v) > 1:
-                v.sort()
-                new_stat[k] = v
+                # v.sort(key=Universe.name)
+                new_stat[k] = set(v)
         return new_stat
 
     def rename(self, start_cell=None, start_surf=None, start_mat=None,
@@ -475,7 +478,7 @@ class Universe:
                 start_cell += 1
         if start_surf:
             surfs = self.get_surfaces()
-            for s in sorted(surfs.values(), key=Card.name):
+            for s in sorted(surfs, key=Card.name):
                 s.rename(start_surf)
                 start_surf += 1
 
@@ -494,11 +497,10 @@ class Universe:
         cells = []
         surfaces = []
         materials = []
-        for u_name in sorted(universes.keys()):
-            u = universes[u_name]
+        for u in sorted(universes, key=Universe.name):
             cells.extend(sorted(u, key=Card.name))
-            surfaces.extend(sorted(u.get_surfaces().values(), key=Card.name))
-            materials.extend(sorted(u.get_compositions().values(), key=Card.name))
+            surfaces.extend(sorted(u.get_surfaces(), key=Card.name))
+            materials.extend(sorted(u.get_compositions(), key=Card.name))
         cards = [str(self.verbose_name())]
         cards.extend(map(Card.mcnp_repr, cells))
         cards.append('')

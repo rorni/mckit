@@ -105,11 +105,12 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs):
             assert acell is not cell
             assert acell.name() == name
             assert acell.options['U'] is u
-        for k, v in s_before.items():
-            assert v is s_after[k]
-        assert len(s_after.keys()) - len(s_before.keys()) == len(new_surfs)
-        for s in new_surfs:
-            assert s_after[s.name()] == s
+        for s in s_before:
+            assert s in s_after
+        assert len(s_after) - len(s_before) == len(new_surfs)
+        s_diff = s_after.difference(s_before)
+        assert s_diff == set(new_surfs)
+        assert {s.name() for s in s_diff} == {s.name() for s in new_surfs}
 
 
 @pytest.mark.parametrize('case, recursive, answer_data', [
@@ -119,21 +120,32 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs):
                 (4, 'C/Z', [-2, 0, 1]), (5, 'SZ', [3.5, 10])]),
 ])
 def test_get_surfaces(universe, case, recursive, answer_data):
-    answer = {n: create_surface(k, *p, name=n) for n, k, p in answer_data}
+    answer = {create_surface(k, *p, name=n) for n, k, p in answer_data}
     u = universe(case)
     surfaces = u.get_surfaces(inner=recursive)
     assert surfaces == answer
+    names_ans = {x[0] for x in answer_data}
+    names = {s.name() for s in surfaces}
 
 
 @pytest.mark.parametrize('case, answer', [
-    (1, {1: Composition(atomic=[(Element('C-12', lib='31c'), 1)]), 2: Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)])}),
-    (2, {}),
-    (3, {4: Composition(atomic=[(Element('C-12', lib='31c'), 1)]), 3: Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)])}),
+    (1, {
+            Composition(atomic=[(Element('C-12', lib='31c'), 1)], name=1),
+            Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)], name=2)
+    }),
+    (2, set()),
+    (3, {
+            Composition(atomic=[(Element('C-12', lib='31c'), 1)], name=4),
+            Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)], name=3)
+    }),
 ])
 def test_get_compositions(universe, case, answer):
     u = universe(case)
     comps = u.get_compositions()
     assert comps == answer
+    names_ans = {c.name() for c in answer}
+    names = {c.name() for c in comps}
+    assert names == names_ans
 
 
 @pytest.mark.parametrize('tr', [
@@ -181,8 +193,8 @@ def test_copy(universe, case):
         assert cc is not c
         assert c.name() == cc.name()
         assert c.shape == cc.shape
-    surfs = u.get_surfaces()
-    csurfs = uc.get_surfaces()
+    surfs = {s.name(): s for s in u.get_surfaces()}
+    csurfs = {s.name(): s for s in uc.get_surfaces()}
     assert surfs == csurfs
     for k, v in surfs.items():
         assert csurfs[k] is not v
@@ -238,8 +250,9 @@ def test_select(universe, case, condition, inner, answer):
 def test_get_universes(universe, case, answer):
     u = universe(case)
     unvs = u.get_universes()
-    assert len(unvs.keys()) == len(answer.keys())
-    for k, v in unvs.items():
+    assert len(unvs) == len(answer.keys())
+    named_u = {x.name(): x for x in unvs}
+    for k, v in named_u.items():
         names = {c.name() for c in v}
         assert names == answer[k]
 
@@ -251,14 +264,24 @@ def test_get_universes(universe, case, answer):
     (2, {2: {'start_surf': 2}}, {'surf': {2: [0, 2], 3: [0, 2], 4: [0, 2]}}),
     (2, {2: {'start_cell': 2, 'start_surf': 3}}, {'cell': {2: [0, 2], 3: [0, 2]}, 'surf': {3: [0, 2], 4: [0, 2]}}),
     (2, {2: {'start_cell': 2}, 1: {'start_cell': 1}}, {'cell': {1: [0, 1], 2: [0, 1, 2], 3: [0, 1, 2]}}),
+    (2, {1: {'name': 2}}, {'universe': {2: [1, 2]}}),
+    (2, {1: {'name': 3}, 2: {'name': 3}}, {'universe': {3: [1, 2]}}),
     (3, {}, {})
 ])
 def test_name_clashes(universe, case, rename, stat):
     u = universe(case)
-    unvs = u.get_universes()
+    unvs = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
         unvs[uname].rename(**ren_dict)
+    for stat_item in stat.values():
+        for name, ulist in stat_item.items():
+            stat_item[name] = {unvs[uname] for uname in ulist}
     s = u.name_clashes()
+    if 'universe' in s.keys():
+        for un, uu in unvs.items():
+            print(un, uu.name(), id(uu))
+        for uname, ulist in s['universe'].items():
+            print(uname, [x.name() for x in ulist], [id(x) for x in ulist])
     assert s == stat
 
 
@@ -291,7 +314,7 @@ def test_rename(universe, case, start, answer):
     u.rename(**start)
     assert u.name() == answer['name']
     cnames = sorted(c.name() for c in u)
-    snames = sorted(u.get_surfaces().keys())
+    snames = sorted(s.name() for s in u.get_surfaces())
     assert cnames == answer['cell']
     assert snames == answer['surface']
 
@@ -321,8 +344,8 @@ def test_save(universe, case, box):
     ur = read_mcnp(out.name)
 
     points = box.generate_random_points(100000)
-    universes_orig = u.get_universes()
-    universes_answ = ur.get_universes()
+    universes_orig = {x.name(): x for x in u.get_universes()}
+    universes_answ = {x.name(): x for x in ur.get_universes()}
     assert universes_orig.keys() == universes_answ.keys()
     for k, univ in universes_orig.items():
         test_a = univ.test_points(points)
