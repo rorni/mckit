@@ -63,40 +63,83 @@ def test_init(cells, kwargs):
     assert u._comment == kwargs.get('comment', None)
 
 
-@pytest.mark.parametrize('case, cells, name_rule, new_name, new_surfs', [
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'keep', None, []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'keep', [8], None),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'clash', [5], [Sphere([0, 3, 0], 0.5, name=8)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'clash', [8], [Sphere([0, 3, 0], 0.5, name=6)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)]),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)]),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=2), 'new', [5], []),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=2)), name=8), 'keep', [8], []),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=7), 'new', [5], []),
+@pytest.mark.parametrize('case, cells, name_rule, new_name, new_surfs, new_comps', [
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'keep', None, [], []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'keep', [8], None, []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'clash', [5], [Sphere([0, 3, 0], 0.5, name=8)], []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'clash', [8], [Sphere([0, 3, 0], 0.5, name=6)], []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=2), 'new', [5], [], []),
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=2)), name=8), 'keep', [8], [], []),
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=7), 'new', [5], [], []),
     (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=8),
-         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=8)), name=9)], 'keep', [8, 9], None),
+         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=8)), name=9)], 'keep', [8, 9], None, []),
     (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=9),
-         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=9)), name=9)], 'keep', None, [8, 9]),
+         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=9)), name=9)], 'keep', None, [8, 9], []),
     (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=2),
          Body(Shape('C', Sphere([0, 4, 0], 0.5, name=2)), name=2)], 'clash',
-     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)]),
+     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)], []),
     (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=9),
          Body(Shape('C', Sphere([0, 4, 0], 0.5, name=9)), name=9)], 'new',
-     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)]),
+     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)], []),
+    (1, Body(
+            Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
+            name=7,
+            MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=2), density=2.0)
+        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
+    (1, Body(
+        Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
+        name=7,
+        MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=1),
+                     density=2.0)
+        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
+    (1, Body(
+        Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
+        name=7,
+        MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=3),
+                     density=2.0)
+        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
+    (1, Body(
+        Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
+        name=7,
+        MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=2),
+                     density=2.0)
+        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], None),
+    (1, Body(
+        Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
+        name=7,
+        MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=2),
+                     density=2.0)
+        ), 'new', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=3)]),
+    (1, Body(
+        Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
+        name=7,
+        MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=2),
+                     density=2.0)
+        ), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=3)]),
+    (1, Body(
+        Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
+        name=7,
+        MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=6),
+                     density=2.0)
+        ), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=6)]),
 
 ])
-def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs):
+def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_comps):
     u = universe(case)
     s_before = u.get_surfaces()
-    if new_surfs is None or new_name is None:
+    c_before = u.get_compositions()
+    if new_surfs is None or new_name is None or new_comps is None:
         with pytest.raises(NameClashError):
             u.add_cells(cells, name_rule=name_rule)
     else:
         u.add_cells(cells, name_rule=name_rule)
         s_after = u.get_surfaces()
+        c_after = u.get_compositions()
         acells = u._cells[-len(new_name):]
         if isinstance(cells, Body):
             cells = [cells]
@@ -105,12 +148,20 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs):
             assert acell is not cell
             assert acell.name() == name
             assert acell.options['U'] is u
-        for s in s_before:
-            assert s in s_after
-        assert len(s_after) - len(s_before) == len(new_surfs)
-        s_diff = s_after.difference(s_before)
-        assert s_diff == set(new_surfs)
-        assert {s.name() for s in s_diff} == {s.name() for s in new_surfs}
+            if cell.material() is not None:
+                assert acell.material().composition == cell.material().composition
+
+        assert_change(s_before, s_after, new_surfs)
+        assert_change(c_before, c_after, new_comps)
+
+
+def assert_change(before, after, new_items):
+    for s in before:
+        assert s in after
+    assert len(after) - len(before) == len(new_items)
+    diff = after.difference(before)
+    assert diff == set(new_items)
+    assert {s.name() for s in diff} == {s.name() for s in new_items}
 
 
 @pytest.mark.parametrize('case, recursive, answer_data', [

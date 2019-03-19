@@ -117,6 +117,8 @@ class Universe:
         universe.
     comment : list[str] or str
         String or list of strings that describes the universe.
+    common_materials : set
+        A set of common materials. Default: None.
 
     Methods
     -------
@@ -159,11 +161,14 @@ class Universe:
     """
 
     def __init__(self, cells, name=0, verbose_name=None, comment=None,
-                 name_rule='keep'):
+                 name_rule='keep', common_materials=None):
         self._name = name
         self._comment = comment
         self._verbose_name = name if verbose_name is None else verbose_name
         self._cells = []
+        if common_materials is None:
+            common_materials = set()
+        self._common_materials = common_materials
 
         self.add_cells(cells, name_rule=name_rule)
 
@@ -189,8 +194,11 @@ class Universe:
             cells = [cells]
         surfs = self.get_surfaces()
         surf_replace = {s: s for s in surfs}
+        comps = self._common_materials.union(self.get_compositions())
+        comp_replace = {c: c for c in comps}
         cell_names = {c.name() for c in self}
         surf_names = {s.name() for s in surfs}
+        comp_names = {c.name() for c in comps}
         for cell in cells:
             if cell.shape.is_empty():
                 continue
