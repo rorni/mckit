@@ -177,6 +177,7 @@ def test_get_surfaces(universe, case, recursive, answer_data):
     assert surfaces == answer
     names_ans = {x[0] for x in answer_data}
     names = {s.name() for s in surfaces}
+    assert names == names_ans
 
 
 @pytest.mark.parametrize('case, answer', [
