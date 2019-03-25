@@ -648,11 +648,6 @@ class GQuadratic(Surface, _GQuadratic):
             m = np.array(m)
             v = np.array(v)
             k = k
-        maxdir = np.argmax(np.abs(np.diag(m)))
-        if np.diag(m)[maxdir] < 0:
-            m *= -1
-            v *= -1
-            k *= -1
         self._m_digits = significant_array(m, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         self._v_digits = significant_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         self._k_digits = significant_digits(k, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
