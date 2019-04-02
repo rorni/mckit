@@ -155,6 +155,50 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_co
         assert_change(c_before, c_after, new_comps)
 
 
+@pytest.mark.parametrize('case, common_materials, ans_compositions', [
+    (1, set(), {Composition(atomic=[('C-12', 1)], name=1, lib='31c'),
+             Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2, lib='31c')}),
+    (1, {Composition(atomic=[('C-12', 1)], name=10, lib='31c')}, {
+        Composition(atomic=[('C-12', 1)], name=10, lib='31c'),
+        Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2, lib='31c')
+    }),
+    (1, {
+            Composition(atomic=[('C-12', 1)], name=10, lib='31c'),
+            Composition(atomic=[('H-1', 2), ('O-16', 1)], name=11, lib='31c')
+        },
+        {
+            Composition(atomic=[('C-12', 1)], name=10, lib='31c'),
+            Composition(atomic=[('H-1', 2), ('O-16', 1)], name=11, lib='31c')
+        }
+     ),
+    (1, {
+            Composition(atomic=[('Fe-56', 1)], name=10, lib='31c')
+        },
+        {
+            Composition(atomic=[('C-12', 1)], name=1, lib='31c'),
+            Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2, lib='31c')
+        }
+     ),
+    (1, {
+            Composition(atomic=[('Fe-56', 1)], name=1, lib='31c')
+        }, None
+     )
+])
+def test_common_materials(universe, case, common_materials, ans_compositions):
+    u = universe(case)
+    if ans_compositions is None:
+        with pytest.raises(NameClashError):
+            Universe(u, common_materials=common_materials)
+    else:
+        new_u = Universe(u, common_materials=common_materials)
+        new_comps = new_u.get_compositions()
+        assert new_comps == ans_compositions
+        common = {c.name(): c for c in common_materials}
+        for c in new_comps:
+            if c in common_materials:
+                assert c is common[c.name()]
+
+
 def assert_change(before, after, new_items):
     for s in before:
         assert s in after
