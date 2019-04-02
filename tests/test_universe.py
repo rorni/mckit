@@ -156,7 +156,7 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_co
 
 
 @pytest.mark.parametrize('case, common_materials, ans_compositions', [
-    (1, set(), {Composition(atomic=[('C-12', 1)], name=1, lib='31c'),
+    (1, set(), {Composition(atomic=[('C-12', 1)], name=1),
              Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2, lib='31c')}),
     (1, {Composition(atomic=[('C-12', 1)], name=10, lib='31c')}, {
         Composition(atomic=[('C-12', 1)], name=10, lib='31c'),
@@ -172,11 +172,11 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_co
         }
      ),
     (1, {
-            Composition(atomic=[('Fe-56', 1)], name=10, lib='31c')
+            Composition(atomic=[('Fe-56', 1)], name=10)
         },
         {
             Composition(atomic=[('C-12', 1)], name=1, lib='31c'),
-            Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2, lib='31c')
+            Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2)
         }
      ),
     (1, {

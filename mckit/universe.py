@@ -250,7 +250,7 @@ class Universe:
                     "{0} name clash: {1}".format(err_desc, entity.name())
                 )
             elif rule == 'new' or rule == 'clash' and new_entity.name() in names:
-                new_name = max(names) + 1
+                new_name = max(names, default=0) + 1
                 new_entity.rename(new_name)
                 names.add(new_name)
             replace[new_entity] = new_entity
