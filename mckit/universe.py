@@ -8,6 +8,7 @@ from .body import Body
 from .card import Card
 from .geometry import GLOBAL_BOX, Box
 from .transformation import Transformation
+from .material import Material
 
 __all__ = [
     'Universe', 'produce_universes', 'NameClashError', 'get_cell_selector',
@@ -208,6 +209,16 @@ class Universe:
             )
 
             new_cell = Body(new_shape, **cell.options)
+            mat = new_cell.material()
+            if mat:
+                new_comp = Universe._update_replace_dict(
+                    mat._composition, comp_replace, comp_names, name_rule,
+                    'Material'
+                )
+                new_cell.options['MAT'] = Material(
+                    composition=new_comp, density=mat.density
+                )
+
             if name_rule == 'keep' and cell.name() in cell_names:
                 raise NameClashError("Cell name clash: {0}".format(cell.name()))
             elif name_rule == 'new' or name_rule == 'clash' and cell.name() in cell_names:
@@ -220,26 +231,33 @@ class Universe:
     @staticmethod
     def _get_cell_replaced_shape(cell, surf_replace, surf_names, name_rule):
         cell_surfs = cell.shape.get_surfaces()
-        new_name = max(surf_names, default=0) + 1
         replace_dict = {}
         for s in cell_surfs:
-            if s not in surf_replace.keys():
-                new_surf = s.copy()
-                if name_rule == 'keep' and new_surf.name() in surf_names:
-                    raise NameClashError(
-                        "Surface name clash: {0}".format(s.name()))
-                elif name_rule == 'new':
-                    new_surf.rename(new_name)
-                    new_name += 1
-                elif name_rule == 'clash' and new_surf.name() in surf_names:
-                    new_surf.rename(new_name)
-                    new_name += 1
-                replace_dict[new_surf] = new_surf
-                surf_replace[new_surf] = new_surf
-                surf_names.add(new_surf.name())
-            else:
-                replace_dict[s] = surf_replace[s]
+            replace_dict[s] = Universe._update_replace_dict(
+                s, surf_replace, surf_names, name_rule, 'Surface'
+            )
         return cell.shape.replace_surfaces(surf_replace)
+
+    @staticmethod
+    def _update_replace_dict(entity, replace, names, rule, err_desc):
+        if entity not in replace.keys():
+            new_entity = entity.copy()
+            if rule == 'keep' and new_entity.name() in names:
+                print(entity.mcnp_repr())
+                for c in replace.keys():
+                    print(c.mcnp_repr())
+                raise NameClashError(
+                    "{0} name clash: {1}".format(err_desc, entity.name())
+                )
+            elif rule == 'new' or rule == 'clash' and new_entity.name() in names:
+                new_name = max(names) + 1
+                new_entity.rename(new_name)
+                names.add(new_name)
+            replace[new_entity] = new_entity
+            names.add(new_entity.name())
+            return new_entity
+        else:
+            return replace[entity]
 
     @staticmethod
     def _fill_check(predicate):
