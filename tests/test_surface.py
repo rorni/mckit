@@ -93,6 +93,8 @@ def test_surface_creation(cls, kind, params, expected):
 @pytest.mark.parametrize('cls, kind, params', [
     (Plane, 'P', [3.2, -1.4, 5.7, -4.8]),
     (Plane, 'P', [3.28434343457632, -1.48888888888888, 5.7341411411414, -4.8]),
+    (Plane, 'P', [-0.176628496439844, -0.005226281717615, 0.984263714776080,
+                  342.264078203542790]),
     (Sphere, 'S', [3.7, -3.8, 3.9, 6.5]),
     (Cylinder, 'CX', [6.6]),
     (Cylinder, 'CY', [6.7]),

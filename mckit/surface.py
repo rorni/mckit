@@ -237,8 +237,9 @@ class Plane(Surface, _Plane):
             v = np.array(normal)
             k = offset
         length = np.linalg.norm(v)
-        v = v / length
-        k /= length
+        if abs(length - 1) > FLOAT_TOLERANCE:
+            v = v / length
+            k /= length
         self._k_digits = significant_digits(k, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         self._v_digits = significant_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
