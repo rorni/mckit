@@ -568,7 +568,8 @@ class Universe:
                     items.append(item)
         return items
 
-    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False):
+    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False,
+                 verbose=False):
         """Simplifies all cells of the universe.
 
         Modifies current universe.
@@ -581,9 +582,13 @@ class Universe:
             Minimal volume of the box, when splitting process terminates.
         split_disjoint : bool
             Whether to split disjoint cells.
+        verbose : bool
+            Turns on verbose output. Default: False.
         """
         i = 0
         while i < len(self._cells):
+            if verbose:
+                print('simplifying: {0}/{1}'.format(i, len(self._cells)))
             cs = self._cells[i].simplify(box=box, min_volume=min_volume)
             if cs.shape.is_empty():
                 self._cells.pop(i)
