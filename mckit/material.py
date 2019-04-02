@@ -91,20 +91,24 @@ class Composition(Card):
         self._composition = {}
         elem_w = []
         frac_w = []
+        if 'lib' in options.keys():
+            elem_opt = {'lib': options['lib']}
+        else:
+            elem_opt = {}
         for elem, frac in weight:
             if isinstance(elem, Element):
-                elem_w.append(elem)
+                elem_w.append(elem.copy(**elem_opt))
             else:
-                elem_w.append(Element(elem))
+                elem_w.append(Element(elem, **elem_opt))
             frac_w.append(frac)
 
         elem_a = []
         frac_a = []
         for elem, frac in atomic:
             if isinstance(elem, Element):
-                elem_a.append(elem)
+                elem_a.append(elem.copy(**elem_opt))
             else:
-                elem_a.append(Element(elem))
+                elem_a.append(Element(elem, **elem_opt))
             frac_a.append(frac)
 
         if len(frac_w) + len(frac_a) > 0:
@@ -133,6 +137,9 @@ class Composition(Card):
             raise ValueError('Incorrect set of parameters.')
         self._hash = reduce(xor, map(hash, self._composition.keys()))
         self._object_count += 1
+
+    def copy(self):
+        return Composition(atomic=self._composition.items(), **self.options)
 
     def __del__(self):
         self._object_count -= 1
@@ -581,6 +588,18 @@ class Element:
             isomer = 0
         self._isomer = isomer
         self._comment = comment
+
+    def copy(self, lib=None, isomer=None, comment=None):
+        charge = self.charge
+        mass_num = self.mass_number
+        if not lib:
+            lib = self.lib
+        if not isomer:
+            isomer = self.isomer
+        if not comment:
+            comment = self._comment
+        name = charge * 1000 + mass_num
+        return Element(name, lib=lib, isomer=isomer, comment=comment)
 
     def __hash__(self):
         return self._charge * (self._mass_number + 1) * hash(self._lib) * (self._isomer + 1)

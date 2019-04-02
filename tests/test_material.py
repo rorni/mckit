@@ -173,6 +173,22 @@ class TestElement:
         elem = Element(name, **options)
         assert expected == str(elem)
 
+    @pytest.mark.parametrize("lib", [None, '31c', '21c', '70c', '50d'])
+    @pytest.mark.parametrize("name, opt", cases)
+    def test_copy(self, name, opt, lib):
+        elem = Element(name, **opt)
+        if lib:
+            elem_c = elem.copy(lib=lib)
+        else:
+            elem_c = elem.copy()
+        assert elem.charge == elem_c.charge
+        assert elem.mass_number == elem_c.mass_number
+        assert elem.isomer == elem_c.isomer
+        if lib:
+            assert elem_c.lib == lib
+        else:
+            assert elem_c.lib == elem.lib
+
     @pytest.mark.parametrize("case_no, expected", enumerate([
         '1000', '1000', '1001', '20000', '20000', '20000.21c', '20040.21c',
         '20040', '20042.21c', '20043', '20041', '92000', '92000', '92235',
