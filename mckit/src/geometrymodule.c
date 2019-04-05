@@ -86,6 +86,7 @@ static PyObject * boxobj_copy(BoxObject * self);
 static PyObject * boxobj_generate_random_points(BoxObject * self, PyObject * npts);
 static PyObject * boxobj_test_points(BoxObject * self, PyObject * points);
 static PyObject * boxobj_split(BoxObject * self, PyObject * args, PyObject * kwds);
+static PyObject * boxobj_check_intersection(BoxObject * self, PyObject * box);
 static PyObject * boxobj_getcorners(BoxObject * self, void * closure);
 static PyObject * boxobj_getvolume(BoxObject * self, void * closure);
 static PyObject * boxobj_getbounds(BoxObject * self, void * closure);
@@ -106,6 +107,7 @@ static PyMethodDef boxobj_methods[] = {
         {"generate_random_points", (PyCFunction) boxobj_generate_random_points, METH_O, BOX_GRP_DOC},
         {"test_points", (PyCFunction) boxobj_test_points, METH_O, BOX_TEST_POINTS_DOC},
         {"split", (PyCFunctionWithKeywords) boxobj_split, METH_VARARGS | METH_KEYWORDS, BOX_SPLIT_DOC},
+        {"check_intersection", (PyCFunction) boxobj_check_intersection, METH_O, BOX_CHECK_INTERSECTION_DOC},
         {NULL}
 };
 
@@ -218,6 +220,19 @@ boxobj_test_points(BoxObject * self, PyObject * points)
                    (int *) PyArray_DATA(result));
     Py_DECREF(pts);
     return result;
+}
+
+static PyObject *
+boxobj_check_intersection(BoxObject * self, PyObject * box)
+{
+     if (! PyObject_TypeCheck(box, &BoxType)) {
+        PyErr_SetString(PyExc_ValueError, "Box instance is expected");
+        return NULL;
+    }
+
+    int result = box_check_intersection(&self->box, &((BoxObject *) box)->box);
+
+    return PyBool_FromLong(result);
 }
 
 static PyObject *

@@ -155,3 +155,34 @@ def test_random_points(box, case_no):
     pt = box[case_no].test_points(points)
     assert np.all(pt) == True
 
+
+boxes = [
+    Box([0, 0, 0], 1, 1, 1),
+    Box([2, 0, 0], 0.5, 4, 2),
+    Box([0, 0, 2], 0.5, 4, 2),
+    Box([0, 0, 2], 0.2, 0.2, 10),
+    Box([1, 1, 1], 1.1, 1.1, 1.1),
+    Box([-1, -1, -1], 1.1, 1.1, 1.1)
+]
+
+eq_matrix = [
+    [1, 0, 0, 1, 1, 1],
+    [0, 1, 0, 0, 0, 0],
+    [0, 0, 1, 1, 0, 0],
+    [1, 0, 1, 1, 0, 0],
+    [1, 0, 0, 0, 1, 0],
+    [1, 0, 0, 0, 0, 1]
+]
+
+
+@pytest.mark.parametrize('case1', range(len(boxes)))
+@pytest.mark.parametrize('case2', range(len(boxes)))
+def test_check_intersection(case1, case2):
+    box1 = boxes[case1]
+    box2 = boxes[case2]
+    answer = bool(eq_matrix[case1][case2])
+
+    result = box1.check_intersection(box2)
+    assert result == answer
+    result = box2.check_intersection(box1)
+    assert result == answer
