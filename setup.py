@@ -53,9 +53,9 @@ else:
         'mkl_sequential_dll',
         'libnlopt-0',
     ]
-    nlopt_inc = get_dirs("NLOPT_INC")
+    nlopt_inc = get_dirs("NLOPT")
     append_if_not_present(include_dirs, nlopt_inc)
-    nlopt_lib = get_dirs("NLOPT_LIB")
+    nlopt_lib = get_dirs("NLOPT")
     append_if_not_present(library_dirs, nlopt_lib)
     mkl_inc = sys.prefix + '\\Library\\include'
     append_if_not_present(include_dirs, mkl_inc)
@@ -90,7 +90,7 @@ setup(
     author='Roman Rodionov',
     author_email='r.rodionov@iterrf.ru',
     description='Tool for handling neutronic models and results',
-    install_requires=['numpy', 'scipy', 'ply'],
+    install_requires=['numpy', 'scipy', 'ply', 'mkl-include'],
     ext_modules=extensions,
     # data_files=[('.', ['libnlopt-0.dll'])]
 )

@@ -414,13 +414,14 @@ def test_rename(universe, case, start, answer):
     assert snames == answer['surface']
 
 
+@pytest.mark.parametrize('verbose', [False, True])
 @pytest.mark.parametrize('case, complexities', [
     (1, {1: 1, 2: 3, 3: 5, 4: 1}),
     (3, {1: 1, 2: 3, 4: 5, 5: 1})
 ])
-def test_simplify(universe, case, complexities):
+def test_simplify(universe, case, complexities, verbose):
     u = universe(case)
-    u.simplify(min_volume=0.1)
+    u.simplify(min_volume=0.1, verbose=verbose)
     assert len(u._cells) == len(complexities.keys())
     for c in u:
         assert c.shape.complexity() == complexities[c.name()]

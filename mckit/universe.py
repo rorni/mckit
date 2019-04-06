@@ -3,6 +3,7 @@
 from collections import defaultdict
 
 import numpy as np
+from progressbar import widgets, ProgressBar
 
 from .body import Body
 from .card import Card
@@ -14,6 +15,30 @@ __all__ = [
     'Universe', 'produce_universes', 'NameClashError', 'get_cell_selector',
     'get_surface_selector'
 ]
+
+
+class CellWidget(widgets.WidgetBase):
+    def __init__(self, text, **kwargs):
+        widgets.WidgetBase.__init__(self, **kwargs)
+        self._text = text
+
+    def __call__(self, progress, data):
+        return self._text.format(value=progress.value)
+
+
+def get_progress_bar(univ, text):
+    label = CellWidget(text)
+    # label.mapping['value'] = ('value', lambda c: c.name())
+    bar_widgets = [
+        label, ' | ',
+        widgets.Percentage(), ' ',
+        widgets.SimpleProgress(
+            format='(%s)' % widgets.SimpleProgress.DEFAULT_FORMAT
+        ), ' ',
+        widgets.Bar(), ' ',
+        widgets.Timer()
+    ]
+    return ProgressBar(widgets=bar_widgets)(univ)
 
 
 class NameClashError(Exception):
@@ -569,7 +594,7 @@ class Universe:
         return items
 
     def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False,
-                 verbose=False):
+                 verbose=True):
         """Simplifies all cells of the universe.
 
         Modifies current universe.
@@ -583,18 +608,24 @@ class Universe:
         split_disjoint : bool
             Whether to split disjoint cells.
         verbose : bool
-            Turns on verbose output. Default: False.
+            Turns on verbose output. Default: True.
         """
-        i = 0
-        while i < len(self._cells):
-            if verbose:
-                print('simplifying: {0}/{1}'.format(i, len(self._cells)))
-            cs = self._cells[i].simplify(box=box, min_volume=min_volume)
-            if cs.shape.is_empty():
-                self._cells.pop(i)
-            else:
-                self._cells[i] = cs
-                i += 1
+        new_cells = []
+        if verbose:
+            uiter = get_progress_bar(self, "Simplifying cell #{value}")
+        else:
+            uiter = self
+        
+        for c in uiter:
+            cs = c.simplify(box=box, min_volume=min_volume)
+            if not cs.shape.is_empty():
+                new_cells.append(cs)
+       
+        if verbose:
+            print('Universe {0} simplification has been finished.'.format(self.name()))
+            print('{0} empty cells were deleted.'.format(len(self._cells) - len(new_cells)))
+
+        self._cells = new_cells
 
     def test_points(self, points):
         """Finds cell to which each point belongs to.
