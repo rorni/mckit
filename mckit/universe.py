@@ -490,17 +490,17 @@ class Universe:
                 s.rename(start_surf)
                 start_surf += 1
 
-    def save(self, filename, inner=True):
+    def save(self, filename):
         """Saves the universe into file.
 
         Parameters
         ----------
         filename : str
             File name, universe to be saved to.
-        inner : bool
-            Whether to save inner universes too. If False, only this universe
-            itself without fillers will be saved. Default: True.
         """
+        result = self.name_clashes()
+        if result:
+            raise NameClashError('Impossible to save model.')
         universes = self.get_universes()
         cells = []
         surfaces = []

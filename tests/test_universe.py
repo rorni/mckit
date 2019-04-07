@@ -404,6 +404,24 @@ def test_save(universe, case, box):
         test_f = universes_answ[k].test_points(points)
         np.testing.assert_array_equal(test_f, test_a)
 
+
+@pytest.mark.parametrize('case, rename', [
+    (2, {2: {'start_cell': 2}}),
+    (2, {2: {'start_surf': 2}}),
+    (2, {2: {'start_cell': 2, 'start_surf': 3}}),
+    (2, {2: {'start_cell': 2}, 1: {'start_cell': 1}}),
+    (2, {1: {'name': 2}}),
+    (2, {1: {'name': 3}, 2: {'name': 3}}),
+])
+def test_save_exception(universe, case, rename):
+    u = universe(case)
+    unvs = {x.name(): x for x in u.get_universes()}
+    for uname, ren_dict in rename.items():
+        unvs[uname].rename(**ren_dict)
+    with pytest.raises(NameClashError):
+        u.save('test.i')
+
+
 #
 # @pytest.mark.parametrize('case_no, u_name, materials', [
 #     (0, 0, set()),
