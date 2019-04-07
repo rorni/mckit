@@ -356,10 +356,15 @@ def test_apply_fill(universe, case, condition, answer_case, box):
 
 
 @pytest.mark.parametrize('case, start, answer', [
-    (1, {'name': 4}, {'name': 4, 'cell': [1, 2, 3, 4], 'surface': [1, 2, 3, 4, 5]}),
-    (1, {'start_cell': 6}, {'name': 0, 'cell': [6, 7, 8, 9], 'surface': [1, 2, 3, 4, 5]}),
-    (1, {'start_surf': 7}, {'name': 0, 'cell': [1, 2, 3, 4], 'surface': [7, 8, 9, 10, 11]}),
-    (1, {'name': 4, 'start_cell': 6, 'start_surf': 7}, {'name': 4, 'cell': [6, 7, 8, 9], 'surface': [7, 8, 9, 10, 11]})
+    (1, {'name': 4}, {'name': 4, 'cell': [1, 2, 3, 4], 'surface': [1, 2, 3, 4, 5], 'material': [1, 2]}),
+    (1, {'start_cell': 6}, {'name': 0, 'cell': [6, 7, 8, 9], 'surface': [1, 2, 3, 4, 5], 'material': [1, 2]}),
+    (1, {'start_surf': 7}, {'name': 0, 'cell': [1, 2, 3, 4], 'surface': [7, 8, 9, 10, 11], 'material': [1, 2]}),
+    (1, {'name': 4, 'start_cell': 6, 'start_surf': 7}, {'name': 4, 'cell': [6, 7, 8, 9], 'surface': [7, 8, 9, 10, 11], 'material': [1, 2]}),
+    (1, {'name': 4, 'start_mat': 5}, {'name': 4, 'cell': [1, 2, 3, 4], 'surface': [1, 2, 3, 4, 5], 'material': [5, 6]}),
+    (1, {'start_cell': 6, 'start_mat': 6}, {'name': 0, 'cell': [6, 7, 8, 9], 'surface': [1, 2, 3, 4, 5], 'material': [6, 7]}),
+    (1, {'start_surf': 7, 'start_mat': 4}, {'name': 0, 'cell': [1, 2, 3, 4], 'surface': [7, 8, 9, 10, 11], 'material': [4, 5]}),
+    (1, {'name': 4, 'start_cell': 6, 'start_surf': 7, 'start_mat': 4}, {'name': 4, 'cell': [6, 7, 8, 9], 'surface': [7, 8, 9, 10, 11], 'material': [4, 5]})
+
 ])
 def test_rename(universe, case, start, answer):
     u = universe(case)
@@ -367,8 +372,10 @@ def test_rename(universe, case, start, answer):
     assert u.name() == answer['name']
     cnames = sorted(c.name() for c in u)
     snames = sorted(s.name() for s in u.get_surfaces())
+    mnames = sorted(m.name() for m in u.get_compositions())
     assert cnames == answer['cell']
     assert snames == answer['surface']
+    assert mnames == answer['material']
 
 
 @pytest.mark.parametrize('case, complexities', [
