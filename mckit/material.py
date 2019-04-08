@@ -134,6 +134,9 @@ class Composition(Card):
         self._hash = reduce(xor, map(hash, self._composition.keys()))
         self._object_count += 1
 
+    def copy(self):
+        return Composition(atomic=self._composition.items(), **self.options)
+
     def __del__(self):
         self._object_count -= 1
 
@@ -583,11 +586,11 @@ class Element:
         self._comment = comment
 
     def __hash__(self):
-        return self._charge * (self._mass_number + 1) * hash(self._lib) * (self._isomer + 1)
+        return self._charge * (self._mass_number + 1) * (self._isomer + 1)
 
     def __eq__(self, other):
         if self._charge == other.charge and self._mass_number == \
-                other.mass_number and self._lib == other._lib and self._isomer == other._isomer:
+                other.mass_number and self._isomer == other._isomer:
             return True
         else:
             return False

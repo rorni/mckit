@@ -70,3 +70,16 @@
 "    Resulting boxes. box1 contains parent box base point."
 
 #define BOX_COPY_DOC "Makes a copy of the box."
+
+#define BOX_CHECK_INTERSECTION_DOC \
+"Checks if the box intersects with another one." \
+"" \
+"Parameters" \
+"----------" \
+"box : Box" \
+"    The box intersection must be checked with." \
+"" \
+"Returns" \
+"-------" \
+"result : bool" \
+"    Test result. True if boxes intersect."

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "nlopt.h"
 #include "mkl.h"
 #include "box.h"
 
@@ -231,6 +232,55 @@ void box_ieqcons(
         }
     }  
 }
+
+
+double min_func(
+    unsigned int n,
+    const double * x,
+    double * grad,
+    void * f_data
+)
+{
+    Box * data = (Box *) f_data;
+    if (grad != NULL) {
+        cblas_dcopy(NDIM, x, 1, grad, 1);
+        cblas_daxpy(NDIM, -1, data->center, 1, grad, 1);
+        cblas_dscal(NDIM, 2, grad, 1);
+    }
+    double delta[NDIM];
+    cblas_dcopy(NDIM, x, 1, delta, 1);
+    cblas_daxpy(NDIM, -1, data->center, 1, delta, 1);
+    return cblas_ddot(NDIM, delta, 1, delta, 1);
+}
+
+// Checks if the box intersects with another one.
+int box_check_intersection(
+    const Box * box1,
+    const Box * box2
+)
+{
+    double x[NDIM], opt_val;
+    nlopt_result opt_result;
+    int result;
+
+    nlopt_opt opt;
+    opt = nlopt_create(NLOPT_LD_SLSQP, 3);
+    nlopt_set_lower_bounds(opt, box1->lb);
+    nlopt_set_upper_bounds(opt, box1->ub);
+
+    nlopt_set_min_objective(opt, min_func, box2);
+
+    nlopt_add_inequality_mconstraint(opt, 6, box_ieqcons, (void*) box1, NULL);
+    nlopt_set_stopval(opt, 0);
+    nlopt_set_maxeval(opt, 1000); // TODO: consider passing this parameter.
+
+    cblas_dcopy(NDIM, box1->center, 1, x, 1);
+    opt_result = nlopt_optimize(opt, x, &opt_val);
+    box_test_points(box2, 1, x, &result);
+    nlopt_destroy(opt);
+    return result;
+}
+
 
 int box_is_in(const Box * in_box, uint64_t out_subdiv)
 {

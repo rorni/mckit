@@ -86,6 +86,12 @@ void box_ieqcons(
     void * f_data       // Box structure
 );
 
+// Checks if the box intersects with another one.
+int box_check_intersection(
+    const Box * box1,
+    const Box * box2
+);
+
 /* Compares two boxes. Returns
  * +1 if in_box lies actually inside the out_box;
  *  0 if in_box equals out_box;

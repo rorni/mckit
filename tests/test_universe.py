@@ -64,69 +64,69 @@ def test_init(cells, kwargs):
 
 
 @pytest.mark.parametrize('case, cells, name_rule, new_name, new_surfs, new_comps', [
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'keep', None, [], []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'keep', [8], None, []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'clash', [5], [Sphere([0, 3, 0], 0.5, name=8)], []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'clash', [8], [Sphere([0, 3, 0], 0.5, name=6)], []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),
-    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=2), 'new', [5], [], []),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=2)), name=8), 'keep', [8], [], []),
-    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=7), 'new', [5], [], []),
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'keep', None, [], []),    # 0
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'keep', [8], None, []),   # 1
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),   # 2
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'clash', [5], [Sphere([0, 3, 0], 0.5, name=8)], []),  # 3
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'clash', [8], [Sphere([0, 3, 0], 0.5, name=6)], []),  # 4
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),  # 5
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=2), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),    # 6
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=8), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),    # 7
+    (1, Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=7), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], []),    # 8
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=2), 'new', [5], [], []),                                    # 9
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=2)), name=8), 'keep', [8], [], []),               # 10
+    (1, Body(Shape('C', Sphere([0, 0, 0], 2, name=8)), name=7), 'new', [5], [], []),                # 11
     (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=8),
-         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=8)), name=9)], 'keep', [8, 9], None, []),
+         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=8)), name=9)], 'keep', [8, 9], None, []),      # 12
     (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=9),
-         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=9)), name=9)], 'keep', None, [8, 9], []),
+         Body(Shape('C', Sphere([0, 4, 0], 0.5, name=9)), name=9)], 'keep', None, [8, 9], []),      # 13
     (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=2)), name=2),
          Body(Shape('C', Sphere([0, 4, 0], 0.5, name=2)), name=2)], 'clash',
-     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)], []),
+     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)], []),                 # 14
     (1, [Body(Shape('C', Sphere([0, 3, 0], 0.5, name=8)), name=9),
          Body(Shape('C', Sphere([0, 4, 0], 0.5, name=9)), name=9)], 'new',
-     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)], []),
+     [5, 6], [Sphere([0, 3, 0], 0.5, name=6), Sphere([0, 4, 0], 0.5, name=7)], []),                 # 15
     (1, Body(
             Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
             name=7,
-            MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=2), density=2.0)
-        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
+            MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=2, lib='31c'), density=2.0)
+        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),                                      # 16
     (1, Body(
         Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
         name=7,
-        MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=1),
+        MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=1, lib='31c'),
                      density=2.0)
-        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
+        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),                                      # 17
     (1, Body(
         Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
         name=7,
-        MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=3),
+        MAT=Material(composition=Composition(atomic=[('C-12', 1)], name=3, lib='31c'),
                      density=2.0)
-        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),
-    (1, Body(
-        Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
-        name=7,
-        MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=2),
-                     density=2.0)
-        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], None),
+        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], []),                                      # 18
     (1, Body(
         Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
         name=7,
         MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=2),
                      density=2.0)
-        ), 'new', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=3)]),
+        ), 'keep', [7], [Sphere([0, 3, 0], 0.5, name=8)], None),                                    # 19
     (1, Body(
         Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
         name=7,
         MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=2),
                      density=2.0)
-        ), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=3)]),
+        ), 'new', [5], [Sphere([0, 3, 0], 0.5, name=6)], [Composition(atomic=[('Fe-56', 1)], name=3)]),     # 20
+    (1, Body(
+        Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
+        name=7,
+        MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=2),
+                     density=2.0)
+        ), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=3)]),   # 21
     (1, Body(
         Shape('C', Sphere([0, 3, 0], 0.5, name=8)),
         name=7,
         MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=6),
                      density=2.0)
-        ), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=6)]),
+        ), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=6)]),   # 22
 
 ])
 def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_comps):
@@ -153,6 +153,50 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_co
 
         assert_change(s_before, s_after, new_surfs)
         assert_change(c_before, c_after, new_comps)
+
+
+@pytest.mark.parametrize('case, common_materials, ans_compositions', [
+    (1, set(), {Composition(atomic=[('C-12', 1)], name=1),
+             Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2, lib='31c')}),
+    (1, {Composition(atomic=[('C-12', 1)], name=10, lib='31c')}, {
+        Composition(atomic=[('C-12', 1)], name=10, lib='31c'),
+        Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2, lib='31c')
+    }),
+    (1, {
+            Composition(atomic=[('C-12', 1)], name=10, lib='31c'),
+            Composition(atomic=[('H-1', 2), ('O-16', 1)], name=11, lib='31c')
+        },
+        {
+            Composition(atomic=[('C-12', 1)], name=10, lib='31c'),
+            Composition(atomic=[('H-1', 2), ('O-16', 1)], name=11, lib='31c')
+        }
+     ),
+    (1, {
+            Composition(atomic=[('Fe-56', 1)], name=10)
+        },
+        {
+            Composition(atomic=[('C-12', 1)], name=1, lib='31c'),
+            Composition(atomic=[('H-1', 2), ('O-16', 1)], name=2)
+        }
+     ),
+    (1, {
+            Composition(atomic=[('Fe-56', 1)], name=1, lib='31c')
+        }, None
+     )
+])
+def test_common_materials(universe, case, common_materials, ans_compositions):
+    u = universe(case)
+    if ans_compositions is None:
+        with pytest.raises(NameClashError):
+            Universe(u, common_materials=common_materials)
+    else:
+        new_u = Universe(u, common_materials=common_materials)
+        new_comps = new_u.get_compositions()
+        assert new_comps == ans_compositions
+        common = {c.name(): c for c in common_materials}
+        for c in new_comps:
+            if c in common_materials:
+                assert c is common[c.name()]
 
 
 def assert_change(before, after, new_items):
@@ -378,13 +422,14 @@ def test_rename(universe, case, start, answer):
     assert mnames == answer['material']
 
 
+@pytest.mark.parametrize('verbose', [False, True])
 @pytest.mark.parametrize('case, complexities', [
     (1, {1: 1, 2: 3, 3: 5, 4: 1}),
     (3, {1: 1, 2: 3, 4: 5, 5: 1})
 ])
-def test_simplify(universe, case, complexities):
+def test_simplify(universe, case, complexities, verbose):
     u = universe(case)
-    u.simplify(min_volume=0.1)
+    u.simplify(min_volume=0.1, verbose=verbose)
     assert len(u._cells) == len(complexities.keys())
     for c in u:
         assert c.shape.complexity() == complexities[c.name()]

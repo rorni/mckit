@@ -93,6 +93,8 @@ def test_surface_creation(cls, kind, params, expected):
 @pytest.mark.parametrize('cls, kind, params', [
     (Plane, 'P', [3.2, -1.4, 5.7, -4.8]),
     (Plane, 'P', [3.28434343457632, -1.48888888888888, 5.7341411411414, -4.8]),
+    (Plane, 'P', [-0.176628496439844, -0.005226281717615, 0.984263714776080,
+                  342.264078203542790]),
     (Sphere, 'S', [3.7, -3.8, 3.9, 6.5]),
     (Cylinder, 'CX', [6.6]),
     (Cylinder, 'CY', [6.7]),
@@ -976,8 +978,12 @@ class TestGQuadratic:
     ]
 
     eq_matrix = [
-        [1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0], [1, 1, 1, 0, 0, 0],
-        [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 1, 1]
+        [1, 1, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 1, 0, 1],
+        [0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 1, 0, 1]
     ]
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
@@ -995,9 +1001,9 @@ class TestGQuadratic:
     @pytest.mark.parametrize('surface, answer', zip(surfs, [
         '1 GQ 1 1 1 0 0 0 -2 -2 -2 3',
         '1 GQ 1 1 1 0 0 0 -2 -2 -2 3',
-        '1 GQ 1 1 1 0 0 0 -2 -2 -2 3',
+        '1 GQ -1 -1 -1 0 0 0 2 2 2 -3',
         '2 GQ 1 2 3 0.5 0.8 0.6 1 2 3 -4',
-        '2 GQ 1 2 3 0.5 0.8 0.6 1 2 3 -4',
+        '2 GQ -1 -2 -3 -0.5 -0.8 -0.6 -1 -2 -3 4',
         '2 GQ 1 2 3 0.5 0.8 0.6 1 2 3 -4'
     ]))
     def test_mcnp_repr(self, surface, answer):
