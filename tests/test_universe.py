@@ -321,14 +321,14 @@ def test_bounding_box(universe, tol, case, expected):
 
 
 @pytest.mark.parametrize('case, condition, inner, answer', [
-    (1, get_cell_selector(1), False, [(Body, 1)]),
-    (1, get_cell_selector([1, 3]), False, [(Body, 1), (Body, 3)]),
-    (1, get_surface_selector(1), False, [(Surface, 1)]),
-    (1, get_surface_selector([1, 4]), False, [(Surface, 1), (Surface, 4)]),
+    (1, cell_selector(1), False, [(Body, 1)]),
+    (1, cell_selector([1, 3]), False, [(Body, 1), (Body, 3)]),
+    (1, surface_selector(1), False, [(Surface, 1)]),
+    (1, surface_selector([1, 4]), False, [(Surface, 1), (Surface, 4)]),
     (1, lambda c: [c] if c.material() else [], False, [(Body, 1), (Body, 2)]),
-    (2, get_cell_selector(3), False, [(Body, 3)]),
-    (2, get_cell_selector(11), False, []),
-    (2, get_cell_selector(11), True, [(Body, 11)])
+    (2, cell_selector(3), False, [(Body, 3)]),
+    (2, cell_selector(11), False, []),
+    (2, cell_selector(11), True, [(Body, 11)])
 ])
 def test_select(universe, case, condition, inner, answer):
     u = universe(case)

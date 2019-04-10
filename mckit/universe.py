@@ -12,8 +12,8 @@ from .transformation import Transformation
 from .material import Material
 
 __all__ = [
-    'Universe', 'produce_universes', 'NameClashError', 'get_cell_selector',
-    'get_surface_selector'
+    'Universe', 'produce_universes', 'NameClashError', 'cell_selector',
+    'surface_selector'
 ]
 
 
@@ -45,7 +45,7 @@ class NameClashError(Exception):
     pass
 
 
-def get_cell_selector(cell_names):
+def cell_selector(cell_names):
     """Produces cell selector function for specific cell names.
 
     Parameters
@@ -71,7 +71,7 @@ def get_cell_selector(cell_names):
     return selector
 
 
-def get_surface_selector(surface_names):
+def surface_selector(surface_names):
     """Produces surface selector function for specific surface names.
 
     Parameters
@@ -200,6 +200,9 @@ class Universe:
 
     def __iter__(self):
         return iter(self._cells)
+
+    def __len__(self):
+        return len(self._cells)
 
     def add_cells(self, cells, name_rule='new'):
         """Adds new cell to the universe.
