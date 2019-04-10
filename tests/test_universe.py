@@ -422,6 +422,20 @@ def test_rename(universe, case, start, answer):
     assert mnames == answer['material']
 
 
+@pytest.mark.parametrize('case, common, start, answer', [
+    (1, set(), 7, [7, 8]),
+    (1, {Composition(atomic=[('C-12', 1)], name=1)}, 7, [1, 7]),
+    (1, {Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)], name=2)}, 7, [2, 7]),
+    (1, {Composition(atomic=[('C-12', 1)], name=1),
+         Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)], name=2)}, 7, [1, 2])
+])
+def test_rename_when_common_mat(universe, case, common, start, answer):
+    u = Universe(universe(case), common_materials=common)
+    u.rename(start_mat=start)
+    mnames = sorted(m.name() for m in u.get_compositions())
+    assert mnames == answer
+
+
 @pytest.mark.parametrize('verbose', [False, True])
 @pytest.mark.parametrize('case, complexities', [
     (1, {1: 1, 2: 3, 3: 5, 4: 1}),
@@ -472,48 +486,3 @@ def test_save_exception(universe, case, rename):
         unvs[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
         u.save('test.i')
-
-
-#
-# @pytest.mark.parametrize('case_no, u_name, materials', [
-#     (0, 0, set()),
-#     (0, 1, {Material(atomic=[(Element('C12', lib='21C'), 1)], density=2.7),
-#             Material(weight=[(Element('H1', lib='21C'), 0.11191),
-#                              (Element('O16', lib='50c'), 0.88809)], density=1.0)}),
-#     (0, 2, {Material(atomic=[(Element('H1', lib='21C'), 2),
-#                              (Element('C12', lib='21C'), 1)], density=0.9),
-#             Material(atomic=[(Element('Fe56', lib='21c'), 1)], density=7.8),
-#             Material(weight=[(Element('B10', lib='21c'), 1)], density=1.8)})
-# ])
-# def test_get_materials(universe, case_no, u_name, materials):
-#     base_u = universe[case_no]
-#     if u_name == 0:
-#         u = base_u
-#     else:
-#         u = base_u.select_universe(u_name)
-#     mats = u.get_materials()
-#     assert mats == materials
-#
-#
-#
-# @pytest.mark.parametrize('case_no, cells, status, output', [
-#     (0, None, False, {}),
-#     (0, 1, False, {}),
-#     (0, 2, False, {}),
-#     (1, None, True, {
-#         'cells': {21: {None}, 22: {None}, 23: [None], 24: [None]},
-#         'surfaces': {20: [None], 21: [None], 22: [None], 23: [None], 24: [None]}
-#     }),
-#     (1, 1, True, {'cells': {21: [2], 22: [2], 23: [2], 24: [2]}}),
-#     (1, 2, True, {
-#         'cells': {21: [2], 22: [2], 23: [2], 24: [2]},
-#         'surfaces': {20: [2], 21: [2], 22: [2], 23: [2], 24: [2]}
-#     })
-# ])
-# def test_check_names(universe, case_no, cells, status, output):
-#     u = universe[case_no]
-#     u = u.fill(cells=cells)
-#     s, r = u.name_clashes()
-#     assert s == status
-#     # assert r == output
-#

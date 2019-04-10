@@ -535,8 +535,9 @@ class Universe:
         if start_mat:
             mats = self.get_compositions()
             for m in sorted(mats, key=Card.name):
-                m.rename(start_mat)
-                start_mat += 1
+                if m not in self._common_materials:
+                    m.rename(start_mat)
+                    start_mat += 1
 
     def save(self, filename):
         """Saves the universe into file.
