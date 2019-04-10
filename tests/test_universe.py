@@ -127,7 +127,6 @@ def test_init(cells, kwargs):
         MAT=Material(composition=Composition(atomic=[('Fe-56', 1)], name=6),
                      density=2.0)
         ), 'clash', [7], [Sphere([0, 3, 0], 0.5, name=8)], [Composition(atomic=[('Fe-56', 1)], name=6)]),   # 22
-
 ])
 def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_comps):
     u = universe(case)
@@ -153,6 +152,30 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_co
 
         assert_change(s_before, s_after, new_surfs)
         assert_change(c_before, c_after, new_comps)
+
+
+@pytest.mark.parametrize('case, cells, shapes', [
+    (1, Body(Shape('C', create_surface('P', 0, 0, -1, -3, name=8)), name=5), [Shape('S', create_surface('P', 0, 0, 1, 3, name=2))])
+])
+def test_add_cells_neg(universe, case, cells, shapes):
+    u = universe(case)
+    s_before = u.get_surfaces()
+    u.add_cells(cells, name_rule='keep')
+    s_after = u.get_surfaces()
+    if isinstance(cells, Body):
+        cells = [cells]
+    acells = u._cells[-len(cells):]
+    if isinstance(cells, Body):
+        cells = [cells]
+    for acell, cell, shape in zip(acells, cells, shapes):
+        assert acell.shape == shape
+        assert acell is not cell
+        assert acell.name() == cell.name()
+        assert acell.options['U'] is u
+        if cell.material() is not None:
+            assert acell.material().composition == cell.material().composition
+
+    assert_change(s_before, s_after, {})
 
 
 @pytest.mark.parametrize('case, common_materials, ans_compositions', [

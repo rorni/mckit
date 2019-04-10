@@ -5,11 +5,12 @@ from collections import defaultdict
 import numpy as np
 from progressbar import widgets, ProgressBar
 
-from .body import Body
+from .body import Body, Shape
 from .card import Card
 from .geometry import GLOBAL_BOX, Box
 from .transformation import Transformation
 from .material import Material
+from .surface import Plane
 
 __all__ = [
     'Universe', 'produce_universes', 'NameClashError', 'cell_selector',
@@ -261,10 +262,16 @@ class Universe:
         cell_surfs = cell.shape.get_surfaces()
         replace_dict = {}
         for s in cell_surfs:
+            if isinstance(s, Plane):
+                rev_s = Plane(-s._v, -s._k)
+                if rev_s in surf_replace.keys():
+                    rev_s = surf_replace[rev_s]
+                    replace_dict[s] = Shape('C', rev_s)
+                    continue
             replace_dict[s] = Universe._update_replace_dict(
                 s, surf_replace, surf_names, name_rule, 'Surface'
             )
-        return cell.shape.replace_surfaces(surf_replace)
+        return cell.shape.replace_surfaces(replace_dict)
 
     @staticmethod
     def _update_replace_dict(entity, replace, names, rule, err_desc):

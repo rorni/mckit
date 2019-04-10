@@ -15,6 +15,9 @@ from mckit import read_meshtal, read_mcnp
 from mckit.fmesh import SparseData
 
 
+pytestmark = pytest.mark.skip("Skip all tests")
+
+
 @pytest.mark.parametrize('text, fatal', [
     ("Arbitrary text", False),
     (" collapse:--------- FATAL ERROR ---------- run terminated, for details see runlog file, collapse.log", True),

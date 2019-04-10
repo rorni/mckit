@@ -1,2 +1,1 @@
-coverage run -m unittest discover %1 tests
-coverage report -m --omit=tests/*,mckit/parsetab.py
+python -m pytest -vv tests
