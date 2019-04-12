@@ -404,10 +404,36 @@ def test_name_clashes(universe, case, rename, stat):
     assert s == stat
 
 
-@pytest.mark.skip
-def test_name_clashes_with_common_materials(universe, case, common_mat, rename, stat):
+@pytest.mark.parametrize('case, common_mat, stat', [
+    (2, {Composition(atomic=[('6012', 1)], name=1)}, {}),
+    (2, {Composition(atomic=[('6012', 1)], name=10)}, {}),
+    (2, {Composition(atomic=[('7014', 1)], name=10)}, {'material': {10: [1, None]}}),
+    (2, {Composition(atomic=[(Element('H1', lib='31c'), 2 / 3),
+                             (Element('O16', lib='31c'), 1 / 3)], name=2)}, {}),
+    (2, {Composition(atomic=[(Element('H2', lib='31c'), 2 / 3),
+                             (Element('O16', lib='31c'), 1 / 3)], name=11)}, {'material': {11: [1, None]}}),
+    (2, {Composition(atomic=[(Element('H1', lib='31c'), 2 / 3),
+                             (Element('O16', lib='31c'), 1 / 3)], name=21)}, {'material': {21: [2, None]}}),
+
+    (2, {Composition(atomic=[('7012', 1)], name=10), Composition(
+        atomic=[(Element('H2', lib='31c'), 2 / 3),
+                (Element('O16', lib='31c'), 1 / 3)], name=11)}, {'material': {10: [1, None], 11: [1, None]}}),
+])
+def test_name_clashes_with_common_materials(universe, case, common_mat, stat):
     u = universe(case)
     unvs = {x.name(): x for x in u.get_universes()}
+    u.set_common_materials(common_mat)
+    for stat_item in stat.values():
+        for name, ulist in stat_item.items():
+            stat_item[name] = {unvs[uname] if uname else None for uname in ulist}
+    s = u.name_clashes()
+    for c in u._common_materials:
+        print(c.mcnp_repr())
+    for name, un in unvs.items():
+        print(name)
+        for c in un.get_compositions():
+            print(c.mcnp_repr())
+    assert s == stat
 
 
 @pytest.mark.parametrize('case, common_mat', [

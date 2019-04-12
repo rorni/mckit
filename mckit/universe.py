@@ -513,7 +513,9 @@ class Universe:
         stat = {}
         cells = {u: list(map(Card.name, u)) for u in univ}
         surfs = {u: list(map(Card.name, u.get_surfaces())) for u in univ}
-        mats = {u: list(map(Card.name, u.get_compositions())) for u in univ}
+        mats = {None: list(map(Card.name, self._common_materials))}
+        for u in univ:
+            mats[u] = list(map(Card.name, u.get_compositions().difference(self._common_materials)))
         univs = {u: [u.name()] for u in univ}
         cstat = Universe._produce_stat(cells)
         if cstat:
