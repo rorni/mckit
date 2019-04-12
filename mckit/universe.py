@@ -641,7 +641,7 @@ class Universe:
         """
         new_cells = []
         if verbose:
-            uiter = progressbar(self, lambda x: "Simplifying cell #{0}".format(x.name())).__enter__()
+            uiter = progressbar(self, item_show_func=lambda x: "Simplifying cell #{0}".format(x.name())).__enter__()
         else:
             uiter = self
         

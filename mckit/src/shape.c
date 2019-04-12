@@ -72,8 +72,6 @@ void shape_dealloc(Shape * shape)
     }
 }
 
-#include <stdio.h>
-
 // Tests box location with respect to the shape.
 // Returns BOX_INSIDE_SHAPE | BOX_CAN_INTERSECT_SHAPE | BOX_OUTSIDE_SHAPE
 //
@@ -102,7 +100,6 @@ int shape_test_box(
     int result;
     if (is_final(shape->opc)) {
         char already = (box->subdiv == (shape->args.surface)->last_box);
-        // printf("subdiv=%d, last_box=%d, already=%d\n", box->subdiv, (shape->args.surface)->last_box, already);
         result = surface_test_box(shape->args.surface, box);
         if (shape->opc == COMPLEMENT) result = geom_complement(result);
         if (collect > 0 && result == 0 && !already) ++(*zero_surfaces);
@@ -147,13 +144,11 @@ int shape_test_box(
 int set_zero_surface_pointers(Shape * shape, int n, Surface ** zs, uint64_t subdiv)
 {
     if (is_final(shape->opc)) {
-        // printf("n=%d, test=%d, box=%d, surf=%p\n", n, shape->args.surface->last_box_result, shape->args.surface->last_box, shape->args.surface);
-        if (shape->args.surface->last_box == subdiv && shape->args.surface->last_box_result == 0) {    
+        if (shape->args.surface->last_box == subdiv && shape->args.surface->last_box_result == 0) {
             char already = 0;
             for (int i = 0; i < n; ++i) {
                 if (zs[i] == shape->args.surface) {
                     already = 1;
-           //         printf("already\n");
                     break;
                 }
             }
@@ -177,8 +172,6 @@ int shape_ultimate_test_box(
         char collect            // Whether to collect statistics about results.
 )
 {
-    //if (collect != 0 && (box->volume <= min_vol || zero_surfs == 1)) collect = -1;
-    //else zero_surfs = 0;
     int zero_surfaces = 0;
     int result = shape_test_box(shape, box, collect, &zero_surfaces);
     if (collect > 0 && result == BOX_CAN_INTERSECT_SHAPE) {
@@ -190,13 +183,11 @@ int shape_ultimate_test_box(
         // In those cases we test all possible test_box results of the
         // remaining surfaces and collect statistics.
         if (zero_surfaces == 1 || box->volume < min_vol) {
-            //printf("subdiv=%d, zero_surfaces=%d\n", box->subdiv, zero_surfaces);
             // vary all zero surfaces that remain to be -1 and +1
             Surface **zs = (Surface **) malloc(zero_surfaces * sizeof(Surface*));
             for (int i = 0; i < zero_surfaces; ++i) zs[i] = NULL;
             
             int k = set_zero_surface_pointers(shape, 0, zs, box->subdiv);
-            // printf("k=%d\n", k);
             int n = 1 << zero_surfaces;
             for (int i = 0; i < n; ++i) {
                 for (int j = 0; j < zero_surfaces; ++j) {
