@@ -385,6 +385,11 @@ def test_get_universes(universe, case, answer):
     (2, {2: {'start_cell': 2}, 1: {'start_cell': 1}}, {'cell': {1: [0, 1], 2: [0, 1, 2], 3: [0, 1, 2]}}),
     (2, {1: {'name': 2}}, {'universe': {2: [1, 2]}}),
     (2, {1: {'name': 3}, 2: {'name': 3}}, {'universe': {3: [1, 2]}}),
+    (2, {1: {'start_mat': 19}}, {}),
+    (2, {1: {'start_mat': 20}}, {'material': {21: [1, 2]}}),
+    (2, {1: {'start_mat': 21}}, {'material': {21: [1, 2], 22: [1, 2]}}),
+    (2, {1: {'start_mat': 20}, 2: {'start_cell': 2}}, {'material': {21: [1, 2]}, 'cell': {2: [0, 2], 3: [0, 2]}}),
+    (2, {1: {'start_mat': 21}, 2: {'start_cell': 2}}, {'material': {21: [1, 2], 22: [1, 2]}, 'cell': {2: [0, 2], 3: [0, 2]}}),
     (3, {}, {})
 ])
 def test_name_clashes(universe, case, rename, stat):
@@ -392,10 +397,17 @@ def test_name_clashes(universe, case, rename, stat):
     unvs = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
         unvs[uname].rename(**ren_dict)
+        print(uname, ren_dict)
+        for m in unvs[uname].get_compositions():
+            print(m.mcnp_repr())
     for stat_item in stat.values():
         for name, ulist in stat_item.items():
             stat_item[name] = {unvs[uname] for uname in ulist}
     s = u.name_clashes()
+    for n, un in unvs.items():
+        print(n, ':')
+        for m in un.get_compositions():
+            print(m.mcnp_repr())
     if 'universe' in s.keys():
         for un, uu in unvs.items():
             print(un, uu.name(), id(uu))

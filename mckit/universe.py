@@ -24,7 +24,7 @@ class CellWidget(widgets.WidgetBase):
         self._text = text
 
     def __call__(self, progress, data):
-        return self._text.format(value=progress.value)
+        return self._text.format(value=progress.value.name())
 
 
 def get_progress_bar(univ, text):
@@ -384,7 +384,7 @@ class Universe:
         """Makes a copy of the universe."""
         return Universe(
             self._cells, name=self._name, verbose_name=self._verbose_name,
-            comment=self._comment
+            comment=self._comment, common_materials=self._common_materials
         )
 
     def get_surfaces(self, inner=False):
@@ -482,6 +482,7 @@ class Universe:
         stat = {}
         cells = {u: list(map(Card.name, u)) for u in univ}
         surfs = {u: list(map(Card.name, u.get_surfaces())) for u in univ}
+        mats = {u: list(map(Card.name, u.get_compositions())) for u in univ}
         univs = {u: [u.name()] for u in univ}
         cstat = Universe._produce_stat(cells)
         if cstat:
@@ -489,6 +490,9 @@ class Universe:
         sstat = Universe._produce_stat(surfs)
         if sstat:
             stat['surf'] = sstat
+        mstat = Universe._produce_stat(mats)
+        if mstat:
+            stat['material'] = mstat
         ustat = Universe._produce_stat(univs)
         if ustat:
             stat['universe'] = ustat
