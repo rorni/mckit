@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 import numpy as np
-from progressbar import widgets, ProgressBar
+from click import progressbar
 
 from .body import Body, Shape
 from .card import Card
@@ -16,30 +16,6 @@ __all__ = [
     'Universe', 'produce_universes', 'NameClashError', 'cell_selector',
     'surface_selector'
 ]
-
-
-class CellWidget(widgets.WidgetBase):
-    def __init__(self, text, **kwargs):
-        widgets.WidgetBase.__init__(self, **kwargs)
-        self._text = text
-
-    def __call__(self, progress, data):
-        return self._text.format(value=progress.value.name())
-
-
-def get_progress_bar(univ, text):
-    label = CellWidget(text)
-    # label.mapping['value'] = ('value', lambda c: c.name())
-    bar_widgets = [
-        label, ' | ',
-        widgets.Percentage(), ' ',
-        widgets.SimpleProgress(
-            format='(%s)' % widgets.SimpleProgress.DEFAULT_FORMAT
-        ), ' ',
-        widgets.Bar(), ' ',
-        widgets.Timer()
-    ]
-    return ProgressBar(widgets=bar_widgets)(univ)
 
 
 class NameClashError(Exception):
@@ -665,7 +641,7 @@ class Universe:
         """
         new_cells = []
         if verbose:
-            uiter = get_progress_bar(self, "Simplifying cell #{value}")
+            uiter = progressbar(self, lambda x: "Simplifying cell #{0}".format(x.name())).__enter__()
         else:
             uiter = self
         

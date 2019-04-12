@@ -90,7 +90,7 @@ setup(
     author='Roman Rodionov',
     author_email='r.rodionov@iterrf.ru',
     description='Tool for handling neutronic models and results',
-    install_requires=['numpy', 'scipy', 'ply', 'mkl-include'],
+    install_requires=['numpy', 'scipy', 'ply', 'click'],
     ext_modules=extensions,
     # data_files=[('.', ['libnlopt-0.dll'])]
 )
