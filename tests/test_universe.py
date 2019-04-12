@@ -397,23 +397,39 @@ def test_name_clashes(universe, case, rename, stat):
     unvs = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
         unvs[uname].rename(**ren_dict)
-        print(uname, ren_dict)
-        for m in unvs[uname].get_compositions():
-            print(m.mcnp_repr())
     for stat_item in stat.values():
         for name, ulist in stat_item.items():
             stat_item[name] = {unvs[uname] for uname in ulist}
     s = u.name_clashes()
-    for n, un in unvs.items():
-        print(n, ':')
-        for m in un.get_compositions():
-            print(m.mcnp_repr())
-    if 'universe' in s.keys():
-        for un, uu in unvs.items():
-            print(un, uu.name(), id(uu))
-        for uname, ulist in s['universe'].items():
-            print(uname, [x.name() for x in ulist], [id(x) for x in ulist])
     assert s == stat
+
+
+@pytest.mark.skip
+def test_name_clashes_with_common_materials(universe, case, common_mat, rename, stat):
+    u = universe(case)
+    unvs = {x.name(): x for x in u.get_universes()}
+
+
+@pytest.mark.parametrize('case, common_mat', [
+    (2, {Composition(atomic=[('6012', 1)], name=1)}),
+    (2, {Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)], name=2)}),
+    (2, {Composition(atomic=[('6012', 1)], name=1), Composition(atomic=[(Element('H1', lib='31c'), 2 / 3), (Element('O16', lib='31c'), 1 / 3)], name=2)}),
+    (2, {Composition(atomic=[('Li', 1)], name=3)})
+])
+def test_set_common_materials(universe, case, common_mat):
+    u = universe(case)
+    unvs = u.get_universes()
+    mats_before = {un: un.get_compositions() for un in unvs}
+    u.set_common_materials(common_mat)
+    cm = {c: c for c in common_mat}
+    for un in unvs:
+        assert mats_before[un] == un.get_compositions()
+        for c in un:
+            mat = c.material()
+            if mat:
+                comp = mat.composition
+                if comp in common_mat:
+                    assert comp is cm[comp]
 
 
 @pytest.mark.parametrize('case, condition, answer_case, box', [

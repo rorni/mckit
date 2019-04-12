@@ -257,6 +257,37 @@ class Universe:
             new_cell.options['U'] = self
             self._cells.append(new_cell)
 
+    def set_common_materials(self, common_materials):
+        """Sets common materials for this one and all nested universes.
+
+        Parameters
+        ----------
+        common_materials : set
+            A set of common materials.
+        """
+        universes = self.get_universes()
+        for u in universes:
+            u._set_common_materials(common_materials)
+
+    def _set_common_materials(self, common_materials):
+        """Sets common materials for individual universe.
+
+        Parameters
+        ----------
+        common_materials : set
+            A set of common_materials
+        """
+        self._common_materials = common_materials
+        cmd = {m: m for m in common_materials}
+        for c in self:
+            mat = c.material()
+            if mat:
+                comp = mat.composition
+                if comp in common_materials:
+                    c.options['MAT'] = Material(
+                        composition=cmd[comp], density=mat.density
+                    )
+
     @staticmethod
     def _get_cell_replaced_shape(cell, surf_replace, surf_names, name_rule):
         cell_surfs = cell.shape.get_surfaces()
