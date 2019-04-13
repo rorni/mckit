@@ -99,7 +99,10 @@ def produce_universes(cells):
             fill['universe'] = universes[fill['universe']][0]
     for u, u_cells in universes.values():
         u.add_cells(u_cells, name_rule='keep')
-    return universes[0][0]
+    u = universes[0][0]
+    common_mats = u.find_common_materials()
+    u.set_common_materials(common_mats)
+    return u
 
 
 class Universe:
@@ -133,6 +136,8 @@ class Universe:
         Gets bounding box of the universe.
     copy()
         Makes a copy of the universe.
+    find_common_materials()
+        Finds all common materials among universes.
     get_surfaces()
         Gets all surfaces of the universe.
     get_materials()
@@ -153,6 +158,8 @@ class Universe:
         Saves the universe to file.
     select(cell, selector)
         Selects specified entities.
+    set_common_materials(com_mat)
+        Sets new common materials for universe and all nested universes.
     simplify(box, split_disjoint, min_volume)
         Simplifies all cells of the universe.
     test_points(points)
@@ -394,6 +401,20 @@ class Universe:
             comment=self._comment, common_materials=self._common_materials
         )
 
+    def find_common_materials(self):
+        """Finds common materials among universes included.
+
+        Returns
+        -------
+        common_mats : set
+            A set of common materials.
+        """
+        unvs = self.get_universes()
+        if len(unvs) == 1:
+            return set()
+        comps = [u.get_compositions() for u in unvs]
+        return set.intersection(*comps)
+
     def get_surfaces(self, inner=False):
         """Gets all surfaces of the universe.
 
@@ -432,14 +453,13 @@ class Universe:
         """
         pass
 
-    def get_compositions(self, inner=False):
+    def get_compositions(self, exclude_common=False):
         """Gets all compositions of the unvierse.
 
         Parameters
         ----------
-        inner : bool
-            Whether to take composition of inner universes. Default: False -
-            returns compositions of this universe only.
+        exclude_common : bool
+            Exclude common compositions from the result. Default: False.
 
         Returns
         -------
@@ -451,6 +471,8 @@ class Universe:
             mat = c.material()
             if mat:
                 comps.add(mat.composition)
+        if exclude_common:
+            comps.difference_update(self._common_materials)
         return comps
 
     def get_transformations(self):
@@ -576,11 +598,11 @@ class Universe:
         universes = self.get_universes()
         cells = []
         surfaces = []
-        materials = []
+        materials = list(sorted(self._common_materials, key=Card.name))
         for u in sorted(universes, key=Universe.name):
             cells.extend(sorted(u, key=Card.name))
             surfaces.extend(sorted(u.get_surfaces(), key=Card.name))
-            materials.extend(sorted(u.get_compositions(), key=Card.name))
+            materials.extend(sorted(u.get_compositions(True), key=Card.name))
         cards = [str(self.verbose_name())]
         cards.extend(map(Card.mcnp_repr, cells))
         cards.append('')
@@ -641,7 +663,8 @@ class Universe:
         """
         new_cells = []
         if verbose:
-            uiter = progressbar(self, item_show_func=lambda x: "Simplifying cell #{0}".format(x.name())).__enter__()
+            fmt_fun = lambda x: "Simplifying cell #{0}".format(x.name() if x else x)
+            uiter = progressbar(self, item_show_func=fmt_fun).__enter__()
         else:
             uiter = self
         

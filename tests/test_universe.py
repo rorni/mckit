@@ -18,6 +18,7 @@ def universe():
         1: 'tests/universe_test_data/universe1.i',
         2: 'tests/universe_test_data/universe2.i',
         3: 'tests/universe_test_data/universe3.i',
+        4: 'tests/universe_test_data/universe4.i',
         1002: 'tests/universe_test_data/universe1002.i',
         1012: 'tests/universe_test_data/universe1012.i',
         1022: 'tests/universe_test_data/universe1022.i'
@@ -390,7 +391,8 @@ def test_get_universes(universe, case, answer):
     (2, {1: {'start_mat': 21}}, {'material': {21: [1, 2], 22: [1, 2]}}),
     (2, {1: {'start_mat': 20}, 2: {'start_cell': 2}}, {'material': {21: [1, 2]}, 'cell': {2: [0, 2], 3: [0, 2]}}),
     (2, {1: {'start_mat': 21}, 2: {'start_cell': 2}}, {'material': {21: [1, 2], 22: [1, 2]}, 'cell': {2: [0, 2], 3: [0, 2]}}),
-    (3, {}, {})
+    (3, {}, {}),
+    (4, {}, {})
 ])
 def test_name_clashes(universe, case, rename, stat):
     u = universe(case)
