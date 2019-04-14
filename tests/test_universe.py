@@ -19,6 +19,7 @@ def universe():
         2: 'tests/universe_test_data/universe2.i',
         3: 'tests/universe_test_data/universe3.i',
         4: 'tests/universe_test_data/universe4.i',
+        5: 'tests/universe_test_data/universe5.i',
         1002: 'tests/universe_test_data/universe1002.i',
         1012: 'tests/universe_test_data/universe1012.i',
         1022: 'tests/universe_test_data/universe1022.i'
@@ -246,6 +247,17 @@ def test_get_surfaces(universe, case, recursive, answer_data):
     names_ans = {x[0] for x in answer_data}
     names = {s.name() for s in surfaces}
     assert names == names_ans
+
+
+@pytest.mark.parametrize('case, answer', [
+    (5, {Composition(atomic=[('6012', 1)], name=10)}),
+    (1, set())
+])
+def test_find_common_materials(universe, case, answer):
+    u = universe(case)
+    cm = u._common_materials
+    assert cm == answer
+    assert {c.name() for c in cm} == {c.name() for c in answer}
 
 
 @pytest.mark.parametrize('case, answer', [

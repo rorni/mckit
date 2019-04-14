@@ -409,11 +409,12 @@ class Universe:
         common_mats : set
             A set of common materials.
         """
-        unvs = self.get_universes()
-        if len(unvs) == 1:
-            return set()
-        comps = [u.get_compositions() for u in unvs]
-        return set.intersection(*comps)
+        comp_count = defaultdict(lambda: 0)
+        for u in self.get_universes():
+            for c in u.get_compositions():
+                comp_count[c] += 1
+        common_mats = {c for c, cnt in comp_count.items() if cnt > 1}
+        return common_mats
 
     def get_surfaces(self, inner=False):
         """Gets all surfaces of the universe.
