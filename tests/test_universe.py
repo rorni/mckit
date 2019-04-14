@@ -513,6 +513,27 @@ def test_rename(universe, case, start, answer):
     assert mnames == answer['material']
 
 
+@pytest.mark.parametrize('case', [1, 2])
+def test_alone(universe, case):
+    u = universe(case)
+    uc = u.alone()
+    assert uc is not u
+    assert 0 == uc.name()
+    assert u.verbose_name() == uc.verbose_name()
+    assert len(u._cells) == len(uc._cells)
+    for c, cc in zip(u, uc):
+        assert cc is not c
+        assert c.name() == cc.name()
+        assert c.shape == cc.shape
+        assert 'FILL' not in cc.options
+    surfs = {s.name(): s for s in u.get_surfaces()}
+    csurfs = {s.name(): s for s in uc.get_surfaces()}
+    assert surfs == csurfs
+    for k, v in surfs.items():
+        assert csurfs[k] is not v
+        assert csurfs[k] == v
+
+
 @pytest.mark.parametrize('case, common, start, answer', [
     (1, set(), 7, [7, 8]),
     (1, {Composition(atomic=[('C-12', 1)], name=1)}, 7, [1, 7]),

@@ -318,6 +318,20 @@ class Universe:
                 return False
         return _predicate
 
+    def alone(self):
+        """Gets this universe alone, without inner universes.
+
+        Returns
+        -------
+        u : Universe
+            A copy of the universe with FILL cards removed.
+        """
+        cells = []
+        for c in self:
+            options = {k: v for k, v in c.options.items() if k != 'FILL'}
+            cells.append(Body(c.shape, **options))
+        return Universe(cells)
+
     def apply_fill(self, cell=None, universe=None, predicate=None):
         """Applies fill operations to all or selected cells or universes.
 
