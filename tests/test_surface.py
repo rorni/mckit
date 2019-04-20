@@ -90,6 +90,10 @@ def test_surface_creation(cls, kind, params, expected):
         np.testing.assert_array_almost_equal(surf_attr, attr_value)
 
 
+@pytest.mark.parametrize('tr', [
+    None,
+    Transformation([0, 0, 0], [20.0, 70.0, 90, 110.0, 20.0, 90, 90, 90, 0], indegrees=True)
+])
 @pytest.mark.parametrize('cls, kind, params', [
     (Plane, 'P', [3.2, -1.4, 5.7, -4.8]),
     (Plane, 'P', [3.28434343457632, -1.48888888888888, 5.7341411411414, -4.8]),
@@ -102,6 +106,7 @@ def test_surface_creation(cls, kind, params, expected):
     (Cylinder, 'C/X', [4.0, -4.1, 6.9]),
     (Cylinder, 'C/Y', [-4.2, 4.3, 7.0]),
     (Cylinder, 'C/Z', [4.4, 4.5, 7.1]),
+    (Cylinder, 'C/X', [72.4, 157.0, 25.5]),
     (Cylinder, 'X', [1.2, 3.4, 8.4, 3.4]),
     (Cylinder, 'Y', [1.2, 3.4, 8.4, 3.4]),
     (Cylinder, 'Z', [1.2, 3.4, 8.4, 3.4]),
@@ -142,8 +147,9 @@ def test_surface_creation(cls, kind, params, expected):
     (GQuadratic, 'SQ', [0.5, -2.5841834141234512351, 3.0, 1.1, -1.3, -5.4, -7.0, 3.2, -1.7, 8.4]),
     (GQuadratic, 'GQ', [1, 2, 3, 4, 5, 6, 7, 8, 9, -10])
 ])
-def test_surface_copy(cls, kind, params):
-    surf = create_surface(kind, *params)
+def test_surface_copy(cls, kind, params, tr):
+    options = {'transform': tr} if tr else {}
+    surf = create_surface(kind, *params, **options)
     surf_cpy = surf.copy()
     assert id(surf) != id(surf_cpy)
     assert isinstance(surf_cpy, surf.__class__)

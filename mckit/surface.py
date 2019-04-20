@@ -187,9 +187,6 @@ class Surface(Card):
     def __eq__(self, other):
         return id(self) == id(other)
 
-    def copy(self):
-        return self.transform(Transformation())
-
     @abstractmethod
     def transform(self, tr):
         """Applies transformation to this surface.
@@ -237,13 +234,20 @@ class Plane(Surface, _Plane):
             v = np.array(normal)
             k = offset
         length = np.linalg.norm(v)
-        if abs(length - 1) > constants.FLOAT_TOLERANCE:
-            v = v / length
-            k /= length
+        v = v / length
+        k /= length
         self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
+
+    def copy(self):
+        instance = Plane.__new__(Plane, self._v, self._k)
+        instance._k_digits = self._k_digits
+        instance._v_digits = self._v_digits
+        Surface.__init__(instance, **self.options)
+        _Plane.__init__(instance, self._v, self._k)
+        return instance
 
     def __hash__(self):
         result = hash(self._get_k())
@@ -315,6 +319,14 @@ class Sphere(Surface, _Sphere):
         self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE,
                                                  resolution=constants.FLOAT_TOLERANCE)
         _Sphere.__init__(self, center, radius)
+
+    def copy(self):
+        instance = Sphere.__new__(Sphere, self._center, self._radius)
+        instance._center_digits = self._center_digits
+        instance._radius_digits = self._radius_digits
+        Surface.__init__(instance, **self.options)
+        _Sphere.__init__(instance, self._center, self._radius)
+        return instance
 
     def __hash__(self):
         result = hash(self._get_radius())
@@ -406,6 +418,15 @@ class Cylinder(Surface, _Cylinder):
         self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
+
+    def copy(self):
+        instance = Cylinder.__new__(Cylinder, self._pt, self._axis, self._radius)
+        instance._axis_digits = self._axis_digits
+        instance._pt_digits = self._pt_digits
+        instance._radius_digits = self._radius_digits
+        Surface.__init__(instance, **self.options)
+        _Cylinder.__init__(instance, self._pt, self._axis, self._radius)
+        return instance
 
     def __hash__(self):
         result = hash(self._get_radius())
@@ -534,6 +555,16 @@ class Cone(Surface, _Cone):
         _Cone.__init__(self, apex, axis, ta, sheet)
         self._t2_digits = significant_digits(self._t2, constants.FLOAT_TOLERANCE)
 
+    def copy(self):
+        ta = np.sqrt(self._t2)
+        instance = Cone.__new__(Cone, self._apex, self._axis, ta, self._sheet)
+        instance._axis_digits = self._axis_digits
+        instance._apex_digits = self._apex_digits
+        instance._t2_digits = self._t2_digits
+        Surface.__init__(instance, **self.options)
+        _Cone.__init__(instance, self._apex, self._axis, ta, self._sheet)
+        return instance
+
     def __hash__(self):
         result = hash(self._get_t2()) ^ hash(self._sheet)
         for c in self._get_apex():
@@ -656,6 +687,15 @@ class GQuadratic(Surface, _GQuadratic):
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k)
 
+    def copy(self):
+        instance = GQuadratic.__new__(GQuadratic, self._m, self._v, self._k)
+        instance._m_digits = self._m_digits
+        instance._v_digits = self._v_digits
+        instance._k_digits = self._k_digits
+        Surface.__init__(instance, **self.options)
+        _GQuadratic.__init__(instance, self._m, self._v, self._k)
+        return instance
+
     def __hash__(self):
         result = hash(self._get_k())
         for v in self._get_v():
@@ -746,6 +786,17 @@ class Torus(Surface, _Torus):
 
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, R, a, b)
+
+    def copy(self):
+        instance = Torus.__new__(Torus, self._center, self._axis, self._R, self._a, self._b)
+        instance._axis_digits = self._axis_digits
+        instance._center_digits = self._center_digits
+        instance._R_digits = self._R_digits
+        instance._a_digits = self._a_digits
+        instance._b_digits = self._b_digits
+        Surface.__init__(instance, **self.options)
+        _Torus.__init__(instance, self._center, self._axis, self._R, self._a, self._b)
+        return instance
 
     def __hash__(self):
         result = hash(self._get_R()) ^ hash(self._get_a()) ^ hash(self._get_b())
