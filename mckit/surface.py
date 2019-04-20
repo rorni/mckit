@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from .constants import *
+from . import constants 
 from .geometry import Plane      as _Plane,    \
                       Sphere     as _Sphere,   \
                       Cone       as _Cone,     \
@@ -111,9 +111,9 @@ def create_surface(kind, *params, **options):
         elif len(params) == 4:
             # TODO: Use special classes instead of GQ
             h1, r1, h2, r2 = params
-            if abs(h2 - h1) < RESOLUTION * max(abs(h1), abs(h2)):
+            if abs(h2 - h1) < constants.RESOLUTION * max(abs(h1), abs(h2)):
                 return Plane(axis, -0.5 * (h1 + h2), **options)
-            elif abs(r2 - r1) < RESOLUTION * max(abs(r2), abs(r1)):
+            elif abs(r2 - r1) < constants.RESOLUTION * max(abs(r2), abs(r1)):
                 R = 0.5 * (abs(r1) + abs(r2))
                 return Cylinder([0, 0, 0], axis, R, **options)
             else:
@@ -237,11 +237,11 @@ class Plane(Surface, _Plane):
             v = np.array(normal)
             k = offset
         length = np.linalg.norm(v)
-        if abs(length - 1) > FLOAT_TOLERANCE:
+        if abs(length - 1) > constants.FLOAT_TOLERANCE:
             v = v / length
             k /= length
-        self._k_digits = significant_digits(k, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        self._v_digits = significant_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
 
@@ -310,10 +310,10 @@ class Sphere(Surface, _Sphere):
             tr = options.pop('transform')
             center = tr.apply2point(center)
         Surface.__init__(self, **options)
-        self._center_digits = significant_array(np.array(center), FLOAT_TOLERANCE,
-                                                resolution=FLOAT_TOLERANCE)
-        self._radius_digits = significant_digits(radius, FLOAT_TOLERANCE,
-                                                 resolution=FLOAT_TOLERANCE)
+        self._center_digits = significant_array(np.array(center), constants.FLOAT_TOLERANCE,
+                                                resolution=constants.FLOAT_TOLERANCE)
+        self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE,
+                                                 resolution=constants.FLOAT_TOLERANCE)
         _Sphere.__init__(self, center, radius)
 
     def __hash__(self):
@@ -400,10 +400,10 @@ class Cylinder(Surface, _Cylinder):
         if axis[maxdir] < 0:
             axis *= -1
         pt = np.array(pt)
-        self._axis_digits = significant_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         pt = pt - axis * np.dot(pt, axis)
-        self._pt_digits = significant_array(pt, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        self._radius_digits = significant_digits(radius, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._pt_digits = significant_array(pt, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
 
@@ -526,13 +526,13 @@ class Cone(Surface, _Cone):
             axis *= -1
             sheet *= -1
         apex = np.array(apex)
-        self._axis_digits = significant_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        self._apex_digits = significant_array(apex, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._apex_digits = significant_array(apex, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
 
         Surface.__init__(self, **options)
         # TODO: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
         _Cone.__init__(self, apex, axis, ta, sheet)
-        self._t2_digits = significant_digits(self._t2, FLOAT_TOLERANCE)
+        self._t2_digits = significant_digits(self._t2, constants.FLOAT_TOLERANCE)
 
     def __hash__(self):
         result = hash(self._get_t2()) ^ hash(self._sheet)
@@ -649,9 +649,9 @@ class GQuadratic(Surface, _GQuadratic):
             m = np.array(m)
             v = np.array(v)
             k = k
-        self._m_digits = significant_array(m, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        self._v_digits = significant_array(v, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        self._k_digits = significant_digits(k, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
+        self._m_digits = significant_array(m, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
 
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k)
@@ -701,7 +701,7 @@ class GQuadratic(Surface, _GQuadratic):
         k = self._get_k()
         for v in [a, b, c, d, e, f, g, h, j, k]:
             words.append(' ')
-            p = significant_digits(v, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
+            p = significant_digits(v, constants.FLOAT_TOLERANCE, constants.FLOAT_TOLERANCE)
             words.append(pretty_float(v, p))
         return print_card(words)
 
@@ -738,11 +738,11 @@ class Torus(Surface, _Torus):
         maxdir = np.argmax(np.abs(axis))
         if axis[maxdir] < 0:
             axis *= -1
-        self._axis_digits = significant_array(axis, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        self._center_digits = significant_array(center, FLOAT_TOLERANCE, resolution=FLOAT_TOLERANCE)
-        self._R_digits = significant_digits(R, FLOAT_TOLERANCE)
-        self._a_digits = significant_digits(a, FLOAT_TOLERANCE)
-        self._b_digits = significant_digits(b, FLOAT_TOLERANCE)
+        self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._center_digits = significant_array(center, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._R_digits = significant_digits(R, constants.FLOAT_TOLERANCE)
+        self._a_digits = significant_digits(a, constants.FLOAT_TOLERANCE)
+        self._b_digits = significant_digits(b, constants.FLOAT_TOLERANCE)
 
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, R, a, b)
