@@ -16,6 +16,7 @@ from .printer import print_card, pretty_float
 from .transformation import Transformation
 from .utils import *
 from .card import Card
+import mckit.body
 
 
 __all__ = [
@@ -595,8 +596,16 @@ class Cone(Surface, _Cone):
         return round_scalar(self._t2, self._t2_digits)
 
     def transform(self, tr):
-        return Cone(self._apex, self._axis, np.sqrt(self._t2),
-                    sheet=self._sheet, transform=tr, **self.options)
+        cone = Cone(self._apex, self._axis, np.sqrt(self._t2),
+                    sheet=0, transform=tr, **self.options)
+        if self._sheet != 0:
+            plane = Plane(self._axis, -np.dot(self._axis, self._apex), name=1, transform=tr)
+            if self._sheet == +1:
+                op = 'C'
+            else:
+                op = 'S'
+            return mckit.body.Shape('U', cone, mckit.body.Shape(op, plane))
+        return cone
 
     def mcnp_words(self):
         words = Surface.mcnp_words(self)

@@ -715,6 +715,16 @@ class TestCone:
         Cone([3, 2, -4], [1.e-13, -1.e-13, -1], np.sqrt(0.5), sheet=1, name=7)   # 29
     ]
 
+    @pytest.mark.parametrize('surf', surfs)
+    @pytest.mark.parametrize('box', [Box([3, 2, -4], 10, 10, 10)])
+    def test_transform2(self, transform, surf, box):
+        points = box.generate_random_points(10000)
+        test = surf.test_points(points)
+        new_pts = transform.apply2point(points)
+        new_surf = surf.transform(transform)
+        new_test = new_surf.test_points(new_pts)
+        np.testing.assert_array_equal(test, new_test)
+
     eq_matrix = [
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
