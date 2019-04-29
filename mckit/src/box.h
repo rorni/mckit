@@ -12,6 +12,9 @@
 #define BOX_SPLIT_Z 2
 #define BOX_SPLIT_AUTODIR -1
 
+#define BIT_LEN 64
+#define HIGHEST_BIT (1ull << BIT_LEN - 1)
+
 #include "mkl_vsl.h"
 
 

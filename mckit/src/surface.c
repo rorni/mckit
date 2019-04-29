@@ -376,8 +376,10 @@ int surface_test_box(Surface * surf, const Box * box)
         nlopt_destroy(opt);
     }
     // Cache test result;
-    surf->last_box = box->subdiv;
-    surf->last_box_result = sign;
+    if (!(box->subdiv & HIGHEST_BIT)) {
+        surf->last_box = box->subdiv;
+        surf->last_box_result = sign;
+    }
     
     return sign;
 }

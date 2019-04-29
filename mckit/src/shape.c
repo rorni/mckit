@@ -133,7 +133,7 @@ int shape_test_box(
         } else free(sub);
     }
     // Cache test result;
-    if (collect >= 0) {
+    if (collect >= 0 && !(box->subdiv & HIGHEST_BIT)) {
         shape->last_box = box->subdiv;
         shape->last_box_result = result;
     }
@@ -279,6 +279,7 @@ int shape_bounding_box(
             else upper = box2.dims[dim];
         }
     }
+    box->subdiv = 1;
     return SHAPE_SUCCESS;
 }
 

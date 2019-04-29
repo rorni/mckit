@@ -3,8 +3,6 @@
 #include "mkl.h"
 #include "box.h"
 
-#define BIT_LEN 64
-
 // Turn on caching of test_box results.
 char enable_box_cache = 0;
 
@@ -195,10 +193,15 @@ int box_split(
     status = box_init(box2, center2, box->ex, box->ey, box->ez, 
                         dims2[0], dims2[1], dims2[2]);
     if (status == BOX_FAILURE) return BOX_FAILURE;
-    
-    box1->subdiv = box->subdiv & (~mask) | start_bit;
-    box2->subdiv = box->subdiv | start_bit;
-    
+
+    if (box->subdiv & HIGHEST_BIT) {
+        box1->subdiv = box->subdiv;
+        box2->subdiv = box->subdiv;
+    } else {
+        box1->subdiv = box->subdiv & (~mask) | start_bit;
+        box2->subdiv = box->subdiv | start_bit;
+    }
+
     return BOX_SUCCESS;
 }
 
@@ -291,6 +294,6 @@ int box_is_in(const Box * in_box, uint64_t out_subdiv)
     char out_stop = high_bit(out);
     mask >>= BIT_LEN + 1 - out_stop;
     if ((in & (~mask)) == 0) return -1; // inner box actually is bigger one.
-    if (((out ^ in) & mask) == 0) return +1;    
+    if (((out ^ in) & mask) == 0) return +1;
     return -1;
 }
