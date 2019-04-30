@@ -957,10 +957,11 @@ class TestGQuadratic:
         result = surf.test_points(point)
         np.testing.assert_array_equal(result, expected)
 
+    @pytest.mark.parametrize('mult', [1, 1e+3, 1e+7, 1.e-3, 1.e-7])
     @pytest.mark.parametrize('m, v, k, ans', [
-        (np.diag([1, 1, 1]), [0, 0, 0], -1, 0),
-        (np.diag([1, 1, 1]), [0, 0, 0], -0.1, 0),
-        (np.diag([1, 1, 1]), [0, 0, 0], -3.01, -1),
+        (np.diag([1, 1, 1]), np.array([0, 0, 0]), -1, 0),
+        (np.diag([1, 1, 1]), np.array([0, 0, 0]), -0.1, 0),
+        (np.diag([1, 1, 1]), np.array([0, 0, 0]), -3.01, -1),
         (np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), 3 - 0.1, 0),
         (np.diag([1, 1, 1]), -2 * np.array([2, 2, 2]), 12 - 3.01, 0),
         (np.diag([1, 1, 1]), -2 * np.array([2, 2, 2]), 12 - 2.99, +1),
@@ -968,8 +969,8 @@ class TestGQuadratic:
         (np.diag([1, 1, 1]), -2 * np.array([2, 0, 0]), 4 - 0.99, +1),
         (np.diag([1, 1, 1]), -2 * np.array([100, 0, 100]), 20000 - 2, +1)
     ])
-    def test_box_test(self, box, m, v, k, ans):
-        surf = GQuadratic(m, v, k)
+    def test_box_test(self, box, m, v, k, ans, mult):
+        surf = GQuadratic(m * mult, v * mult, k * mult)
         assert surf.test_box(box) == ans
 
     @pytest.mark.parametrize('m, v, k', [

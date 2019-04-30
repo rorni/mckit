@@ -483,10 +483,10 @@ static int
 gqobj_init(GQuadraticObject * self, PyObject * args, PyObject * kwds)
 {
     PyObject *m, *v;
-    double k;
-    if (! PyArg_ParseTuple(args, "O&O&d", convert_to_dbl_vec_array, &m, convert_to_dbl_vec, &v, &k)) return -1;
+    double k, f;
+    if (! PyArg_ParseTuple(args, "O&O&dd", convert_to_dbl_vec_array, &m, convert_to_dbl_vec, &v, &k, &f)) return -1;
 
-    gq_init(&self->surf, (double *) PyArray_DATA(m), (double *) PyArray_DATA(v), k);
+    gq_init(&self->surf, (double *) PyArray_DATA(m), (double *) PyArray_DATA(v), k, f);
 
     Py_DECREF(m);
     Py_DECREF(v);

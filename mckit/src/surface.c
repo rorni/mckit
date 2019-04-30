@@ -98,11 +98,12 @@ double gq_func(
     if (grad != NULL) {
         cblas_dcopy(NDIM, data->v, 1, grad, 1);
         cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 2, data->m, NDIM, x, 1, 1, grad, 1);
+        cblas_dscal(NDIM, data->factor, grad, 1);
     }
     double y[NDIM];
     cblas_dcopy(NDIM, data->v, 1, y, 1);
     cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 1, data->m, NDIM, x, 1, 1, y, 1);
-    return cblas_ddot(NDIM, y, 1, x, 1) + data->k;
+    return (cblas_ddot(NDIM, y, 1, x, 1) + data->k) * data->factor;
 }
 
 double clip_negative_values(double value)
@@ -280,13 +281,15 @@ int gq_init(
     GQuadratic * surf,
     const double * m,
     const double * v,
-    double k
+    double k,
+    double factor
 )
 {
     int i, j;
     surface_INIT((Surface *) surf);
     surf->base.type = GQUADRATIC;
     surf->k = k;
+    surf->factor = factor;
     for (i = 0; i < NDIM; ++i) {
         surf->v[i] = v[i];
         for (j = 0; j < NDIM; ++j) surf->m[i * NDIM + j] = m[i * NDIM + j];
@@ -349,6 +352,7 @@ int surface_test_box(Surface * surf, const Box * box)
         // exists inside the box if all corner results are negative. SLSQP optimization method
         // is used.
         double x[NDIM], opt_val;
+        double xtol[NDIM];
         nlopt_result opt_result;
         
         nlopt_opt opt;
@@ -358,10 +362,13 @@ int surface_test_box(Surface * surf, const Box * box)
         
         if (sign > 0) nlopt_set_min_objective(opt, surface_func, surf);
         else          nlopt_set_max_objective(opt, surface_func, surf);
-    
+
+        for (i = 0; i < NDIM; ++i) xtol[i] = box->dims[i] / 1000;
+
         nlopt_add_inequality_mconstraint(opt, 6, box_ieqcons, (void*) box, NULL);
         nlopt_set_stopval(opt, 0);
         nlopt_set_maxeval(opt, 1000); // TODO: consider passing this parameter.
+        // nlopt_set_xtol_abs(opt, xtol);
 
         // Because the problem is nonlinear, the points, where gradient is 0 exist.
         // To avoid such trap we start optimization from several points - box's corners.

@@ -689,12 +689,14 @@ class GQuadratic(Surface, _GQuadratic):
             m = np.array(m)
             v = np.array(v)
             k = k
+        L = np.linalg.eigvalsh(m)
+        factor = 1 / np.max(np.abs(L))
         self._m_digits = significant_array(m, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
 
         Surface.__init__(self, **options)
-        _GQuadratic.__init__(self, m, v, k)
+        _GQuadratic.__init__(self, m, v, k, factor)
 
     def copy(self):
         instance = GQuadratic.__new__(GQuadratic, self._m, self._v, self._k)

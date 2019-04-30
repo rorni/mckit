@@ -69,6 +69,7 @@ struct GQuadratic {
     double m[NDIM * NDIM];
     double v[NDIM];
     double k;
+    double factor;
 };
 
 // Methods //
@@ -113,7 +114,8 @@ int gq_init(
     GQuadratic * surf,
     const double * m,
     const double * v,
-    double k
+    double k,
+    double factor
 );
 
 // Tests senses of points with respect to the surface.
