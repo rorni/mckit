@@ -22,7 +22,8 @@ def read_mctal(filename, encoding='utf-8'):
     """
     with open(filename, encoding=encoding) as f:
         text = f.read()
-    header, *tally_texts = text.split('tally')
+    flags = re.MULTILINE + re.IGNORECASE
+    header, *tally_texts = re.split('tally', text, flags=flags)
     tallies = {}
     for text in tally_texts:
         tally = parse_tally(text)
