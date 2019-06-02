@@ -43,6 +43,26 @@ class RectMesh:
     def __eq__(self, other):
         return self is other
 
+    def bounding_box(self):
+        """Gets the bounding box of the cell.
+
+        Returns
+        -------
+        bbox : Box
+            Bounding box.
+        """
+        origin = [
+            0.5 * (self._xbins[0] + self._xbins[-1]),
+            0.5 * (self._ybins[0] + self._ybins[-1]),
+            0.5 * (self._zbins[0] + self._zbins[-1])
+        ]
+        if self._tr:
+            origin = self._tr.apply2point(origin)
+        dimx = self._xbins[-1] - self._xbins[0]
+        dimy = self._ybins[-1] - self._ybins[0]
+        dimz = self._zbins[-1] - self._zbins[0]
+        return Box(origin, dimx, dimy, dimz, ex=self._ex, ey=self._ey, ez=self._ez)
+
     @property
     def shape(self):
         """Gets the shape of the mesh."""
