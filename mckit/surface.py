@@ -699,12 +699,12 @@ class GQuadratic(Surface, _GQuadratic):
         _GQuadratic.__init__(self, m, v, k, factor)
 
     def copy(self):
-        instance = GQuadratic.__new__(GQuadratic, self._m, self._v, self._k)
+        instance = GQuadratic.__new__(GQuadratic, self._m, self._v, self._k, self._factor)
         instance._m_digits = self._m_digits
         instance._v_digits = self._v_digits
         instance._k_digits = self._k_digits
         Surface.__init__(instance, **self.options)
-        _GQuadratic.__init__(instance, self._m, self._v, self._k)
+        _GQuadratic.__init__(instance, self._m, self._v, self._k, self._factor)
         return instance
 
     def __hash__(self):

@@ -740,10 +740,17 @@ gqobj_get_k(GQuadraticObject * self, void * closure)
     return Py_BuildValue("d", self->surf.k);
 }
 
+static PyObject *
+gqobj_get_factor(GQuadraticObject * self, void * closure)
+{
+    return Py_BuildValue("d", self->surf.factor);
+}
+
 static PyGetSetDef gqobj_getset[] = {
         {"_m", (getter) gqobj_get_m, NULL, "GQuadratic's matrix.", NULL},
         {"_v", (getter) gqobj_get_v, NULL, "GQuadratic's vector.", NULL},
         {"_k", (getter) gqobj_get_k, NULL, "GQuadratic's free term", NULL},
+        {"_factor", (getter) gqobj_get_factor, NULL, "GQuadratic's normalisation factor", NULL},
         {NULL}
 };
 

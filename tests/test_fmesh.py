@@ -61,6 +61,28 @@ class TestRectMesh:
         np.testing.assert_array_almost_equal(mesh._ey, ey)
         np.testing.assert_array_almost_equal(mesh._ez, ez)
 
+    @pytest.mark.parametrize('ti', range(4))
+    @pytest.mark.parametrize('mi', range(3))
+    def test_bounding_box(self, mi, ti):
+        tr = transforms[ti]
+        bin = bins[mi]
+        mesh = create_rmesh(bin, tr)
+        box = mesh.bounding_box()
+        corners = box.corners
+        ans_corners = [
+            [bin['xbins'][0], bin['ybins'][0], bin['zbins'][0]],
+            [bin['xbins'][0], bin['ybins'][0], bin['zbins'][-1]],
+            [bin['xbins'][0], bin['ybins'][-1], bin['zbins'][0]],
+            [bin['xbins'][0], bin['ybins'][-1], bin['zbins'][-1]],
+            [bin['xbins'][-1], bin['ybins'][0], bin['zbins'][0]],
+            [bin['xbins'][-1], bin['ybins'][0], bin['zbins'][-1]],
+            [bin['xbins'][-1], bin['ybins'][-1], bin['zbins'][0]],
+            [bin['xbins'][-1], bin['ybins'][-1], bin['zbins'][-1]],
+        ]
+        if tr:
+            ans_corners = tr.apply2point(ans_corners)
+        np.testing.assert_array_almost_equal(corners, ans_corners)
+
     @pytest.mark.parametrize('mi, ti, ans', [
         (0, 0, (4, 2, 2)), (0, 1, (4, 2, 2)), (0, 2, (4, 2, 2)),
         (0, 3, (4, 2, 2)),
