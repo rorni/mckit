@@ -1,5 +1,5 @@
-from .activation import EBINS_24
-from .fmesh import SparseData
+# -*- coding: utf-8 -*-
+
 from .printer import print_card, separate
 
 
@@ -180,7 +180,7 @@ def expand_matrix_distribution(intensities, *var_values, start_name=1):
 
     Parameters
     ----------
-    intensities : np.ndarray or SparseData
+    intensities : array_like
         A matrix of source intensities.
     var_values : tuple
         A tuple of variable values along each axis. Length of var_values must
@@ -208,9 +208,6 @@ def expand_matrix_distribution(intensities, *var_values, start_name=1):
             start_name, dists = create_bin_distributions(values, start_name)
             uniq_values.append(dists)
         exp_var_values.append([])
-
-    if not isinstance(intensities, SparseData):
-        intensities = SparseData.from_dense(intensities)
 
     exp_intensities = []
     for index, intensity in intensities:
