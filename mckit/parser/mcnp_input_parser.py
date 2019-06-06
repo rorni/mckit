@@ -671,7 +671,7 @@ def p_material_option(p):
     p[0] = p[1], p[2]
 
 
-mcnp_input_parser = yacc.yacc(tabmodule="mcnp_input_tab", debug=False)
+mcnp_input_parser = yacc.yacc(tabmodule="mcnp_input_tab", debug=False, errorlog=yacc.NullLogger())
 
 
 def read_mcnp(filename, encoding='utf-8'):
