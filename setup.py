@@ -82,7 +82,7 @@ extensions = [
 
 setup(
     name='mckit',
-    version='0.1.1',
+    version='0.1.2',
     packages=find_packages(),
     package_data={'mckit': ['data/isotopes.dat', 'libnlopt-0.dll']},
     url='https://gitlab.iterrf.ru/Rodionov/mckit',
@@ -90,7 +90,7 @@ setup(
     author='Roman Rodionov',
     author_email='r.rodionov@iterrf.ru',
     description='Tool for handling neutronic models and results',
-    install_requires=['numpy', 'scipy', 'ply', 'click'],
+    install_requires=['numpy', 'scipy', 'ply', 'click', 'mkl-devel'],
     ext_modules=extensions,
     # data_files=[('.', ['libnlopt-0.dll'])]
 )
