@@ -1,6 +1,6 @@
 import pytest
 
-from mckit.source import Distribution, Source, activation_gamma_source
+from mckit.source import Distribution, Source
 
 
 class TestDistribution:
@@ -101,6 +101,3 @@ class TestSource:
         src = Source(**kwargs)
         assert src.mcnp_repr() == expected
 
-
-def test_gamma_src():
-    pass
