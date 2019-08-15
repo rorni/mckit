@@ -45,10 +45,7 @@ def attach_bounding_boxes(model: mk.Universe, tolerance: int = 10) -> tp.NoRetur
         c.bounding_box = c.shape.bounding_box(tol=tolerance)
 
 
-# def collect_bounding_boxes(model: mk.Universe, tolerance: int = 10) -> tp.List[mg.Box]:
-#     return list(scan_bounding_boxes(model, tolerance))
-
-mem = Memory(location=".cache")
+mem = Memory(location=".cache", verbose=2)
 
 
 @mem.cache
@@ -57,6 +54,30 @@ def load_model(path: Path, tolerance: int = 10) -> mk.Universe:
     model = read_mcnp(str(path), encoding="Cp1251")
     attach_bounding_boxes(model, tolerance)
     return model
+
+
+def subtract(
+    a_model: mk.Universe,
+    b_model: mk.Universe,
+) -> mk.Universe:
+    new_cells = a_model._cells.copy()
+    index_list = set()
+    for b_cell in b_model:
+        b_box = b_cell.bounding_box
+        comp = None
+        for i, a_cell in a_model:
+            a_box = a_cell.bounding_box
+            if a_box.check_intersection(b_box):
+                if comp is None:
+                    comp = b_cell.shape.complement()
+                new_cells[i] = new_cells[i].intersection(comp)
+                index_list.add(i)
+    for i in index_list:
+        # print(i)
+        new_cells[i] = new_cells[i].simplify(min_volume=0.1)
+    new_cells.extend(b_model)
+    return Universe(new_cells, name_rule='clash')
+
 
 antenna_envelop = load_model(HFSR_ROOT / "models/antenna/box.i")
 envelops = load_model(CMODEL_ROOT / "universes/envelopes.i")

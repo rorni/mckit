@@ -76,7 +76,8 @@ extensions = [
         geometry_sources,
         include_dirs=include_dirs,
         libraries=geometry_dependencies,
-        library_dirs=library_dirs
+        library_dirs=library_dirs,
+
     )
 ]
 
