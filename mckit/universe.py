@@ -7,6 +7,7 @@ from click import progressbar
 
 from .body import Body, Shape
 from .card import Card
+# noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
 from .geometry import GLOBAL_BOX, Box
 from .transformation import Transformation
 from .material import Material
@@ -45,6 +46,7 @@ def cell_selector(cell_names):
             return [cell]
         else:
             return []
+
     return selector
 
 
@@ -69,6 +71,7 @@ def surface_selector(surface_names):
     def selector(cell):
         surfs = cell.shape.get_surfaces()
         return [s for s in surfs if s.name() in surface_names]
+
     return selector
 
 
@@ -187,6 +190,13 @@ class Universe:
 
     def __len__(self):
         return len(self._cells)
+
+    def __setitem__(self, key: int, value: Body):
+        assert self._cells[key].name() == value.name(), "You can only replace a cell with a modified copy of it."
+        self._cells.__setitem__(key, value)
+
+    def __getitem__(self, item):
+        return self._cells.__getitem__(item)
 
     def add_cells(self, cells, name_rule='new'):
         """Adds new cell to the universe.
@@ -316,6 +326,7 @@ class Universe:
                 return predicate(cell)
             else:
                 return False
+
         return _predicate
 
     def alone(self):
@@ -682,12 +693,12 @@ class Universe:
             uiter = progressbar(self, item_show_func=fmt_fun).__enter__()
         else:
             uiter = self
-        
+
         for c in uiter:
             cs = c.simplify(box=box, min_volume=min_volume)
             if not cs.shape.is_empty():
                 new_cells.append(cs)
-       
+
         if verbose:
             print('Universe {0} simplification has been finished.'.format(self.name()))
             print('{0} empty cells were deleted.'.format(len(self._cells) - len(new_cells)))

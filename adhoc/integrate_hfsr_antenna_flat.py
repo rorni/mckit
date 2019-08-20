@@ -1,3 +1,5 @@
+"""
+"""
 import sys
 import os
 
@@ -56,28 +58,56 @@ def load_model(path: Path, tolerance: int = 10) -> mk.Universe:
     return model
 
 
-def subtract(
-    a_model: mk.Universe,
-    b_model: mk.Universe,
+def subtract_model_from_model(
+    minuend: mk.Universe,
+    subtrahend: mk.Universe,
 ) -> mk.Universe:
-    new_cells = a_model._cells.copy()
-    index_list = set()
-    for b_cell in b_model:
-        b_box = b_cell.bounding_box
-        comp = None
-        for i, a_cell in a_model:
-            a_box = a_cell.bounding_box
-            if a_box.check_intersection(b_box):
-                if comp is None:
-                    comp = b_cell.shape.complement()
-                new_cells[i] = new_cells[i].intersection(comp)
-                index_list.add(i)
-    for i in index_list:
-        # print(i)
-        new_cells[i] = new_cells[i].simplify(min_volume=0.1)
-    new_cells.extend(b_model)
-    return Universe(new_cells, name_rule='clash')
+    new_universe = minuend.copy()
+    changed = False
+    for _i, a_cell in enumerate(new_universe):
+        new_cell = subtract_model_from_cell(a_cell, subtrahend, simplify=True)
+        if new_cell is not a_cell:
+            changed = True
+            new_universe[_i] = new_cell
+    if changed:
+        return new_universe
+    else:
+        return minuend
 
+
+def subtract_model_from_cell(
+    cell: mk.Shape,
+    model: mk.Universe,
+    simplify: bool = True,
+) -> mk.Shape:
+    new_cell = cell
+    cbb = cell.bounding_box
+    for b_cell in model:
+        if cbb.check_intersection(b_cell.bounding_box):
+            comp = b_cell.shape.complement()
+            new_cell = new_cell.intersection(comp)
+    if simplify and new_cell is not cell:
+        new_cell = new_cell.simplify(box=cbb, min_volume=0.1)
+    return new_cell
+
+
+# new_cells.extend(b_model)
 
 antenna_envelop = load_model(HFSR_ROOT / "models/antenna/box.i")
 envelops = load_model(CMODEL_ROOT / "universes/envelopes.i")
+
+cells_to_fill = [11, 14, 75]
+cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
+universes_dir = CMODEL_ROOT / "universes"
+assert universes_dir.is_dir()
+universes = {}
+
+for i in cells_to_fill_indexes:
+    envelop = envelops[i]
+    new_envelop = subtract_model_from_cell(envelop, antenna_envelop)
+    assert new_envelop is not envelop, f"Envelop ${envelop.name()} should be changed with intersect with" ...
+
+for i in cells_to_fill:
+    universe_path = universes_dir / f"u{i}.i"
+    universe = read_mcnp(universe_path, encoding="cp1251")
+    universes[i] = universe
