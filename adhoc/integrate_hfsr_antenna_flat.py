@@ -10,7 +10,11 @@ import os
 # import scipy as sp
 # import scipy.constants as sc
 import typing as tp
-from joblib import Memory
+from joblib import (
+    Memory, Parallel, delayed, wrap_non_picklable_objects, effective_n_jobs
+)
+from joblib.externals.loky import set_loky_pickler
+
 import dotenv
 from pathlib import Path
 
@@ -41,19 +45,30 @@ CMODEL_ROOT = get_root_dir("CMODEL_ROOT", "~/dev/mcnp/c-model")
 
 assert_pathes_exist(HFSR_ROOT, CMODEL_ROOT)
 
+NJOBS = effective_n_jobs()
+print(f"NJOBS: {NJOBS}")
+set_loky_pickler()
 
-def attach_bounding_boxes(model: mk.Universe, tolerance: int = 10) -> tp.NoReturn:
-    for c in model:
-        c.bounding_box = c.shape.bounding_box(tol=tolerance)
+# @wrap_non_picklable_objects
+def compute_bounding_box(shape: mk.Shape, tolerance: float) -> mg.Box:
+    return shape.bounding_box(tol=tolerance)
+
+
+def attach_bounding_boxes(model: mk.Universe, tolerance: float = 1.0) -> tp.NoReturn:
+    boxes = Parallel(n_jobs=NJOBS, backend='multiprocessing')(
+        delayed(compute_bounding_box)(c.shape, tolerance) for c in model
+    )
+    for _i, cell in enumerate(model):
+        cell.bounding_box = boxes[_i]
 
 
 mem = Memory(location=".cache", verbose=2)
 
 
 @mem.cache
-def load_model(path: Path, tolerance: int = 10) -> mk.Universe:
+def load_model(path: str, tolerance: float = 1.0) -> mk.Universe:
     # The cp1251-encoding reads C-model with various kryakozyabrs
-    model = read_mcnp(str(path), encoding="Cp1251")
+    model = read_mcnp(path, encoding="Cp1251")
     attach_bounding_boxes(model, tolerance)
     return model
 
@@ -93,8 +108,9 @@ def subtract_model_from_cell(
 
 # new_cells.extend(b_model)
 
-antenna_envelop = load_model(HFSR_ROOT / "models/antenna/box.i")
-envelops = load_model(CMODEL_ROOT / "universes/envelopes.i")
+antenna_envelop = load_model(str(HFSR_ROOT / "models/antenna/box.i"))
+envelops = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
+envelops_original = envelops.copy()
 
 cells_to_fill = [11, 14, 75]
 cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
@@ -105,7 +121,14 @@ universes = {}
 for i in cells_to_fill_indexes:
     envelop = envelops[i]
     new_envelop = subtract_model_from_cell(envelop, antenna_envelop)
-    assert new_envelop is not envelop, f"Envelop ${envelop.name()} should be changed with intersect with" ...
+    assert new_envelop is not envelop, \
+        f"Envelope ${envelop.name()} should be changed on intersect with antenna envelope"
+    envelops[i] = new_envelop
+antenna_envelop.rename(start_cell=200000, start_surf=200000)
+envelops.extend(antenna_envelop)
+
+
+
 
 for i in cells_to_fill:
     universe_path = universes_dir / f"u{i}.i"

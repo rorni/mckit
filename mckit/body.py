@@ -81,6 +81,11 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
+
+    def __getnewargs_ex__(self):
+        return (self.opc, ), self.args
+
+
     def __hash__(self):
         return self._hash
 

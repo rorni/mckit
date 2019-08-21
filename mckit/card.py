@@ -9,6 +9,9 @@ class Card(ABC):
     def __init__(self, **options):
         self.options = options
 
+    def __getnewargs_ex__(self):
+        return ((), self.options)
+
     def name(self):
         """Returns card's name."""
         return self.options.get('name', None)

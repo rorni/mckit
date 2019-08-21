@@ -241,6 +241,11 @@ class Plane(Surface, _Plane):
         self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
+        self.normal = normal
+        self.offset = offset
+
+    def __getnewargs_ex__(self):
+        return (self.normal, self.offset), self.options
 
     def copy(self):
         instance = Plane.__new__(Plane, self._v, self._k)
