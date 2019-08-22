@@ -81,8 +81,14 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
-    def __repr__(self):
-        return f"Shape(${self.opc}, ${self.options}"
+    def __getstate__(self):
+        return self.opc, self.args, self._hash
+
+    def __setstate__(self, state):
+        opc, args, hash_value = state
+        _Shape.__init__(self, opc, *args)
+        self._hash = hash_value
+
 
     def __str__(self):
         return print_card(self._get_words(None))
