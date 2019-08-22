@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pickle
 
 from mckit.transformation import Transformation
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
@@ -229,6 +230,21 @@ class TestPlane:
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
 
+    @pytest.mark.parametrize('norm, offset, options', [
+        ([0, 0, 1], -2, {}),
+        ([1, 0, 0], -2, {'name': 3}),
+        ([0, 1, 0], -2, {'name': 4, 'comments': ['abc', 'def']}),
+    ])
+    def test_pickle(self, norm, offset, options):
+        surf = Plane(norm, offset, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        np.testing.assert_array_almost_equal(surf._v, surf_un._v)
+        np.testing.assert_almost_equal(surf._k, surf_un._k)
+        assert surf.options == surf_un.options
+
     surfs = [
         create_surface('PX', 5.0, name=1),                                 # 0
         create_surface('PX', 5.0 + 1.e-12, name=1),                        # 1
@@ -355,6 +371,21 @@ class TestSphere:
         np.testing.assert_array_almost_equal(ans_surf._center, surf_tr._center)
         np.testing.assert_almost_equal(ans_surf._radius, surf_tr._radius)
 
+    @pytest.mark.parametrize('center, radius, options', [
+        ([1, 2, 3], 5, {}),
+        ([1, 2, 3], 5, {'name': 2}),
+        ([1, 2, 3], 5, {'name': 3, 'comment': ['abc', 'def']}),
+    ])
+    def test_pickle(self, center, radius, options):
+        surf = Sphere(center, radius, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        np.testing.assert_array_almost_equal(surf._center, surf_un._center)
+        np.testing.assert_almost_equal(surf._radius, surf_un._radius)
+        assert surf.options == surf_un.options
+
     surfs = [
         create_surface('SO', 1.0, name=1),                                  # 0
         create_surface('SO', 1.0 + 5.e-13, name=1),                         # 1
@@ -473,6 +504,22 @@ class TestCylinder:
         np.testing.assert_array_almost_equal(ans_surf._pt, surf_tr._pt)
         np.testing.assert_array_almost_equal(ans_surf._axis, surf_tr._axis)
         np.testing.assert_almost_equal(ans_surf._radius, surf_tr._radius)
+
+    @pytest.mark.parametrize('point, axis, radius, options', [
+        ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5, {}),
+        ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5, {'name': 1}),
+        ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5, {'name': 2}),
+    ])
+    def test_pickle(self, point, axis, radius, options):
+        surf = Cylinder(point, axis, radius, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        np.testing.assert_array_almost_equal(surf._pt, surf_un._pt)
+        np.testing.assert_array_almost_equal(surf._axis, surf_un._axis)
+        np.testing.assert_almost_equal(surf._radius, surf_un._radius)
+        assert surf.options == surf_un.options
 
     surfs = [
         create_surface('CX', 1.0, name=1),                                  # 0
@@ -672,9 +719,37 @@ class TestCone:
         ans_surf = Cone(apex, axis, t2, transform=transform)
         surf = Cone(apex, axis, t2)
         surf_tr = surf.transform(transform)
+        self.assert_cone(ans_surf, surf_tr)
+
+    @staticmethod
+    def assert_cone(ans_surf, surf_tr):
         np.testing.assert_array_almost_equal(ans_surf._apex, surf_tr._apex)
         np.testing.assert_array_almost_equal(ans_surf._axis, surf_tr._axis)
         np.testing.assert_almost_equal(ans_surf._t2, surf_tr._t2)
+        assert ans_surf._sheet == surf_tr._sheet
+        assert ans_surf.options == surf_tr.options
+
+    @pytest.mark.parametrize('apex, axis, t2, sheet, options', [
+        ([1, 2, 3],
+         np.array([1, 2, 3]) / np.sqrt(14), 0.25, 0, {'name': 1}),
+        ([1, 2, 3],
+         np.array([1, 2, 3]) / np.sqrt(14), 0.25, 0, {}),
+        ([1, 2, 3],
+         np.array([1, 2, 3]) / np.sqrt(14), 0.25, -1, {'name': 1}),
+        ([1, 2, 3],
+         np.array([1, 2, 3]) / np.sqrt(14), 0.25, -1, {}),
+        ([1, 2, 3],
+         np.array([1, 2, 3]) / np.sqrt(14), 0.25, +1, {'name': 1}),
+        ([1, 2, 3],
+         np.array([1, 2, 3]) / np.sqrt(14), 0.25, +1, {}),
+    ])
+    def test_pickle(self, apex, axis, t2, sheet, options):
+        surf = Cone(apex, axis, t2, sheet, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        self.assert_cone(surf, surf_un)
 
     surfs = [
         create_surface('KX', 4, 0.5, name=1),                                    # 0
@@ -876,11 +951,28 @@ class TestTorus:
         ans_surf = Torus(point, axis, radius, a, b, transform=transform)
         surf = Torus(point, axis, radius, a, b)
         surf_tr = surf.transform(transform)
+        self.assert_torus(ans_surf, surf_tr)
+
+    @staticmethod
+    def assert_torus(ans_surf, surf_tr):
         np.testing.assert_array_almost_equal(ans_surf._center, surf_tr._center)
         np.testing.assert_array_almost_equal(ans_surf._axis, surf_tr._axis)
         np.testing.assert_almost_equal(ans_surf._R, surf_tr._R)
         np.testing.assert_almost_equal(ans_surf._a, surf_tr._a)
         np.testing.assert_almost_equal(ans_surf._b, surf_tr._b)
+        assert surf_tr.options == ans_surf.options
+
+    @pytest.mark.parametrize('point, axis, radius, a, b, options', [
+        ([1, 2, 3], [0, 0, 1], 4, 2, 1, {}),
+        ([1, 2, 3], [0, 0, 1], 4, 2, 1, {'name': 4}),
+    ])
+    def test_pickle(self, point, axis, radius, a, b, options):
+        surf = Torus(point, axis, radius, a, b, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        self.assert_torus(surf, surf_un)
 
     surfs = [
         Torus([1, 2, 3], [1, 0, 0], 4, 2, 1, name=1),
@@ -980,9 +1072,26 @@ class TestGQuadratic:
         ans_surf = GQuadratic(m, v, k, transform=transform)
         surf = GQuadratic(m, v, k)
         surf_tr = surf.transform(transform)
+        self.assert_gq(ans_surf, surf_tr)
+
+    @staticmethod
+    def assert_gq(ans_surf, surf_tr):
         np.testing.assert_array_almost_equal(ans_surf._m, surf_tr._m)
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
+        assert ans_surf.options == surf_tr.options
+
+    @pytest.mark.parametrize('m, v, k, options', [
+        (np.diag([1, 2, 3]), [1, 2, 3], -4, {}),
+        (np.diag([1, 2, 3]), [1, 2, 3], -4, {'name': 5}),
+    ])
+    def test_pickle(self, m, v, k, options):
+        surf = GQuadratic(m, v, k, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        self.assert_gq(surf, surf_un)
 
     surfs = [
         GQuadratic(np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), 3, name=1),

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from . import constants 
+from . import constants
 from .geometry import Plane      as _Plane,    \
                       Sphere     as _Sphere,   \
                       Cone       as _Cone,     \
@@ -188,6 +188,12 @@ class Surface(Card):
     def __eq__(self, other):
         return id(self) == id(other)
 
+    def __getstate__(self):
+        return self.options
+
+    def __setstate__(self, state):
+        self.options = state
+
     @abstractmethod
     def transform(self, tr):
         """Applies transformation to this surface.
@@ -295,6 +301,14 @@ class Plane(Surface, _Plane):
         words.append(pretty_float(-self._get_k(), self._k_digits))
         return print_card(words)
 
+    def __getstate__(self):
+        return self._v, self._k, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        v, k, options = state
+        _Plane.__init__(self, v, k)
+        Surface.__setstate__(self, options)
+
 
 class Sphere(Surface, _Sphere):
     """Sphere surface class.
@@ -320,6 +334,14 @@ class Sphere(Surface, _Sphere):
         self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE,
                                                  resolution=constants.FLOAT_TOLERANCE)
         _Sphere.__init__(self, center, radius)
+
+    def __getstate__(self):
+        return self._center, self._radius, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        c, r, options = state
+        _Sphere.__init__(self, c, r)
+        Surface.__setstate__(self, options)
 
     def copy(self):
         instance = Sphere.__new__(Sphere, self._center, self._radius)
@@ -419,6 +441,14 @@ class Cylinder(Surface, _Cylinder):
         self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
+
+    def __getstate__(self):
+        return self._pt, self._axis, self._radius, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        pt, axis, radius, options = state
+        _Cylinder.__init__(self, pt, axis, radius)
+        Surface.__setstate__(self, options)
 
     def copy(self):
         instance = Cylinder.__new__(Cylinder, self._pt, self._axis, self._radius)
@@ -566,6 +596,14 @@ class Cone(Surface, _Cone):
         _Cone.__init__(instance, self._apex, self._axis, ta, self._sheet)
         return instance
 
+    def __getstate__(self):
+        return self._apex, self._axis, self._t2, self._sheet, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        apex, axis, ta, sheet, options = state
+        _Cone.__init__(self, apex, axis, np.sqrt(ta), sheet)
+        Surface.__setstate__(self, options)
+
     def __hash__(self):
         result = hash(self._get_t2()) ^ hash(self._sheet)
         for c in self._get_apex():
@@ -698,6 +736,14 @@ class GQuadratic(Surface, _GQuadratic):
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k, factor)
 
+    def __getstate__(self):
+        return self._m, self._v, self._k, self._factor, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        m, v, k, factor, options = state
+        _GQuadratic.__init__(self, m, v, k, factor)
+        Surface.__setstate__(self, options)
+
     def copy(self):
         instance = GQuadratic.__new__(GQuadratic, self._m, self._v, self._k, self._factor)
         instance._m_digits = self._m_digits
@@ -797,6 +843,14 @@ class Torus(Surface, _Torus):
 
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, R, a, b)
+
+    def __getstate__(self):
+        return self._center, self._axis, self._R, self._a, self._b, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        center, axis, R, a, b, options = state
+        _Torus.__init__(self, center, axis, R, a, b)
+        Surface.__setstate__(self, options)
 
     def copy(self):
         instance = Torus.__new__(Torus, self._center, self._axis, self._R, self._a, self._b)

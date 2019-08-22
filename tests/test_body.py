@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pickle
 
 from mckit.body import Shape, Body
 from mckit.surface import create_surface
@@ -370,6 +371,25 @@ class TestShape:
         expected = set(surfaces[s] for s in expected)
         surfs = geometry[case_no].get_surfaces()
         assert surfs == expected
+
+    @pytest.mark.parametrize('case_no, polish', enumerate(polish_cases))
+    def test_pickle(self, surfaces, case_no, polish):
+        polish = [self.filter_arg(a, surfaces) for a in polish]
+        g = Shape.from_polish_notation(polish)
+        # The idea is to generate many random points. This points have some
+        # definite test results with respect to the body being tested.
+        # After body saving and loading they must have absolutely the same
+        # results.
+        points = np.random.random((10000, 3))
+        points -= np.array([0.5, 0.5, 0.5])
+        points *= np.array([20, 10, 10])
+        results = g.test_points(points)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(g, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            g_pic = pickle.load(f)
+        result_pic = g_pic.test_points(points)
+        np.testing.assert_array_equal(results, result_pic)
 
     @pytest.mark.parametrize('case_no, replace_names', enumerate([
         [2, 3, 1, 5, 4],
