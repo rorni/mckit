@@ -304,12 +304,13 @@ class Plane(Surface, _Plane):
         return print_card(words)
 
     def __getstate__(self):
-        return self._v, self._k, Surface.__getstate__(self)
+        return self._v, self._k, self._k_digits, self._v_digits, Surface.__getstate__(self)
 
     def __setstate__(self, state):
-        v, k, options = state
+        v, k, _k_digits, _v_digits, options = state
         _Plane.__init__(self, v, k)
         Surface.__setstate__(self, options)
+        self._k_digits, self._v_digits = _k_digits, _v_digits
 
 
 class Sphere(Surface, _Sphere):

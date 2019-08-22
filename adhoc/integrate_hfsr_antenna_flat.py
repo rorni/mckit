@@ -11,8 +11,9 @@ import os
 # import scipy.constants as sc
 import typing as tp
 from typing import Union, NoReturn, List, Callable
-from multiprocessing import Pool
-from multiprocessing.dummy import Pool as ThreadPool
+# from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
+# from multiprocessing.dummy import Pool as ThreadPool
 
 from joblib import (
     Memory,
@@ -103,9 +104,9 @@ class BoundingBoxAdder(object):
 
 def attach_bounding_boxes(model: mk.Universe, tolerance: float = 10.0, add_boxes_to=None) -> NoReturn:
     # pool: ThreadPool = ThreadPool()
-    pool: Pool = Pool()
-    bba = BoundingBoxAdder(tolerance, add_boxes_to)
-    pool.map(bba, model)
+    with ThreadPool(8) as pool:
+        bba = BoundingBoxAdder(tolerance, add_boxes_to)
+        pool.map(bba, model)
 
 
 
@@ -173,19 +174,19 @@ universes_dir = CMODEL_ROOT / "universes"
 assert universes_dir.is_dir()
 universes = {}
 
-for i in cells_to_fill_indexes:
-    envelop = envelops[i]
-    new_envelop = subtract_model_from_cell(envelop, antenna_envelop)
-    assert new_envelop is not envelop, \
-        f"Envelope ${envelop.name()} should be changed on intersect with antenna envelope"
-    envelops[i] = new_envelop
-antenna_envelop.rename(start_cell=200000, start_surf=200000)
-envelops.extend(antenna_envelop)
-
-
-
-
-for i in cells_to_fill:
-    universe_path = universes_dir / f"u{i}.i"
-    universe = read_mcnp(universe_path, encoding="cp1251")
-    universes[i] = universe
+# for i in cells_to_fill_indexes:
+#     envelop = envelops[i]
+#     new_envelop = subtract_model_from_cell(envelop, antenna_envelop)
+#     assert new_envelop is not envelop, \
+#         f"Envelope ${envelop.name()} should be changed on intersect with antenna envelope"
+#     envelops[i] = new_envelop
+# antenna_envelop.rename(start_cell=200000, start_surf=200000)
+# envelops.extend(antenna_envelop)
+#
+#
+#
+#
+# for i in cells_to_fill:
+#     universe_path = universes_dir / f"u{i}.i"
+#     universe = read_mcnp(universe_path, encoding="cp1251")
+#     universes[i] = universe
