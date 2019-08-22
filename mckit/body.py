@@ -81,13 +81,8 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
-
-    def __getnewargs_ex__(self):
-        return (self.opc, ), self.args
-
-
-    def __hash__(self):
-        return self._hash
+    def __repr__(self):
+        return f"Shape(${self.opc}, ${self.options}"
 
     def __str__(self):
         return print_card(self._get_words(None))
@@ -206,6 +201,23 @@ class Shape(_Shape):
                     return True
         return False
 
+    def __hash__(self):
+        return self._hash
+
+    def _calculate_hash(self, opc, *args):
+        """Calculates hash value for the object.
+
+        Hash is 'xor' for hash values of all arguments together with opc hash.
+        """
+        if opc == 'C':  # C and S can be present only with Surface instance.
+            self._hash = ~hash(args[0]) # ^ self._opc_hash[opc]
+        elif opc == 'S':
+            self._hash = hash(args[0]) # ^ self._opc_hash[opc]
+        else:
+            self._hash = self._opc_hash[opc]
+            for a in args:
+                self._hash ^= hash(a)
+
     def complement(self):
         """Gets complement to the shape.
 
@@ -253,20 +265,6 @@ class Shape(_Shape):
                 else:
                     return False
         return True
-
-    def _calculate_hash(self, opc, *args):
-        """Calculates hash value for the object.
-
-        Hash is 'xor' for hash values of all arguments together with opc hash.
-        """
-        if opc == 'C':  # C and S can be present only with Surface instance.
-            self._hash = ~hash(args[0]) # ^ self._opc_hash[opc]
-        elif opc == 'S':
-            self._hash = hash(args[0]) # ^ self._opc_hash[opc]
-        else:
-            self._hash = self._opc_hash[opc]
-            for a in args:
-                self._hash ^= hash(a)
 
     def intersection(self, *other):
         """Gets intersection with other shape.
