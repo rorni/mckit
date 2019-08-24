@@ -10,9 +10,10 @@ import os
 # import scipy as sp
 # import scipy.constants as sc
 import typing as tp
+import traceback
 from typing import Union, NoReturn, List, Callable
-# from multiprocessing import Pool
-from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
+# from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
 
 from joblib import (
@@ -69,44 +70,81 @@ def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:
     return index < to_select.size and to_select[index] == name
 
 
-def decorate_select(
-    select: tp.Union[List, np.ndarray, Callable[[mk.Body, np.ndarray], bool]]
-) -> Callable[[mk.Body, np.ndarray], bool]:
-    if select is not None:
-        if isinstance(select, list):
-            select = np.array(select, dtype=np.int32)
-        if isinstance(select, np.ndarray):
-            assert is_sorted(select)
-            assert 0 < select[0]
-            return lambda c: select_from(c, select)
-    return select
+# def decorate_select(
+#     select: tp.Union[List, np.ndarray, Callable[[mk.Body, np.ndarray], bool]]
+# ) -> Callable[[mk.Body, np.ndarray], bool]:
+#     if select is not None:
+#         if isinstance(select, list):
+#             select = np.array(select, dtype=np.int32)
+#         if isinstance(select, np.ndarray):
+#             assert is_sorted(select)
+#             assert 0 < select[0]
+#             return lambda c: select_from(c, select)
+#     return select
 
+
+# class BoundingBoxAdder(object):
+#
+#     def __init__(self, tolerance: float, add_boxes_to):
+#         self.tolerance = tolerance
+#         self.select = decorate_select(add_boxes_to)
+#         self.add_boxes_to = add_boxes_to
+#
+#     def __call__(self, cell: mk.Body):
+#         if self.select is None or self.select(cell):
+#             return cell.shape.bounding_box(tol=self.tolerance)
+#
+#     def __getstate__(self):
+#         return self.tolerance, self.add_boxes_to
+#
+#     def __setstate__(self, state):
+#         tolerance, add_boxes_to = state
+#         self.__init__(tolerance, add_boxes_to)
 
 class BoundingBoxAdder(object):
 
-    def __init__(self, tolerance: float, add_boxes_to):
+    def __init__(self, tolerance: float):
         self.tolerance = tolerance
-        self.select = decorate_select(add_boxes_to)
-        self.add_boxes_to = add_boxes_to
 
     def __call__(self, cell: mk.Body):
-        if self.select is None or self.select(cell):
-            cell.bounding_box = cell.shape.bounding_box(tol=self.tolerance)
+        return cell.shape.bounding_box(tol=self.tolerance)
 
     def __getstate__(self):
-        return self.tolerance, self.add_boxes_to
+        return self.tolerance
 
     def __setstate__(self, state):
-        tolerance, add_boxes_to = state
-        self.__init__(tolerance, add_boxes_to)
+        tolerance = state
+        self.__init__(tolerance)
+
+# def bounding_box_appender(tolerance = 10.0):
+#     def _call(cell: mk.Body):
+#         return cell, cell.shape.bounding_box(tol=tolerance)
+#     return _call
+
+def attach_bounding_box_callback(result):
+    cell, bounding_box = result
+    cell.bounding_box = bounding_box
+
+def attach_bounding_box_error_callback(ex):
+    print(ex)
 
 
 
-def attach_bounding_boxes(model: mk.Universe, tolerance: float = 10.0, add_boxes_to=None) -> NoReturn:
-    # pool: ThreadPool = ThreadPool()
-    with ThreadPool(8) as pool:
-        bba = BoundingBoxAdder(tolerance, add_boxes_to)
-        pool.map(bba, model)
+def attach_bounding_boxes(
+    cells: tp.Iterable[mk.Body],
+    tolerance: float = 10.0,
+    chunksize=None,
+) -> NoReturn:
+    cpu_count = os.cpu_count()
+    with Pool(cpu_count) as pool:
+        result = pool.map_async(
+            BoundingBoxAdder(tolerance),
+            cells,
+            chunksize,
+            attach_bounding_box_callback,
+            attach_bounding_box_error_callback,
+        )
+        result = result.get()
 
 
 
@@ -121,12 +159,12 @@ def attach_bounding_boxes(model: mk.Universe, tolerance: float = 10.0, add_boxes
 mem = Memory(location=".cache", verbose=2)
 
 
-@mem.cache
-def load_model(path: str, tolerance: float = 10.0, add_boxes_to=None) -> mk.Universe:
+# @mem.cache
+def load_model(path: str) -> mk.Universe:
     # The cp1251-encoding reads C-model with various kryakozyabrs
     model: mk.Universe = read_mcnp(path, encoding="Cp1251")
-    attach_bounding_boxes(model, tolerance, add_boxes_to)
     return model
+
 
 
 def subtract_model_from_model(
@@ -165,11 +203,19 @@ def subtract_model_from_cell(
 # new_cells.extend(b_model)
 
 antenna_envelop = load_model(str(HFSR_ROOT / "models/antenna/box.i"))
-envelops = load_model(str(CMODEL_ROOT / "universes/envelopes.i"), tolerance=1.0, add_boxes_to=[11, 14, 75])
-envelops_original = envelops.copy()
+attach_bounding_boxes(
+    antenna_envelop,
+    tolerance=10.0,
+    chunksize=max(len(antenna_envelop)/os.cpu_count(), 1)
+)
+envelops = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
 
 cells_to_fill = [11, 14, 75]
 cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
+
+attach_bounding_boxes((envelops[i] for i in cells_to_fill_indexes), tolerance=10.0, chunksize=1)
+envelops_original = envelops.copy()
+
 universes_dir = CMODEL_ROOT / "universes"
 assert universes_dir.is_dir()
 universes = {}
