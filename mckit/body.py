@@ -1,11 +1,15 @@
+import os
 from functools import reduce
 from itertools import product, groupby, permutations
-
+import typing as tp
+from typing import Iterable, Union, Any, NoReturn
+from multiprocessing import Pool
 import numpy as np
+from click import progressbar
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import Shape as _Shape
-from mckit.box import GLOBAL_BOX
+from mckit.box import GLOBAL_BOX, Box
 from .constants import MIN_BOX_VOLUME
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
@@ -13,7 +17,7 @@ from .transformation import Transformation
 from .card import Card
 
 
-__all__ = ['Shape', 'Body']
+__all__ = ['Shape', 'Body', 'simplify']
 
 
 class Shape(_Shape):
@@ -723,3 +727,103 @@ class Body(Card):
             new_tr = tr.apply2transform(tr_in)
             fill['transform'] = new_tr
         return cell
+
+
+def simplify(
+    cells: Iterable,
+    box: Box = GLOBAL_BOX,
+    min_volume: float = 1.0,
+) -> tp.Generator:
+    """Simplifies the cells.
+
+    Parameters
+    ----------
+
+    cells:
+        iterable over cells to simplify
+    box : Box
+        Box, from which simplification process starts. Default: GLOBAL_BOX.
+    min_volume : float
+        Minimal volume of the box, when splitting process terminates.
+
+    """
+
+    for c in cells:
+        cs = c.simplify(box=box, min_volume=min_volume)
+        if not cs.shape.is_empty():
+            yield cs
+
+
+class Simplifier(object):
+    def __init__(self, box: Box = GLOBAL_BOX, min_volume: float = 1.0):
+        self.box = box
+        self.min_volume = min_volume
+
+    def __call__(self, cell: Body):
+        return cell.simplify(box=self.box, min_volume=self.min_volume)
+
+    def __getstate__(self):
+        return self.box, self.min_volume
+
+    def __setstate__(self, state):
+        box, min_volume = state
+        self.__init__(box, min_volume)
+
+
+def simplify_mp(
+    cells: Iterable[Body],
+    box: Box = GLOBAL_BOX,
+    min_volume: float = 1.0,
+    chunksize = 1,
+) -> tp.Generator:
+    """Simplifies the cells in multiprocessing mode.
+
+    Parameters
+    ----------
+
+    cells:
+        iterable over cells to simplify
+    box :
+        Box, from which simplification process starts. Default: GLOBAL_BOX.
+    min_volume : float
+        Minimal volume of the box, when splitting process terminates.
+    chunksize: size of chunks to pass to child processes
+    """
+    cpus = os.cpu_count()
+    with Pool(processors=cpus) as pool:
+        yield from pool.imap(
+            Simplifier(box=box, min_volume=min_volume),
+            cells,
+            chunksize=chunksize,
+        )
+
+
+def simplify_mpp(
+    cells: Iterable[Body],
+    box: Box = GLOBAL_BOX,
+    min_volume: float = 1.0,
+    chunksize: int = 1,
+) -> tp.Generator:
+    """Simplifies the cells in multiprocessing mode with progress bar.
+
+    Parameters
+    ----------
+
+    cells:
+        iterable over cells to simplify
+    box :
+        Box, from which simplification process starts. Default: GLOBAL_BOX.
+    min_volume : float
+        Minimal volume of the box, when splitting process terminates.
+    chunksize: size of chunks to pass to child processes
+    """
+
+    def fmt_fun(x):
+        return "Simplifying cell #{0}".format(x.name() if x else x)
+
+    with progressbar(
+        simplify_mp(cells, box, min_volume, chunksize),
+        item_show_func=fmt_fun,
+    ) as pb:
+        for c in pb:
+            yield c

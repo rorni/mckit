@@ -11,15 +11,20 @@ import os
 # import scipy.constants as sc
 import typing as tp
 import traceback
-from typing import Union, NoReturn, List, Callable
+from typing import Union, NoReturn, List, Callable, Any
 from multiprocessing import Pool
 # from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
+import time
+import timeit
+import click
+import click_log
+import logging
 
-from joblib import (
-    Memory,
-    # Parallel, delayed, wrap_non_picklable_objects, effective_n_jobs
-)
+# from joblib import (
+#     Memory,
+#     # Parallel, delayed, wrap_non_picklable_objects, effective_n_jobs
+# )
 from joblib.externals.loky import set_loky_pickler
 
 import dotenv
@@ -29,9 +34,17 @@ import numpy as np
 sys.path.append("..")
 
 import mckit as mk
-from mckit import *
+# from mckit import *
 from mckit.box import Box
 import mckit.geometry as mg
+
+LOG = logging.getLogger(__name__)
+logging.basicConfig(
+    # format='%(asctime)s - %(levelname)-7s - %(name)-20s - %(message)s',
+    format='%(asctime)s - %(levelname)-7s - %(message)s',
+    level=logging.DEBUG,
+)
+# LOG = click_log.basic_config(LOG)
 
 
 def assert_all_paths_exist(*paths):
@@ -54,10 +67,11 @@ def get_root_dir(environment_variable_name, default):
 dotenv.load_dotenv(dotenv_path=".env", verbose=True)
 HFSR_ROOT = get_root_dir("HFSR_ROOT", "~/dev/mcnp/hfsr")
 CMODEL_ROOT = get_root_dir("CMODEL_ROOT", "~/dev/mcnp/c-model")
-
+LOG.info("HFSR_ROOT=%s", HFSR_ROOT)
+LOG.info("CMODEL_ROOT=%s", CMODEL_ROOT)
 assert_all_paths_exist(HFSR_ROOT, CMODEL_ROOT)
 
-# NJOBS = effective_n_jobs()
+NJOBS = os.cpu_count()
 # print(f"NJOBS: {NJOBS}")
 # set_loky_pickler()
 
@@ -71,37 +85,6 @@ def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:
     return index < to_select.size and to_select[index] == name
 
 
-# def decorate_select(
-#     select: tp.Union[List, np.ndarray, Callable[[mk.Body, np.ndarray], bool]]
-# ) -> Callable[[mk.Body, np.ndarray], bool]:
-#     if select is not None:
-#         if isinstance(select, list):
-#             select = np.array(select, dtype=np.int32)
-#         if isinstance(select, np.ndarray):
-#             assert is_sorted(select)
-#             assert 0 < select[0]
-#             return lambda c: select_from(c, select)
-#     return select
-
-
-# class BoundingBoxAdder(object):
-#
-#     def __init__(self, tolerance: float, add_boxes_to):
-#         self.tolerance = tolerance
-#         self.select = decorate_select(add_boxes_to)
-#         self.add_boxes_to = add_boxes_to
-#
-#     def __call__(self, cell: mk.Body):
-#         if self.select is None or self.select(cell):
-#             return cell.shape.bounding_box(tol=self.tolerance)
-#
-#     def __getstate__(self):
-#         return self.tolerance, self.add_boxes_to
-#
-#     def __setstate__(self, state):
-#         tolerance, add_boxes_to = state
-#         self.__init__(tolerance, add_boxes_to)
-
 class BoundingBoxAdder(object):
 
     def __init__(self, tolerance: float):
@@ -111,7 +94,7 @@ class BoundingBoxAdder(object):
         box = cell.shape.bounding_box(tol=self.tolerance)
         if not isinstance(box, Box):
             box = Box.from_geometry_box(box)
-        return cell, box
+        return box
 
     def __getstate__(self):
         return self.tolerance
@@ -119,34 +102,18 @@ class BoundingBoxAdder(object):
     def __setstate__(self, state):
         self.__init__(state)
 
-# def bounding_box_appender(tolerance = 10.0):
-#     def _call(cell: mk.Body):
-#         return cell, cell.shape.bounding_box(tol=tolerance)
-#     return _call
-
-# def attach_bounding_box_callback(result):
-#     cell, bounding_box = result
-#     cell.bounding_box = bounding_box
-#
-# def attach_bounding_box_error_callback(ex):
-#     print(ex)
-
-
 
 def attach_bounding_boxes(
-    cells: tp.Iterable[mk.Body],
+    cells: tp.List[mk.Body],
     tolerance: float = 10.0,
     chunksize=1,
 ) -> NoReturn:
+    assert 0 < len(cells), "Needs explicit list of cells to run iteration over it twice"
     cpu_count = os.cpu_count()
     with Pool(cpu_count) as pool:
-        for result in pool.imap(
-            BoundingBoxAdder(tolerance),
-            cells,
-            chunksize,
-        ):
-            cell, bounding_box = result
-            cell.bounding_box = bounding_box
+        boxes = pool.map(BoundingBoxAdder(tolerance), cells, chunksize,)
+    for _i, cell in enumerate(cells):
+        cell.bounding_box = boxes[_i]
 
 
 # def attach_bounding_boxes(model: mk.Universe, tolerance: float = 1.0) -> tp.NoReturn:
@@ -157,32 +124,30 @@ def attach_bounding_boxes(
 #         cell.bounding_box = boxes[_i]
 
 
-mem = Memory(location=".cache", verbose=2)
+# mem = Memory(location=".cache", verbose=2)
 
 
 # @mem.cache
 def load_model(path: str) -> mk.Universe:
     # The cp1251-encoding reads C-model with various kryakozyabrs
-    model: mk.Universe = read_mcnp(path, encoding="Cp1251")
+    model: mk.Universe = mk.read_mcnp(path, encoding="Cp1251")
     return model
-
 
 
 def subtract_model_from_model(
     minuend: mk.Universe,
     subtrahend: mk.Universe,
+    cells_filter: tp.Callable[[mk.Body], bool] = None,
 ) -> mk.Universe:
-    new_universe = minuend.copy()
-    changed = False
-    for _i, a_cell in enumerate(new_universe):
-        new_cell = subtract_model_from_cell(a_cell, subtrahend, simplify=True)
-        if new_cell is not a_cell:
-            changed = True
-            new_universe[_i] = new_cell
-    if changed:
-        return new_universe
-    else:
-        return minuend
+    def iterate():
+        for a_cell in minuend:
+            if cells_filter is None or cells_filter(a_cell):
+                new_cell: mk.Body = subtract_model_from_cell(a_cell, subtrahend, simplify=True)
+                new_cell.rename(a_cell.name())
+            yield a_cell
+    new_cells = list(iterate())
+    new_universe = mk.Universe(new_cells, name=minuend.name(), name_rule='keep')
+    return new_universe
 
 
 def subtract_model_from_cell(
@@ -200,41 +165,96 @@ def subtract_model_from_cell(
         new_cell = new_cell.simplify(box=cbb, min_volume=0.1)
     return new_cell
 
+def set_common_materials(*universes) -> tp.NoReturn:
+    common_materials = set()
+    for u in universes:
+        compositions = u.get_compositions()
+        common_materials.union(compositions)
+    for u in universes:
+        u.set_common_materials(common_materials)
 
 # new_cells.extend(b_model)
-
+LOG.info("Loading antenna envelop")
 antenna_envelop = load_model(str(HFSR_ROOT / "models/antenna/box.i"))
+LOG.info("Attaching bounding boxes to antenna envelop")
 attach_bounding_boxes(
     antenna_envelop,
-    tolerance=10.0,
-    chunksize=max(len(antenna_envelop)/os.cpu_count(), 1)
+    tolerance=5.0,
+    chunksize=max(len(antenna_envelop)//os.cpu_count(), 1)
 )
+LOG.info("Loading c-model envelops")
 envelops = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
 
 cells_to_fill = [11, 14, 75]
 cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
 
-# attach_bounding_boxes((envelops[i] for i in cells_to_fill_indexes), tolerance=10.0, chunksize=1)
-attach_bounding_boxes((envelops), tolerance=10.0, chunksize=5)
+LOG.info("Attaching bounding boxes to c-model envelops %s", cells_to_fill)
+attach_bounding_boxes([envelops[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
+# attach_bounding_boxes((envelops), tolerance=10.0, chunksize=5)
+LOG.info("Backing up original envelops")
 envelops_original = envelops.copy()
+
+antenna_envelop.rename(start_cell=200000, start_surf=200000)
+
+LOG.info("Subtracting antenna envelop from c-model envelops %s", cells_to_fill)
+envelops = subtract_model_from_model(envelops, antenna_envelop, cells_filter=lambda c: c.name() in [cells_to_fill])
+LOG.info("Adding antenna envelop to c-model envelops")
+envelops.add_cells(antenna_envelop, name_rule='clash')
+envelops_path = "envelops+antenna-envelop.i"
+envelops.save(envelops_path)
+LOG.info("The envelops are saved to %s", envelops_path)
 
 universes_dir = CMODEL_ROOT / "universes"
 assert universes_dir.is_dir()
-universes = {}
 
-# for i in cells_to_fill_indexes:
-#     envelop = envelops[i]
-#     new_envelop = subtract_model_from_cell(envelop, antenna_envelop)
-#     assert new_envelop is not envelop, \
-#         f"Envelope ${envelop.name()} should be changed on intersect with antenna envelope"
-#     envelops[i] = new_envelop
-# antenna_envelop.rename(start_cell=200000, start_surf=200000)
-# envelops.extend(antenna_envelop)
-#
-#
-#
-#
-# for i in cells_to_fill:
-#     universe_path = universes_dir / f"u{i}.i"
-#     universe = read_mcnp(universe_path, encoding="cp1251")
-#     universes[i] = universe
+
+def load_subtracted_universe(universe_name):
+    new_universe_path = Path(f"u{universe_name}-ae.i")
+    if new_universe_path.exists():
+        LOG.info(f"Loading filler {universe_name}")
+        universe = load_model(new_universe_path)
+    else:
+        st = time.time()
+        universe_path = universes_dir / f"u{universe_name}.i"
+        LOG.info("Subtracting antenna envelope from the original filler %s", universe_name)
+        universe: mk.Universe = mk.read_mcnp(universe_path, encoding="cp1251")
+        LOG.info("Size %d", len(universe))
+        attach_bounding_boxes(
+            universe,
+            tolerance=100.0,
+            chunksize=max(len(universe) // os.cpu_count(), 1),
+        )
+        et = time.time()
+        LOG.info(f"Elapsed time on attaching bounding boxes: %.2f min", (et - st)/60)
+        st = time.time()
+        universe = subtract_model_from_model(universe, antenna_envelop)
+        et = time.time()
+        LOG.info(f"Elapsed time on subtracting filler %d, : %.2f min", universe_name, (et - st)/60)
+        for c in universe._cells:
+            del c.options['comment']
+        universe.rename(name=universe_name)
+        universe.save(str(new_universe_path))
+        LOG.info("Universe %d is saved to %s", universe_name, new_universe_path)
+    return universe
+
+
+universes = list(map(load_subtracted_universe, cells_to_fill))
+antenna = load_model(HFSR_ROOT / "models/antenna/antenna.i")
+antenna.rename(210000, 210000, 210000, 210000, name=210)
+
+for i, filler in zip(cells_to_fill_indexes, universes):
+    envelops[i].options['FILL'] = {"universe": filler}
+
+added_cells = len(antenna_envelop)
+for c in envelops[-added_cells:]:
+    c.options['FILL'] = {"universe": antenna}
+
+set_common_materials(envelops, antenna, *universes)
+
+# def delete_subtracted_universe(universe_name):
+#     new_universe_path = Path(f"u{universe_name}-ae.i")
+#     new_universe_path.unlink()
+# list(map(delete_subtracted_universe, cells_to_fill))
+
+
+envelops.save("envelope_with_hfsr_antenna_2.i")

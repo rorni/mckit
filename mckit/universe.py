@@ -192,8 +192,7 @@ class Universe:
         return len(self._cells)
 
     def __setitem__(self, key: int, value: Body):
-        assert self._cells[key].name() == value.name(), "You can only replace a cell with a modified copy of it."
-        self._cells.__setitem__(key, value)
+        raise NotImplementedError("Renaming rules should be applied.")
 
     def __getitem__(self, item):
         return self._cells.__getitem__(item)
