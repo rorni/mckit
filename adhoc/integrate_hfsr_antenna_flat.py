@@ -111,7 +111,7 @@ class BoundingBoxAdder(object):
         box = cell.shape.bounding_box(tol=self.tolerance)
         if not isinstance(box, Box):
             box = Box.from_geometry_box(box)
-        return cell, box
+        return box
 
     def __getstate__(self):
         return self.tolerance
@@ -132,21 +132,17 @@ class BoundingBoxAdder(object):
 #     print(ex)
 
 
-
 def attach_bounding_boxes(
-    cells: tp.Iterable[mk.Body],
+    cells: tp.List[mk.Body],
     tolerance: float = 10.0,
     chunksize=1,
 ) -> NoReturn:
+    assert 0 < len(cells), "Needs explicit list of cells to run iteration over it twice"
     cpu_count = os.cpu_count()
     with Pool(cpu_count) as pool:
-        for result in pool.imap(
-            BoundingBoxAdder(tolerance),
-            cells,
-            chunksize,
-        ):
-            cell, bounding_box = result
-            cell.bounding_box = bounding_box
+        boxes = pool.map(BoundingBoxAdder(tolerance), cells, chunksize,)
+    for _i, cell in enumerate(cells):
+        cell.bounding_box = boxes[_i]
 
 
 # def attach_bounding_boxes(model: mk.Universe, tolerance: float = 1.0) -> tp.NoReturn:
@@ -206,7 +202,7 @@ def subtract_model_from_cell(
 antenna_envelop = load_model(str(HFSR_ROOT / "models/antenna/box.i"))
 attach_bounding_boxes(
     antenna_envelop,
-    tolerance=10.0,
+    tolerance=5.0,
     chunksize=max(len(antenna_envelop)/os.cpu_count(), 1)
 )
 envelops = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
@@ -214,27 +210,33 @@ envelops = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
 cells_to_fill = [11, 14, 75]
 cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
 
-# attach_bounding_boxes((envelops[i] for i in cells_to_fill_indexes), tolerance=10.0, chunksize=1)
-attach_bounding_boxes((envelops), tolerance=10.0, chunksize=5)
+attach_bounding_boxes([envelops[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
+# attach_bounding_boxes((envelops), tolerance=10.0, chunksize=5)
 envelops_original = envelops.copy()
+
+antenna_envelop.rename(start_cell=200000, start_surf=200000)
+
+for i in cells_to_fill_indexes:
+    envelop = envelops[i]
+    new_envelop = subtract_model_from_cell(envelop, antenna_envelop)
+    assert new_envelop is not envelop, \
+        f"Envelope ${envelop.name()} should be changed on intersect with antenna envelope"
+    envelops[i] = new_envelop
+
+envelops.add_cells(antenna_envelop, name_rule='clash')
+envelops.save("envelops+antenna-envelop.i")
 
 universes_dir = CMODEL_ROOT / "universes"
 assert universes_dir.is_dir()
 universes = {}
 
-# for i in cells_to_fill_indexes:
-#     envelop = envelops[i]
-#     new_envelop = subtract_model_from_cell(envelop, antenna_envelop)
-#     assert new_envelop is not envelop, \
-#         f"Envelope ${envelop.name()} should be changed on intersect with antenna envelope"
-#     envelops[i] = new_envelop
-# antenna_envelop.rename(start_cell=200000, start_surf=200000)
-# envelops.extend(antenna_envelop)
-#
-#
-#
-#
-# for i in cells_to_fill:
-#     universe_path = universes_dir / f"u{i}.i"
-#     universe = read_mcnp(universe_path, encoding="cp1251")
-#     universes[i] = universe
+for i in cells_to_fill:
+    universe_path = universes_dir / f"u{i}.i"
+    universe = read_mcnp(universe_path, encoding="cp1251")
+    attach_bounding_boxes(
+        universe,
+        tolerance=5.0,
+        chunksize=max(len(universe) / os.cpu_count(), 1)
+    )
+    subtract_model_from_model(universe, antenna_envelop)
+
