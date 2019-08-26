@@ -3,8 +3,10 @@ from itertools import product, groupby, permutations
 
 import numpy as np
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+from .geometry import Shape as _Shape
+from mckit.box import GLOBAL_BOX
 from .constants import MIN_BOX_VOLUME
-from .geometry import Shape as _Shape, GLOBAL_BOX, Box as _Box
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation

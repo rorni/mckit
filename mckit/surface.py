@@ -5,13 +5,15 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from . import constants
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import Plane      as _Plane,    \
                       Sphere     as _Sphere,   \
                       Cone       as _Cone,     \
                       Cylinder   as _Cylinder, \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
-                      GLOBAL_BOX, ORIGIN, EX, EY, EZ
+                      ORIGIN, EX, EY, EZ
+from mckit.box import GLOBAL_BOX
 from .printer import print_card, pretty_float
 from .transformation import Transformation
 from .utils import *

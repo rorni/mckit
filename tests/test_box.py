@@ -1,8 +1,10 @@
 import pytest
-
+import io
+import pickle
 import numpy as np
-
-from mckit.geometry import Box
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+from mckit.geometry import EX, EY, EZ
+from mckit.box import Box
 
 
 @pytest.fixture(scope='module')
@@ -186,3 +188,17 @@ def test_check_intersection(case1, case2):
     assert result == answer
     result = box2.check_intersection(box1)
     assert result == answer
+
+
+@pytest.mark.parametrize('center, wx, wy, wz, ex, ey, ez', [
+    ([0.0, 0.0, 0.0], 1.0, 2.0, 3.0, EX, EY, EZ),
+])
+def test_pickle(center, wx, wy, wz, ex, ey, ez):
+    box = Box(center, wx, wy, wz, ex, ey, ez)
+    with io.BytesIO() as f:
+        pickle.dump(box, f)
+        f.seek(0)
+        box_unpickled = pickle.load(f)
+    assert box == box_unpickled
+
+

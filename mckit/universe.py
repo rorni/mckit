@@ -8,7 +8,7 @@ from click import progressbar
 from .body import Body, Shape
 from .card import Card
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
-from .geometry import GLOBAL_BOX, Box
+from mckit.box import GLOBAL_BOX, Box
 from .transformation import Transformation
 from .material import Material
 from .surface import Plane

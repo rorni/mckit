@@ -30,6 +30,7 @@ sys.path.append("..")
 
 import mckit as mk
 from mckit import *
+from mckit.box import Box
 import mckit.geometry as mg
 
 
@@ -107,45 +108,45 @@ class BoundingBoxAdder(object):
         self.tolerance = tolerance
 
     def __call__(self, cell: mk.Body):
-        return cell.shape.bounding_box(tol=self.tolerance)
+        box = cell.shape.bounding_box(tol=self.tolerance)
+        if not isinstance(box, Box):
+            box = Box.from_geometry_box(box)
+        return cell, box
 
     def __getstate__(self):
         return self.tolerance
 
     def __setstate__(self, state):
-        tolerance = state
-        self.__init__(tolerance)
+        self.__init__(state)
 
 # def bounding_box_appender(tolerance = 10.0):
 #     def _call(cell: mk.Body):
 #         return cell, cell.shape.bounding_box(tol=tolerance)
 #     return _call
 
-def attach_bounding_box_callback(result):
-    cell, bounding_box = result
-    cell.bounding_box = bounding_box
-
-def attach_bounding_box_error_callback(ex):
-    print(ex)
+# def attach_bounding_box_callback(result):
+#     cell, bounding_box = result
+#     cell.bounding_box = bounding_box
+#
+# def attach_bounding_box_error_callback(ex):
+#     print(ex)
 
 
 
 def attach_bounding_boxes(
     cells: tp.Iterable[mk.Body],
     tolerance: float = 10.0,
-    chunksize=None,
+    chunksize=1,
 ) -> NoReturn:
     cpu_count = os.cpu_count()
     with Pool(cpu_count) as pool:
-        result = pool.map_async(
+        for result in pool.imap(
             BoundingBoxAdder(tolerance),
             cells,
             chunksize,
-            attach_bounding_box_callback,
-            attach_bounding_box_error_callback,
-        )
-        result = result.get()
-
+        ):
+            cell, bounding_box = result
+            cell.bounding_box = bounding_box
 
 
 # def attach_bounding_boxes(model: mk.Universe, tolerance: float = 1.0) -> tp.NoReturn:
@@ -213,7 +214,8 @@ envelops = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
 cells_to_fill = [11, 14, 75]
 cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
 
-attach_bounding_boxes((envelops[i] for i in cells_to_fill_indexes), tolerance=10.0, chunksize=1)
+# attach_bounding_boxes((envelops[i] for i in cells_to_fill_indexes), tolerance=10.0, chunksize=1)
+attach_bounding_boxes((envelops), tolerance=10.0, chunksize=5)
 envelops_original = envelops.copy()
 
 universes_dir = CMODEL_ROOT / "universes"

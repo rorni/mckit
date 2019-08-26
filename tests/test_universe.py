@@ -5,7 +5,7 @@ import tempfile
 from mckit.material import Material, Element
 from mckit.parser.mcnp_input_parser import read_mcnp
 from mckit.transformation import Transformation
-from mckit.geometry import Box
+from mckit.box import Box
 from mckit.universe import *
 from mckit.body import Body, Shape
 from mckit.surface import Sphere, Surface, create_surface

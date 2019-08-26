@@ -5,7 +5,7 @@ import pickle
 from mckit.transformation import Transformation
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
     create_surface
-from mckit.geometry import Box
+from mckit.box import Box
 
 
 @pytest.fixture(scope='module', params=[
