@@ -17,6 +17,7 @@ from multiprocessing import Pool
 # from multiprocessing.dummy import Pool as ThreadPool
 import time
 import timeit
+import toolz
 import click
 import click_log
 import logging
@@ -63,6 +64,20 @@ def make_dirs(*dirs):
 def get_root_dir(environment_variable_name, default):
     return Path(os.getenv(environment_variable_name, default)).expanduser()
 
+def foreach(func: tp.Callable, iterable: tp.Iterable):
+    "Just drops the result of mapping an 'iterable' with 'func'."
+    for _ in map(func, iterable):
+        pass
+
+def is_sorted(a: np.ndarray) -> bool:
+    return np.all(np.diff(a) > 0)
+
+
+def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:
+    name: int = cell.name()
+    index: int = to_select.searchsorted(name)
+    return index < to_select.size and to_select[index] == name
+
 
 dotenv.load_dotenv(dotenv_path=".env", verbose=True)
 HFSR_ROOT = get_root_dir("HFSR_ROOT", "~/dev/mcnp/hfsr")
@@ -75,14 +90,6 @@ NJOBS = os.cpu_count()
 # print(f"NJOBS: {NJOBS}")
 # set_loky_pickler()
 
-def is_sorted(a: np.ndarray) -> bool:
-    return np.all(np.diff(a) > 0)
-
-
-def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:
-    name: int = cell.name()
-    index: int = to_select.searchsorted(name)
-    return index < to_select.size and to_select[index] == name
 
 
 class BoundingBoxAdder(object):
@@ -134,43 +141,49 @@ def load_model(path: str) -> mk.Universe:
     return model
 
 
+def load_filler(universe_name):
+    universe_path = universes_dir / f"u{universe_name}.i"
+    LOG.info(f"Loading filler {universe_name}")
+    universe = load_model(universe_path)
+    universe.rename(name=universe_name)
+    return universe
+
+
 def subtract_model_from_model(
     minuend: mk.Universe,
     subtrahend: mk.Universe,
     cells_filter: tp.Callable[[mk.Body], bool] = None,
 ) -> mk.Universe:
-    def iterate():
-        for a_cell in minuend:
-            if cells_filter is None or cells_filter(a_cell):
-                new_cell: mk.Body = subtract_model_from_cell(a_cell, subtrahend, simplify=True)
-                new_cell.rename(a_cell.name())
-            yield a_cell
-    new_cells = list(iterate())
+    def mapper(a_cell):
+        if cells_filter is None or cells_filter(a_cell.name()):
+            return subtract_model_from_cell(a_cell, subtrahend, simplify=True)
+        else:
+            return a_cell
+    new_cells = list(map(mapper, minuend))
     new_universe = mk.Universe(new_cells, name=minuend.name(), name_rule='keep')
     return new_universe
 
 
 def subtract_model_from_cell(
-    cell: mk.Shape,
+    cell: mk.Body,
     model: mk.Universe,
     simplify: bool = True,
-) -> mk.Shape:
+) -> mk.Body:
     new_cell = cell
     cbb = cell.bounding_box
     for b_cell in model:
         if cbb.check_intersection(b_cell.bounding_box):
             comp = b_cell.shape.complement()
             new_cell = new_cell.intersection(comp)
-    if simplify and new_cell is not cell:
-        new_cell = new_cell.simplify(box=cbb, min_volume=0.1)
+    if new_cell is not cell:
+        if simplify:
+            new_cell = new_cell.simplify(box=cbb, min_volume=0.1)
     return new_cell
 
 def set_common_materials(*universes) -> tp.NoReturn:
-    common_materials = set()
-    for u in universes:
-        compositions = u.get_compositions()
-        common_materials.union(compositions)
-    for u in universes:
+    universes_collection = toolz.reduce(set.union, map(mk.Universe.get_universes, universes))
+    common_materials = toolz.reduce(set.union, map(mk.Universe.get_compositions, universes_collection))
+    for u in universes_collection:
         u.set_common_materials(common_materials)
 
 # new_cells.extend(b_model)
@@ -197,7 +210,7 @@ envelops_original = envelops.copy()
 antenna_envelop.rename(start_cell=200000, start_surf=200000)
 
 LOG.info("Subtracting antenna envelop from c-model envelops %s", cells_to_fill)
-envelops = subtract_model_from_model(envelops, antenna_envelop, cells_filter=lambda c: c.name() in [cells_to_fill])
+envelops = subtract_model_from_model(envelops, antenna_envelop, cells_filter=lambda c: c in cells_to_fill)
 LOG.info("Adding antenna envelop to c-model envelops")
 envelops.add_cells(antenna_envelop, name_rule='clash')
 envelops_path = "envelops+antenna-envelop.i"
@@ -208,37 +221,39 @@ universes_dir = CMODEL_ROOT / "universes"
 assert universes_dir.is_dir()
 
 
-def load_subtracted_universe(universe_name):
-    new_universe_path = Path(f"u{universe_name}-ae.i")
-    if new_universe_path.exists():
-        LOG.info(f"Loading filler {universe_name}")
-        universe = load_model(new_universe_path)
-    else:
-        st = time.time()
-        universe_path = universes_dir / f"u{universe_name}.i"
-        LOG.info("Subtracting antenna envelope from the original filler %s", universe_name)
-        universe: mk.Universe = mk.read_mcnp(universe_path, encoding="cp1251")
-        LOG.info("Size %d", len(universe))
-        attach_bounding_boxes(
-            universe,
-            tolerance=100.0,
-            chunksize=max(len(universe) // os.cpu_count(), 1),
-        )
-        et = time.time()
-        LOG.info(f"Elapsed time on attaching bounding boxes: %.2f min", (et - st)/60)
-        st = time.time()
-        universe = subtract_model_from_model(universe, antenna_envelop)
-        et = time.time()
-        LOG.info(f"Elapsed time on subtracting filler %d, : %.2f min", universe_name, (et - st)/60)
-        for c in universe._cells:
-            del c.options['comment']
-        universe.rename(name=universe_name)
-        universe.save(str(new_universe_path))
-        LOG.info("Universe %d is saved to %s", universe_name, new_universe_path)
-    return universe
+# def load_subtracted_universe(universe_name):
+#     new_universe_path = Path(f"u{universe_name}-ae.i")
+#     if new_universe_path.exists():
+#         LOG.info(f"Loading filler {universe_name}")
+#         universe = load_model(new_universe_path)
+#     else:
+#         st = time.time()
+#         universe_path = universes_dir / f"u{universe_name}.i"
+#         LOG.info("Subtracting antenna envelope from the original filler %s", universe_name)
+#         universe: mk.Universe = mk.read_mcnp(universe_path, encoding="cp1251")
+#         LOG.info("Size %d", len(universe))
+#         attach_bounding_boxes(
+#             universe,
+#             tolerance=100.0,
+#             chunksize=max(len(universe) // os.cpu_count(), 1),
+#         )
+#         et = time.time()
+#         LOG.info(f"Elapsed time on attaching bounding boxes: %.2f min", (et - st)/60)
+#         st = time.time()
+#         universe = subtract_model_from_model(universe, antenna_envelop)
+#         et = time.time()
+#         LOG.info(f"Elapsed time on subtracting filler %d, : %.2f min", universe_name, (et - st)/60)
+#         for c in universe._cells:
+#             del c.options['comment']
+#         universe.rename(name=universe_name)
+#         universe.save(str(new_universe_path))
+#         LOG.info("Universe %d is saved to %s", universe_name, new_universe_path)
+#     return universe
+#
+#
+# universes = list(map(load_subtracted_universe, cells_to_fill))
 
-
-universes = list(map(load_subtracted_universe, cells_to_fill))
+universes = list(map(load_filler, cells_to_fill))
 antenna = load_model(HFSR_ROOT / "models/antenna/antenna.i")
 antenna.rename(210000, 210000, 210000, 210000, name=210)
 
@@ -249,12 +264,17 @@ added_cells = len(antenna_envelop)
 for c in envelops[-added_cells:]:
     c.options['FILL'] = {"universe": antenna}
 
-set_common_materials(envelops, antenna, *universes)
+set_common_materials(envelops)
 
 # def delete_subtracted_universe(universe_name):
 #     new_universe_path = Path(f"u{universe_name}-ae.i")
 #     new_universe_path.unlink()
-# list(map(delete_subtracted_universe, cells_to_fill))
+# foreach(delete_subtracted_universe, cells_to_fill)
 
 
-envelops.save("envelope_with_hfsr_antenna_2.i")
+envelops_surrounding_and_antenna_file = "ewfa_3.i"
+envelops.save(envelops_surrounding_and_antenna_file)
+LOG.info(
+    "c-model envelops integrated with universes and antenna is saved to \"%s\"",
+    envelops_surrounding_and_antenna_file,
+)
