@@ -57,6 +57,8 @@ COMMON_KEYWORDS = {'R', 'I', 'ILOG', 'J', 'NO', 'MESSAGE'}
 
 KEYWORDS = CELL_KEYWORDS.union(DATA_KEYWORDS)
 
+# KEYWORDS = KEYWORDS.union(map(str.lower, KEYWORDS))  # add lowercase variants to ignore cases
+
 # List of token names
 tokens = [
     'blank_line',

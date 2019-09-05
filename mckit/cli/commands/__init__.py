@@ -1,0 +1,1 @@
+from .decompose import decompose as do_decompose
