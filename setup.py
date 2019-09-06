@@ -5,6 +5,7 @@ import sys
 import numpy as np
 from setuptools import Extension, find_packages, setup
 from setuptools.dist import Distribution
+from mckit import __version__
 
 
 class BinaryDistribution(Distribution):
@@ -83,7 +84,7 @@ extensions = [
 
 setup(
     name='mckit',
-    version='0.1.2',
+    version=__version__,
     packages=find_packages(),
     package_data={'mckit': ['data/isotopes.dat', 'libnlopt-0.dll']},
     url='https://gitlab.iterrf.ru/Rodionov/mckit',
@@ -91,7 +92,18 @@ setup(
     author='Roman Rodionov',
     author_email='r.rodionov@iterrf.ru',
     description='Tool for handling neutronic models and results',
-    install_requires=['numpy', 'scipy', 'ply', 'click', 'mkl-devel'],
+    install_requires=[
+        'click>=6.7',
+        'click-log>=0.3.2',
+        'mkl-devel',
+        'numpy',
+        'ply',
+        'scipy',
+    ],
     ext_modules=extensions,
-    # data_files=[('.', ['libnlopt-0.dll'])]
+    entry_points={
+        'console_scripts': [
+            'mckit = mckit.cli.runner:mckit',
+        ]
+    },
 )

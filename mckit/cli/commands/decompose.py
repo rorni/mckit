@@ -9,7 +9,7 @@
 """
 import logging
 from pathlib import Path
-
+import click
 import mckit as mk
 
 
@@ -55,22 +55,35 @@ def get_universes(universe):
     return result
 
 
-def decompose(ctx, source):
+def save(model, path, override):
+    if not override and path.exists():
+        logger = logging.getLogger(__name__)
+        errmsg = """
+        Cannot override existing file \"{}\".
+        Please remove the file or specify --override option"""[1:]
+        errmsg = errmsg.format(path)
+        logger.error(errmsg)
+        raise click.UsageError(errmsg)
+    else:
+        model.save(path)
+
+
+def decompose(output, source, override):
     logger = logging.getLogger(__name__)
     logger.debug("Loading model from %s", source)
     model = mk.read_mcnp(source, encoding=MCNP_ENCODING)
     universes = model.get_universes()
     universes = {u.name(): u for u in universes}
     delete_fill(model)
-    output_dir = Path('universes')
+    output_dir = Path(output)
     output_dir.mkdir(parents=True, exist_ok=True)
     envelops_path = output_dir / "envelops.i"
-    model.save(envelops_path)
+    save(model, envelops_path, override)
     logger.debug("The envelops are saved to %s", envelops_path)
     for name, univ in universes.items():
         delete_fill(univ)
         delete_universe(univ)
-        univ.save(f'universes/u{name}.i')
+        save(univ, output_dir / f'u{name}.i', override)
 
 
 

@@ -43,6 +43,12 @@ def test_help(runner):
     assert "Usage: " in result.output
 
 
+def test_help_decompose(runner):
+    result = runner.invoke(mckit, args=["decompose", "--help"], catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+    assert "Usage: mckit decompose" in result.output
+
+
 def test_when_there_is_no_args(runner):
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=['decompose'], catch_exceptions=False)
@@ -56,61 +62,74 @@ def test_not_existing_mcnp_file(runner):
     assert "Path \"not-existing.imcnp\" does not exist" in result.output
 
 
-def test_when_only_source_is_specified(runner):
-    source = data_filename_resolver("parser_test_data/parser1.txt")
+@pytest.mark.parametrize("source, expected", [
+    ("parser_test_data/parser1.txt", "envelops.i"),
+])
+def test_when_there_are_no_universes(runner, source, expected):
+    source = data_filename_resolver(source)
+    with runner.isolated_filesystem():
+        result = runner.invoke(mckit, args=['decompose', source], catch_exceptions=False)
+        assert result.exit_code == 0, "Should success without universes"
+        assert Path("universes/envelops.i").exists(), \
+            "Should store the only envelops.i file in the default directory 'universes'"
+
+
+@pytest.mark.parametrize("source,expected", [
+    ("cli/data/simple_cubes.mcnp", "envelops.i u1.i u2.i".split()),
+])
+def test_when_only_source_is_specified(runner, source, expected):
+    source = data_filename_resolver(source)
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=['decompose', source], catch_exceptions=False)
         assert result.exit_code == 0, \
             "Should success without specified output: " + result.output
-        assert Path("universes/envelop.i").exists(), \
-            "Should store the output files in the default directory 'universes' starting from envolops.i"
+        output = Path("universes")
+        for f in expected:
+            assert (output / f).exists(), \
+                f"Should store the file {f} in the default directory 'universes'"
 
 
-# def test_when_output_is_specified(runner):
-#     part = data_filename_resolver("data/utils/test_load_table_1.csv")
-#     with runner.isolated_filesystem() as prefix:
-#         output_file = Path(prefix) / "test_when_output_is_specified.txt"
-#         result = runner.invoke(
-#             concat,
-#             args=["--output", str(output_file), part],
-#             catch_exceptions=False
-#         )
-#         assert result.exit_code == 0, \
-#             "Should success with specified output: " + result.output
-#         assert output_file.exists(), \
-#             "Should create output file " + output_file
-#         # noinspection PyCompatibility
-#         assert "x   y" in output_file.read_text(encoding="Cp1251"), \
-#             f"Should contain content of '{part}'"
-#
-#
-# # noinspection PyCompatibility
-# def test_when_two_parts_are_specified(runner):
-#     part1 = data_filename_resolver("data/utils/test_load_table_1.csv")
-#     part2 = data_filename_resolver("data/utils/test_load_table_2.csv")
-#     with runner.isolated_filesystem() as prefix:
-#         output_file = Path(prefix) / "test_when_output_is_specified.txt"
-#         result = runner.invoke(
-#             concat,
-#             args=["--output", str(output_file), part1, part2],
-#             catch_exceptions=False
-#         )
-#         assert result.exit_code == 0, "Should success with specified output: " + result.output
-#         assert output_file.exists(), "Should create output file " + output_file
-#         text = output_file.read_text(encoding="Cp1251")
-#         assert "x   y" in text, f"Should contain content of '{part1}'"
-#         assert "x    ;   y" in text, f"Should contain content of '{part2}'"
-#
-#
-# def test_when_output_file_exists_and_override_is_not_specified(runner):
-#     part = data_filename_resolver("data/utils/test_load_table_1.csv")
-#     with runner.isolated_filesystem() as prefix:
-#         output_file = Path(prefix) / "test_when_output_is_specified.txt"
-#         output_file.touch(exist_ok=False)
-#         result = runner.invoke(
-#             concat,
-#             args=["-o", str(output_file), part],
-#             catch_exceptions=False
-#         )
-#         assert result.exit_code != 0, \
-#             "Should fail when output file exist and override is not specified"
+@pytest.mark.parametrize("source,output,expected", [
+    ("cli/data/simple_cubes.mcnp", "split-1", "envelops.i u1.i u2.i".split()),
+])
+def test_when_output_is_specified(runner, source, output, expected):
+    source = data_filename_resolver(source)
+    with runner.isolated_filesystem():
+        output = Path(output)
+        assert not output.exists(), f"The {output} directory should not exist before mckit run"
+        result = runner.invoke(mckit, args=['decompose', "--output", str(output), source], catch_exceptions=False)
+        assert result.exit_code == 0
+        assert output.exists(), f"The {output} directory should exist after mckit run"
+        for f in expected:
+            assert (output / f).exists(), \
+                f"Should store the file {f} in the default directory 'universes'"
+
+
+def test_when_output_file_exists_and_override_is_not_specified(runner):
+    source = data_filename_resolver("cli/data/simple_cubes.mcnp")
+    with runner.isolated_filesystem() as prefix:
+        output = Path(prefix) / "universes/envelops.i"
+        output.parent.mkdir(parents=True)
+        output.touch(exist_ok=False)
+        result = runner.invoke(
+            mckit,
+            args=["decompose", source],
+            catch_exceptions=False
+        )
+        assert result.exit_code != 0, \
+            "Should fail when output file exists and --override is not specified"
+
+
+def test_when_output_file_exists_and_override_is_specified(runner):
+    source = data_filename_resolver("cli/data/simple_cubes.mcnp")
+    with runner.isolated_filesystem() as prefix:
+        output = Path(prefix) / "universes/envelops.i"
+        output.parent.mkdir(parents=True)
+        output.touch(exist_ok=False)
+        result = runner.invoke(
+            mckit,
+            args=["--override", "decompose", source],
+            catch_exceptions=False
+        )
+        assert result.exit_code == 0, \
+            "Should success when output file exists and --override is specified"

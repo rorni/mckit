@@ -758,15 +758,19 @@ def _get_cell(name, cells, surfaces, data):
         ref_name = cell_data.pop('reference')
         ref_cell = _get_cell(ref_name, cells, surfaces, data)
         geometry = ref_cell.shape
-        for k, v in ref_cell.items():
+        for k, v in ref_cell.options.items():
             if k not in cell_data.keys():
                 cell_data[k] = v
         rho = cell_data.pop('RHO', None)
+        material = cell_data['MAT']
+        cell_data['MAT'] = {'composition': material.composition.name()}
         if rho is not None:
             if rho > 0:
                 cell_data['MAT']['concentration'] = rho * 1.e+24
             else:
                 cell_data['MAT']['density'] = abs(rho)
+        else:
+            cell_data['MAT']['density'] = material.density
     else:    # create geometry from polish notation
         for i, g in enumerate(geometry):
             if isinstance(g, int):
