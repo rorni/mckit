@@ -36,6 +36,7 @@ def mckit(ctx, debug, override):
 @mckit.command()
 @click.pass_context
 @click.option("--output", "-o", default="universes", help="Output directory")
+@click.option("--fill-descriptor", "-o", default="fill-descriptor.toml", help="TOML file for FILL descriptors")
 @click.argument(
     "source",
     metavar="<source>",
@@ -43,9 +44,9 @@ def mckit(ctx, debug, override):
     nargs=1,
     required=True,
 )
-def decompose(ctx, output, source):
+def decompose(ctx, output, fill_descriptor, source):
     __LOG.info(f"Processing {source}")
-    return do_decompose(output, source, ctx.obj['OVERRIDE'])
+    return do_decompose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
 
 
 if __name__ == '__main__':

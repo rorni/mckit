@@ -99,6 +99,8 @@ setup(
         'numpy',
         'ply',
         'scipy',
+        'tomlkit',
+        'datetime',
     ],
     ext_modules=extensions,
     entry_points={

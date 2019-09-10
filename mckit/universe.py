@@ -502,7 +502,7 @@ class Universe:
 
     def get_transformations(self):
         """Gets all transformations of the universe."""
-        pass
+        pass   # TODO dvp: add transformations
 
     def get_universes(self):
         """Gets all inner universes.
@@ -514,8 +514,8 @@ class Universe:
         """
         universes = {self}
         for c in self:
-            u = c.options.get('FILL', {}).get('universe', None)
-            if u:
+            if 'FILL' in c.options:
+                u = c.options['FILL']['universe']  # TODO dvp: add transformations
                 universes.update(u.get_universes())
         return universes
 
@@ -609,13 +609,15 @@ class Universe:
                     m.rename(start_mat)
                     start_mat += 1
 
-    def save(self, filename):
+    def save(self, filename, encoding="cp1251"):
         """Saves the universe into file.
 
         Parameters
         ----------
         filename : str
             File name, universe to be saved to.
+        encoding: str
+            Encoding ot the output file
         """
         result = self.name_clashes()
         if result:
@@ -635,7 +637,7 @@ class Universe:
         cards.append('')
         cards.extend(map(Card.mcnp_repr, materials))
         cards.append('')
-        with open(filename, mode='w') as f:
+        with open(filename, mode='w', encoding=encoding) as f:
             f.write('\n'.join(cards))
 
     def select(self, selector=None, inner=False):
@@ -746,3 +748,7 @@ class Universe:
     def verbose_name(self):
         """Gets verbose name of the universe."""
         return self._verbose_name
+
+    @property
+    def comment(self):
+        return self._comment

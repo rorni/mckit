@@ -3,7 +3,7 @@ import logging
 import click_log
 import pytest
 from pathlib import Path
-
+import tomlkit as tk
 from click.testing import CliRunner
 from mckit.utils.resource import filename_resolver
 
@@ -133,3 +133,40 @@ def test_when_output_file_exists_and_override_is_specified(runner):
         )
         assert result.exit_code == 0, \
             "Should success when output file exists and --override is specified"
+
+
+
+def test_fill_descriptor(runner):
+    source = data_filename_resolver("cli/data/simple_cubes.mcnp")
+    with runner.isolated_filesystem() as prefix:
+        output = Path(prefix) / "universes/fill-descriptor.toml"
+        result = runner.invoke(
+            mckit,
+            args=["decompose", source],
+            catch_exceptions=False
+        )
+        assert result.exit_code == 0, "Should success"
+        assert output.exists()
+        with output.open() as fid:
+            fill_descriptor = fid.read()
+            assert fill_descriptor.find('simple_cubes.mcnp')
+            fill_descriptor = tk.parse(fill_descriptor)
+            assert 'created' in fill_descriptor
+            assert '2' in fill_descriptor
+            assert 'universe' in fill_descriptor['2']
+            assert 1 == fill_descriptor['2']['universe']
+            assert 'u1.i' == fill_descriptor['2']['file']
+
+
+
+def test_fill_descriptor_when_fill_descriptor_file_is_specified(runner):
+    source = data_filename_resolver("cli/data/simple_cubes.mcnp")
+    with runner.isolated_filesystem() as prefix:
+        output = Path(prefix) / "universes/fill-descriptor-special.toml"
+        result = runner.invoke(
+            mckit,
+            args=["decompose", "--fill-descriptor", str(output), source],
+            catch_exceptions=False
+        )
+        assert result.exit_code == 0, "Should success"
+        assert output.exists()
