@@ -700,6 +700,7 @@ def read_mcnp(filename, encoding='utf-8'):
     """
     with open(filename, encoding=encoding) as f:
         text = f.read()
+    text = text.rstrip() + '\n'
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(
         text, tracking=True, lexer=mcnp_input_lexer

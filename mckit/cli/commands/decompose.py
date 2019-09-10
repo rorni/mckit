@@ -3,8 +3,9 @@
 """
 Разложение модели на составляющие юниверсы.
 
-Читает C-Model, извлекает все юниверсы и сохраняет их в каталог universes под именем uN.i, где N - номер юниверса.
-Также сохраняет общую модель (без юниверсов) под именем envelopes.i# -*- coding: utf-8 -*-
+Читает модель, извлекает юниверсы первого уровня и сохраняет их в каталог universes под именем uN.i, где N - номер юниверса.
+Также сохраняет общую модель (без юниверсов) под именем envelopes.i
+Создает спецификацию для сборки модели в виде TOML файла.
 
 """
 from datetime import datetime
@@ -13,23 +14,7 @@ from pathlib import Path
 import click
 import tomlkit as tk
 import mckit as mk
-
-
-# This is the encoding swallowing non ascii (neither unicode) symbols happening in MCNP models code
-MCNP_ENCODING = "cp1251"
-
-
-def save(model, path, override):
-    if not override and path.exists():
-        logger = logging.getLogger(__name__)
-        errmsg = """
-        Cannot override existing file \"{}\".
-        Please remove the file or specify --override option"""[1:]
-        errmsg = errmsg.format(path)
-        logger.error(errmsg)
-        raise click.UsageError(errmsg)
-    else:
-        model.save(path, encoding=MCNP_ENCODING)
+from .common import save, MCNP_ENCODING
 
 
 def decompose(output, fill_descriptor_path, source, override):
@@ -39,7 +24,7 @@ def decompose(output, fill_descriptor_path, source, override):
     output_dir.mkdir(parents=True, exist_ok=True)
     model: mk.Universe = mk.read_mcnp(source, encoding=MCNP_ENCODING)
     fill_descriptor = tk.document()
-    fill_descriptor.add(tk.comment(f"This is a decomposition of \"{source}\" model"))
+    fill_descriptor.add(tk.comment(f"This is a decomposition of \"{Path(source).name}\" model"))
     if model.comment:
         fill_descriptor.append("comment", "model.comment")
     fill_descriptor.append("created", datetime.now())

@@ -5,9 +5,10 @@ import sys
 
 import click
 import click_log
+from pathlib import Path
 
 from mckit import __version__
-from mckit.cli.commands import do_decompose
+from mckit.cli.commands import do_decompose, do_compose
 
 __LOG = logging.getLogger(__name__)
 click_log.basic_config(__LOG)
@@ -47,6 +48,32 @@ def mckit(ctx, debug, override):
 def decompose(ctx, output, fill_descriptor, source):
     __LOG.info(f"Processing {source}")
     return do_decompose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
+
+
+@mckit.command()
+@click.pass_context
+@click.option("--output", "-o", required=True, help="Output file")
+@click.option(
+    "--fill-descriptor",
+    default=None,
+    help="TOML file for FILL descriptors",
+)
+@click.argument(
+    "source",
+    metavar="<source>",
+    type=click.Path(exists=True),
+    nargs=1,
+    required=True,
+)
+def compose(ctx, output, fill_descriptor, source):
+    if fill_descriptor is None:
+        fill_descriptor = Path(source).absolute().parent / "fill-descriptor.toml"
+    else:
+        fill_descriptor = Path(fill_descriptor)
+    if not fill_descriptor.exists():
+        raise click.UsageError(f"Cannot find fill descriptor file \"{fill_descriptor}\"")
+    __LOG.info(f"Composing \"{output}\", from envelops \"{source}\" with fill descriptor \"{fill_descriptor}\"")
+    return do_compose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
 
 
 if __name__ == '__main__':
