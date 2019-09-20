@@ -5,6 +5,7 @@ import pytest
 from pathlib import Path
 import tomlkit as tk
 from click.testing import CliRunner
+import mckit as mk
 from mckit.utils.resource import filename_resolver
 
 # skip the pylint warning on fixture names
@@ -54,7 +55,7 @@ def test_when_output_is_not_specified(runner):
 
 
 @pytest.mark.parametrize("source, output, expected", [
-    ("data/universes/envelops.i", "simple_cubes_restored.i", "data/simple_cubes.imcnp"),
+    ("data/universes/envelops.i", "simple_cubes_restored.i", "data/simple_cubes.mcnp"),
 ])
 def test_when_fill_descriptor_is_not_specified(runner, source, output, expected):
     source = data_filename_resolver(source)
@@ -63,6 +64,9 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
         assert result.exit_code == 0, "Should success using fill_descriptor in the same directory as source file"
         assert Path(output).exists(), \
             f"Should create file {output} file"
+        actual = mk.read_mcnp(output)
+        expected = mk.read_mcnp(expected)
+        assert actual.has_equivalent_cells(expected), "Cells differ"
 
 
 # @pytest.mark.parametrize("source,expected", [

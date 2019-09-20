@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from collections import defaultdict
+from operator import xor, eq, and_
+from toolz import reduce
 
 import numpy as np
 from click import progressbar
@@ -185,6 +187,10 @@ class Universe:
 
         self.add_cells(cells, name_rule=name_rule)
 
+    @property
+    def cells(self):
+        return self._cells
+
     def __iter__(self):
         return iter(self._cells)
 
@@ -196,6 +202,16 @@ class Universe:
 
     def __getitem__(self, item):
         return self._cells.__getitem__(item)
+
+    # def __hash__(self):
+    #     return reduce(xor, map(hash, self.cells), 0)
+    #
+    # def __eq__(self, other):
+    #     return reduce(and_, map(eq, zip(self._cells, other.cells), True))
+
+    def has_equivalent_cells(self, other):
+        return reduce(and_, map(lambda x: x[0].is_equivalent_to(x[1]), zip(self._cells, other.cells), True))
+
 
     def add_cells(self, cells, name_rule='new'):
         """Adds new cell to the universe.
@@ -614,7 +630,7 @@ class Universe:
 
         Parameters
         ----------
-        filename : str
+        filename : str, Path
             File name, universe to be saved to.
         encoding: str
             Encoding ot the output file

@@ -542,10 +542,20 @@ class Body(Card):
         self._shape = geometry
 
     def __hash__(self):
-        return id(self)
+        return Card.__hash__(self) ^ hash(self._shape)
 
     def __eq__(self, other):
-        return id(self) == id(other)
+        return Card.__eq__(self, other) and self._shape == other._shape
+
+    def is_equivalent_to(self, other):
+        self._shape == other._shape
+        if 'FILL' in self.options:
+            if 'FILL' not in other.options:
+                return False
+            my = self.options['FILL']
+            their = other.options['FILL']
+            return my.has_equivalent_cells(other)
+
 
     def mcnp_words(self):
         words = [str(self.name()), ' ']
