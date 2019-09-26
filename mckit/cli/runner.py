@@ -37,7 +37,7 @@ def mckit(ctx, debug, override):
 @mckit.command()
 @click.pass_context
 @click.option("--output", "-o", default="universes", help="Output directory")
-@click.option("--fill-descriptor", "-o", default="fill-descriptor.toml", help="TOML file for FILL descriptors")
+@click.option("--fill-descriptor", "-f", default="fill-descriptor.toml", help="TOML file for FILL descriptors")
 @click.argument(
     "source",
     metavar="<source>",
