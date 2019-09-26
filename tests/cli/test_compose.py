@@ -41,7 +41,7 @@ def test_when_there_is_no_args(runner):
         assert 'Usage:' in result.output
 
 
-def test_not_existing_envelops_file(runner):
+def test_not_existing_envelopes_file(runner):
     result = runner.invoke(mckit, args=["compose", "not-existing.imcnp"], catch_exceptions=False)
     assert result.exit_code > 0
     assert "Path \"not-existing.imcnp\" does not exist" in result.output
@@ -55,7 +55,7 @@ def test_when_output_is_not_specified(runner):
 
 
 @pytest.mark.parametrize("source, output, expected", [
-    ("data/universes/envelops.i", "simple_cubes_restored.i", "data/simple_cubes.mcnp"),
+    ("data/universes/envelopes.i", "simple_cubes_restored.i", "data/simple_cubes.mcnp"),
 ])
 def test_when_fill_descriptor_is_not_specified(runner, source, output, expected):
     source = data_filename_resolver(source)
@@ -70,7 +70,7 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
 
 
 # @pytest.mark.parametrize("source,expected", [
-#     ("cli/data/simple_cubes.mcnp", "envelops.i u1.i u2.i".split()),
+#     ("cli/data/simple_cubes.mcnp", "envelopes.i u1.i u2.i".split()),
 # ])
 # def test_when_only_source_is_specified(runner, source, expected):
 #     source = data_filename_resolver(source)
@@ -85,7 +85,7 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
 #
 #
 # @pytest.mark.parametrize("source,output,expected", [
-#     ("cli/data/simple_cubes.mcnp", "split-1", "envelops.i u1.i u2.i".split()),
+#     ("cli/data/simple_cubes.mcnp", "split-1", "envelopes.i u1.i u2.i".split()),
 # ])
 # def test_when_output_is_specified(runner, source, output, expected):
 #     source = data_filename_resolver(source)
@@ -103,7 +103,7 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
 # def test_when_output_file_exists_and_override_is_not_specified(runner):
 #     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
 #     with runner.isolated_filesystem() as prefix:
-#         output = Path(prefix) / "universes/envelops.i"
+#         output = Path(prefix) / "universes/envelopes.i"
 #         output.parent.mkdir(parents=True)
 #         output.touch(exist_ok=False)
 #         result = runner.invoke(
@@ -118,7 +118,7 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
 # def test_when_output_file_exists_and_override_is_specified(runner):
 #     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
 #     with runner.isolated_filesystem() as prefix:
-#         output = Path(prefix) / "universes/envelops.i"
+#         output = Path(prefix) / "universes/envelopes.i"
 #         output.parent.mkdir(parents=True)
 #         output.touch(exist_ok=False)
 #         result = runner.invoke(

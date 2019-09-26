@@ -57,9 +57,9 @@ def decompose(output, fill_descriptor_path, source, override):
     with open(output_dir / fill_descriptor_path, "w") as fid:
         res = tk.dumps(fill_descriptor)
         fid.write(res)
-    envelops_path = output_dir / "envelops.i"
-    save(model, envelops_path, override)
-    logger.debug("The envelops are saved to %s", envelops_path)
+    envelopes_path = output_dir / "envelopes.i"
+    save(model, envelopes_path, override)
+    logger.debug("The envelopes are saved to %s", envelopes_path)
 
 
 

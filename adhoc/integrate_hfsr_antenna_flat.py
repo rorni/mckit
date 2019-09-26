@@ -195,27 +195,27 @@ attach_bounding_boxes(
     tolerance=5.0,
     chunksize=max(len(antenna_envelop)//os.cpu_count(), 1)
 )
-LOG.info("Loading c-model envelops")
-envelops = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
+LOG.info("Loading c-model envelopes")
+envelopes = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
 
 cells_to_fill = [11, 14, 75]
 cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
 
-LOG.info("Attaching bounding boxes to c-model envelops %s", cells_to_fill)
-attach_bounding_boxes([envelops[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
-# attach_bounding_boxes((envelops), tolerance=10.0, chunksize=5)
-LOG.info("Backing up original envelops")
-envelops_original = envelops.copy()
+LOG.info("Attaching bounding boxes to c-model envelopes %s", cells_to_fill)
+attach_bounding_boxes([envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
+# attach_bounding_boxes((envelopes), tolerance=10.0, chunksize=5)
+LOG.info("Backing up original envelopes")
+envelopes_original = envelopes.copy()
 
 antenna_envelop.rename(start_cell=200000, start_surf=200000)
 
-LOG.info("Subtracting antenna envelop from c-model envelops %s", cells_to_fill)
-envelops = subtract_model_from_model(envelops, antenna_envelop, cells_filter=lambda c: c in cells_to_fill)
-LOG.info("Adding antenna envelop to c-model envelops")
-envelops.add_cells(antenna_envelop, name_rule='clash')
-envelops_path = "envelops+antenna-envelop.i"
-envelops.save(envelops_path)
-LOG.info("The envelops are saved to %s", envelops_path)
+LOG.info("Subtracting antenna envelop from c-model envelopes %s", cells_to_fill)
+envelopes = subtract_model_from_model(envelopes, antenna_envelop, cells_filter=lambda c: c in cells_to_fill)
+LOG.info("Adding antenna envelop to c-model envelopes")
+envelopes.add_cells(antenna_envelop, name_rule='clash')
+envelopes_path = "envelopes+antenna-envelop.i"
+envelopes.save(envelopes_path)
+LOG.info("The envelopes are saved to %s", envelopes_path)
 
 universes_dir = CMODEL_ROOT / "universes"
 assert universes_dir.is_dir()
@@ -258,13 +258,13 @@ antenna = load_model(HFSR_ROOT / "models/antenna/antenna.i")
 antenna.rename(210000, 210000, 210000, 210000, name=210)
 
 for i, filler in zip(cells_to_fill_indexes, universes):
-    envelops[i].options['FILL'] = {"universe": filler}
+    envelopes[i].options['FILL'] = {"universe": filler}
 
 added_cells = len(antenna_envelop)
-for c in envelops[-added_cells:]:
+for c in envelopes[-added_cells:]:
     c.options['FILL'] = {"universe": antenna}
 
-set_common_materials(envelops)
+set_common_materials(envelopes)
 
 # def delete_subtracted_universe(universe_name):
 #     new_universe_path = Path(f"u{universe_name}-ae.i")
@@ -272,9 +272,9 @@ set_common_materials(envelops)
 # foreach(delete_subtracted_universe, cells_to_fill)
 
 
-envelops_surrounding_and_antenna_file = "ewfa_3.i"
-envelops.save(envelops_surrounding_and_antenna_file)
+envelopes_surrounding_and_antenna_file = "ewfa_3.i"
+envelopes.save(envelopes_surrounding_and_antenna_file)
 LOG.info(
-    "c-model envelops integrated with universes and antenna is saved to \"%s\"",
-    envelops_surrounding_and_antenna_file,
+    "c-model envelopes integrated with universes and antenna is saved to \"%s\"",
+    envelopes_surrounding_and_antenna_file,
 )

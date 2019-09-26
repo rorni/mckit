@@ -72,7 +72,7 @@ def compose(ctx, output, fill_descriptor, source):
         fill_descriptor = Path(fill_descriptor)
     if not fill_descriptor.exists():
         raise click.UsageError(f"Cannot find fill descriptor file \"{fill_descriptor}\"")
-    __LOG.info(f"Composing \"{output}\", from envelops \"{source}\" with fill descriptor \"{fill_descriptor}\"")
+    __LOG.info(f"Composing \"{output}\", from envelopes \"{source}\" with fill descriptor \"{fill_descriptor}\"")
     return do_compose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
 
 

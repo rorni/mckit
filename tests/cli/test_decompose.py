@@ -63,19 +63,19 @@ def test_not_existing_mcnp_file(runner):
 
 
 @pytest.mark.parametrize("source, expected", [
-    ("parser_test_data/parser1.txt", "envelops.i"),
+    ("parser_test_data/parser1.txt", "envelopes.i"),
 ])
 def test_when_there_are_no_universes(runner, source, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=['decompose', source], catch_exceptions=False)
         assert result.exit_code == 0, "Should success without universes"
-        assert Path("universes/envelops.i").exists(), \
-            "Should store the only envelops.i file in the default directory 'universes'"
+        assert Path("universes/envelopes.i").exists(), \
+            "Should store the only envelopes.i file in the default directory 'universes'"
 
 
 @pytest.mark.parametrize("source,expected", [
-    ("cli/data/simple_cubes.mcnp", "envelops.i u1.i u2.i".split()),
+    ("cli/data/simple_cubes.mcnp", "envelopes.i u1.i u2.i".split()),
 ])
 def test_when_only_source_is_specified(runner, source, expected):
     source = data_filename_resolver(source)
@@ -90,7 +90,7 @@ def test_when_only_source_is_specified(runner, source, expected):
 
 
 @pytest.mark.parametrize("source,output,expected", [
-    ("cli/data/simple_cubes.mcnp", "split-1", "envelops.i u1.i u2.i".split()),
+    ("cli/data/simple_cubes.mcnp", "split-1", "envelopes.i u1.i u2.i".split()),
 ])
 def test_when_output_is_specified(runner, source, output, expected):
     source = data_filename_resolver(source)
@@ -108,7 +108,7 @@ def test_when_output_is_specified(runner, source, output, expected):
 def test_when_output_file_exists_and_override_is_not_specified(runner):
     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
     with runner.isolated_filesystem() as prefix:
-        output = Path(prefix) / "universes/envelops.i"
+        output = Path(prefix) / "universes/envelopes.i"
         output.parent.mkdir(parents=True)
         output.touch(exist_ok=False)
         result = runner.invoke(
@@ -123,7 +123,7 @@ def test_when_output_file_exists_and_override_is_not_specified(runner):
 def test_when_output_file_exists_and_override_is_specified(runner):
     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
     with runner.isolated_filesystem() as prefix:
-        output = Path(prefix) / "universes/envelops.i"
+        output = Path(prefix) / "universes/envelopes.i"
         output.parent.mkdir(parents=True)
         output.touch(exist_ok=False)
         result = runner.invoke(

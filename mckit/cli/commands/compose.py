@@ -12,7 +12,7 @@ from .common import save, MCNP_ENCODING
 
 
 def compose(output, fill_descriptor_path, source, override):
-    envelops = mk.read_mcnp(source, encoding=MCNP_ENCODING)
+    envelopes = mk.read_mcnp(source, encoding=MCNP_ENCODING)
     source = Path(source)
     universes_dir = source.absolute().parent
     assert universes_dir.is_dir()
@@ -41,8 +41,8 @@ def compose(output, fill_descriptor_path, source, override):
         comps[k] = {c for c in cps}
 
     common = reduce(set.union, comps.values())
-    envelops.set_common_materials(common)
-    cells_index = dict((cell.name(), cell) for cell in envelops)
+    envelopes.set_common_materials(common)
+    cells_index = dict((cell.name(), cell) for cell in envelopes)
 
     for i, universe in universes.items():
         cell = cells_index[i]
@@ -51,4 +51,4 @@ def compose(output, fill_descriptor_path, source, override):
         universe.set_common_materials(common)
         cell.options["FILL"] = {"universe": universe}
 
-    save(envelops, output, override)
+    save(envelopes, output, override)
