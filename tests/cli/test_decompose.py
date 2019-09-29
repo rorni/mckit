@@ -5,6 +5,7 @@ import pytest
 from pathlib import Path
 import tomlkit as tk
 from click.testing import CliRunner
+import mckit as mk
 from mckit.utils.resource import filename_resolver
 
 # skip the pylint warning on fixture names
@@ -25,6 +26,17 @@ def runner():
 
 
 data_filename_resolver = filename_resolver('tests')
+
+
+@pytest.mark.parametrize( "path, expected_cells", [
+    ("cli/data/simple_cubes.mcnp", 3),
+    ("cli/data/universes/envelopes.i",3),
+    ("cli/data/universes/u1.i", 2),
+    ("cli/data/universes/u2.i", 2),
+])
+def test_input_files_reading(path, expected_cells):
+    universe = mk.read_mcnp(data_filename_resolver(path))
+    assert len(universe) == expected_cells, f"Failed to read from file {path}"
 
 
 def test_version(runner):
@@ -85,8 +97,12 @@ def test_when_only_source_is_specified(runner, source, expected):
             "Should success without specified output: " + result.output
         output = Path("universes")
         for f in expected:
-            assert (output / f).exists(), \
-                f"Should store the file {f} in the default directory 'universes'"
+            p = output / f
+            assert p.exists(), \
+                f"Should store the file {p} in the default directory 'universes'"
+            model = mk.read_mcnp(p)
+            for cell in model:
+                assert 'U' not in cell.options or cell.options['U'].name() == 0
 
 
 @pytest.mark.parametrize("source,output,expected", [

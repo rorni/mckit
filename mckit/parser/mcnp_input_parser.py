@@ -12,6 +12,23 @@ from ..surface import create_surface
 from ..body import Body
 from ..universe import produce_universes
 
+__DEBUG__ = False
+if __DEBUG__:
+    # Set up a logging object
+    import logging
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename="mckit_parselog.txt",
+        filemode="w",
+        format="%(filename)10s:%(lineno)4d:%(message)s"
+    )
+    log = logging.getLogger()
+else:
+    log = None
+
+# lex.lex(debug=True, debuglog=log)
+# yacc.yacc(debug=True, debuglog=log)
 
 literals = ['+', '-', ':', '*', '(', ')', '#', '.']
 
@@ -57,8 +74,6 @@ COMMON_KEYWORDS = {'R', 'I', 'ILOG', 'J', 'NO', 'MESSAGE'}
 
 KEYWORDS = CELL_KEYWORDS.union(DATA_KEYWORDS)
 
-# KEYWORDS = KEYWORDS.union(map(str.lower, KEYWORDS))  # add lowercase variants to ignore cases
-
 # List of token names
 tokens = [
     'blank_line',
@@ -93,7 +108,7 @@ RESET_CONTINUE = r'\n(?=[ ]{5,}[^\s])'
 CONTINUE = r'&(?=[ ]*(' + CARD_COMMENT + r')?$)'
 SEPARATOR = r'\n(?=' + CARD_START + r')'
 FRACTION = r'\.'
-EXPONENT = r'(E[-+]?\d+)'
+EXPONENT = r'([eE][-+]?\d+)'
 INT_NUMBER = r'(\d+)'
 FLT_NUMBER = r'(' + \
              INT_NUMBER + r'?' + FRACTION + INT_NUMBER + EXPONENT + r'?|' +\
@@ -262,7 +277,7 @@ def t_continue_cells_ckw_surfs_data_newline_skip(t):
     t.lexer.last_pos = t.lexer.lexpos
 
 
-mcnp_input_lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
+mcnp_input_lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE, debug=__DEBUG__, debuglog=log)
 
 
 def extract_comments(line):
@@ -277,9 +292,15 @@ def extract_comments(line):
 def p_model(p):
     """model_body : title separator cell_cards blank_line \
                     surface_cards blank_line \
-                    data_cards blank_line
+                    data_cards
     """
     p[0] = p[1], p[3], p[5], p[7]
+
+
+def p_model_without_data(p):
+    """model_body : title separator cell_cards blank_line surface_cards"""
+    p[0] = p[1], p[3], p[5], None
+
 
 
 def p_cell_cards(p):
@@ -673,10 +694,15 @@ def p_material_option(p):
     p[0] = p[1], p[2]
 
 
-mcnp_input_parser = yacc.yacc(tabmodule="mcnp_input_tab", debug=False, errorlog=yacc.NullLogger())
+mcnp_input_parser = yacc.yacc(
+    tabmodule="mcnp_input_tab",
+    debug=__DEBUG__,
+    debuglog=log,
+    errorlog=log if __DEBUG__ else yacc.NullLogger(),
+)
 
 
-def read_mcnp(filename, encoding='utf-8'):
+def read_mcnp(filename, encoding='cp1251'):
     """Reads MCNP model from file and creates corresponding objects.
 
     Parameters
@@ -700,12 +726,14 @@ def read_mcnp(filename, encoding='utf-8'):
     """
     with open(filename, encoding=encoding) as f:
         text = f.read()
-    text = text.rstrip() + '\n'
+    text = text.rstrip()
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(
-        text, tracking=True, lexer=mcnp_input_lexer
+        text,
+        tracking=True,
+        lexer=mcnp_input_lexer,
+        debug=__DEBUG__,
     )
-
     bodies = []
     for name in list(cells.keys()):
         bodies.append(_get_cell(name, cells, surfaces, data))

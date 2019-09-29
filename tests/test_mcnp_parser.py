@@ -297,6 +297,7 @@ def test_mcnp_parser(parse_file, expected):
     parse_file = file_resolver(parse_file)
     with open(parse_file) as f:
         text = f.read()
+        text = text.rstrip()
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(text, lexer=mcnp_input_lexer)
     assert expected['title'] == title

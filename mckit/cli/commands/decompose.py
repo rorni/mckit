@@ -17,6 +17,15 @@ import mckit as mk
 from .common import save, MCNP_ENCODING
 
 
+def move_universe_attribute_to_comments(universe):
+    no = universe.name()
+    for cell in universe:
+        cell.options.pop('U', None)
+        comm = cell.options.get('comment', [])
+        comm.append(f'U={no}')
+        cell.options['comment'] = comm
+
+
 def decompose(output, fill_descriptor_path, source, override):
     logger = logging.getLogger(__name__)
     logger.debug("Loading model from %s", source)
@@ -52,8 +61,10 @@ def decompose(output, fill_descriptor_path, source, override):
             descriptor['file'] = fn
             fill_descriptor.append(str(c.name()), descriptor)
             fill_descriptor.add(tk.nl())
+            move_universe_attribute_to_comments(un)
             save(un, output_dir / fn, override)
             logger.debug("The universe %s are saved to %s", universe_name, fn)
+
     with open(output_dir / fill_descriptor_path, "w") as fid:
         res = tk.dumps(fill_descriptor)
         fid.write(res)
