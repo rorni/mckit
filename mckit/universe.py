@@ -210,7 +210,12 @@ class Universe:
     #     return reduce(and_, map(eq, zip(self._cells, other.cells), True))
 
     def has_equivalent_cells(self, other):
-        return reduce(and_, map(lambda x: x[0].is_equivalent_to(x[1]), zip(self._cells, other.cells), True))
+        if len(self) != len(other):
+            return False
+        for i, c in enumerate(self):
+            if not c.is_equivalent_to(other[i]):
+                return False
+        return True
 
 
     def add_cells(self, cells, name_rule='new'):

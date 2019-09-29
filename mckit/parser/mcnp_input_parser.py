@@ -292,13 +292,13 @@ def extract_comments(line):
 def p_model(p):
     """model_body : title separator cell_cards blank_line \
                     surface_cards blank_line \
-                    data_cards
+                    data_cards blank_line
     """
     p[0] = p[1], p[3], p[5], p[7]
 
 
 def p_model_without_data(p):
-    """model_body : title separator cell_cards blank_line surface_cards"""
+    """model_body : title separator cell_cards blank_line surface_cards blank_line"""
     p[0] = p[1], p[3], p[5], None
 
 
@@ -363,6 +363,7 @@ def p_cell_option(p):
 def p_cell_int_option(p):
     """cell_int_option : U integer
                        | MAT integer
+                       | LAT integer
     """
     p[0] = {p[1]: p[2]}
 
@@ -726,7 +727,7 @@ def read_mcnp(filename, encoding='cp1251'):
     """
     with open(filename, encoding=encoding) as f:
         text = f.read()
-    text = text.rstrip()
+    text = text.rstrip() + '\n'  # float number spec requires end of line or space after float
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(
         text,

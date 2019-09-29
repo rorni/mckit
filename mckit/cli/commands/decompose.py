@@ -57,7 +57,7 @@ def decompose(output, fill_descriptor_path, source, override):
             fn = f'u{universe_name}.i'
             descriptor['universe'] = universe_name
             if tr:
-                descriptor['transform'] = tr
+                descriptor['transform'] = tr.name()
             descriptor['file'] = fn
             fill_descriptor.append(str(c.name()), descriptor)
             fill_descriptor.add(tk.nl())

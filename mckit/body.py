@@ -548,13 +548,15 @@ class Body(Card):
         return Card.__eq__(self, other) and self._shape == other._shape
 
     def is_equivalent_to(self, other):
-        self._shape == other._shape
-        if 'FILL' in self.options:
-            if 'FILL' not in other.options:
-                return False
-            my = self.options['FILL']
-            their = other.options['FILL']
-            return my.has_equivalent_cells(other)
+        result = self._shape == other._shape
+        if result:
+            if 'FILL' in self.options:
+                if 'FILL' not in other.options:
+                    return False
+                my = self.options['FILL']['universe']
+                their = other.options['FILL']['universe']
+                return my.has_equivalent_cells(their)
+        return result
 
 
     def mcnp_words(self):
