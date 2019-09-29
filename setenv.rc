@@ -14,8 +14,7 @@ mckit_load_environment() {
         if [[ -r ./.local.env ]]; then
             local env="./.local.env"
         else
-            local machine="$(hostname)"
-            local env="build_configs/${cfg_src}.rc"
+            local env="build_configs/$(hostname).rc"
         fi
         if [[ -r  "$env" ]]; then
             echo "Sourcing environment from $env"
@@ -48,7 +47,6 @@ mckit_printenv() {
 
 
 mckit_update_dot_env() {
-    echo "Args: $*"
     if [[ "$1" == "reset" ]]; then
         shift
         unset MCKIT_BUILD_CFG
@@ -59,6 +57,6 @@ mckit_update_dot_env() {
 }
 
 
-[ -n "$BATS_PREFIX" ] ||  mckit_update_dot_env
+[ -n "$BATS_PREFIX" ] ||  mckit_update_dot_env $*
 
 # vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai :
