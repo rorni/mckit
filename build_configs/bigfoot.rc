@@ -1,0 +1,2 @@
+. $MCKIT_ROOT/build_configs/common.rc
+. anaconda.rc

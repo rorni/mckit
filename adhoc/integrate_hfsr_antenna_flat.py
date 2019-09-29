@@ -85,7 +85,8 @@ CMODEL_ROOT = get_root_dir("CMODEL_ROOT", "~/dev/mcnp/c-model")
 LOG.info("HFSR_ROOT=%s", HFSR_ROOT)
 LOG.info("CMODEL_ROOT=%s", CMODEL_ROOT)
 assert_all_paths_exist(HFSR_ROOT, CMODEL_ROOT)
-
+universes_dir = CMODEL_ROOT / "universes"
+# assert universes_dir.is_dir()
 NJOBS = os.cpu_count()
 # print(f"NJOBS: {NJOBS}")
 # set_loky_pickler()
@@ -186,95 +187,96 @@ def set_common_materials(*universes) -> tp.NoReturn:
     for u in universes_collection:
         u.set_common_materials(common_materials)
 
-# new_cells.extend(b_model)
-LOG.info("Loading antenna envelop")
-antenna_envelop = load_model(str(HFSR_ROOT / "models/antenna/box.i"))
-LOG.info("Attaching bounding boxes to antenna envelop")
-attach_bounding_boxes(
-    antenna_envelop,
-    tolerance=5.0,
-    chunksize=max(len(antenna_envelop)//os.cpu_count(), 1)
-)
-LOG.info("Loading c-model envelopes")
-envelopes = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
+def main():
+    # new_cells.extend(b_model)
+    LOG.info("Loading antenna envelop")
+    antenna_envelop = load_model(str(HFSR_ROOT / "models/antenna/box.i"))
+    LOG.info("Attaching bounding boxes to antenna envelop")
+    attach_bounding_boxes(
+        antenna_envelop,
+        tolerance=5.0,
+        chunksize=max(len(antenna_envelop)//os.cpu_count(), 1)
+    )
+    LOG.info("Loading c-model envelopes")
+    envelopes = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
 
-cells_to_fill = [11, 14, 75]
-cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
+    cells_to_fill = [11, 14, 75]
+    cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
 
-LOG.info("Attaching bounding boxes to c-model envelopes %s", cells_to_fill)
-attach_bounding_boxes([envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
-# attach_bounding_boxes((envelopes), tolerance=10.0, chunksize=5)
-LOG.info("Backing up original envelopes")
-envelopes_original = envelopes.copy()
+    LOG.info("Attaching bounding boxes to c-model envelopes %s", cells_to_fill)
+    attach_bounding_boxes([envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
+    # attach_bounding_boxes((envelopes), tolerance=10.0, chunksize=5)
+    LOG.info("Backing up original envelopes")
+    envelopes_original = envelopes.copy()
 
-antenna_envelop.rename(start_cell=200000, start_surf=200000)
+    antenna_envelop.rename(start_cell=200000, start_surf=200000)
 
-LOG.info("Subtracting antenna envelop from c-model envelopes %s", cells_to_fill)
-envelopes = subtract_model_from_model(envelopes, antenna_envelop, cells_filter=lambda c: c in cells_to_fill)
-LOG.info("Adding antenna envelop to c-model envelopes")
-envelopes.add_cells(antenna_envelop, name_rule='clash')
-envelopes_path = "envelopes+antenna-envelop.i"
-envelopes.save(envelopes_path)
-LOG.info("The envelopes are saved to %s", envelopes_path)
-
-universes_dir = CMODEL_ROOT / "universes"
-assert universes_dir.is_dir()
+    LOG.info("Subtracting antenna envelop from c-model envelopes %s", cells_to_fill)
+    envelopes = subtract_model_from_model(envelopes, antenna_envelop, cells_filter=lambda c: c in cells_to_fill)
+    LOG.info("Adding antenna envelop to c-model envelopes")
+    envelopes.add_cells(antenna_envelop, name_rule='clash')
+    envelopes_path = "envelopes+antenna-envelop.i"
+    envelopes.save(envelopes_path)
+    LOG.info("The envelopes are saved to %s", envelopes_path)
 
 
-# def load_subtracted_universe(universe_name):
-#     new_universe_path = Path(f"u{universe_name}-ae.i")
-#     if new_universe_path.exists():
-#         LOG.info(f"Loading filler {universe_name}")
-#         universe = load_model(new_universe_path)
-#     else:
-#         st = time.time()
-#         universe_path = universes_dir / f"u{universe_name}.i"
-#         LOG.info("Subtracting antenna envelope from the original filler %s", universe_name)
-#         universe: mk.Universe = mk.read_mcnp(universe_path, encoding="cp1251")
-#         LOG.info("Size %d", len(universe))
-#         attach_bounding_boxes(
-#             universe,
-#             tolerance=100.0,
-#             chunksize=max(len(universe) // os.cpu_count(), 1),
-#         )
-#         et = time.time()
-#         LOG.info(f"Elapsed time on attaching bounding boxes: %.2f min", (et - st)/60)
-#         st = time.time()
-#         universe = subtract_model_from_model(universe, antenna_envelop)
-#         et = time.time()
-#         LOG.info(f"Elapsed time on subtracting filler %d, : %.2f min", universe_name, (et - st)/60)
-#         for c in universe._cells:
-#             del c.options['comment']
-#         universe.rename(name=universe_name)
-#         universe.save(str(new_universe_path))
-#         LOG.info("Universe %d is saved to %s", universe_name, new_universe_path)
-#     return universe
-#
-#
-# universes = list(map(load_subtracted_universe, cells_to_fill))
+    # def load_subtracted_universe(universe_name):
+    #     new_universe_path = Path(f"u{universe_name}-ae.i")
+    #     if new_universe_path.exists():
+    #         LOG.info(f"Loading filler {universe_name}")
+    #         universe = load_model(new_universe_path)
+    #     else:
+    #         st = time.time()
+    #         universe_path = universes_dir / f"u{universe_name}.i"
+    #         LOG.info("Subtracting antenna envelope from the original filler %s", universe_name)
+    #         universe: mk.Universe = mk.read_mcnp(universe_path, encoding="cp1251")
+    #         LOG.info("Size %d", len(universe))
+    #         attach_bounding_boxes(
+    #             universe,
+    #             tolerance=100.0,
+    #             chunksize=max(len(universe) // os.cpu_count(), 1),
+    #         )
+    #         et = time.time()
+    #         LOG.info(f"Elapsed time on attaching bounding boxes: %.2f min", (et - st)/60)
+    #         st = time.time()
+    #         universe = subtract_model_from_model(universe, antenna_envelop)
+    #         et = time.time()
+    #         LOG.info(f"Elapsed time on subtracting filler %d, : %.2f min", universe_name, (et - st)/60)
+    #         for c in universe._cells:
+    #             del c.options['comment']
+    #         universe.rename(name=universe_name)
+    #         universe.save(str(new_universe_path))
+    #         LOG.info("Universe %d is saved to %s", universe_name, new_universe_path)
+    #     return universe
+    #
+    #
+    # universes = list(map(load_subtracted_universe, cells_to_fill))
 
-universes = list(map(load_filler, cells_to_fill))
-antenna = load_model(HFSR_ROOT / "models/antenna/antenna.i")
-antenna.rename(210000, 210000, 210000, 210000, name=210)
+    universes = list(map(load_filler, cells_to_fill))
+    antenna = load_model(HFSR_ROOT / "models/antenna/antenna.i")
+    antenna.rename(210000, 210000, 210000, 210000, name=210)
 
-for i, filler in zip(cells_to_fill_indexes, universes):
-    envelopes[i].options['FILL'] = {"universe": filler}
+    for i, filler in zip(cells_to_fill_indexes, universes):
+        envelopes[i].options['FILL'] = {"universe": filler}
 
-added_cells = len(antenna_envelop)
-for c in envelopes[-added_cells:]:
-    c.options['FILL'] = {"universe": antenna}
+    added_cells = len(antenna_envelop)
+    for c in envelopes[-added_cells:]:
+        c.options['FILL'] = {"universe": antenna}
 
-set_common_materials(envelopes)
+    set_common_materials(envelopes)
 
-# def delete_subtracted_universe(universe_name):
-#     new_universe_path = Path(f"u{universe_name}-ae.i")
-#     new_universe_path.unlink()
-# foreach(delete_subtracted_universe, cells_to_fill)
+    # def delete_subtracted_universe(universe_name):
+    #     new_universe_path = Path(f"u{universe_name}-ae.i")
+    #     new_universe_path.unlink()
+    # foreach(delete_subtracted_universe, cells_to_fill)
 
 
-envelopes_surrounding_and_antenna_file = "ewfa_3.i"
-envelopes.save(envelopes_surrounding_and_antenna_file)
-LOG.info(
-    "c-model envelopes integrated with universes and antenna is saved to \"%s\"",
-    envelopes_surrounding_and_antenna_file,
-)
+    envelopes_surrounding_and_antenna_file = "ewfa_3.i"
+    envelopes.save(envelopes_surrounding_and_antenna_file)
+    LOG.info(
+        "c-model envelopes integrated with universes and antenna is saved to \"%s\"",
+        envelopes_surrounding_and_antenna_file,
+    )
+
+if __name__ == "__main__":
+    main()
