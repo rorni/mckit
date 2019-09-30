@@ -5,6 +5,7 @@ import numpy as np
 
 from .geometry import ORIGIN
 from .card import Card
+from .printer import pretty_float
 
 __all__ = ['Transformation', 'IDENTITY_ROTATION']
 
@@ -122,7 +123,10 @@ class Transformation(Card):
             self._hash ^= hash(v)
 
     def mcnp_words(self):
-        words = ['*', 'TR{0}'.format(self.name())]
+        name = self.name()
+        if name is None:
+            name = 0
+        words = ['*', f'TR{name}']
         words.extend(self.get_words())
         return words
 
@@ -130,10 +134,10 @@ class Transformation(Card):
         words = []
         for v in self._t:
             words.append(' ')
-            words.append('{0:.12e}'.format(v))
+            words.append("{:.10g}".format(v))
         for v in self._u.transpose().ravel():
             words.append(' ')
-            words.append('{0:.12e}'.format(np.arccos(v) * 180 / np.pi))
+            words.append("{:.10g}".format(np.arccos(v) * 180 / np.pi))
         return words
 
     def __hash__(self):

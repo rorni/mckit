@@ -55,7 +55,7 @@ def test_when_output_is_not_specified(runner):
 
 
 @pytest.mark.parametrize("source, output, expected", [
-    ("data/universes/envelopes.i", "simple_cubes_restored.i", "data/simple_cubes.mcnp"),
+    ("data/simple_cubes.universes/envelopes.i", "simple_cubes_restored.i", "data/simple_cubes.mcnp"),
 ])
 def test_when_fill_descriptor_is_not_specified(runner, source, output, expected):
     source = data_filename_resolver(source)

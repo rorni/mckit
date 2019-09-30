@@ -85,7 +85,7 @@ CMODEL_ROOT = get_root_dir("CMODEL_ROOT", "~/dev/mcnp/c-model")
 LOG.info("HFSR_ROOT=%s", HFSR_ROOT)
 LOG.info("CMODEL_ROOT=%s", CMODEL_ROOT)
 assert_all_paths_exist(HFSR_ROOT, CMODEL_ROOT)
-universes_dir = CMODEL_ROOT / "universes"
+universes_dir = CMODEL_ROOT / "simple_cubes.universes"
 # assert universes_dir.is_dir()
 NJOBS = os.cpu_count()
 # print(f"NJOBS: {NJOBS}")
@@ -198,7 +198,7 @@ def main():
         chunksize=max(len(antenna_envelop)//os.cpu_count(), 1)
     )
     LOG.info("Loading c-model envelopes")
-    envelopes = load_model(str(CMODEL_ROOT / "universes/envelopes.i"))
+    envelopes = load_model(str(CMODEL_ROOT / "simple_cubes.universes/envelopes.i"))
 
     cells_to_fill = [11, 14, 75]
     cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
@@ -250,7 +250,7 @@ def main():
     #     return universe
     #
     #
-    # universes = list(map(load_subtracted_universe, cells_to_fill))
+    # simple_cubes.universes = list(map(load_subtracted_universe, cells_to_fill))
 
     universes = list(map(load_filler, cells_to_fill))
     antenna = load_model(HFSR_ROOT / "models/antenna/antenna.i")
@@ -274,7 +274,7 @@ def main():
     envelopes_surrounding_and_antenna_file = "ewfa_3.i"
     envelopes.save(envelopes_surrounding_and_antenna_file)
     LOG.info(
-        "c-model envelopes integrated with universes and antenna is saved to \"%s\"",
+        "c-model envelopes integrated with simple_cubes.universes and antenna is saved to \"%s\"",
         envelopes_surrounding_and_antenna_file,
     )
 

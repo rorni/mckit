@@ -12,10 +12,9 @@ def save(model: Universe, path: tp.Union[str, Path], override: bool):
         path = Path(path)
     if not override and path.exists():
         logger = logging.getLogger(__name__)
-        errmsg = """\
-        Cannot override existing file \"{}\".
+        errmsg = f"""\
+        Cannot override existing file \"{path}\".
         Please remove the file or specify --override option"""
-        errmsg = errmsg.format(path)
         logger.error(errmsg)
         raise click.UsageError(errmsg)
     else:

@@ -35,7 +35,7 @@ class Card(ABC):
         return print_card(words)
 
     def __str__(self):
-        return "{}: \"{}\"".format(self.name, self.options)
+        return "{}: \"{}\"".format(self.name(), self.options)
 
     def __hash__(self):
         return reduce(xor, map(lambda x:  hash(x[0]) ^ hash(x[1]), self.options.items()), 0)

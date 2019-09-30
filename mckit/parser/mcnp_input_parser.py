@@ -744,6 +744,7 @@ def read_mcnp(filename, encoding='cp1251'):
 def _get_transformation(name, data):
     if isinstance(name, dict):
         return Transformation(**name)
+    assert isinstance(name, int)
     tr = data['TR'][name]
     if isinstance(tr, dict):
         tr = Transformation(**tr)
@@ -826,8 +827,13 @@ def _get_cell(name, cells, surfaces, data):
     if 'TRCL' in cell_data.keys():
         cell_data['TRCL'] = _get_transformation(cell_data['TRCL'], data)
     fill = cell_data.get('FILL', {})
+    temp_tr = None
     if 'transform' in fill.keys():
-        fill['transform'] = _get_transformation(fill['transform'], data)
+        temp_tr = fill['transform']
+        temp_tr = _get_transformation(temp_tr, data)
+        if temp_tr and not isinstance(temp_tr, Transformation):
+            print(name)
+        fill['transform'] = temp_tr
 
     cell = Body(geometry, **cell_data)
     cells[name] = cell
