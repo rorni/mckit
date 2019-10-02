@@ -363,7 +363,7 @@ class Universe:
             cells.append(Body(c.shape, **options))
         return Universe(cells)
 
-    def apply_fill(self, cell=None, universe=None, predicate=None):
+    def apply_fill(self, cell=None, universe=None, predicate=None, name_rule='new'):
         """Applies fill operations to all or selected cells or simple_cubes.universes.
 
         Modifies current universe.
@@ -396,7 +396,7 @@ class Universe:
                 del_indices.append(i)
         for i in reversed(del_indices):
             self._cells.pop(i)
-        self.add_cells(extra_cells, name_rule='new')
+        self.add_cells(extra_cells, name_rule=name_rule)
 
     def bounding_box(self, tol=100, box=GLOBAL_BOX):
         """Gets bounding box for the universe.
