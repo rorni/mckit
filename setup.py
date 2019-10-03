@@ -164,7 +164,7 @@ setup(
         'ply',
         'scipy',
         'tomlkit',
-        'datetime',
+        'datetime', 'attr', 'six'
     ],
     ext_modules=extensions,
     tests_require=['pytest', 'pytest-cov>=2.3.1'],
