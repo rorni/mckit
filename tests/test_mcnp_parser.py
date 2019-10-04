@@ -4,9 +4,12 @@ import numpy as np
 from mckit.parser.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
 from mckit.parser.meshtal_parser import meshtal_lexer, meshtal_parser
 from mckit.parser.mctal_parser import read_mctal
+from mckit.utils import filename_resolver
+
+file_resolver = filename_resolver()
 
 @pytest.mark.parametrize('lex_file, expected', [
-    ('tests/parser_test_data/lex1.txt', [
+    ('parser_test_data/lex1.txt', [
         ('title', 'Title card', 1), ('separator', '\n', 1),
         ('int_number', 1, 2), ('int_number', 1, 2), ('-', '-', 2),
         ('flt_number', 1.0, 2), ('int_number', 1, 2), ('int_number', 2, 2),
@@ -33,7 +36,7 @@ from mckit.parser.mctal_parser import read_mctal
         ('VOL', 'VOL', 15), ('int_number', 1, 15), ('int_number', 2, 15),
         ('blank_line', '\n', 15)
     ]),
-    ('tests/parser_test_data/lex2.txt', [
+    ('parser_test_data/lex2.txt', [
         ('title', 'Title card', 1), ('separator', '\n', 3),
         ('int_number', 1, 4), ('int_number', 1, 4), ('-', '-', 4),
         ('flt_number', 1.0, 4), ('int_number', 1, 4), ('int_number', 2, 4),
@@ -62,7 +65,7 @@ from mckit.parser.mctal_parser import read_mctal
         ('M', 'M', 25), ('int_number', 1, 25), ('int_number', 1001, 25),
         ('.', '.', 25), ('lib_spec', '50C', 25), ('blank_line', '\n', 26)
     ]),
-    ('tests/parser_test_data/lex3.txt', [
+    ('parser_test_data/lex3.txt', [
         ('title', 'Title card', 1), ('separator', '\n', 3),
         ('int_number', 1, 4), ('int_number', 1, 4), ('-', '-', 4),
         ('flt_number', 1.0, 4), ('int_number', 1, 4), ('int_number', 2, 4),
@@ -81,7 +84,7 @@ from mckit.parser.mctal_parser import read_mctal
         ('int_number', 5, 15), ('void_material', '0', 15), ('-', '-', 15),
         ('int_number', 1, 15), ('int_number', 2, 15), (ValueError, 16, 15)
     ]),
-    ('tests/parser_test_data/lex4.txt', [
+    ('parser_test_data/lex4.txt', [
         ('title', 'Title card', 1), ('separator', '\n', 1),
         ('int_number', 1, 2), ('int_number', 1, 2), ('-', '-', 2),
         ('flt_number', 1.0, 2), ('int_number', 1, 2), ('int_number', 2, 2),
@@ -91,7 +94,7 @@ from mckit.parser.mctal_parser import read_mctal
         ('-', '-', 3), ('int_number', 2, 3), ('int_number', 3, 3),
         (ValueError, 3, 17)
     ]),
-    ('tests/parser_test_data/lex5.txt', [
+    ('parser_test_data/lex5.txt', [
         ('title', 'Title card', 1), ('separator', '\n', 1),
         ('int_number', 1, 2), ('int_number', 1, 2), ('-', '-', 2),
         ('flt_number', 1.0, 2), ('int_number', 1, 2), ('int_number', 2, 2),
@@ -111,7 +114,7 @@ from mckit.parser.mctal_parser import read_mctal
         ('int_number', 1, 9), ('int_number', 2, 9), ('blank_line', '\n', 9),
         ('int_number', 1, 11), (ValueError, 11, 3)
     ]),
-    ('tests/parser_test_data/lex6.txt', [
+    ('parser_test_data/lex6.txt', [
         ('title', 'Title card', 1), ('separator', '\n', 1),
         ('int_number', 1, 2), ('int_number', 1, 2), ('-', '-', 2),
         ('flt_number', 1.0, 2), ('int_number', 1, 2), ('int_number', 2, 2),
@@ -139,6 +142,7 @@ from mckit.parser.mctal_parser import read_mctal
     ])
 ])
 def test_mcnp_lexer(lex_file, expected):
+    lex_file = file_resolver(lex_file)
     with open(lex_file) as f:
         text = f.read()
     mcnp_input_lexer.begin('INITIAL')
@@ -158,7 +162,7 @@ def test_mcnp_lexer(lex_file, expected):
 
 
 @pytest.mark.parametrize('parse_file, expected', [
-    ('tests/parser_test_data/parser1.txt', {
+    ('parser_test_data/parser1.txt', {
         'title': 'mcnp parsing test file',
         'cells': {
             1: {
@@ -199,7 +203,7 @@ def test_mcnp_lexer(lex_file, expected):
             }
         }
     }),
-    ('tests/parser_test_data/parser2.txt', {
+    ('parser_test_data/parser2.txt', {
         'title': 'mcnp parsing test file 2',
         'cells': {
             1: {
@@ -290,6 +294,7 @@ def test_mcnp_lexer(lex_file, expected):
     })
 ])
 def test_mcnp_parser(parse_file, expected):
+    parse_file = file_resolver(parse_file)
     with open(parse_file) as f:
         text = f.read()
     mcnp_input_lexer.begin('INITIAL')
@@ -301,7 +306,7 @@ def test_mcnp_parser(parse_file, expected):
 
 
 @pytest.mark.parametrize('mesh_file, expected', [
-    ('tests/parser_test_data/fmesh.m', {
+    ('parser_test_data/fmesh.m', {
         'date': '05/24/1812:21:45',
         'histories': 10000000.00,
         'title': 'fmesh test',
@@ -999,7 +1004,7 @@ def test_mcnp_parser(parse_file, expected):
             }
         ]
     }),
-    ('tests/parser_test_data/d1s_mesh.m', {
+    ('parser_test_data/d1s_mesh.m', {
         'date': '12/17/1814:06:18',
         'histories': 766606920.00,
         'title': 'Test of neutron flux calculations for reference.',
@@ -1622,7 +1627,7 @@ def test_mcnp_parser(parse_file, expected):
             }
         ]
     }),
-    ('tests/parser_test_data/fmesh3.m', {
+    ('parser_test_data/fmesh3.m', {
         'date': '05/24/1812:21:45',
         'histories': 10000000.00,
         'title': 'fmesh test',
@@ -1814,7 +1819,7 @@ def test_mcnp_parser(parse_file, expected):
             }
         ]
     }),
-    ('tests/parser_test_data/fmesh2.m', {
+    ('parser_test_data/fmesh2.m', {
         'date': '05/24/1812:21:45',
         'histories': 10000000.00,
         'title': 'fmesh test',
@@ -1956,6 +1961,7 @@ def test_mcnp_parser(parse_file, expected):
     })
 ])
 def test_meshtal_parser(mesh_file, expected):
+    mesh_file = file_resolver(mesh_file)
     with open(mesh_file) as f:
         text = f.read() + '\n'
     meshtal_lexer.begin('INITIAL')
@@ -1973,7 +1979,7 @@ def test_meshtal_parser(mesh_file, expected):
 
 
 @pytest.mark.parametrize('mctal_file, expected', [
-    ('tests/parser_test_data/mctal.t', {
+    ('parser_test_data/mctal.t', {
         4: {
             'name': 4, 'particles': {'N'}, 'type': 'Non',
             'dims': [4], 'vars': ['f'], 'bins': [[1, 2, 3, 4]],
@@ -2239,6 +2245,7 @@ def test_meshtal_parser(mesh_file, expected):
     })
 ])
 def test_mctal_parser(mctal_file, expected):
+    mctal_file = file_resolver(mctal_file)
     tallies = read_mctal(mctal_file)
     assert tallies.keys() == expected.keys()
     for name, tally in tallies.items():

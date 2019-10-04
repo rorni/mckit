@@ -1,17 +1,23 @@
+import os
 from functools import reduce
 from itertools import product, groupby, permutations
-
+import typing as tp
+from typing import Iterable, Union, Any, NoReturn
+from multiprocessing import Pool
 import numpy as np
+from click import progressbar
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+from .geometry import Shape as _Shape
+from mckit.box import GLOBAL_BOX, Box
 from .constants import MIN_BOX_VOLUME
-from .geometry import Shape as _Shape, GLOBAL_BOX
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .card import Card
 
 
-__all__ = ['Shape', 'Body']
+__all__ = ['Shape', 'Body', 'simplify']
 
 
 class Shape(_Shape):
@@ -89,8 +95,6 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._hash = hash_value
 
-    def __hash__(self):
-        return self._hash
 
     def __str__(self):
         return print_card(self._get_words(None))
@@ -209,6 +213,23 @@ class Shape(_Shape):
                     return True
         return False
 
+    def __hash__(self):
+        return self._hash
+
+    def _calculate_hash(self, opc, *args):
+        """Calculates hash value for the object.
+
+        Hash is 'xor' for hash values of all arguments together with opc hash.
+        """
+        if opc == 'C':  # C and S can be present only with Surface instance.
+            self._hash = ~hash(args[0]) # ^ self._opc_hash[opc]
+        elif opc == 'S':
+            self._hash = hash(args[0]) # ^ self._opc_hash[opc]
+        else:
+            self._hash = self._opc_hash[opc]
+            for a in args:
+                self._hash ^= hash(a)
+
     def complement(self):
         """Gets complement to the shape.
 
@@ -256,20 +277,6 @@ class Shape(_Shape):
                 else:
                     return False
         return True
-
-    def _calculate_hash(self, opc, *args):
-        """Calculates hash value for the object.
-
-        Hash is 'xor' for hash values of all arguments together with opc hash.
-        """
-        if opc == 'C':  # C and S can be present only with Surface instance.
-            self._hash = ~hash(args[0]) # ^ self._opc_hash[opc]
-        elif opc == 'S':
-            self._hash = hash(args[0]) # ^ self._opc_hash[opc]
-        else:
-            self._hash = self._opc_hash[opc]
-            for a in args:
-                self._hash ^= hash(a)
 
     def intersection(self, *other):
         """Gets intersection with other shape.
@@ -535,10 +542,22 @@ class Body(Card):
         self._shape = geometry
 
     def __hash__(self):
-        return id(self)
+        return Card.__hash__(self) ^ hash(self._shape)
 
     def __eq__(self, other):
-        return id(self) == id(other)
+        return Card.__eq__(self, other) and self._shape == other._shape
+
+    def is_equivalent_to(self, other):
+        result = self._shape == other._shape
+        if result:
+            if 'FILL' in self.options:
+                if 'FILL' not in other.options:
+                    return False
+                my = self.options['FILL']['universe']
+                their = other.options['FILL']['universe']
+                return my.has_equivalent_cells(their)
+        return result
+
 
     def mcnp_words(self):
         words = [str(self.name()), ' ']
@@ -720,3 +739,103 @@ class Body(Card):
             new_tr = tr.apply2transform(tr_in)
             fill['transform'] = new_tr
         return cell
+
+
+def simplify(
+    cells: Iterable,
+    box: Box = GLOBAL_BOX,
+    min_volume: float = 1.0,
+) -> tp.Generator:
+    """Simplifies the cells.
+
+    Parameters
+    ----------
+
+    cells:
+        iterable over cells to simplify
+    box : Box
+        Box, from which simplification process starts. Default: GLOBAL_BOX.
+    min_volume : float
+        Minimal volume of the box, when splitting process terminates.
+
+    """
+
+    for c in cells:
+        cs = c.simplify(box=box, min_volume=min_volume)
+        if not cs.shape.is_empty():
+            yield cs
+
+
+class Simplifier(object):
+    def __init__(self, box: Box = GLOBAL_BOX, min_volume: float = 1.0):
+        self.box = box
+        self.min_volume = min_volume
+
+    def __call__(self, cell: Body):
+        return cell.simplify(box=self.box, min_volume=self.min_volume)
+
+    def __getstate__(self):
+        return self.box, self.min_volume
+
+    def __setstate__(self, state):
+        box, min_volume = state
+        self.__init__(box, min_volume)
+
+
+def simplify_mp(
+    cells: Iterable[Body],
+    box: Box = GLOBAL_BOX,
+    min_volume: float = 1.0,
+    chunksize = 1,
+) -> tp.Generator:
+    """Simplifies the cells in multiprocessing mode.
+
+    Parameters
+    ----------
+
+    cells:
+        iterable over cells to simplify
+    box :
+        Box, from which simplification process starts. Default: GLOBAL_BOX.
+    min_volume : float
+        Minimal volume of the box, when splitting process terminates.
+    chunksize: size of chunks to pass to child processes
+    """
+    cpus = os.cpu_count()
+    with Pool(processors=cpus) as pool:
+        yield from pool.imap(
+            Simplifier(box=box, min_volume=min_volume),
+            cells,
+            chunksize=chunksize,
+        )
+
+
+def simplify_mpp(
+    cells: Iterable[Body],
+    box: Box = GLOBAL_BOX,
+    min_volume: float = 1.0,
+    chunksize: int = 1,
+) -> tp.Generator:
+    """Simplifies the cells in multiprocessing mode with progress bar.
+
+    Parameters
+    ----------
+
+    cells:
+        iterable over cells to simplify
+    box :
+        Box, from which simplification process starts. Default: GLOBAL_BOX.
+    min_volume : float
+        Minimal volume of the box, when splitting process terminates.
+    chunksize: size of chunks to pass to child processes
+    """
+
+    def fmt_fun(x):
+        return "Simplifying cell #{0}".format(x.name() if x else x)
+
+    with progressbar(
+        simplify_mp(cells, box, min_volume, chunksize),
+        item_show_func=fmt_fun,
+    ) as pb:
+        for c in pb:
+            yield c

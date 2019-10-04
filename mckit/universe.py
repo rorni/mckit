@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from collections import defaultdict
+from operator import xor, eq, and_
+from toolz import reduce
 
 import numpy as np
 from click import progressbar
 
 from .body import Body, Shape
 from .card import Card
-from .geometry import GLOBAL_BOX, Box
+# noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
+from mckit.box import GLOBAL_BOX, Box
 from .transformation import Transformation
 from .material import Material
 from .surface import Plane
@@ -45,6 +48,7 @@ def cell_selector(cell_names):
             return [cell]
         else:
             return []
+
     return selector
 
 
@@ -69,14 +73,15 @@ def surface_selector(surface_names):
     def selector(cell):
         surfs = cell.shape.get_surfaces()
         return [s for s in surfs if s.name() in surface_names]
+
     return selector
 
 
 def produce_universes(cells):
-    """Creates universes from cells.
+    """Creates simple_cubes.universes from cells.
 
     The function groups all cells that have equal value of 'universe' option,
-    and the creates corresponding universes. Universe with name 0 is returned
+    and the creates corresponding simple_cubes.universes. Universe with name 0 is returned
     only.
 
     Parameters
@@ -131,13 +136,13 @@ class Universe:
     add_cells(cell)
         Adds new cell to the universe.
     apply_fill(cell, universe)
-        Applies fill operations to all or selected cells or universes.
+        Applies fill operations to all or selected cells or simple_cubes.universes.
     bounding_box(tol, box)
         Gets bounding box of the universe.
     copy()
         Makes a copy of the universe.
     find_common_materials()
-        Finds all common materials among universes.
+        Finds all common materials among simple_cubes.universes.
     get_surfaces()
         Gets all surfaces of the universe.
     get_materials()
@@ -147,7 +152,7 @@ class Universe:
     get_transformations()
         Gets all transformations of the universe.
     get_universes()
-        Gets all inner universes.
+        Gets all inner simple_cubes.universes.
     name()
         Gets numeric name of the universe.
     name_clashes()
@@ -159,7 +164,7 @@ class Universe:
     select(cell, selector)
         Selects specified entities.
     set_common_materials(com_mat)
-        Sets new common materials for universe and all nested universes.
+        Sets new common materials for universe and all nested simple_cubes.universes.
     simplify(box, split_disjoint, min_volume)
         Simplifies all cells of the universe.
     test_points(points)
@@ -182,11 +187,36 @@ class Universe:
 
         self.add_cells(cells, name_rule=name_rule)
 
+    @property
+    def cells(self):
+        return self._cells
+
     def __iter__(self):
         return iter(self._cells)
 
     def __len__(self):
         return len(self._cells)
+
+    def __setitem__(self, key: int, value: Body):
+        raise NotImplementedError("Renaming rules should be applied.")
+
+    def __getitem__(self, item):
+        return self._cells.__getitem__(item)
+
+    # def __hash__(self):
+    #     return reduce(xor, map(hash, self.cells), 0)
+    #
+    # def __eq__(self, other):
+    #     return reduce(and_, map(eq, zip(self._cells, other.cells), True))
+
+    def has_equivalent_cells(self, other):
+        if len(self) != len(other):
+            return False
+        for i, c in enumerate(self):
+            if not c.is_equivalent_to(other[i]):
+                return False
+        return True
+
 
     def add_cells(self, cells, name_rule='new'):
         """Adds new cell to the universe.
@@ -241,7 +271,7 @@ class Universe:
             self._cells.append(new_cell)
 
     def set_common_materials(self, common_materials):
-        """Sets common materials for this one and all nested universes.
+        """Sets common materials for this one and all nested simple_cubes.universes.
 
         Parameters
         ----------
@@ -316,10 +346,11 @@ class Universe:
                 return predicate(cell)
             else:
                 return False
+
         return _predicate
 
     def alone(self):
-        """Gets this universe alone, without inner universes.
+        """Gets this universe alone, without inner simple_cubes.universes.
 
         Returns
         -------
@@ -332,8 +363,8 @@ class Universe:
             cells.append(Body(c.shape, **options))
         return Universe(cells)
 
-    def apply_fill(self, cell=None, universe=None, predicate=None):
-        """Applies fill operations to all or selected cells or universes.
+    def apply_fill(self, cell=None, universe=None, predicate=None, name_rule='new'):
+        """Applies fill operations to all or selected cells or simple_cubes.universes.
 
         Modifies current universe.
 
@@ -341,7 +372,7 @@ class Universe:
         ----------
         cell : Body or int
             Cell or name of cell which is filled by filling universe. The cell
-            can only belong to this universe. Cells of inner universes are not
+            can only belong to this universe. Cells of inner simple_cubes.universes are not
             taken into account.
         universe : Universe or int
             Filler-universe or its name. Cells, that have this universe as a
@@ -365,7 +396,7 @@ class Universe:
                 del_indices.append(i)
         for i in reversed(del_indices):
             self._cells.pop(i)
-        self.add_cells(extra_cells, name_rule='new')
+        self.add_cells(extra_cells, name_rule=name_rule)
 
     def bounding_box(self, tol=100, box=GLOBAL_BOX):
         """Gets bounding box for the universe.
@@ -416,7 +447,7 @@ class Universe:
         )
 
     def find_common_materials(self):
-        """Finds common materials among universes included.
+        """Finds common materials among simple_cubes.universes included.
 
         Returns
         -------
@@ -436,7 +467,7 @@ class Universe:
         Parameters
         ----------
         inner : bool
-            Whether to take surfaces of inner universes. Default: False -
+            Whether to take surfaces of inner simple_cubes.universes. Default: False -
             return surfaces of this universe only.
 
         Returns
@@ -458,7 +489,7 @@ class Universe:
         Parameters
         ----------
         recursive : bool
-            Whether to take materials of inner universes. Default: False -
+            Whether to take materials of inner simple_cubes.universes. Default: False -
             returns materials of this universe only.
 
         Returns
@@ -492,20 +523,20 @@ class Universe:
 
     def get_transformations(self):
         """Gets all transformations of the universe."""
-        pass
+        pass   # TODO dvp: add transformations
 
     def get_universes(self):
-        """Gets all inner universes.
+        """Gets all inner simple_cubes.universes.
 
         Returns
         -------
-        universes : set
-            A set of universes.
+        simple_cubes.universes : set
+            A set of simple_cubes.universes.
         """
         universes = {self}
         for c in self:
-            u = c.options.get('FILL', {}).get('universe', None)
-            if u:
+            if 'FILL' in c.options:
+                u = c.options['FILL']['universe']  # TODO dvp: add transformations
                 universes.update(u.get_universes())
         return universes
 
@@ -599,13 +630,15 @@ class Universe:
                     m.rename(start_mat)
                     start_mat += 1
 
-    def save(self, filename):
+    def save(self, filename, encoding="cp1251"):
         """Saves the universe into file.
 
         Parameters
         ----------
-        filename : str
+        filename : str, Path
             File name, universe to be saved to.
+        encoding: str
+            Encoding ot the output file
         """
         result = self.name_clashes()
         if result:
@@ -625,7 +658,7 @@ class Universe:
         cards.append('')
         cards.extend(map(Card.mcnp_repr, materials))
         cards.append('')
-        with open(filename, mode='w') as f:
+        with open(filename, mode='w', encoding=encoding) as f:
             f.write('\n'.join(cards))
 
     def select(self, selector=None, inner=False):
@@ -637,7 +670,7 @@ class Universe:
             A function that accepts 1 argument, Body instance, and returns
             selected entities.
         inner : bool
-            Whether to consider inner universes. Default: False - only this
+            Whether to consider inner simple_cubes.universes. Default: False - only this
             universe will be taken into account.
 
         Returns
@@ -682,12 +715,12 @@ class Universe:
             uiter = progressbar(self, item_show_func=fmt_fun).__enter__()
         else:
             uiter = self
-        
+
         for c in uiter:
             cs = c.simplify(box=box, min_volume=min_volume)
             if not cs.shape.is_empty():
                 new_cells.append(cs)
-       
+
         if verbose:
             print('Universe {0} simplification has been finished.'.format(self.name()))
             print('{0} empty cells were deleted.'.format(len(self._cells) - len(new_cells)))
@@ -736,3 +769,7 @@ class Universe:
     def verbose_name(self):
         """Gets verbose name of the universe."""
         return self._verbose_name
+
+    @property
+    def comment(self):
+        return self._comment

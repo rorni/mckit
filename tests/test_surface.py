@@ -5,7 +5,7 @@ import pickle
 from mckit.transformation import Transformation
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
     create_surface
-from mckit.geometry import Box
+from mckit.box import Box
 
 
 @pytest.fixture(scope='module', params=[
@@ -1085,13 +1085,29 @@ class TestGQuadratic:
         (np.diag([1, 2, 3]), [1, 2, 3], -4, {}),
         (np.diag([1, 2, 3]), [1, 2, 3], -4, {'name': 5}),
     ])
-    def test_pickle(self, m, v, k, options):
+    def test_pickle(self, tmpdir, m, v, k, options):
         surf = GQuadratic(m, v, k, **options)
-        with open('test.pic', 'bw') as f:
-            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open('test.pic', 'br') as f:
+        file_name = tmpdir.join('test.pic')
+        with open(file_name, 'bw') as f:
+            pickle.dump(surf, f) #, pickle.HIGHEST_PROTOCOL)
+        with open(file_name, 'br') as f:
             surf_un = pickle.load(f)
         self.assert_gq(surf, surf_un)
+
+
+    @pytest.mark.parametrize('m, v, k, options', [
+        (np.diag([1, 2, 3]), [1, 2, 3], -4, {}),
+        (np.diag([1, 2, 3]), [1, 2, 3], -4, {'name': 5}),
+    ])
+    def test_pickle_in_mem(self, tmpdir, m, v, k, options):
+        import io
+        surf = GQuadratic(m, v, k, **options)
+        with io.BytesIO() as f:
+            pickle.dump(surf, f)
+            f.seek(0)
+            surf_un = pickle.load(f)
+        self.assert_gq(surf, surf_un)
+
 
     surfs = [
         GQuadratic(np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), 3, name=1),

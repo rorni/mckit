@@ -10,6 +10,11 @@ from .fmesh import FMesh
 from .parser.mcnp_input_parser import read_mcnp
 from .parser.meshtal_parser import read_meshtal
 from .parser.mctal_parser import read_mctal
+from .version import (
+    __author__, __copyright__, __license__, __title__, __doc__,
+    __ver_major__, __ver_minor__, __ver_patch__, __ver_sub__,
+    __version__, __version_info__
+)
 
 __all__ = [
     'Universe', 'create_surface', 'Plane', 'Sphere', 'Cylinder', 'Cone',
@@ -17,3 +22,4 @@ __all__ = [
     'Element', 'Composition', 'Material', 'read_meshtal', 'read_mctal',
     'FMesh', 'read_mcnp'
 ]
+

@@ -12,6 +12,23 @@ from ..surface import create_surface
 from ..body import Body
 from ..universe import produce_universes
 
+__DEBUG__ = False
+if __DEBUG__:
+    # Set up a logging object
+    import logging
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename="mckit_parselog.txt",
+        filemode="w",
+        format="%(filename)10s:%(lineno)4d:%(message)s"
+    )
+    log = logging.getLogger()
+else:
+    log = None
+
+# lex.lex(debug=True, debuglog=log)
+# yacc.yacc(debug=True, debuglog=log)
 
 literals = ['+', '-', ':', '*', '(', ')', '#', '.']
 
@@ -91,7 +108,7 @@ RESET_CONTINUE = r'\n(?=[ ]{5,}[^\s])'
 CONTINUE = r'&(?=[ ]*(' + CARD_COMMENT + r')?$)'
 SEPARATOR = r'\n(?=' + CARD_START + r')'
 FRACTION = r'\.'
-EXPONENT = r'(E[-+]?\d+)'
+EXPONENT = r'([eE][-+]?\d+)'
 INT_NUMBER = r'(\d+)'
 FLT_NUMBER = r'(' + \
              INT_NUMBER + r'?' + FRACTION + INT_NUMBER + EXPONENT + r'?|' +\
@@ -260,7 +277,7 @@ def t_continue_cells_ckw_surfs_data_newline_skip(t):
     t.lexer.last_pos = t.lexer.lexpos
 
 
-mcnp_input_lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
+mcnp_input_lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE, debug=__DEBUG__, debuglog=log)
 
 
 def extract_comments(line):
@@ -278,6 +295,12 @@ def p_model(p):
                     data_cards blank_line
     """
     p[0] = p[1], p[3], p[5], p[7]
+
+
+def p_model_without_data(p):
+    """model_body : title separator cell_cards blank_line surface_cards blank_line"""
+    p[0] = p[1], p[3], p[5], None
+
 
 
 def p_cell_cards(p):
@@ -340,6 +363,7 @@ def p_cell_option(p):
 def p_cell_int_option(p):
     """cell_int_option : U integer
                        | MAT integer
+                       | LAT integer
     """
     p[0] = {p[1]: p[2]}
 
@@ -671,10 +695,15 @@ def p_material_option(p):
     p[0] = p[1], p[2]
 
 
-mcnp_input_parser = yacc.yacc(tabmodule="mcnp_input_tab", debug=False, errorlog=yacc.NullLogger())
+mcnp_input_parser = yacc.yacc(
+    tabmodule="mcnp_input_tab",
+    debug=__DEBUG__,
+    debuglog=log,
+    errorlog=log if __DEBUG__ else yacc.NullLogger(),
+)
 
 
-def read_mcnp(filename, encoding='utf-8'):
+def read_mcnp(filename, encoding='cp1251'):
     """Reads MCNP model from file and creates corresponding objects.
 
     Parameters
@@ -698,11 +727,14 @@ def read_mcnp(filename, encoding='utf-8'):
     """
     with open(filename, encoding=encoding) as f:
         text = f.read()
+    text = text.rstrip() + '\n'  # float number spec requires end of line or space after float
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(
-        text, tracking=True, lexer=mcnp_input_lexer
+        text,
+        tracking=True,
+        lexer=mcnp_input_lexer,
+        debug=__DEBUG__,
     )
-
     bodies = []
     for name in list(cells.keys()):
         bodies.append(_get_cell(name, cells, surfaces, data))
@@ -712,6 +744,7 @@ def read_mcnp(filename, encoding='utf-8'):
 def _get_transformation(name, data):
     if isinstance(name, dict):
         return Transformation(**name)
+    assert isinstance(name, int)
     tr = data['TR'][name]
     if isinstance(tr, dict):
         tr = Transformation(**tr)
@@ -756,15 +789,19 @@ def _get_cell(name, cells, surfaces, data):
         ref_name = cell_data.pop('reference')
         ref_cell = _get_cell(ref_name, cells, surfaces, data)
         geometry = ref_cell.shape
-        for k, v in ref_cell.items():
+        for k, v in ref_cell.options.items():
             if k not in cell_data.keys():
                 cell_data[k] = v
         rho = cell_data.pop('RHO', None)
+        material = cell_data['MAT']
+        cell_data['MAT'] = {'composition': material.composition.name()}
         if rho is not None:
             if rho > 0:
                 cell_data['MAT']['concentration'] = rho * 1.e+24
             else:
                 cell_data['MAT']['density'] = abs(rho)
+        else:
+            cell_data['MAT']['density'] = material.density
     else:    # create geometry from polish notation
         for i, g in enumerate(geometry):
             if isinstance(g, int):
@@ -790,8 +827,13 @@ def _get_cell(name, cells, surfaces, data):
     if 'TRCL' in cell_data.keys():
         cell_data['TRCL'] = _get_transformation(cell_data['TRCL'], data)
     fill = cell_data.get('FILL', {})
+    temp_tr = None
     if 'transform' in fill.keys():
-        fill['transform'] = _get_transformation(fill['transform'], data)
+        temp_tr = fill['transform']
+        temp_tr = _get_transformation(temp_tr, data)
+        if temp_tr and not isinstance(temp_tr, Transformation):
+            print(name)
+        fill['transform'] = temp_tr
 
     cell = Body(geometry, **cell_data)
     cells[name] = cell

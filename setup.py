@@ -5,6 +5,55 @@ import sys
 import numpy as np
 from setuptools import Extension, find_packages, setup
 from setuptools.dist import Distribution
+from setuptools.command.test import test as TestCommand
+
+# See recomendations in https://docs.pytest.org/en/latest/goodpractices.html
+# noinspection PyAttributeOutsideInit
+
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = ""
+
+    def run_tests(self):
+        import shlex
+        # import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
+
+
+def load_version():
+    fd = {}
+    with open('./mckit/version.py') as fid:
+        exec(fid.read(), fd)
+        return (
+            fd["_title__"],
+            fd["__author__"],
+            fd["__license__"],
+            fd["__copyright__"],
+            fd["__ver_major__"],
+            fd["__ver_minor__"],
+            fd["__ver_patch__"],
+            fd["__version_info__"],
+            fd["__ver_sub__"],
+            fd["__version__"],
+        )
+
+(
+    __title__,
+    __author__,
+    __license__,
+    __copyright__,
+    __ver_major__,
+    __ver_minor__,
+    __ver_patch__,
+    __version_info__,
+    __ver_sub__,
+    __version__,
+) = load_version()
 
 
 class BinaryDistribution(Distribution):
@@ -34,7 +83,6 @@ include_dirs = get_dirs("INCLUDE_PATH")
 append_if_not_present(include_dirs, np.get_include())
 
 library_dirs = get_dirs("LIBRARY_PATH")
-
 
 if sys.platform.startswith('linux'):
     geometry_dependencies = [
@@ -76,21 +124,54 @@ extensions = [
         geometry_sources,
         include_dirs=include_dirs,
         libraries=geometry_dependencies,
-        library_dirs=library_dirs
+        library_dirs=library_dirs,
+
     )
 ]
 
+packages = find_packages(
+    include=("mckit", "mckit.*",),
+    exclude=(
+        "adhoc",
+        "build*",
+        "data",
+        "dist",
+        "doc",
+        "examples",
+        "htmlcov",
+        "notebook",
+        "tutorial",
+        "tests",
+        "src",
+    ),
+)
+
 setup(
-    name='mckit',
-    version='0.1.2',
-    packages=find_packages(),
+    name=_title__,
+    version=__version__,
+    packages=packages,
     package_data={'mckit': ['data/isotopes.dat', 'libnlopt-0.dll']},
     url='https://gitlab.iterrf.ru/Rodionov/mckit',
-    license='',
-    author='Roman Rodionov',
+    license=__license__,
+    author=__author__,
     author_email='r.rodionov@iterrf.ru',
     description='Tool for handling neutronic models and results',
-    install_requires=['numpy', 'scipy', 'ply', 'click', 'mkl-devel'],
+    install_requires=[
+        'click>=6.7',
+        'click-log>=0.3.2',
+        'mkl-devel',
+        'numpy',
+        'ply',
+        'scipy',
+        'tomlkit',
+        'datetime',
+    ],
     ext_modules=extensions,
-    # data_files=[('.', ['libnlopt-0.dll'])]
+    tests_require=['pytest', 'pytest-cov>=2.3.1'],
+    cmdclass={'test': PyTest},
+    entry_points={
+        'console_scripts': [
+            'mckit = mckit.cli.runner:mckit',
+        ]
+    },
 )

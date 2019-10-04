@@ -92,6 +92,10 @@ static PyObject * boxobj_getvolume(BoxObject * self, void * closure);
 static PyObject * boxobj_getbounds(BoxObject * self, void * closure);
 static PyObject * boxobj_getcenter(BoxObject * self, void * closure);
 static PyObject * boxobj_getdims(BoxObject * self, void * closure);
+static PyObject * boxobj_get_ex(BoxObject * self, void * closure);
+static PyObject * boxobj_get_ey(BoxObject * self, void * closure);
+static PyObject * boxobj_get_ez(BoxObject * self, void * closure);
+
 
 static PyGetSetDef boxobj_getsetters[] = {
         {"corners", (getter) boxobj_getcorners, NULL, "Box's corners", NULL},
@@ -99,6 +103,9 @@ static PyGetSetDef boxobj_getsetters[] = {
         {"bounds",  (getter) boxobj_getbounds,  NULL, "Box's bounds",  NULL},
         {"center",  (getter) boxobj_getcenter,  NULL, "Box's center",  NULL},
         {"dimensions", (getter) boxobj_getdims, NULL, "Box's dimensions", NULL},
+        {"ex", (getter) boxobj_get_ex, NULL, "Box's EX", NULL},
+        {"ey", (getter) boxobj_get_ey, NULL, "Box's EY", NULL},
+        {"ez", (getter) boxobj_get_ez, NULL, "Box's EZ", NULL},
         {NULL}
 };
 
@@ -311,6 +318,42 @@ static PyObject * boxobj_getcenter(BoxObject * self, void * closure)
     double * data = (double *) PyArray_DATA(center);
     for (i = 0; i < NDIM; ++i) data[i] = self->box.center[i];
     return center;
+}
+
+static PyObject * boxobj_get_ex(BoxObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * ex = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    int i;
+    double * data = (double *) PyArray_DATA(ex);
+    for (i = 0; i < NDIM; ++i) {
+        data[i] = self->box.ex[i];
+    }
+    return ex;
+}
+
+static PyObject * boxobj_get_ey(BoxObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * ey = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    int i;
+    double * data = (double *) PyArray_DATA(ey);
+    for (i = 0; i < NDIM; ++i) {
+        data[i] = self->box.ey[i];
+    }
+    return ey;
+}
+
+static PyObject * boxobj_get_ez(BoxObject * self, void * closure)
+{
+    npy_intp dims[] = {NDIM};
+    PyObject * ez = PyArray_EMPTY(1, dims, NPY_DOUBLE, 0);
+    int i;
+    double * data = (double *) PyArray_DATA(ez);
+    for (i = 0; i < NDIM; ++i) {
+        data[i] = self->box.ez[i];
+    }
+    return ez;
 }
 
 static PyObject * boxobj_getdims(BoxObject * self, void * closure)

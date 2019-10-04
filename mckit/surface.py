@@ -5,13 +5,15 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from . import constants
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import Plane      as _Plane,    \
                       Sphere     as _Sphere,   \
                       Cone       as _Cone,     \
                       Cylinder   as _Cylinder, \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
-                      GLOBAL_BOX, ORIGIN, EX, EY, EZ
+                      ORIGIN, EX, EY, EZ
+from mckit.box import GLOBAL_BOX
 from .printer import print_card, pretty_float
 from .transformation import Transformation
 from .utils import *
@@ -247,6 +249,8 @@ class Plane(Surface, _Plane):
         self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
+        self.normal = normal
+        self.offset = offset
 
     def copy(self):
         instance = Plane.__new__(Plane, self._v, self._k)
@@ -302,12 +306,13 @@ class Plane(Surface, _Plane):
         return print_card(words)
 
     def __getstate__(self):
-        return self._v, self._k, Surface.__getstate__(self)
+        return self._v, self._k, self._k_digits, self._v_digits, Surface.__getstate__(self)
 
     def __setstate__(self, state):
-        v, k, options = state
+        v, k, _k_digits, _v_digits, options = state
         _Plane.__init__(self, v, k)
         Surface.__setstate__(self, options)
+        self._k_digits, self._v_digits = _k_digits, _v_digits
 
 
 class Sphere(Surface, _Sphere):

@@ -4,7 +4,7 @@ import pickle
 
 from mckit.body import Shape, Body
 from mckit.surface import create_surface
-from mckit.geometry import Box
+from mckit.box import Box
 from mckit.material import Material
 from mckit.transformation import Transformation
 

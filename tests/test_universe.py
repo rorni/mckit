@@ -5,28 +5,30 @@ import tempfile
 from mckit.material import Material, Element
 from mckit.parser.mcnp_input_parser import read_mcnp
 from mckit.transformation import Transformation
-from mckit.geometry import Box
+from mckit.box import Box
 from mckit.universe import *
 from mckit.body import Body, Shape
 from mckit.surface import Sphere, Surface, create_surface
 from mckit.material import Composition
+from mckit.utils.resource import filename_resolver
 
+data_filename_resolver = filename_resolver('tests')
 
 @pytest.fixture(scope='module')
 def universe():
     cases = {
-        1: 'tests/universe_test_data/universe1.i',
-        2: 'tests/universe_test_data/universe2.i',
-        3: 'tests/universe_test_data/universe3.i',
-        4: 'tests/universe_test_data/universe4.i',
-        5: 'tests/universe_test_data/universe5.i',
-        1002: 'tests/universe_test_data/universe1002.i',
-        1012: 'tests/universe_test_data/universe1012.i',
-        1022: 'tests/universe_test_data/universe1022.i'
+        1: 'universe_test_data/universe1.i',
+        2: 'universe_test_data/universe2.i',
+        3: 'universe_test_data/universe3.i',
+        4: 'universe_test_data/universe4.i',
+        5: 'universe_test_data/universe5.i',
+        1002: 'universe_test_data/universe1002.i',
+        1012: 'universe_test_data/universe1012.i',
+        1022: 'universe_test_data/universe1022.i'
     }
 
     def _universe(case):
-        return read_mcnp(cases[case])
+        return read_mcnp(data_filename_resolver(cases[case]))
 
     return _universe
 

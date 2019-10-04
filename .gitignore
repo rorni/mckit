@@ -81,3 +81,6 @@ target/
 
 #VSCode settings
 .vscode
+
+# Local environemnt files for dotenv
+.env
