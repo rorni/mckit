@@ -99,3 +99,4 @@ def round_array(array, digarr):
     for index in zip(*map(np.ravel, np.indices(array.shape))):
         result[index] = round_scalar(array[index], digarr[index])
     return result
+

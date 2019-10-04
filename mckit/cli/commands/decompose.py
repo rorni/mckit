@@ -14,7 +14,7 @@ from pathlib import Path
 import click
 import tomlkit as tk
 import mckit as mk
-from .common import save, MCNP_ENCODING
+from .common import save_mcnp, MCNP_ENCODING
 
 
 def get_default_output_directory(source):
@@ -78,7 +78,7 @@ def decompose(output, fill_descriptor_path, source, override):
             fill_descriptor.add(tk.nl())
             if universe_name not in already_processed_universes:
                 move_universe_attribute_to_comments(universe)
-                save(universe, output / fn, override)
+                save_mcnp(universe, output / fn, override)
                 logger.debug("The universe %s are saved to %s", universe_name, fn)
                 already_processed_universes.add(universe_name)
 
@@ -86,7 +86,7 @@ def decompose(output, fill_descriptor_path, source, override):
         res = tk.dumps(fill_descriptor)
         fid.write(res)
     envelopes_path = output / "envelopes.i"
-    save(model, envelopes_path, override)
+    save_mcnp(model, envelopes_path, override)
     logger.debug("The envelopes are saved to %s", envelopes_path)
 
 

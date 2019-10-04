@@ -8,7 +8,8 @@ import click_log
 from pathlib import Path
 
 from mckit import __version__
-from mckit.cli.commands import do_decompose, do_compose
+from mckit.cli.commands.common import get_default_output_directory
+from mckit.cli.commands import do_decompose, do_compose, do_split
 
 __LOG = logging.getLogger(__name__)
 click_log.basic_config(__LOG)
@@ -74,6 +75,26 @@ def compose(ctx, output, fill_descriptor, source):
         raise click.UsageError(f"Cannot find fill descriptor file \"{fill_descriptor}\"")
     __LOG.info(f"Composing \"{output}\", from envelopes \"{source}\" with fill descriptor \"{fill_descriptor}\"")
     return do_compose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
+
+
+@mckit.command()
+@click.pass_context
+@click.option("--output", "-o", default=None, help="Output directory")
+@click.argument(
+    "source",
+    metavar="<source>",
+    type=click.Path(exists=True),
+    nargs=1,
+    required=True,
+)
+def split(ctx, output, source):
+    if output is None:
+        output = get_default_output_directory(source, ".split")
+    else:
+        output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+    __LOG.info(f"Splitting \"{source}\" to directory \"{output}\"")
+    return do_split(output, source, ctx.obj['OVERRIDE'])
 
 
 if __name__ == '__main__':
