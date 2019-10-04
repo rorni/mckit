@@ -6,39 +6,37 @@ from io import StringIO
 from mckit.parser.mcnp_section_parser import *
 
 
+
 @pytest.mark.parametrize("text,expected", [
+    ( "aaa\n\nbbb", ["aaa", "bbb"]),
+    ("aaa\n   \nbbb", ["aaa", "bbb"]),
+    ("aaa\nbbb", ["aaa\nbbb"]),
+])
+def test_blank_line_pattern(text, expected):
+    actual = BLANK_LINE_PATTERN.split(text)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("text,expected", [
+    ( "1 0 1\n", ('1 0 1\n', 0)),
+    ("1 0 1 $bla bla bla\n", ('1 0 1\n', 1)),
     (
-            "1 0 1\n",
-            ('1 0 1\n', 0)
-    ),
-    (
-            "1 0 1 $bla bla bla\n",
-            ('1 0 1\n', 1)
-    ),
-    (
-            """
-1 0 1 $bla bla bla
-c the comment
-   2 -3
-"""[1:-1],
-            (
-                    """
-1 0 1
-   2 -3
-"""[1:-1], 2)
+        "1 0 1 $bla bla bla\n" +
+        "c the comment with the space before c\n" +
+        "   2 -3",
+        (
+            "1 0 1\n" +
+            "   2 -3", 2
+        )
     ),
 ])
-def test_comment_pattern(text, expected):
-    actual = COMMENT_PATTERN.subn('', text)
+def test_removing_comment_pattern(text, expected):
+    actual = REMOVE_COMMENT_PATTERN.subn('', text)
     assert expected == actual
 
 
 @pytest.mark.parametrize("text,comment,card", [
-    (
-            "1 0 1\n",
-            None,
-            '1 0 1\n'
-    ),
+    ("1 0 1\n", None, '1 0 1\n'),
     (
             """
 c the preceding comment
@@ -55,7 +53,7 @@ c the preceding comment
             """
 c the preceding comment
 1 0 1
-c inner comment
+ c inner comment (with space before it)
   2 $continuation
 """[1:-1],
             """
@@ -63,8 +61,32 @@ c the preceding comment
 """[1:],
             """
 1 0 1
-c inner comment
+ c inner comment (with space before it)
   2 $continuation
+"""[1:-1]
+    ),
+    (
+"""
+C ----------------------------------------------------------------------------C
+C    TRANSFORMATIONS                                                          C
+C    ROTATION WITH RESPECT TO Z-AXIS (-20,|5|,20)                             C
+C ----------------------------------------------------------------------------C
+*TR1    0  0  0
+        20.0000    70.0000  90
+       110.0000    20.0000  90
+       90        90         0
+"""[1:-1],
+"""
+C ----------------------------------------------------------------------------C
+C    TRANSFORMATIONS                                                          C
+C    ROTATION WITH RESPECT TO Z-AXIS (-20,|5|,20)                             C
+C ----------------------------------------------------------------------------C
+"""[1:],
+"""
+*TR1    0  0  0
+        20.0000    70.0000  90
+       110.0000    20.0000  90
+       90        90         0
 """[1:-1]
     ),
 ])
@@ -226,7 +248,7 @@ test
 c some comment
 c second line
 1 0 1 $bla bla bla
-   2 $continuation
+     2 $continuation
 2 0 -1
 c trailing comment
 
@@ -242,10 +264,10 @@ test
 c some comment
 c second line
 1 0 1 $bla bla bla
-   2 $continuation
+     2 $continuation
 c trailing comment
 2
-  0 -1  $rrrrrr
+    0 -1  $rrrrrr
 c z-z-zz-z-z-z
 
 1 so 1

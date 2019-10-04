@@ -10,15 +10,34 @@ from attr import attrs, attrib
 
 LOG = logging.getLogger(__name__)
 
+
+BLANK_LINE_PATTERN = re.compile(
+    r'\n\s*\n',
+    flags=re.MULTILINE,
+)
+
+COMMENT_LINE_PATTERN = re.compile(
+    r'^\s{,4}[cC](\s.*)?'
+)
+
 # pattern to remove comments from a card text
-COMMENT_PATTERN = re.compile(
-    r'\s*\$.*|\nc.*|^c.*\n',
+REMOVE_COMMENT_PATTERN = re.compile(
+    r'(\s*\$.*$)|(^\s{0,4}c\s.*\n?)',
     flags=re.MULTILINE | re.IGNORECASE
 )
 
+# TODO dvp: fix the folllowing:
+# mostly works but converts ctme card, for example, to commment
+r"(?P<comment>(^c.*\n?)+)?(?P<card>^(\*|\w).*(\n((^c.*\n?)*^\s+.*\S.*\n?)*)?)?",
+
+# doesn't work
+# r"(?P<comment>(^c((\s.*)|(\s*)\n?))+)?(?P<card>^\w.*(\n((^c.*\n?)*^\s+.*\S.*\n?)*)?)?",
+# r"(?P<comment>(^\s{0,4}c(\s.*)?\n?)+)?(?P<card>^\w.*(\n(^\s{4,}c\S.*)?\n?)*(^\s{4,}\S.*\n?)*)?)?",
+# r"(?P<comment>(^c(\s.*)?\n?)+)?(?P<card>(^((c\w)|[^c]).*\n?)*((^c(\s.*)?\n?)|(^\s+.*\S.*\n?)))*",
+
 # pattern to split section text to optional "comment" and subsequent MCNP card pairs
 CARD_PATTERN = re.compile(
-    r"(?P<comment>(^c.*\n?)+)?(?P<card>^\w.*(\n((^c.*\n?)*^\s+.*\S.*\n?)*)?)?",
+    r"(?P<comment>(^c.*\n?)+)?(?P<card>^(\*|\w).*(\n((^c.*\n?)*^\s+.*\S.*\n?)*)?)?",
     flags=re.MULTILINE | re.IGNORECASE
 )
 
@@ -211,7 +230,7 @@ def parse_sections(inp: tp.TextIO) -> InputSections:
     data_cards = None
     remainder = None
 
-    sections = inp.read().split("\n\n", 5)
+    sections = BLANK_LINE_PATTERN.split(inp.read(), 5)
 
     # The first line can be message or title.
     kw = sections[0][:len("message:")].lower()
@@ -295,11 +314,11 @@ def is_comment_line(line, skip_asserts=False):
     if not skip_asserts:
         assert isinstance(line, six.string_types), "The parameter 'line' should be text"
         assert '\n' not in line, "The parameter 'line' should be the single text line"
-    return line[0] in "cC"
+    return COMMENT_LINE_PATTERN.match(line)
 
 
 def get_clean_text(text):
-    without_comments = COMMENT_PATTERN.subn('', text)[0]
+    without_comments = REMOVE_COMMENT_PATTERN.subn('', text)[0]
     with_spaces_normalized = SPACE_PATTERN.subn(' ', without_comments)[0]
     return with_spaces_normalized
 
