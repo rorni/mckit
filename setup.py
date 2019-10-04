@@ -30,7 +30,7 @@ def load_version():
     with open('./mckit/version.py') as fid:
         exec(fid.read(), fd)
         return (
-            fd["_title__"],
+            fd["__title__"],
             fd["__author__"],
             fd["__license__"],
             fd["__copyright__"],
@@ -147,7 +147,7 @@ packages = find_packages(
 )
 
 setup(
-    name=_title__,
+    name=__title__,
     version=__version__,
     packages=packages,
     package_data={'mckit': ['data/isotopes.dat', 'libnlopt-0.dll']},
