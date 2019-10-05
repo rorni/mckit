@@ -7,6 +7,7 @@
 материалов, трансформаций, sdef и прочие карты. Файлы соответственно: cells.txt, surfaces.txt,
 materials.txt, transformations.txt, sdef.txt, cards.txt
 """
+from attr import attrs, attrib
 from datetime import datetime
 import logging
 from pathlib import Path
@@ -34,34 +35,46 @@ def print_cards(cards, output, base_name, override):
                 print(c.text, file=fid)
 
 
+@attrs
+class _distributor(object):
+    """
+        Need this class because inner function append() somehow doesn't see comment variable
+    """
+    comment: sp.Card = None
+
+    def append(self, cards: tp.List[sp.Card], card: sp.Card):
+        if self.comment:
+            cards.append(self.comment)
+            self.comment = None
+        cards.append(card)
+
+    def __call__(self, cards: tp.Iterable[sp.Card]) -> tp.Tuple[tp.List,tp.List,tp.List]:
+        self.comment = None
+        materials, transformations, sdef, others = [], [], [], []
+
+        for card in cards:
+            if card.is_comment:
+                assert self.comment is None
+                self.comment = card
+            elif card.is_material:
+                self.append(materials, card)
+            elif card.is_transformation:
+                self.append(transformations, card)
+            elif card.is_sdef:
+                self.append(sdef, card)
+            else:
+                self.append(others, card)
+
+        if self.comment:
+            others.append(self.comment)
+
+        self.comment = None
+
+        return materials, transformations, sdef, others
+
+
 def distribute_cards(cards: tp.Iterable[sp.Card]) -> tp.Tuple[tp.List,tp.List,tp.List]:
-    comment = None
-    materials, transformations, sdef, others = [], [], [], []
-
-    def append(_cards, _card):
-        global comment
-        if comment:
-            _cards.append(comment)
-            comment = None
-        _cards.append(_card)
-
-    for card in cards:
-        if card.is_comment:
-            assert comment is None
-            comment = card
-        elif card.is_material:
-            append(materials, card)
-        elif card.is_transformation:
-            append(transformations, card)
-        elif card.is_sdef:
-            append(sdef, card)
-        else:
-            append(others, card)
-
-    if comment:
-        others.append(comment)
-
-    return materials, transformations, sdef, others
+    return _distributor()(cards)
 
 
 def split(output:Path, source, override:bool):
