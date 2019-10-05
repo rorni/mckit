@@ -1,13 +1,17 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+
 import logging
 import sys
 
 import click
 import click_log
+
+from contextlib import contextmanager
 from pathlib import Path
 
 from mckit import __version__
+from mckit.utils import MCNP_ENCODING
 from mckit.cli.commands.common import get_default_output_directory
 from mckit.cli.commands import do_decompose, do_compose, do_split
 
@@ -95,6 +99,71 @@ def split(ctx, output, source):
     output.mkdir(parents=True, exist_ok=True)
     __LOG.info(f"Splitting \"{source}\" to directory \"{output}\"")
     return do_split(output, source, ctx.obj['OVERRIDE'])
+
+
+# noinspection PyCompatibility
+@contextmanager
+def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
+    if output:
+        output = Path(output)
+        if exist_ok or not output.exists():
+            fid = output.open("w", encoding=encoding)
+        else:
+            raise click.UsageError(f"Specify --override option to override existing file '{output}'")
+    else:
+        fid = sys.stdout
+    try:
+        yield fid
+    finally:
+        if fid is not sys.stdout:
+            fid.close()
+
+
+# noinspection PyCompatibility
+@mckit.command()
+@click.pass_context
+@click.option(
+    "--output", "-o",
+    metavar="<output>",
+    type=click.Path(exists=False),
+    required=False,
+    help="File to write the concatenated parts",
+)
+@click.option(
+    "--parts-encoding",
+    metavar="<output>",
+    type=click.Path(exists=False),
+    required=False,
+    default=MCNP_ENCODING,
+    help=f"Encoding to read parts (default:{MCNP_ENCODING})",
+)
+@click.option(
+    "--output-encoding",
+    metavar="<output>",
+    type=click.Path(exists=False),
+    required=False,
+    default=MCNP_ENCODING,
+    help=f"Encoding to write output (default:{MCNP_ENCODING})",
+)
+@click.argument(
+    "parts",
+    metavar="<part...>",
+    type=click.Path(exists=True),
+    nargs=-1,
+    required=True,
+)
+def concat(
+        ctx,
+        output,
+        parts_encoding,
+        output_encoding,
+        parts
+):
+    override = ctx.obj['OVERRIDE']
+    with resolve_output(output, exist_ok=override, encoding=output_encoding) as out_fid:
+        for f in parts:
+            f = Path(f)
+            print(f.read_text(encoding=parts_encoding), file=out_fid, end="")
 
 
 if __name__ == '__main__':
