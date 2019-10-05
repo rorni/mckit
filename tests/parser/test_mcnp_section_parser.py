@@ -45,25 +45,19 @@ c the preceding comment
             """
 c the preceding comment
 """[1:],
-            """
-1 0 1
-"""[1:-1]
+            "1 0 1"
     ),
     (
             """
 c the preceding comment
 1 0 1
- c inner comment (with space before it)
-  2 $continuation
+ c The next card comment (with space before it)
+  2 $next card
 """[1:-1],
             """
 c the preceding comment
 """[1:],
-            """
-1 0 1
- c inner comment (with space before it)
-  2 $continuation
-"""[1:-1]
+            "1 0 1\n"
     ),
     (
 """
@@ -96,7 +90,7 @@ def test_card_pattern(text, comment, card):
     actual_comment = groups["comment"]
     assert comment == actual_comment
     actual_card = groups["card"]
-    assert card == actual_card
+    assert actual_card == card
 
 
 @pytest.mark.parametrize("text,cards,kind", [
@@ -146,6 +140,30 @@ c the second line of the trailing comment
 """[1:-1]),
             ],
             Kind.CELL,
+    ),
+    (
+            """
+  cut 5j  $ card starts in column < 5
+ctme 3000
+"""[1:],
+        [Card("  cut 5j  $ card starts in column < 5"), Card("ctme 3000")],
+        None,
+    ),
+    (
+        """
+m100
+      1001.31c 0.6666
+      8000.21c 0.3334
+"""[1:-1],
+        [Card(
+        """
+m100
+      1001.31c 0.6666
+      8000.21c 0.3334
+"""[1:-1],
+            kind=Kind.MATERIAL
+        )],
+        None
     ),
 ])
 def test_split_to_cards(text, cards, kind):

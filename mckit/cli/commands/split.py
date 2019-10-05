@@ -37,29 +37,30 @@ def print_cards(cards, output, base_name, override):
 def distribute_cards(cards: tp.Iterable[sp.Card]) -> tp.Tuple[tp.List,tp.List,tp.List]:
     comment = None
     materials, transformations, sdef, others = [], [], [], []
-    for c in cards:
-        if c.is_comment:
-            comment = c
-        elif c.is_material:
-            if comment:
-                materials.append(comment)
-                comment = None
-            materials.append(c)
-        elif c.is_transformation:
-            if comment:
-                transformations.append(comment)
-                comment = None
-            transformations.append(c)
-        elif c.is_sdef:
-            if comment:
-                sdef.append(comment)
-                comment = None
-            sdef.append(c)
+
+    def append(_cards, _card):
+        global comment
+        if comment:
+            _cards.append(comment)
+            comment = None
+        _cards.append(_card)
+
+    for card in cards:
+        if card.is_comment:
+            assert comment is None
+            comment = card
+        elif card.is_material:
+            append(materials, card)
+        elif card.is_transformation:
+            append(transformations, card)
+        elif card.is_sdef:
+            append(sdef, card)
         else:
-            if comment:
-                others.append(comment)
-                comment = None
-            others.append(c)
+            append(others, card)
+
+    if comment:
+        others.append(comment)
+
     return materials, transformations, sdef, others
 
 

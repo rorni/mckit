@@ -17,7 +17,7 @@ BLANK_LINE_PATTERN = re.compile(
 )
 
 COMMENT_LINE_PATTERN = re.compile(
-    r'^\s{,4}[cC](\s.*)?'
+    r'^\s{,5}[cC]( .*)?\s*$'
 )
 
 # pattern to remove comments from a card text
@@ -26,18 +26,10 @@ REMOVE_COMMENT_PATTERN = re.compile(
     flags=re.MULTILINE | re.IGNORECASE
 )
 
-# TODO dvp: fix the folllowing:
-# mostly works but converts ctme card, for example, to commment
-r"(?P<comment>(^c.*\n?)+)?(?P<card>^(\*|\w).*(\n((^c.*\n?)*^\s+.*\S.*\n?)*)?)?",
-
-# doesn't work
-# r"(?P<comment>(^c((\s.*)|(\s*)\n?))+)?(?P<card>^\w.*(\n((^c.*\n?)*^\s+.*\S.*\n?)*)?)?",
-# r"(?P<comment>(^\s{0,4}c(\s.*)?\n?)+)?(?P<card>^\w.*(\n(^\s{4,}c\S.*)?\n?)*(^\s{4,}\S.*\n?)*)?)?",
-# r"(?P<comment>(^c(\s.*)?\n?)+)?(?P<card>(^((c\w)|[^c]).*\n?)*((^c(\s.*)?\n?)|(^\s+.*\S.*\n?)))*",
 
 # pattern to split section text to optional "comment" and subsequent MCNP card pairs
 CARD_PATTERN = re.compile(
-    r"(?P<comment>(^c.*\n?)+)?(?P<card>^(\*|\w).*(\n((^c.*\n?)*^\s+.*\S.*\n?)*)?)?",
+    r"(?P<comment>((^\s{,5}c( .*)?\s*$)\n?)+)?(?P<card>^\s{,5}(\*|\w).*(\n((^\s{,5}c.*\n?)*^\s{5,}\S.*\n?)*)?)?",
     flags=re.MULTILINE | re.IGNORECASE
 )
 
