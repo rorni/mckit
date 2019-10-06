@@ -19,7 +19,7 @@ COMMENT_LINE_PATTERN = re.compile(
 
 # pattern to remove comments from a card text
 REMOVE_COMMENT_PATTERN = re.compile(
-    r'(\s*\$.*$)|(^\s{0,4}c\s.*\n?)',
+    r'(\s*\$.*$)|(^\s{0,5}c\s.*\n?)',
     flags=re.MULTILINE | re.IGNORECASE
 )
 
@@ -36,6 +36,10 @@ SPACE_PATTERN = re.compile(
     flags=re.MULTILINE
 )
 
+SDEF_PATTERN = re.compile(
+    r"(sdef)|(s[ibp]\d+)|(ds\d+)",
+    re.IGNORECASE,
+)
 
 class Kind(IntEnum):
     COMMENT = 0,
@@ -48,16 +52,17 @@ class Kind(IntEnum):
 
     @classmethod
     def from_card_text(cls, text: str):
-        if text[0] in "mM" and str.isdigit(text[1]):
+        label: str = text.split(maxsplit=2)[0]
+        label = label.strip()
+        if label[0] in "mM" and str.isdigit(label[1]):
             return Kind.MATERIAL
         # check if a label is for transformation card, example: TR20 or *tr1
         i = 0
-        if text[0] == "*":
+        if label[0] == "*":
             i = 1
-        if text[i] in "tT" and text[i + 1] in "rR" and str.isdigit(text[i + 2]):
+        if label[i] in "tT" and label[i + 1] in "rR" and str.isdigit(label[i + 2]):
             return Kind.TRANSFORMATION
-        label: str = text.split(maxsplit=2)[0]
-        if 'sdef' == label.lower():
+        if SDEF_PATTERN.match(label):
             return Kind.SDEF
         if is_comment_text(text, skip_asserts=True):
             return Kind.COMMENT

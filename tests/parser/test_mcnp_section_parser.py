@@ -168,6 +168,24 @@ def test_split_to_cards(text, cards, kind):
     assert actual_cards == cards
 
 
+@pytest.mark.parametrize("text", [
+        (
+        """
+sdef
+sp1
+si1
+ds3
+sb45
+"""[1:-1]
+        ),
+])
+def test_sdef_cards(text):
+    actual_cards = list(split_to_cards(text))
+    for card in actual_cards:
+        assert card.is_sdef, "Should be SDEF card"
+
+
+
 def test_card_constructor():
     descr = "1 0 1"
     c = Card(descr)
