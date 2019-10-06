@@ -98,17 +98,14 @@ def test_card_pattern(text, comment, card):
             """
 c the preceding comment
 1 0 1
-c inner comment
-  2 $continuation
+c next comment
+  2 $next card (starts with less than 5 spaces)
 """[1:-1],
             [
                 Card("c the preceding comment"),
-                Card(
-                    """
-1 0 1
-c inner comment
-  2 $continuation
-"""[1:-1], kind=Kind.CELL)
+                Card("1 0 1", kind=Kind.CELL),
+                Card("c next comment"),
+                Card("  2 $next card (starts with less than 5 spaces)", kind=Kind.CELL)
             ],
             Kind.CELL,
     ),
@@ -117,7 +114,7 @@ c inner comment
 c the preceding comment
 1 0 1
 c inner comment
-  2 $continuation
+     2 $continuation
 c the second preceding comment
 2 0 -1 $the next card
 c the trailing comment
@@ -129,7 +126,7 @@ c the second line of the trailing comment
                 """
 1 0 1
 c inner comment
-  2 $continuation
+     2 $continuation
 """[1:-1], kind=Kind.CELL),
             Card("c the second preceding comment"),
             Card("2 0 -1 $the next card", kind=Kind.CELL),
@@ -205,7 +202,7 @@ def test_input_sections_constructor():
 c some comment
 c second line
 1 0 1 $bla bla bla
-   2 $continuation
+     2 $continuation
 c trailing comment
 """[1:-1],
             [
@@ -222,10 +219,10 @@ c trailing comment
 c some comment
 c second line
 1 0 1 $bla bla bla
-   2 $continuation
+     2 $continuation
 c trailing comment
 2
-  0 -1  $rrrrrr
+     0 -1  $rrrrrr
 c z-z-zz-z-z-z
 """[1:-1],
             [
@@ -245,7 +242,7 @@ c z-z-zz-z-z-z
 ])
 def test_clean_mcnp_cards(text, expected, kind):
     actual = list(clean_mcnp_cards(split_to_cards(text, kind)))
-    assert expected == actual
+    assert actual == expected
 
 
 @pytest.mark.parametrize("text,expected", [

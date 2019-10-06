@@ -157,6 +157,7 @@ setup(
     author_email='r.rodionov@iterrf.ru',
     description='Tool for handling neutronic models and results',
     install_requires=[
+        'attrs>=17.2.0',
         'click>=6.7',
         'click-log>=0.3.2',
         'mkl-devel',
@@ -164,7 +165,8 @@ setup(
         'ply',
         'scipy',
         'tomlkit',
-        'datetime', 'attr', 'six'
+        'datetime',
+        'six',
     ],
     ext_modules=extensions,
     tests_require=['pytest', 'pytest-cov>=2.3.1'],

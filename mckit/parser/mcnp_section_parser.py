@@ -3,9 +3,6 @@ import re
 import sys
 import typing as tp
 from enum import IntEnum
-from timeit import default_timer as timer
-
-import six
 from attr import attrs, attrib
 
 LOG = logging.getLogger(__name__)
@@ -286,7 +283,7 @@ def check_title_is_continue(title):
 
 
 def is_comment(seq):
-    if isinstance(seq, six.string_types):
+    if isinstance(seq, str):
         return is_comment_text(seq, skip_asserts=True)
     res = next((text for text in seq.split('\n') if not is_comment_text(text)), False)
     return not res
@@ -294,7 +291,7 @@ def is_comment(seq):
 
 def is_comment_text(text, skip_asserts=False):
     if not skip_asserts:
-        assert isinstance(text, six.string_types), "The parameter 'line' should be text"
+        assert isinstance(text, str), "The parameter 'line' should be text"
     if '\n' in text:
         res = next((line for line in text.split('\n') if not is_comment_line(line)), False)
         return not res
@@ -302,9 +299,9 @@ def is_comment_text(text, skip_asserts=False):
         return is_comment_line(text, skip_asserts=True)
 
 
-def is_comment_line(line, skip_asserts=False):
+def is_comment_line(line: str, skip_asserts=False):
     if not skip_asserts:
-        assert isinstance(line, six.string_types), "The parameter 'line' should be text"
+        assert isinstance(line, str), "The parameter 'line' should be text"
         assert '\n' not in line, "The parameter 'line' should be the single text line"
     return COMMENT_LINE_PATTERN.match(line)
 
