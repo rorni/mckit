@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-
 import logging
 import sys
 
@@ -18,7 +17,6 @@ from mckit.cli.commands import do_decompose, do_compose, do_split
 __LOG = logging.getLogger(__name__)
 click_log.basic_config(__LOG)
 __LOG.level = logging.INFO
-
 
 if sys.version_info.major < 3:  # pragma: no cover
     click.echo("Only Python 3 is supported in concat_mcnp")
@@ -84,6 +82,9 @@ def compose(ctx, output, fill_descriptor, source):
 @mckit.command()
 @click.pass_context
 @click.option("--output", "-o", default=None, help="Output directory")
+@click.option("--separators/--no-separators", default=False,
+              help="Write comment files to prepend and append this model cells, surfaces etc. on concatenation"
+              )
 @click.argument(
     "source",
     metavar="<source>",
@@ -91,14 +92,14 @@ def compose(ctx, output, fill_descriptor, source):
     nargs=1,
     required=True,
 )
-def split(ctx, output, source):
+def split(ctx, output, source, separators):
     if output is None:
         output = get_default_output_directory(source, ".split")
     else:
         output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     __LOG.info(f"Splitting \"{source}\" to directory \"{output}\"")
-    return do_split(output, source, ctx.obj['OVERRIDE'])
+    return do_split(output, source, ctx.obj['OVERRIDE'], separators)
 
 
 # noinspection PyCompatibility

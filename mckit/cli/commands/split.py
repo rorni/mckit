@@ -77,7 +77,7 @@ def distribute_cards(cards: tp.Iterable[sp.Card]) -> tp.Tuple[tp.List,tp.List,tp
     return _distributor()(cards)
 
 
-def split(output:Path, source, override:bool):
+def split(output:Path, source, override:bool, separators=False):
     logger = logging.getLogger(__name__)
     logger.debug("Splitting model from %s", source)
     source = Path(source)
@@ -95,6 +95,35 @@ def split(output:Path, source, override:bool):
         print_cards(others, output, "cards.txt", override)
     print_text(sections.remainder, output, "remainder.txt", override)
     logger.debug("The parts of %s are saved to %s", source, output)
+    if separators:
+        model = source.stem
+        write_separators(output, model)
+
+
+def write_separators(output: Path, model: str):
+    outer_line = "=" * 40
+    inner_line = "-" * 40
+    for kind in "cells surfaces materials transformations".split():
+        for start_end in "start end".split():
+            if start_end == "start":
+                first_line = outer_line
+                second_line = inner_line
+            else:
+                first_line = inner_line
+                second_line = outer_line
+            text = (
+                "c\n" +
+                "c   " + first_line + "\n" +
+                "c\n" +
+                f"c   {start_end} of {model} {kind}\n" +
+                "c\n" +
+                "c   " + second_line + "\n" +
+                "c\n"
+            )
+            path: Path = output / f"{kind}_{start_end}.txt"
+            path.write_text(text, encoding=MCNP_ENCODING)
+    path: Path = output / "new_line.txt"
+    path.write_text("\n")
 
 
 
