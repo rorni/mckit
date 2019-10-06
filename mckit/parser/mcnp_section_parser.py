@@ -37,7 +37,7 @@ SPACE_PATTERN = re.compile(
 )
 
 SDEF_PATTERN = re.compile(
-    r"(sdef)|(s[ibp]\d+)|(ds\d+)",
+    r"(sdef)|(s[ibp]\d+)|(ds\d+)|(wwp.*)",
     re.IGNORECASE,
 )
 
