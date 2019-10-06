@@ -12,7 +12,7 @@ from pathlib import Path
 from mckit import __version__
 from mckit.utils import MCNP_ENCODING
 from mckit.cli.commands.common import get_default_output_directory
-from mckit.cli.commands import do_decompose, do_compose, do_split
+from mckit.cli.commands import do_decompose, do_compose, do_split, do_check
 
 __LOG = logging.getLogger(__name__)
 click_log.basic_config(__LOG)
@@ -166,6 +166,27 @@ def concat(
             f = Path(f)
             print(f.read_text(encoding=parts_encoding), file=out_fid, end="")
 
+
+# noinspection PyCompatibility
+@mckit.command()
+@click.pass_context
+@click.option(
+    "--output", "-o",
+    metavar="<output>",
+    type=click.Path(exists=False),
+    required=False,
+    help="File to write the concatenated parts",
+)
+@click.argument(
+    "source",
+    metavar="<source>",
+    type=click.Path(exists=True),
+    nargs=1,
+    required=True,
+)
+def check(ctx, output, source):
+    override = ctx.obj['OVERRIDE']
+    do_check(source, output, override)
 
 if __name__ == '__main__':
     mckit(obj={})

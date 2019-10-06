@@ -250,7 +250,7 @@ def main():
     #     return universe
     #
     #
-    # simple_cubes.universes = list(map(load_subtracted_universe, cells_to_fill))
+    # universes = list(map(load_subtracted_universe, cells_to_fill))
 
     universes = list(map(load_filler, cells_to_fill))
     antenna = load_model(HFSR_ROOT / "models/antenna/antenna.i")
@@ -274,7 +274,7 @@ def main():
     envelopes_surrounding_and_antenna_file = "ewfa_3.i"
     envelopes.save(envelopes_surrounding_and_antenna_file)
     LOG.info(
-        "c-model envelopes integrated with simple_cubes.universes and antenna is saved to \"%s\"",
+        "c-model envelopes integrated with universes and antenna is saved to \"%s\"",
         envelopes_surrounding_and_antenna_file,
     )
 

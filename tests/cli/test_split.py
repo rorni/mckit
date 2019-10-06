@@ -146,7 +146,7 @@ def test_when_separator_files_are_required(runner, source, expected):
 # def test_when_output_file_exists_and_override_is_not_specified(runner):
 #     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
 #     with runner.isolated_filesystem() as prefix:
-#         output = Path(prefix) / "simple_cubes.universes/envelopes.i"
+#         output = Path(prefix) / "universes/envelopes.i"
 #         output.parent.mkdir(parents=True)
 #         output.touch(exist_ok=False)
 #         result = runner.invoke(
@@ -177,7 +177,7 @@ def test_when_separator_files_are_required(runner, source, expected):
 # def test_fill_descriptor(runner):
 #     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
 #     with runner.isolated_filesystem() as prefix:
-#         output = Path(prefix) / "simple_cubes.universes/fill-descriptor.toml"
+#         output = Path(prefix) / "universes/fill-descriptor.toml"
 #         result = runner.invoke(
 #             mckit,
 #             args=["split", source],
