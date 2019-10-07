@@ -166,7 +166,6 @@ setup(
         'scipy',
         'tomlkit',
         'datetime',
-        'six',
     ],
     ext_modules=extensions,
     tests_require=['pytest', 'pytest-cov>=2.3.1'],
