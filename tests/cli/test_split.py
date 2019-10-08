@@ -8,6 +8,8 @@ import mckit as mk
 from mckit.utils.resource import filename_resolver
 from mckit.cli.runner import mckit,  __version__
 from mckit.cli.commands.common import get_default_output_directory
+from mckit.parser.mcnp_section_parser import is_comment_text
+from mckit.utils.io import MCNP_ENCODING
 
 # skip the pylint warning on fixture names
 # pylint: disable=redefined-outer-name
@@ -42,6 +44,25 @@ def test_not_existing_mcnp_file(runner):
     assert "Path \"not-existing.imcnp\" does not exist" in result.output
 
 
+@pytest.mark.parametrize("source, out, expected", [
+    (
+        "cli/data/simple_cubes.mcnp",
+        "somewhere.dir",
+        "title.txt cells.txt surfaces.txt materials.txt cards.txt"
+    ),
+])
+def test_when_output_dir_is_specified(runner, source, out, expected):
+    source = data_filename_resolver(source)
+    with runner.isolated_filesystem():
+        result = runner.invoke(mckit, args=['split', '-o', out, source], catch_exceptions=False)
+        assert result.exit_code == 0, "Should success without output directory"
+        out = Path(out)
+        assert out.is_dir()
+        expected = expected.split()
+        for e in expected:
+            assert (out/e).exists()
+
+
 @pytest.mark.parametrize("source, expected", [
     (
         "cli/data/simple_cubes.mcnp",
@@ -52,12 +73,39 @@ def test_when_output_dir_is_not_specified(runner, source, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=['split', source], catch_exceptions=False)
-        assert result.exit_code == 0, "Should success without universes"
+        assert result.exit_code == 0, "Should success without output directory"
         out = get_default_output_directory(source, ".split")
         assert out.is_dir()
         expected = expected.split()
         for e in expected:
             assert (out/e).exists()
+
+
+@pytest.mark.parametrize("source, expected", [
+    (
+        "cli/data/simple_cubes.mcnp",
+        "title.txt \
+        cells_start.txt cells.txt cells_end.txt \
+        surfaces_start.txt surfaces.txt surfaces_end.txt \
+        materials_start.txt materials.txt materials_end.txt \
+        transformations_start.txt transformations_end.txt \
+        cards.txt \
+        new_line.txt"
+    ),
+])
+def test_when_separator_files_are_required(runner, source, expected):
+    source = data_filename_resolver(source)
+    with runner.isolated_filesystem():
+        result = runner.invoke(mckit, args=['split', '--separators', source], catch_exceptions=False)
+        assert result.exit_code == 0, "Should success"
+        out = get_default_output_directory(source, ".split")
+        assert out.is_dir()
+        expected = expected.split()
+        for e in expected:
+            assert (out/e).exists()
+        text = (out / "cells_start.txt").read_text(encoding=MCNP_ENCODING)
+        assert is_comment_text(text), "Should be MCNP comment text"
+
 
 
 # @pytest.mark.parametrize("source,expected", [
@@ -98,7 +146,7 @@ def test_when_output_dir_is_not_specified(runner, source, expected):
 # def test_when_output_file_exists_and_override_is_not_specified(runner):
 #     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
 #     with runner.isolated_filesystem() as prefix:
-#         output = Path(prefix) / "simple_cubes.universes/envelopes.i"
+#         output = Path(prefix) / "universes/envelopes.i"
 #         output.parent.mkdir(parents=True)
 #         output.touch(exist_ok=False)
 #         result = runner.invoke(
@@ -129,7 +177,7 @@ def test_when_output_dir_is_not_specified(runner, source, expected):
 # def test_fill_descriptor(runner):
 #     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
 #     with runner.isolated_filesystem() as prefix:
-#         output = Path(prefix) / "simple_cubes.universes/fill-descriptor.toml"
+#         output = Path(prefix) / "universes/fill-descriptor.toml"
 #         result = runner.invoke(
 #             mckit,
 #             args=["split", source],

@@ -78,10 +78,10 @@ def surface_selector(surface_names):
 
 
 def produce_universes(cells):
-    """Creates simple_cubes.universes from cells.
+    """Creates universes from cells.
 
     The function groups all cells that have equal value of 'universe' option,
-    and the creates corresponding simple_cubes.universes. Universe with name 0 is returned
+    and the creates corresponding universes. Universe with name 0 is returned
     only.
 
     Parameters
@@ -136,13 +136,13 @@ class Universe:
     add_cells(cell)
         Adds new cell to the universe.
     apply_fill(cell, universe)
-        Applies fill operations to all or selected cells or simple_cubes.universes.
+        Applies fill operations to all or selected cells or universes.
     bounding_box(tol, box)
         Gets bounding box of the universe.
     copy()
         Makes a copy of the universe.
     find_common_materials()
-        Finds all common materials among simple_cubes.universes.
+        Finds all common materials among universes.
     get_surfaces()
         Gets all surfaces of the universe.
     get_materials()
@@ -152,7 +152,7 @@ class Universe:
     get_transformations()
         Gets all transformations of the universe.
     get_universes()
-        Gets all inner simple_cubes.universes.
+        Gets all inner universes.
     name()
         Gets numeric name of the universe.
     name_clashes()
@@ -164,7 +164,7 @@ class Universe:
     select(cell, selector)
         Selects specified entities.
     set_common_materials(com_mat)
-        Sets new common materials for universe and all nested simple_cubes.universes.
+        Sets new common materials for universe and all nested universes.
     simplify(box, split_disjoint, min_volume)
         Simplifies all cells of the universe.
     test_points(points)
@@ -271,7 +271,7 @@ class Universe:
             self._cells.append(new_cell)
 
     def set_common_materials(self, common_materials):
-        """Sets common materials for this one and all nested simple_cubes.universes.
+        """Sets common materials for this one and all nested universes.
 
         Parameters
         ----------
@@ -350,7 +350,7 @@ class Universe:
         return _predicate
 
     def alone(self):
-        """Gets this universe alone, without inner simple_cubes.universes.
+        """Gets this universe alone, without inner universes.
 
         Returns
         -------
@@ -364,7 +364,7 @@ class Universe:
         return Universe(cells)
 
     def apply_fill(self, cell=None, universe=None, predicate=None, name_rule='new'):
-        """Applies fill operations to all or selected cells or simple_cubes.universes.
+        """Applies fill operations to all or selected cells or universes.
 
         Modifies current universe.
 
@@ -372,7 +372,7 @@ class Universe:
         ----------
         cell : Body or int
             Cell or name of cell which is filled by filling universe. The cell
-            can only belong to this universe. Cells of inner simple_cubes.universes are not
+            can only belong to this universe. Cells of inner universes are not
             taken into account.
         universe : Universe or int
             Filler-universe or its name. Cells, that have this universe as a
@@ -447,7 +447,7 @@ class Universe:
         )
 
     def find_common_materials(self):
-        """Finds common materials among simple_cubes.universes included.
+        """Finds common materials among universes included.
 
         Returns
         -------
@@ -467,7 +467,7 @@ class Universe:
         Parameters
         ----------
         inner : bool
-            Whether to take surfaces of inner simple_cubes.universes. Default: False -
+            Whether to take surfaces of inner universes. Default: False -
             return surfaces of this universe only.
 
         Returns
@@ -489,7 +489,7 @@ class Universe:
         Parameters
         ----------
         recursive : bool
-            Whether to take materials of inner simple_cubes.universes. Default: False -
+            Whether to take materials of inner universes. Default: False -
             returns materials of this universe only.
 
         Returns
@@ -526,12 +526,12 @@ class Universe:
         pass   # TODO dvp: add transformations
 
     def get_universes(self):
-        """Gets all inner simple_cubes.universes.
+        """Gets all inner universes.
 
         Returns
         -------
-        simple_cubes.universes : set
-            A set of simple_cubes.universes.
+        universes : set
+            A set of universes.
         """
         universes = {self}
         for c in self:
@@ -670,7 +670,7 @@ class Universe:
             A function that accepts 1 argument, Body instance, and returns
             selected entities.
         inner : bool
-            Whether to consider inner simple_cubes.universes. Default: False - only this
+            Whether to consider inner universes. Default: False - only this
             universe will be taken into account.
 
         Returns

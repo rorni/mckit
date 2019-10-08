@@ -3,22 +3,30 @@ import re
 import sys
 import typing as tp
 from enum import IntEnum
-from timeit import default_timer as timer
-
-import six
 from attr import attrs, attrib
 
 LOG = logging.getLogger(__name__)
 
+
+BLANK_LINE_PATTERN = re.compile(
+    r'\n\s*\n',
+    flags=re.MULTILINE,
+)
+
+COMMENT_LINE_PATTERN = re.compile(
+    r'^\s{,5}[cC]( .*)?\s*$'
+)
+
 # pattern to remove comments from a card text
-COMMENT_PATTERN = re.compile(
-    r'\s*\$.*|\nc.*|^c.*\n',
+REMOVE_COMMENT_PATTERN = re.compile(
+    r'(\s*\$.*$)|(^\s{0,5}c\s.*\n?)',
     flags=re.MULTILINE | re.IGNORECASE
 )
 
+
 # pattern to split section text to optional "comment" and subsequent MCNP card pairs
 CARD_PATTERN = re.compile(
-    r"(?P<comment>(^c.*\n?)+)?(?P<card>^\w.*(\n((^c.*\n?)*^\s+.*\S.*\n?)*)?)?",
+    r"(?P<comment>((^\s{,5}c( .*)?\s*$)\n?)+)?(?P<card>^\s{,5}(\*|\w).*(\n((^\s{,5}c.*\n?)*^\s{5,}\S.*\n?)*)?)?",
     flags=re.MULTILINE | re.IGNORECASE
 )
 
@@ -28,6 +36,10 @@ SPACE_PATTERN = re.compile(
     flags=re.MULTILINE
 )
 
+SDEF_PATTERN = re.compile(
+    r"(sdef)|(s[ibp]\d+)|(ds\d+)|(wwp.*)",
+    re.IGNORECASE,
+)
 
 class Kind(IntEnum):
     COMMENT = 0,
@@ -40,16 +52,17 @@ class Kind(IntEnum):
 
     @classmethod
     def from_card_text(cls, text: str):
-        if text[0] in "mM" and str.isdigit(text[1]):
+        label: str = text.split(maxsplit=2)[0]
+        label = label.strip()
+        if label[0] in "mM" and str.isdigit(label[1]):
             return Kind.MATERIAL
         # check if a label is for transformation card, example: TR20 or *tr1
         i = 0
-        if text[0] == "*":
+        if label[0] == "*":
             i = 1
-        if text[i] in "tT" and text[i + 1] in "rR" and str.isdigit(text[i + 2]):
+        if label[i] in "tT" and label[i + 1] in "rR" and str.isdigit(label[i + 2]):
             return Kind.TRANSFORMATION
-        label: str = text.split(maxsplit=2)[0]
-        if 'sdef' == label.lower():
+        if SDEF_PATTERN.match(label):
             return Kind.SDEF
         if is_comment_text(text, skip_asserts=True):
             return Kind.COMMENT
@@ -211,7 +224,7 @@ def parse_sections(inp: tp.TextIO) -> InputSections:
     data_cards = None
     remainder = None
 
-    sections = inp.read().split("\n\n", 5)
+    sections = BLANK_LINE_PATTERN.split(inp.read(), 5)
 
     # The first line can be message or title.
     kw = sections[0][:len("message:")].lower()
@@ -275,7 +288,7 @@ def check_title_is_continue(title):
 
 
 def is_comment(seq):
-    if isinstance(seq, six.string_types):
+    if isinstance(seq, str):
         return is_comment_text(seq, skip_asserts=True)
     res = next((text for text in seq.split('\n') if not is_comment_text(text)), False)
     return not res
@@ -283,7 +296,7 @@ def is_comment(seq):
 
 def is_comment_text(text, skip_asserts=False):
     if not skip_asserts:
-        assert isinstance(text, six.string_types), "The parameter 'line' should be text"
+        assert isinstance(text, str), "The parameter 'line' should be text"
     if '\n' in text:
         res = next((line for line in text.split('\n') if not is_comment_line(line)), False)
         return not res
@@ -291,15 +304,15 @@ def is_comment_text(text, skip_asserts=False):
         return is_comment_line(text, skip_asserts=True)
 
 
-def is_comment_line(line, skip_asserts=False):
+def is_comment_line(line: str, skip_asserts=False):
     if not skip_asserts:
-        assert isinstance(line, six.string_types), "The parameter 'line' should be text"
+        assert isinstance(line, str), "The parameter 'line' should be text"
         assert '\n' not in line, "The parameter 'line' should be the single text line"
-    return line[0] in "cC"
+    return COMMENT_LINE_PATTERN.match(line)
 
 
 def get_clean_text(text):
-    without_comments = COMMENT_PATTERN.subn('', text)[0]
+    without_comments = REMOVE_COMMENT_PATTERN.subn('', text)[0]
     with_spaces_normalized = SPACE_PATTERN.subn(' ', without_comments)[0]
     return with_spaces_normalized
 

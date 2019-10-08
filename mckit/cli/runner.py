@@ -5,16 +5,18 @@ import sys
 
 import click
 import click_log
+
+from contextlib import contextmanager
 from pathlib import Path
 
 from mckit import __version__
+from mckit.utils import MCNP_ENCODING
 from mckit.cli.commands.common import get_default_output_directory
-from mckit.cli.commands import do_decompose, do_compose, do_split
+from mckit.cli.commands import do_decompose, do_compose, do_split, do_check
 
 __LOG = logging.getLogger(__name__)
 click_log.basic_config(__LOG)
 __LOG.level = logging.INFO
-
 
 if sys.version_info.major < 3:  # pragma: no cover
     click.echo("Only Python 3 is supported in concat_mcnp")
@@ -80,6 +82,9 @@ def compose(ctx, output, fill_descriptor, source):
 @mckit.command()
 @click.pass_context
 @click.option("--output", "-o", default=None, help="Output directory")
+@click.option("--separators/--no-separators", default=False,
+              help="Write comment files to prepend and append this model cells, surfaces etc. on concatenation"
+              )
 @click.argument(
     "source",
     metavar="<source>",
@@ -87,15 +92,101 @@ def compose(ctx, output, fill_descriptor, source):
     nargs=1,
     required=True,
 )
-def split(ctx, output, source):
+def split(ctx, output, source, separators):
     if output is None:
         output = get_default_output_directory(source, ".split")
     else:
         output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     __LOG.info(f"Splitting \"{source}\" to directory \"{output}\"")
-    return do_split(output, source, ctx.obj['OVERRIDE'])
+    return do_split(output, source, ctx.obj['OVERRIDE'], separators)
 
+
+# noinspection PyCompatibility
+@contextmanager
+def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
+    if output:
+        output = Path(output)
+        if exist_ok or not output.exists():
+            fid = output.open("w", encoding=encoding)
+        else:
+            raise click.UsageError(f"Specify --override option to override existing file '{output}'")
+    else:
+        fid = sys.stdout
+    try:
+        yield fid
+    finally:
+        if fid is not sys.stdout:
+            fid.close()
+
+
+# noinspection PyCompatibility
+@mckit.command()
+@click.pass_context
+@click.option(
+    "--output", "-o",
+    metavar="<output>",
+    type=click.Path(exists=False),
+    required=False,
+    help="File to write the concatenated parts",
+)
+@click.option(
+    "--parts-encoding",
+    metavar="<output>",
+    type=click.Path(exists=False),
+    required=False,
+    default=MCNP_ENCODING,
+    help=f"Encoding to read parts (default:{MCNP_ENCODING})",
+)
+@click.option(
+    "--output-encoding",
+    metavar="<output>",
+    type=click.Path(exists=False),
+    required=False,
+    default=MCNP_ENCODING,
+    help=f"Encoding to write output (default:{MCNP_ENCODING})",
+)
+@click.argument(
+    "parts",
+    metavar="<part...>",
+    type=click.Path(exists=True),
+    nargs=-1,
+    required=True,
+)
+def concat(
+        ctx,
+        output,
+        parts_encoding,
+        output_encoding,
+        parts
+):
+    override = ctx.obj['OVERRIDE']
+    with resolve_output(output, exist_ok=override, encoding=output_encoding) as out_fid:
+        for f in parts:
+            f = Path(f)
+            print(f.read_text(encoding=parts_encoding), file=out_fid, end="")
+
+
+# noinspection PyCompatibility
+@mckit.command()
+@click.pass_context
+@click.option(
+    "--output", "-o",
+    metavar="<output>",
+    type=click.Path(exists=False),
+    required=False,
+    help="File to write the concatenated parts",
+)
+@click.argument(
+    "source",
+    metavar="<source>",
+    type=click.Path(exists=True),
+    nargs=1,
+    required=True,
+)
+def check(ctx, output, source):
+    override = ctx.obj['OVERRIDE']
+    do_check(source, output, override)
 
 if __name__ == '__main__':
     mckit(obj={})
