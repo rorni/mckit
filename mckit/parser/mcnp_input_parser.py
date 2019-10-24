@@ -62,7 +62,6 @@ DATA_KEYWORDS = {
     'JINTS', 'KMESH', 'KINTS', 'EMESH', 'EINTS', 'FACTOR', 'OUT', 'TR',
     'M', 'GAS', 'ESTEP', 'NLIB', 'PLIB', 'PNLIB', 'ELIB', 'COND',
     'MPN', 'DRX', 'TOTNU', 'NONU', 'AWTAB', 'XS', 'VOID', 'PIKMT', 'MGOPT',
-    'NO',
     'PHYS', 'TMP', 'THTME', 'MT',
     'CUT', 'ELPT', 'NOTRN', 'NPS', 'CTME',
     'PRDMP', 'LOST', 'DBCN', 'FILES', 'PRINT', 'TALNP', 'MPLOT', 'PTRAC',
@@ -88,7 +87,7 @@ tokens = [
     'title',
     'void_material',
     'lib_spec'
-] + list(KEYWORDS)
+] + list(KEYWORDS) + list(COMMON_KEYWORDS)
 
 
 states = (
@@ -114,6 +113,7 @@ FLT_NUMBER = r'(' + \
              INT_NUMBER + r'?' + FRACTION + INT_NUMBER + EXPONENT + r'?|' +\
              INT_NUMBER + FRACTION + r'?' + EXPONENT + r'|' + \
              INT_NUMBER + FRACTION + r')(?=[ \n-+])'
+# TODO dvp: why FLT_NUMBER is not just: [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?
 LIB_SPEC = INT_NUMBER + r'[CDEPUY]'
 KEYWORD = r'[A-Z]+(/[A-Z]+)?'
 VOID_MATERIAL = r' 0 '
