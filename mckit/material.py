@@ -86,6 +86,7 @@ class Composition(Card):
         """Gets relative tolerance of Composition comparison."""
         return cls._tolerance
 
+    # TODO dvp: is there specs using both atomic and weight definitions
     def __init__(self, atomic=(), weight=(), **options):
         Card.__init__(self, **options)
         self._composition = {}
@@ -152,7 +153,7 @@ class Composition(Card):
         return True
 
     def __hash__(self):
-        return reduce(xor, map(hash, self._composition.keys()))
+        return reduce(xor, map(hash, self._composition.keys()))   # TODO dvp: why self._hash is not used
 
     def mcnp_words(self):
         words = ['M{0} '.format(self.name())]
