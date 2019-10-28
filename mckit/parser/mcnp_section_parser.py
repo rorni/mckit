@@ -312,8 +312,8 @@ def is_comment_line(line: str, skip_asserts=False):
 
 
 def get_clean_text(text):
-    without_comments = REMOVE_COMMENT_PATTERN.subn('', text)[0]
-    with_spaces_normalized = SPACE_PATTERN.subn(' ', without_comments)[0]
+    without_comments = REMOVE_COMMENT_PATTERN.sub(' ', text)
+    with_spaces_normalized = SPACE_PATTERN.sub(' ', without_comments)
     return with_spaces_normalized
 
 
