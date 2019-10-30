@@ -2,6 +2,7 @@ import sly
 import re
 import mckit.material as mat
 from .common import drop_c_comments
+import mckit.parser.common as cmn
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
@@ -12,10 +13,10 @@ class Lexer(sly.Lexer):
 
     NAME = r'm\d+'
     LIB = r'\.\d+[cdepuy]'
-    INTEGER = r'\d+'
-    FLOAT = r'[-+]?\d*\.?\d+(?:e[-+]?\d+)?'
-    TRAIL_COMMENT = r'\n\s+\$[^\n]*\n?'
-    EOL_COMMENT = r'\$[^\n]*\n?'
+    INTEGER = cmn.INTEGER
+    FLOAT = cmn.FLOAT
+    TRAIL_COMMENT = cmn.TRAIL_COMMENT
+    EOL_COMMENT = cmn.EOL_COMMENT
     OPTION = r'(?:(?:gas|estep|cond)\s+\d+)|(?:(?:n|p|pn|e)lib\s+\S+)'
 
     @_(r'm\d+')
@@ -23,7 +24,7 @@ class Lexer(sly.Lexer):
         t.value = int(t.value[1:])
         return t
 
-    @_(r'\d+')
+    @_(cmn.INTEGER)
     def INTEGER(self, t):
         t.value = int(t.value)
         return t
@@ -36,17 +37,17 @@ class Lexer(sly.Lexer):
         t.value = value
         return t
 
-    @_(r'[-+]?\d*\.?\d+(e[-+]?\d+)?')
+    @_(cmn.FLOAT)
     def FLOAT(self, t):
         t.value = float(t.value)
         return t
 
-    @_(r'\n\s+\$[^\n]*\n?')
+    @_(cmn.TRAIL_COMMENT)
     def TRAIL_COMMENT(self, t):
         t.value = t.value.strip()
         return t
 
-    @_(r'\$[^\n]*\n?')
+    @_(cmn.EOL_COMMENT)
     def EOL_COMMENT(self, t):
         t.value = t.value.strip()
         return t

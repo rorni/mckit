@@ -6,6 +6,7 @@ import numpy as np
 from .geometry import ORIGIN
 from .card import Card
 from .printer import pretty_float
+from functools import wraps
 
 __all__ = ['Transformation', 'IDENTITY_ROTATION']
 
@@ -58,6 +59,7 @@ class Transformation(Card):
     reverse()
         Reverses this transformation, and returns the result.
     """
+
     def __init__(self, translation=ORIGIN, rotation=None,
                  indegrees=False, inverted=False, **options):
 
@@ -90,7 +92,7 @@ class Transformation(Card):
             # value of cosine of angle between two basis vectors.
             cos_th = np.sin(ANGLE_TOLERANCE)
             if abs(r[0, 1]) > cos_th or abs(r[0, 2]) > cos_th or \
-               abs(r[1, 2]) > cos_th:
+                    abs(r[1, 2]) > cos_th:
                 raise ValueError('Non-orthogonality is greater than 0.001 rad.')
             # To preserve directions of corrected basis vectors.
             for i in range(3):
@@ -279,3 +281,19 @@ class Transformation(Card):
         t1 = -np.dot(u1, self._t)
         return Transformation(translation=t1, rotation=u1)
 
+    @staticmethod
+    def approximator(rtol: float = 1e-05, atol: float = 1e-08, equal_nan=False):
+        """Compares two transformations with a given tolerances"""
+
+        @wraps(Transformation.approximator)
+        def _call(a: Transformation, b: Transformation) -> bool:
+            if np.all(np.isclose(a._t, b._t, rtol, atol, equal_nan)):
+                if a._u is not None:
+                    if b._u is not None:
+                        if np.all(np.isclose(a._u, b._u, rtol, atol, equal_nan)):
+                            return True
+                else:
+                    return b._u is None
+            return False
+
+        return _call
