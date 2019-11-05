@@ -20,8 +20,8 @@ def actual_volume_97():
     return dx * dy * dz
 
 
-def get_path(uninverse_name: int) -> Path:
-    return Path(f"u{uninverse_name:d}.i")
+def get_path(universe_name: int) -> Path:
+    return Path(f"u{universe_name:d}.i")
 
 
 def load_universe(universe_name: int) -> mk.Universe:
