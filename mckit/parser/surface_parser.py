@@ -1,23 +1,47 @@
 import sly
 import re
-import mckit.transformation as tr
+import mckit.surface as surf
 import mckit.parser.common as cmn
 from .common import drop_c_comments
 
 
+SURFACE_TYPES = {
+    'P', 'PX', 'PY', 'PZ',
+    'S', 'SO', 'SX', 'SY', 'SZ',
+    'CX', 'CY', 'CZ', 'C/X', 'C/Y', 'C/Z',
+    'KX', 'KY', 'KZ', 'K/X', 'K/Y', 'K/Z',
+    'TX', 'TY', 'TZ',
+    'SQ', 'GQ',
+    'X', 'Y', 'Z',
+}
+
+
+def intern_surface_type(word: str):
+    word = cmn.ensure_upper(word)
+    for w in SURFACE_TYPES:
+        if w == word:
+            return w
+    return None
+
+
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(sly.Lexer):
-    tokens = {NAME, FLOAT, INTEGER}
-    literals = {'*', '+'}
+    tokens = {MODIFIER, SURFACE_TYPE, FLOAT, INTEGER}
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
 
-    NAME = r'[a-z]+(?:/[a-z]+)?'
+    MODIFIER = r'\*|\+'
+    SURFACE_TYPE = r'[a-z]+(?:/[a-z]+)?'
     FLOAT = cmn.FLOAT
     INTEGER = cmn.INTEGER
 
     @_(r'[a-z]+(?:/[a-z]+)?')
-    def NAME(self, t):
+    def SURFACE_TYPE(self, t):
+        surface_type = intern_surface_type(t.value)
+        if surface_type:
+            t.value = surface_type
+        else:
+            raise cmn.ParseError(f"{t.value} is not a valid surface type")
         return t
 
     @_(cmn.FLOAT)
@@ -44,44 +68,50 @@ class Lexer(sly.Lexer):
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
+    def __init__(self, transformations, surfaces=dict()):
+        sly.Parser.__init__(self)
+        self._transformations = transformations
+        self._surfaces = surfaces
 
-    @_('* INTEGER NAME surface_params')
-    def surface(self, p):
-        surf = p.surface_params
-        n = len(p)
-        surf = p[n - 1]
-        surf['name'] = p[n - 2]
-        if n == 4:
-            surf['modifier'] = p[1]
-        comment = extract_comments(p.lineno(1))
-        if comment:
-            surf['comment'] = comment
-        p[0] = surf
-
-    @_('translation rotation INTEGER')
-    def transform_params(self, p):
-        return p.translation, p.rotation, True
-
-    @_('translation rotation')
-    def transform_params(self, p):
-        return p.translation, p.rotation, False
-
-    @_('translation')
-    def transform_params(self, p):
-        return p.translation, None, False
-
-    @_('float float float')
-    def translation(self, p):
-        return [f for f in p]
+    @property
+    def surfaces(self):
+        return self._surfaces
 
     @_(
-        'float float float float float float float float float',
-        'float float float float float float',
-        'float float float float float',
-        'float float float',
+        'MODIFIER INTEGER surface_description',
+        'INTEGER surface_description',
     )
-    def rotation(self, p):
-        return [f for f in p]
+    def surface(self, p):
+        kind, params, transform = p.surface_description
+        name = p.INTEGER
+        if name in self.surfaces:
+            raise cmn.ParseError(f"Surface {name} is duplicated")
+        options = {}
+        if transform:
+            options['transform'] = self.transformations[transform]
+        if p.MODIFIER:
+            options['modifier'] = p.MODIFIER
+        surface = surf.create_surface(kind, *params, **options)
+        self.surfaces[name] = surface
+        return surface
+
+    @_(
+        'INTEGER SURFACE_TYPE surface_params',
+        'SURFACE_TYPE surface_params',
+    )
+    def surface_description(self, p):
+        params = p.surface_params
+        kind = p.SURFACE_TYPE
+        transform = p.INTEGER
+        return kind, params, transform
+
+    @_('surface_params float')
+    def surface_params(self, p):
+        return p.surface_params.append(p.float)
+
+    @_('float')
+    def surface_params(self, p):
+        return [p.float]
 
     @_('FLOAT')
     def float(self, p):
@@ -92,9 +122,9 @@ class Parser(sly.Parser):
         return float(p.INTEGER)
 
 
-def parse(text):
+def parse(text, transformations={}):
     text = drop_c_comments(text)
     lexer = Lexer()
-    parser = Parser()
+    parser = Parser(transformations)
     result = parser.parse(lexer.tokenize(text))
     return result
