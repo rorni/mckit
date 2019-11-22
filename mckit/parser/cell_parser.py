@@ -1,48 +1,22 @@
 import sly
 import re
 import mckit.surface as surf
+import mckit.material as mat
 import mckit.parser.common as cmn
 from .common import drop_c_comments
 
 
-SURFACE_TYPES = {
-    'P', 'PX', 'PY', 'PZ',
-    'S', 'SO', 'SX', 'SY', 'SZ',
-    'CX', 'CY', 'CZ', 'C/X', 'C/Y', 'C/Z',
-    'KX', 'KY', 'KZ', 'K/X', 'K/Y', 'K/Z',
-    'TX', 'TY', 'TZ',
-    'SQ', 'GQ',
-    'X', 'Y', 'Z',
-}
-
-
-def intern_surface_type(word: str):
-    word = cmn.ensure_upper(word)
-    for w in SURFACE_TYPES:
-        if w == word:
-            return w
-    return None
-
-
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(sly.Lexer):
-    tokens = {MODIFIER, SURFACE_TYPE, FLOAT, INTEGER}
+    tokens = {ATTR, IMP, FLOAT, INTEGER}
+    literals = {':', '(', ')'}
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
 
-    MODIFIER = r'\*|\+'
-    SURFACE_TYPE = r'[a-z]+(?:/[a-z]+)?'
+    ATTR=r'U|MAT|LAT|IMP|TMP|RHO|VOL|TRCL|FILL'
+    IMP = r'IMP'
     FLOAT = cmn.FLOAT
     INTEGER = cmn.INTEGER
-
-    @_(r'[a-z]+(?:/[a-z]+)?')
-    def SURFACE_TYPE(self, t):
-        surface_type = intern_surface_type(t.value)
-        if surface_type:
-            t.value = surface_type
-        else:
-            raise cmn.ParseError(f"{t.value} is not a valid surface type")
-        return t
 
     @_(cmn.FLOAT)
     def FLOAT(self, t):
@@ -68,25 +42,33 @@ class Lexer(sly.Lexer):
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
-    def __init__(self, transformations):
+    def __init__(self, transformations, compositions):
         sly.Parser.__init__(self)
         self._transformations = transformations
+        self.compositions = compositions
 
+    @property
+    def transformations(self):
+        return self._transformations
 
-    @_(
-        'MODIFIER INTEGER surface_description',
-        'INTEGER surface_description',
-    )
-    def surface(self, p):
-        kind, params, transform = p.surface_description
+    @property
+    def compostions(self):
+        return self.compositions
+
+    @_('INTEGER cell_material cell_spec')
+    def cell(self, p):
         name = p.INTEGER
         options = {}
-        if transform:
-            options['transform'] = self.transformations[transform]
-        if p.MODIFIER:
-            options['modifier'] = p.MODIFIER
-        _surface = _surf.create_surface(kind, *params, **options)
-        return _surface
+        if p.cell_material is not None:
+            composition_no: int, density: float = p.cell_material
+            comp = self.compositions[composition_no]
+            if density > 0:
+                material = mat.Material(composition=comp, concentration=density*1e24)
+            else:
+                material = mat.Material(composition=comp, density=density)
+            options['MAT'] = material
+        cell = Body() ...
+        return cell
 
     @_(
         'INTEGER SURFACE_TYPE surface_params',
