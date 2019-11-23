@@ -1,11 +1,10 @@
 import re
 
 RE_C_COMMENT = re.compile(r'\n\s{0,5}c\s[^\n]*', re.IGNORECASE | re.MULTILINE)
-
-INTEGER = r'\d+'
-FLOAT = r'[-+]?\d*\.?\d+(?:e[-+]?\d+)?'
 TRAIL_COMMENT = r'\n\s+\$[^\n]*\n?'
 EOL_COMMENT = r'\$[^\n]*\n?'
+FLOAT = r'[-+]?\d*\.?\d+(?:e[-+]?\d+)?'
+INTEGER = r'\d+'
 
 
 def ensure_lower(text: str):
@@ -28,4 +27,7 @@ def drop_c_comments(text):
 
 class ParseError(ValueError):
     """Parsing exception"""
-    pass
+
+
+# noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
+

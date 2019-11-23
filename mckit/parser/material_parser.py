@@ -1,22 +1,18 @@
-import sly
 import re
+import sly
 import mckit.material as mat
-from .common import drop_c_comments
-import mckit.parser.common as cmn
+from mckit.parser.common.utils import drop_c_comments
+import mckit.parser.common.utils as cmn
+from mckit.parser.common.Lexer import LexerMixin
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
-class Lexer(sly.Lexer):
-    tokens = {NAME, INTEGER, LIB, FLOAT, OPTION, EOL_COMMENT, TRAIL_COMMENT}
+class Lexer(sly.Lexer, LexerMixin):
+    literals = {':', '(', ')'}
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
+    tokens = {NAME, FRACTION, OPTION, TRAIL_COMMENT, EOL_COMMENT, FLOAT, INTEGER}
 
-    NAME = r'm\d+'
-    LIB = r'\.\d+[cdepuy]'
-    INTEGER = cmn.INTEGER
-    FLOAT = cmn.FLOAT
-    TRAIL_COMMENT = cmn.TRAIL_COMMENT
-    EOL_COMMENT = cmn.EOL_COMMENT
     OPTION = r'(?:(?:gas|estep|cond)\s+\d+)|(?:(?:n|p|pn|e)lib\s+\S+)'
 
     @_(r'm\d+')
@@ -24,22 +20,17 @@ class Lexer(sly.Lexer):
         t.value = int(t.value[1:])
         return t
 
-    @_(cmn.INTEGER)
-    def INTEGER(self, t):
-        t.value = int(t.value)
-        return t
-
-    @_(r'\.\d+[cdepuy]')
-    def LIB(self, t):
-        value = t.value[1:]  # drop dot
-        if not value.islower():
-            value = value.lower()
-        t.value = value
-        return t
-
-    @_(cmn.FLOAT)
-    def FLOAT(self, t):
-        t.value = float(t.value)
+    @_(r'\d+(?:\.\d+[cdepuy])')
+    def FRACTION(self, t):
+        if '.' in t.value:
+            isotope, lib = t.value.split('.')
+            isotope = int(isotope)
+            lib = lib[:] # drop dot
+            lib = cmn.ensure_lower(lib)
+            t.value = isotope, lib
+        else:
+            t.type = 'INTEGER'
+            t.value = int(t.value)
         return t
 
     @_(cmn.TRAIL_COMMENT)
@@ -52,9 +43,19 @@ class Lexer(sly.Lexer):
         t.value = t.value.strip()
         return t
 
+    @_(cmn.FLOAT)
+    def FLOAT(self, token):
+        return LexerMixin.on_float(token)
+
+    @_(cmn.INTEGER)
+    def INTEGER(self, token):
+        return LexerMixin.on_integer(token)
+
     @_(r'\n+')
-    def ignore_newline(self, t):
-        self.lineno += len(t.value)
+    def ignore_newline(self, token):
+        self.lineno += len(token.value)
+
+    error = LexerMixin.error
 
 
 # noinspection PyUnresolvedReferences
@@ -115,13 +116,10 @@ class Parser(sly.Parser):
         name, lib, frac = p.fraction_a
         return mat.Element(name, lib=lib), frac
 
-    @_('INTEGER LIB FLOAT')
+    @_('FRACTION FLOAT')
     def fraction_a(self, p):
-        return p.INTEGER, p.LIB, p.FLOAT
-
-    @_('INTEGER FLOAT')
-    def fraction_a(self, p):
-        return p.INTEGER, None, p.FLOAT
+        isotope, lib = p.FRACTION
+        return isotope, lib, p.FLOAT
 
     @_('options option')
     def options(self, p):

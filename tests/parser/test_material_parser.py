@@ -8,15 +8,15 @@ from mckit.material import Composition, Element
 @pytest.mark.parametrize("text, expected_types, expected_values", [
     (
         "1001.21c -1.0",
-        ['INTEGER', 'LIB', 'FLOAT'],
-        [1001, '21c', -1.0],
+        ['FRACTION', 'FLOAT'],
+        [(1001, '21c'), -1.0],
     ),
     (
         """
         1001.21c -1.0  $ comment
         """.strip(),
-        ['INTEGER', 'LIB', 'FLOAT', 'EOL_COMMENT'],
-        [1001, '21c', -1.0, '$ comment'],
+        ['FRACTION', 'FLOAT', 'EOL_COMMENT'],
+        [(1001, '21c'), -1.0, '$ comment'],
     ),
     (
         "  M100 1000",
@@ -26,7 +26,7 @@ from mckit.material import Composition, Element
 ])
 def test_test_composition_lexer(text, expected_types, expected_values):
     lexer = mp.Lexer()
-    tokens = list(t for t in lexer.tokenize(text))
+    tokens = list(lexer.tokenize(text))
     result = list(t.type for t in tokens)
     assert result == expected_types
     result = list(t.value for t in tokens)

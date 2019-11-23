@@ -1,10 +1,9 @@
-from typing import List, Tuple, Optional, NoReturn, Dict, Union, NewType, Callable, Any
-from attr import attrs, attrib
+from typing import List, Tuple, Optional, NoReturn, Dict, Union, NewType, Callable
 import sly
 import re
 import mckit.surface as surf
-import mckit.parser.common as cmn
-from .common import drop_c_comments
+import mckit.parser.common.utils as cmn
+from mckit.parser.common.utils import drop_c_comments
 
 
 SURFACE_TYPES = {

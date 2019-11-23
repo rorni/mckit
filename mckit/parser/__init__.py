@@ -1,1 +1,1 @@
-from .common import RE_C_COMMENT, drop_c_comments
+from mckit.parser.common.utils import RE_C_COMMENT, drop_c_comments

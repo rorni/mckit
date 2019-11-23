@@ -1,42 +1,41 @@
-import sly
 import re
-import mckit.surface as surf
+import sly
 import mckit.material as mat
-import mckit.parser.common as cmn
-from .common import drop_c_comments
+import mckit.parser.common.utils as cmn
+from mckit.parser.common.utils import drop_c_comments
+from mckit.parser.common.Lexer import LexerMixin
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
-class Lexer(sly.Lexer):
-    tokens = {ATTR, IMP, FLOAT, INTEGER, ZERO}
+class Lexer(sly.Lexer, LexerMixin):
     literals = {':', '(', ')'}
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
-
-    ATTR=r'U|MAT|LAT|IMP|TMP|RHO|VOL|TRCL|FILL'
+    tokens = {ATTR, IMP, INTEGER, FLOAT, ZERO, LIKE, BUT}
+    ATTR = r'U|MAT|LAT|IMP|TMP|RHO|VOL|TRCL|FILL'
     IMP = r'IMP'
-    FLOAT = cmn.FLOAT
-    INTEGER = cmn.INTEGER
+    LIKE = r'LIKE'
+    BUT = r'BUT'
 
     @_(cmn.FLOAT)
-    def FLOAT(self, t):
-        try:
-            i_value = int(t.value)
-            if i_value == t.value:
-                t.type = 'INTEGER'
-                t.value = i_value
-        except ValueError:
-            t.value = float(t.value)
-        return t
+    def FLOAT(self, token):
+        return LexerMixin.on_float(token)
 
     @_(cmn.INTEGER)
-    def INTEGER(self, t):
-        t.value = int(t.value)
-        return t
+    def INTEGER(self, token):
+        res = LexerMixin.on_integer(token)
+        if res == 0:
+            token.type = 'ZERO'
+            token.value = 0
+        else:
+            token.value = res
+        return token
 
     @_(r'\n+')
-    def ignore_newline(self, t):
-        self.lineno += len(t.value)
+    def ignore_newline(self, token):
+        self.lineno += len(token.value)
+
+    error = LexerMixin.error
 
 
 # noinspection PyUnresolvedReferences
@@ -46,15 +45,15 @@ class Parser(sly.Parser):
     def __init__(self, transformations, compositions):
         sly.Parser.__init__(self)
         self._transformations = transformations
-        self.compositions = compositions
+        self._compositions = compositions
 
     @property
     def transformations(self):
         return self._transformations
 
     @property
-    def compostions(self):
-        return self.compositions
+    def compositions(self):
+        return self._compositions
 
     @_('INTEGER cell_material cell_spec')
     def cell(self, p):
@@ -64,30 +63,50 @@ class Parser(sly.Parser):
             composition_no, density = p.cell_material  # type: int, float
             comp = self.compositions[composition_no]
             if density > 0:
-                material = mat.Material(composition=comp, concentration=density*1e24)
+                material = mat.Material(composition=comp, concentration=density * 1e24)
             else:
                 material = mat.Material(composition=comp, density=-density)
             options['MAT'] = material
-        cell = Body() ...
+        # cell = Body() ...
         return cell
 
-    @_(
-        'INTEGER SURFACE_TYPE surface_params',
-        'SURFACE_TYPE surface_params',
-    )
+    @_('INTEGER LIKE INTEGER BUT attributes')
+    def cell(self, p):
+        raise NotImplementedError()
+
+    @_('INTEGER float')
     def cell_material(self, p):
-        params = p.surface_params
-        kind = p.SURFACE_TYPE
-        transform = p.INTEGER
-        return kind, params, transform
+        return p.INTEGER, p.float
 
-    @_('surface_params float')
-    def surface_params(self, p):
-        return p.surface_params.append(p.float)
+    @_('ZERO')
+    def cell_material(self, p):
+        return None
 
-    @_('float')
-    def surface_params(self, p):
-        return [p.float]
+    @_('expression attributes')
+    def cell_spec(self, p):
+        return p.expression, p.attributes
+
+    @_('expression')
+    def cell_spec(self, p):
+        return p.expression, None
+
+    @_('INTEGER')
+    def expression(self, p):
+        return p.value
+
+    @_('attributes attribute')
+    def attributes(self, p):
+        res = p.attributes
+        res.append(p.attribute)
+        return res
+
+    @_('attribute')
+    def attributes(self, p):
+        return [p.attribute]
+
+    @_('ATTR')
+    def attribute(self, p):
+        raise NotImplementedError()
 
     @_('FLOAT')
     def float(self, p):
@@ -99,8 +118,4 @@ class Parser(sly.Parser):
 
 
 def parse(text, transformations={}):
-    text = drop_c_comments(text)
-    lexer = Lexer()
-    parser = Parser(transformations)
-    result = parser.parse(lexer.tokenize(text))
-    return result
+    raise NotImplementedError()

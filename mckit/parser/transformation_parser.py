@@ -1,8 +1,8 @@
 import sly
 import re
 import mckit.transformation as tr
-import mckit.parser.common as cmn
-from .common import drop_c_comments
+import mckit.parser.common.utils as cmn
+from mckit.parser.common.utils import drop_c_comments
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
