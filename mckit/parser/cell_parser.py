@@ -8,7 +8,7 @@ from .common import drop_c_comments
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(sly.Lexer):
-    tokens = {ATTR, IMP, FLOAT, INTEGER}
+    tokens = {ATTR, IMP, FLOAT, INTEGER, ZERO}
     literals = {':', '(', ')'}
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
@@ -22,8 +22,9 @@ class Lexer(sly.Lexer):
     def FLOAT(self, t):
         try:
             i_value = int(t.value)
-            t.type = 'INTEGER'
-            t.value = i_value
+            if i_value == t.value:
+                t.type = 'INTEGER'
+                t.value = i_value
         except ValueError:
             t.value = float(t.value)
         return t
@@ -60,12 +61,12 @@ class Parser(sly.Parser):
         name = p.INTEGER
         options = {}
         if p.cell_material is not None:
-            composition_no: int, density: float = p.cell_material
+            composition_no, density = p.cell_material  # type: int, float
             comp = self.compositions[composition_no]
             if density > 0:
                 material = mat.Material(composition=comp, concentration=density*1e24)
             else:
-                material = mat.Material(composition=comp, density=density)
+                material = mat.Material(composition=comp, density=-density)
             options['MAT'] = material
         cell = Body() ...
         return cell
@@ -74,7 +75,7 @@ class Parser(sly.Parser):
         'INTEGER SURFACE_TYPE surface_params',
         'SURFACE_TYPE surface_params',
     )
-    def surface_description(self, p):
+    def cell_material(self, p):
         params = p.surface_params
         kind = p.SURFACE_TYPE
         transform = p.INTEGER

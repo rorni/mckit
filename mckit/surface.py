@@ -22,8 +22,14 @@ import mckit.body
 
 
 __all__ = [
-    'create_surface', 'Plane', 'Sphere', 'Cone', 'Torus', 'GQuadratic',
-    'Cylinder'
+    'create_surface',
+    'Plane',
+    'Sphere',
+    'Cone',
+    'Torus',
+    'GQuadratic',
+    'Cylinder',
+    'Surface',
 ]
 
 
