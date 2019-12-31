@@ -1,2 +1,2 @@
 from .utils import *
-from .Lexer import LexerMixin, ParseError
+from .Lexer import Lexer, ParseError

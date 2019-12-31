@@ -3,15 +3,15 @@ import sly
 import mckit.material as mat
 from mckit.parser.common.utils import drop_c_comments
 import mckit.parser.common.utils as cmn
-from mckit.parser.common.Lexer import LexerMixin
+from mckit.parser.common.Lexer import Lexer as LexerBase
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
-class Lexer(sly.Lexer, LexerMixin):
+class Lexer(LexerBase):
     literals = {':', '(', ')'}
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
-    tokens = {NAME, FRACTION, OPTION, TRAIL_COMMENT, EOL_COMMENT, FLOAT, INTEGER}
+    tokens = {NAME, FRACTION, OPTION, EOL_COMMENT, FLOAT, INTEGER}
 
     OPTION = r'(?:(?:gas|estep|cond)\s+\d+)|(?:(?:n|p|pn|e)lib\s+\S+)'
 
@@ -29,33 +29,21 @@ class Lexer(sly.Lexer, LexerMixin):
             lib = cmn.ensure_lower(lib)
             t.value = isotope, lib
         else:
-            t.type = 'INTEGER'
-            t.value = int(t.value)
+            t = self.on_integer(t)
         return t
 
-    @_(cmn.TRAIL_COMMENT)
-    def TRAIL_COMMENT(self, t):
-        t.value = t.value.strip()
-        return t
-
-    @_(cmn.EOL_COMMENT)
+    @_(cmn.LINE_WITH_COMMENT)
     def EOL_COMMENT(self, t):
         t.value = t.value.strip()
         return t
 
     @_(cmn.FLOAT)
     def FLOAT(self, token):
-        return LexerMixin.on_float(token)
+        return self.on_float(token)
 
     @_(cmn.INTEGER)
     def INTEGER(self, token):
-        return LexerMixin.on_integer(token)
-
-    @_(r'\n+')
-    def ignore_newline(self, token):
-        self.lineno += len(token.value)
-
-    error = LexerMixin.error
+        return self.on_integer(token)
 
 
 # noinspection PyUnresolvedReferences
@@ -151,10 +139,6 @@ class Parser(sly.Parser):
     @_('comment')
     def comments(self, p):
         return [p.comment]
-
-    @_('TRAIL_COMMENT')
-    def comment(self, p):
-        return p.TRAIL_COMMENT
 
     @_('EOL_COMMENT')
     def comment(self, p):

@@ -5,7 +5,6 @@ import mckit.surface as surf
 import mckit.parser.common.utils as cmn
 from mckit.parser.common.utils import drop_c_comments
 
-
 SURFACE_TYPES = {
     'P', 'PX', 'PY', 'PZ',
     'S', 'SO', 'SX', 'SY', 'SZ',
@@ -24,6 +23,7 @@ OnAbsentTransformationStrategy = NewType(
 
 class DummyTransformation(surf.Transformation):
     """To substitute transformation when it's not found"""
+
     def __init__(self, name: int):
         super().__init__(name=name)
 
@@ -93,9 +93,9 @@ class Parser(sly.Parser):
     tokens = Lexer.tokens
 
     def __init__(
-        self,
-        transformations: Optional[Dict[int, Union[None, DummyTransformation, surf.Transformation]]] = None,
-        on_absent_transformation: Optional[OnAbsentTransformationStrategy] = None,
+            self,
+            transformations: Optional[Dict[int, Union[None, DummyTransformation, surf.Transformation]]] = None,
+            on_absent_transformation: Optional[OnAbsentTransformationStrategy] = None,
     ):
         sly.Parser.__init__(self)
         self._transformations = transformations
@@ -116,12 +116,12 @@ class Parser(sly.Parser):
         return self._on_absent_transformation
 
     def build_surface(
-        self,
-        name: int ,
-        kind: str,
-        params: List[float],
-        transform,
-        modifier,
+            self,
+            name: int,
+            kind: str,
+            params: List[float],
+            transform,
+            modifier,
     ) -> surf.Surface:
         options = {'name': name}
         if transform is not None:
@@ -159,13 +159,13 @@ class Parser(sly.Parser):
 
     @_('transform SURFACE_TYPE surface_params')
     def surface_description(self, p) -> Tuple[str, List[float], Optional[int]]:
-        return p.SURFACE_TYPE,  p.surface_params, p.transform
+        return p.SURFACE_TYPE, p.surface_params, p.transform
 
     @_(
         'SURFACE_TYPE surface_params',
     )
     def surface_description(self, p) -> Tuple[str, List[float], Optional[int]]:
-        return p.SURFACE_TYPE,  p.surface_params, None
+        return p.SURFACE_TYPE, p.surface_params, None
 
     @_('INTEGER')
     def transform(self, p):
