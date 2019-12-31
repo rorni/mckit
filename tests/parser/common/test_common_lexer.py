@@ -4,34 +4,55 @@ import pytest
 import sly
 
 import mckit.parser.common as cmn
-from mckit.parser.common.Lexer import LexerMixin
-
-
-# @pytest.mark.parametrize("text, expected_types, expected_values", [
-#     ("1 0 3.14", ['INTEGER', 'ZERO', 'FLOAT'], [1, 0, 3.14])
-# ])
-# def test_good_path(text, expected_types, expected_values):
-#     lexer = Lexer()
-#     tokens = list(t for t in lexer.tokenize(text))
-#     result = list(t.type for t in tokens)
-#     assert result == expected_types
-#     result = list(t.value for t in tokens)
-#     assert result == expected_values
-
-
-# @pytest.mark.parametrize("text, msg_contains", [
-#     ("1~ 0 3.14", "column 2"),
-#     ("\n1 0 3.14 ~", "at line 2, column 11"),
-# ])
-# def test_bad_path(text, msg_contains):
-#     lexer = Lexer()
-#     with pytest.raises(ParseError, match=msg_contains):
-#         for _ in lexer.tokenize(text):
-#             pass
+from mckit.parser.common.Lexer import ParseError, Lexer as LexerBase
 
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences
-class MyLexer(sly.Lexer, LexerMixin):
+class DerivedLexer(LexerBase):
+    tokens = {FRACTION, FLOAT, INTEGER, ZERO}
+
+    FRACTION = r"\d+(?:\.\d+[a-z])"
+
+    @_(cmn.FLOAT)
+    def FLOAT(self, token):
+        return self.on_float(token)
+
+    @_(cmn.INTEGER)
+    def INTEGER(self, token):
+        return self.on_float(token)
+
+    ZERO = r'0'
+
+
+@pytest.mark.parametrize("text, expected_types, expected_values", [
+    ("1 0 3.14", ['INTEGER', 'ZERO', 'FLOAT'], [1, 0, 3.14]),
+    ("3.14 3.14c", ['FLOAT', 'FRACTION'], [3.14, '3.14c']),
+])
+def test_derived_lexer(text, expected_types, expected_values):
+    lexer = DerivedLexer()
+    tokens = list(lexer.tokenize(text))
+    result = list(t.type for t in tokens)
+    assert result == expected_types
+    result = list(t.value for t in tokens)
+    assert result == expected_values
+
+
+@pytest.mark.parametrize("text, msg_contains", [
+    ("1~ 0 3.14", "column 2"),
+    ("\n1 0 3.14 ~", "at line 2, column 10"),
+    ("\n1 0 3.14 ~", r"\s{9}\^"),
+    ("\n1 0 3.14 0~", r"\s{10}\^"),
+    ("~", "column 1\n~\n\\^"),
+])
+def test_bad_path(text, msg_contains):
+    lexer = DerivedLexer()
+    with pytest.raises(ParseError, match=msg_contains):
+        for _ in lexer.tokenize(text):
+            pass
+
+
+# noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences
+class MyLexer(LexerBase):
     literals = {':', '(', ')'}
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
@@ -42,23 +63,13 @@ class MyLexer(sly.Lexer, LexerMixin):
 
     @_(cmn.FLOAT)
     def FLOAT(self, token):
-        return LexerMixin.on_float(token)
+        return self.on_float(token)
 
     @_(cmn.INTEGER)
     def INTEGER(self, token):
-        res = LexerMixin.on_integer(token)
-        if res == 0:
-            token.type = 'ZERO'
-            token.value = 0
-        else:
-            token.value = res
-        return token
+        return self.on_integer(token)
 
-    @_(r'\n+')
-    def ignore_newline(self, token):
-        self.lineno += len(token.value)
-
-    error = LexerMixin.error
+    ZERO = r'0'
 
 
 @pytest.mark.parametrize("text, expected_types, expected_values", [

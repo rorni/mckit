@@ -1,17 +1,17 @@
 import re
 import sly
 import mckit.material as mat
-from mckit.parser.common.utils import drop_c_comments
+from mckit.parser.common.utils import drop_c_comments, extract_comments
 import mckit.parser.common.utils as cmn
-from mckit.parser.common.Lexer import LexerMixin
+from mckit.parser.common.Lexer import Lexer as LexerBase
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
-class Lexer(sly.Lexer, LexerMixin):
+class Lexer(LexerBase):
     literals = {':', '(', ')'}
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
-    tokens = {NAME, FRACTION, OPTION, TRAIL_COMMENT, EOL_COMMENT, FLOAT, INTEGER}
+    tokens = {NAME, FRACTION, OPTION, FLOAT}
 
     OPTION = r'(?:(?:gas|estep|cond)\s+\d+)|(?:(?:n|p|pn|e)lib\s+\S+)'
 
@@ -29,60 +29,56 @@ class Lexer(sly.Lexer, LexerMixin):
             lib = cmn.ensure_lower(lib)
             t.value = isotope, lib
         else:
-            t.type = 'INTEGER'
-            t.value = int(t.value)
+            t = self.on_integer(t)
         return t
 
-    @_(cmn.TRAIL_COMMENT)
-    def TRAIL_COMMENT(self, t):
-        t.value = t.value.strip()
-        return t
-
-    @_(cmn.EOL_COMMENT)
-    def EOL_COMMENT(self, t):
-        t.value = t.value.strip()
-        return t
+    # @_(r'\$.*$')
+    # def EOL_COMMENT(self, t):
+    #     t.value = t.value[1:].strip()
+    #     return t
 
     @_(cmn.FLOAT)
     def FLOAT(self, token):
-        return LexerMixin.on_float(token)
+        return self.on_float(token)
 
-    @_(cmn.INTEGER)
-    def INTEGER(self, token):
-        return LexerMixin.on_integer(token)
-
-    @_(r'\n+')
-    def ignore_newline(self, token):
-        self.lineno += len(token.value)
-
-    error = LexerMixin.error
+    # @_(cmn.INTEGER)
+    # def INTEGER(self, token):
+    #     return self.on_integer(token)
 
 
 # noinspection PyUnresolvedReferences
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
+    def __init__(self, comments, trailing_comments):
+        self.comments = comments
+        self.trailing_comments = trailing_comments
+
     @staticmethod
-    def build_composition(name, fractions, options=None, comments=None):
+    def build_composition(name, fractions, options=None):
         atomic = []
         weight = []
+
         for el, fraction in fractions:
             if fraction < 0.0:
                 weight.append((el, -fraction))
             else:
                 atomic.append((el, fraction))
+
         if options is None:
             options = {'name': name}
         else:
             options['name'] = name
-        if comments:
-            options['comment'] = comments
+
+        if self.trailing_comments:
+            options['comment'] = self.trailing_comments
+
         return mat.Composition(atomic=atomic, weight=weight, **options)
 
-    @_('composition_a comments')
-    def composition(self, p):
-        name, fractions, options = p.composition_a
-        return Parser.build_composition(name, fractions, options, p.comments)
+    # @_('composition_a comments')
+    # def composition(self, p):
+    #     name, fractions, options = p.composition_a
+    #     return Parser.build_composition(name, fractions, options, p.comments)
 
     @_('composition_a')
     def composition(self, p):
@@ -106,11 +102,11 @@ class Parser(sly.Parser):
     def fractions(self, p):
         return [p.fraction]
 
-    @_('fraction_a EOL_COMMENT')
-    def fraction(self, p):
-        name, lib, frac = p.fraction_a
-        return mat.Element(name, lib=lib, comment=p.EOL_COMMENT), frac
-
+    # @_('fraction_a EOL_COMMENT')
+    # def fraction(self, p):
+    #     name, lib, frac = p.fraction_a
+    #     return mat.Element(name, lib=lib, comment=p.EOL_COMMENT), frac
+    #
     @_('fraction_a')
     def fraction(self, p):
         name, lib, frac = p.fraction_a
@@ -143,27 +139,24 @@ class Parser(sly.Parser):
             value = int(value)
         return option, value
 
-    @_('comments comment')
-    def comments(self, p):
-        p.comments.append(p.comment)
-        return p.comments
-
-    @_('comment')
-    def comments(self, p):
-        return [p.comment]
-
-    @_('TRAIL_COMMENT')
-    def comment(self, p):
-        return p.TRAIL_COMMENT
-
-    @_('EOL_COMMENT')
-    def comment(self, p):
-        return p.EOL_COMMENT
+    # @_('comments comment')
+    # def comments(self, p):
+    #     p.comments.append(p.comment)
+    #     return p.comments
+    #
+    # @_('comment')
+    # def comments(self, p):
+    #     return [p.comment]
+    #
+    # @_('EOL_COMMENT')
+    # def comment(self, p):
+    #     return p.EOL_COMMENT
 
 
 def parse(text):
     text = drop_c_comments(text)
+    text, comments, trailing_comments = extract_comments(text)
     lexer = Lexer()
-    parser = Parser()
+    parser = Parser(comments, trailing_comments)
     result = parser.parse(lexer.tokenize(text))
     return result

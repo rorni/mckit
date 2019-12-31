@@ -43,3 +43,16 @@ def test_float_pattern(text, expected):
     assert match, "Should find float number in the text"
     actual = match.group()
     assert actual == expected
+
+
+@pytest.mark.parametrize("text, expected_new_text, expected_comments, expected_trailing_comment", [
+    ("1 $ zzz", "1", {1: ("zzz",)}, None),
+    ("1 $ zzz\n $ ttt", "1", {1: ("zzz",)}, ["ttt"]),
+    ("1\n $ ttt", "1", None, ["ttt"]),
+    ("1 $ zzz\n $ ttt\n2", "1\n2", {1: ("zzz","ttt")}, None),
+])
+def test_extract_comments(text, expected_new_text, expected_comments, expected_trailing_comment):
+    actual_new_text, actual_comments, actual_trailing_comment = extract_comments(text)
+    assert actual_new_text == expected_new_text
+    assert actual_comments == expected_comments
+    assert actual_trailing_comment == expected_trailing_comment

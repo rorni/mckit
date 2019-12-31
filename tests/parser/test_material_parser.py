@@ -11,13 +11,20 @@ from mckit.material import Composition, Element
         ['FRACTION', 'FLOAT'],
         [(1001, '21c'), -1.0],
     ),
-    (
-        """
-        1001.21c -1.0  $ comment
-        """.strip(),
-        ['FRACTION', 'FLOAT', 'EOL_COMMENT'],
-        [(1001, '21c'), -1.0, '$ comment'],
-    ),
+    # (
+    #     "1001.21c -1.0  $ comment\n",
+    #     ['FRACTION', 'FLOAT', 'EOL_COMMENT'],
+    #     [(1001, '21c'), -1.0, 'comment'],
+    # ),
+    # (
+    #     """
+    #     1001.21c -1.0  $ comment
+    #     1001.21c -1.0
+    #       $ comment
+    #     """.strip(),
+    #     ['FRACTION', 'FLOAT', 'EOL_COMMENT', 'FRACTION', 'FLOAT', 'EOL_COMMENT'],
+    #     [(1001, '21c'), -1.0, '$ comment', (1001, '21c'), -1.0, 'comment'],
+    # ),
     (
         "  M100 1000",
         ['NAME', 'INTEGER'],
@@ -92,3 +99,7 @@ def test_test_composition_parser(text, expected):
     assert isinstance(result, Composition), "Parser should create instance of Composition"
     assert result == expected
     assert result.options == expected.options
+
+
+if __name__ == '__main__':
+    pytest.main()
