@@ -46,9 +46,9 @@ def test_not_existing_mcnp_file(runner):
 
 @pytest.mark.parametrize("source, out, expected", [
     (
-        "cli/data/simple_cubes.mcnp",
+        "cli/data/simple_cubes_with_tallies.mcnp",
         "somewhere.dir",
-        "title.txt cells.txt surfaces.txt materials.txt cards.txt"
+        "title.txt cells.txt surfaces.txt materials.txt tallies.txt cards.txt"
     ),
 ])
 def test_when_output_dir_is_specified(runner, source, out, expected):

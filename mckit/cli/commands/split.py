@@ -1,131 +1,135 @@
 # -*- coding: utf-8 -*-
 
 """
-Разложение модели на teкстовые секции.
+Разложение текста модели на секции.
 
 Читает модель, извлекает и раскладывает в указанную директорию отедельно файлы для ячеек, поверхностей,
 материалов, трансформаций, sdef и прочие карты. Файлы соответственно: cells.txt, surfaces.txt,
 materials.txt, transformations.txt, sdef.txt, cards.txt
 """
-from attr import attrs, attrib
-from datetime import datetime
 import logging
 from pathlib import Path
-import mckit.parser.mcnp_section_parser as sp
-import click
-import mckit as mk
 import typing as tp
-from .common import check_if_path_exists, save_mcnp, get_default_output_directory, MCNP_ENCODING
+from typing import List, Iterable
+
+import mckit.parser.mcnp_section_parser as sp
+from mckit.parser.mcnp_section_parser import Card
+from .common import check_if_path_exists, MCNP_ENCODING
+
+OUTER_LINE = "=" * 40
+INNER_LINE = "-" * 40
 
 
-def print_text(text, output, base_name, override):
-    if  text:
-        out = output / base_name
+def print_text(
+        text: str,
+        output_dir: Path,
+        section_file_name: str,
+        override: bool
+) -> None:
+    if text:
+        out = output_dir / section_file_name
         check_if_path_exists(out, override)
-        with open(out, "w", encoding=MCNP_ENCODING) as fid:
-            print(text, file=fid)
+        out.write_text(text, encoding=MCNP_ENCODING)
 
 
-def print_cards(cards, output, base_name, override):
-    if  cards:
-        out = output / base_name
+def print_cards(
+        cards: Iterable[Card],
+        output_dir: Path,
+        section_file_name: str,
+        override: bool
+) -> None:
+    if cards:
+        out = output_dir / section_file_name
         check_if_path_exists(out, override)
-        with open(out, "w", encoding=MCNP_ENCODING) as fid:
-            for c in cards:
-                print(c.text, file=fid)
+        with out.open("w", encoding=MCNP_ENCODING) as fid:
+            for card in cards:
+                print(card.text, file=fid)
 
 
-@attrs
-class _distributor(object):
-    """
-        Need this class because inner function append() somehow doesn't see comment variable
-    """
-    comment: sp.Card = None
+def distribute_cards(
+        cards: Iterable[Card]
+) -> tp.Tuple[List[Card], List[Card], List[Card], List[Card], List[Card]]:
+    comment: tp.Optional[sp.Card] = None
 
-    def append(self, cards: tp.List[sp.Card], card: sp.Card):
-        if self.comment:
-            cards.append(self.comment)
-            self.comment = None
-        cards.append(card)
+    def append(_cards: List[Card], _card: Card) -> None:
+        nonlocal comment
+        if comment:
+            _cards.append(comment)
+            comment = None
+        _cards.append(_card)
 
-    def __call__(self, cards: tp.Iterable[sp.Card]) -> tp.Tuple[tp.List,tp.List,tp.List]:
-        self.comment = None
-        materials, transformations, sdef, others = [], [], [], []
+    materials, transformations, sdef, tallies, others = [], [], [], [], []
+    # type: List[Card], List[Card], List[Card], List[Card], List[Card]
 
-        for card in cards:
-            if card.is_comment:
-                assert self.comment is None
-                self.comment = card
-            elif card.is_material:
-                self.append(materials, card)
-            elif card.is_transformation:
-                self.append(transformations, card)
-            elif card.is_sdef:
-                self.append(sdef, card)
-            else:
-                self.append(others, card)
+    for card in cards:
+        if card.is_comment:
+            assert comment is None
+            comment = card
+        elif card.is_material:
+            append(materials, card)
+        elif card.is_transformation:
+            append(transformations, card)
+        elif card.is_sdef:
+            append(sdef, card)
+        elif card.is_tally:
+            append(tallies, card)
+        else:
+            append(others, card)
 
-        if self.comment:
-            others.append(self.comment)
+    if comment:
+        others.append(comment)
 
-        self.comment = None
-
-        return materials, transformations, sdef, others
+    return materials, transformations, sdef, tallies, others
 
 
-def distribute_cards(cards: tp.Iterable[sp.Card]) -> tp.Tuple[tp.List,tp.List,tp.List]:
-    return _distributor()(cards)
-
-
-def split(output:Path, source, override:bool, separators=False):
+def split(
+        output_dir: Path,
+        mcnp_file_name: tp.Union[str, Path],
+        override: bool,
+        separators=False,
+) -> None:
     logger = logging.getLogger(__name__)
-    logger.debug("Splitting model from %s", source)
-    source = Path(source)
-    assert output.is_dir()
-    with open(source, encoding=MCNP_ENCODING) as fid:
+    logger.debug("Splitting model from %s", mcnp_file_name)
+    if isinstance(mcnp_file_name, str):
+        mcnp_file_name = Path(mcnp_file_name)
+    assert output_dir.is_dir()
+    with open(mcnp_file_name, encoding=MCNP_ENCODING) as fid:
         sections: sp.InputSections = sp.parse_sections(fid)
-    print_text(sections.title, output, "title.txt", override)
-    print_cards(sections.cell_cards, output, "cells.txt", override)
-    print_cards(sections.surface_cards, output, "surfaces.txt", override)
+    print_text(sections.title, output_dir, "title.txt", override)
+    print_cards(sections.cell_cards, output_dir, "cells.txt", override)
+    print_cards(sections.surface_cards, output_dir, "surfaces.txt", override)
     if sections.data_cards:
-        materials, transformations, sdef, others = distribute_cards(sections.data_cards)
-        print_cards(materials, output, "materials.txt", override)
-        print_cards(transformations, output, "transformations.txt", override)
-        print_cards(sdef, output, "sdef.txt", override)
-        print_cards(others, output, "cards.txt", override)
-    print_text(sections.remainder, output, "remainder.txt", override)
-    logger.debug("The parts of %s are saved to %s", source, output)
+        materials, transformations, sdef, tallies, others = distribute_cards(sections.data_cards)
+        print_cards(materials, output_dir, "materials.txt", override)
+        print_cards(transformations, output_dir, "transformations.txt", override)
+        print_cards(sdef, output_dir, "sdef.txt", override)
+        print_cards(tallies, output_dir, "tallies.txt", override)
+        print_cards(others, output_dir, "cards.txt", override)
+    print_text(sections.remainder, output_dir, "remainder.txt", override)
+    logger.debug("The parts of %s are saved to %s", mcnp_file_name, output_dir)
     if separators:
-        model = source.stem
-        write_separators(output, model)
+        write_separators(output_dir, mcnp_file_name.stem)
 
 
-def write_separators(output: Path, model: str):
-    outer_line = "=" * 40
-    inner_line = "-" * 40
-    for kind in "cells surfaces materials transformations".split():
+def write_separators(output: Path, model: str) -> None:
+    for section in "cells surfaces materials transformations tallies".split():
         for start_end in "start end".split():
             if start_end == "start":
-                first_line = outer_line
-                second_line = inner_line
+                first_line = OUTER_LINE
+                second_line = INNER_LINE
             else:
-                first_line = inner_line
-                second_line = outer_line
+                first_line = INNER_LINE
+                second_line = OUTER_LINE
             text = (
                 "c\n" +
                 "c   " + first_line + "\n" +
                 "c\n" +
-                f"c   {start_end} of {model} {kind}\n" +
+                f"c   {start_end} of {model} {section}\n" +
                 "c\n" +
                 "c   " + second_line + "\n" +
                 "c\n"
             )
-            path: Path = output / f"{kind}_{start_end}.txt"
+            path: Path = output / f"{section}_{start_end}.txt"
             path.write_text(text, encoding=MCNP_ENCODING)
-    path: Path = output / "new_line.txt"
+    path = output / "new_line.txt"
     path.write_text("\n")
-
-
-
-
-

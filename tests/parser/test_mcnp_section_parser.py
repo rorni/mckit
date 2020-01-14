@@ -93,6 +93,35 @@ def test_card_pattern(text, comment, card):
     assert actual_card == card
 
 
+@pytest.mark.parametrize("text,expected,tag,number", [
+    ("f1", "f1", "f", 1),
+    ("FMESH10", "FMESH10", "FMESH", 10),
+    ("fm999", "fm999", "fm", 999),
+    ("fc1", "fc1", "fc", 1),
+    ("de1", "de1", "de", 1),
+    ("df1", "df1", "df", 1),
+])
+def test_tally_pattern(text: str, expected: str, tag: str, number: int) -> None:
+    res = TALLY_PATTERN.fullmatch(text)
+    actual = res.group(0) if res else None
+    assert actual == expected, f"Should match pattern '{text}'"
+    actual_tag = res["tag"]
+    assert actual_tag == tag, "Tags differ"
+    actual_number = int(res["number"])
+    assert actual_number == number, "Numbers differ"
+
+
+@pytest.mark.parametrize("text", [
+    "f",
+    "111",
+])
+def test_tally_pattern_bad_path(text: str) -> None:
+    res = TALLY_PATTERN.fullmatch(text)
+    assert res is None, \
+        f"Should not match pattern '{text}'"
+
+
+
 @pytest.mark.parametrize("text,cards,kind", [
     (
             """
@@ -184,7 +213,6 @@ def test_sdef_cards(text):
     actual_cards = list(split_to_cards(text))
     for card in actual_cards:
         assert card.is_sdef, "Should be SDEF card"
-
 
 
 def test_card_constructor():

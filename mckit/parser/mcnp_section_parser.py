@@ -41,6 +41,13 @@ SDEF_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# pattern to match labels of cards relevant for tallies section
+TALLY_PATTERN = re.compile(
+    r"(?P<tag>f(c|(m(esh)?)?)|(e)|(d[ef]))(?P<number>\d+)",
+    re.IGNORECASE,
+)
+
+
 class Kind(IntEnum):
     COMMENT = 0,
     CELL = 1,
@@ -48,7 +55,8 @@ class Kind(IntEnum):
     MATERIAL = 3,
     TRANSFORMATION = 4,
     SDEF = 5,
-    GENERIC = 6
+    TALLY = 6,
+    GENERIC = 7
 
     @classmethod
     def from_card_text(cls, text: str):
@@ -64,6 +72,8 @@ class Kind(IntEnum):
             return Kind.TRANSFORMATION
         if SDEF_PATTERN.match(label):
             return Kind.SDEF
+        if TALLY_PATTERN.match(label):
+            return Kind.TALLY
         if is_comment_text(text, skip_asserts=True):
             return Kind.COMMENT
         return Kind.GENERIC
@@ -109,12 +119,13 @@ class Card(object):
     def is_surface(self):
         return self.kind is Kind.SURFACE
 
-
     @property
     def is_sdef(self):
         return self.kind is Kind.SDEF
 
-
+    @property
+    def is_tally(self):
+        return self.kind is Kind.TALLY
 
     def get_clean_text(self):
         return get_clean_text(self.text)
@@ -312,7 +323,7 @@ def is_comment_line(line: str, skip_asserts=False):
 
 
 def get_clean_text(text):
-    without_comments = REMOVE_COMMENT_PATTERN.sub(' ', text)
+    without_comments = REMOVE_COMMENT_PATTERN.sub('', text)
     with_spaces_normalized = SPACE_PATTERN.sub(' ', without_comments)
     return with_spaces_normalized
 
