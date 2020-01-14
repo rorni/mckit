@@ -46,10 +46,22 @@ def test_float_pattern(text, expected):
 
 
 @pytest.mark.parametrize("text, expected_new_text, expected_comments, expected_trailing_comment", [
-    ("1 $ zzz", "1", {1: ("zzz",)}, None),
-    ("1 $ zzz\n $ ttt", "1", {1: ("zzz",)}, ["ttt"]),
+    ("1 $ zzz", "1 ", {1: ("zzz",)}, None),
+    ("1 $ zzz\n $ ttt", "1 ", {1: ("zzz",)}, ["ttt"]),
     ("1\n $ ttt", "1", None, ["ttt"]),
-    ("1 $ zzz\n $ ttt\n2", "1\n2", {1: ("zzz","ttt")}, None),
+    ("1 $ zzz\n $ ttt\n2", "1 \n2", {1: ("zzz","ttt")}, None),
+    (
+        """M1000
+1001.21c -1.0
+    gas 1 
+    $ trailing comment1
+    $ trailing comment2
+""",
+        """M1000
+1001.21c -1.0
+    gas 1 
+""", None, ["trailing comment1", "trailing comment2"]
+    ),
 ])
 def test_extract_comments(text, expected_new_text, expected_comments, expected_trailing_comment):
     actual_new_text, actual_comments, actual_trailing_comment = extract_comments(text)

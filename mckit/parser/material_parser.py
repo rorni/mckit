@@ -54,8 +54,7 @@ class Parser(sly.Parser):
         self.comments = comments
         self.trailing_comments = trailing_comments
 
-    @staticmethod
-    def build_composition(name, fractions, options=None):
+    def build_composition(self, name, fractions, options=None):
         atomic = []
         weight = []
 
@@ -66,9 +65,9 @@ class Parser(sly.Parser):
                 atomic.append((el, fraction))
 
         if options is None:
-            options = {'name': name}
-        else:
-            options['name'] = name
+            options = {}
+
+        options['name'] = name
 
         if self.trailing_comments:
             options['comment'] = self.trailing_comments
@@ -83,7 +82,7 @@ class Parser(sly.Parser):
     @_('composition_a')
     def composition(self, p):
         name, fractions, options = p.composition_a
-        return Parser.build_composition(name, fractions, options)
+        return self.build_composition(name, fractions, options)
 
     @_('NAME fractions options')
     def composition_a(self, p):

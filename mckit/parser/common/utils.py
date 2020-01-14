@@ -4,11 +4,11 @@ C_COMMENT = r'\n\s{0,5}[cC]\s[^\n]*'
 RE_C_COMMENT = re.compile(C_COMMENT, re.MULTILINE)
 EOL_COMMENT = r'\$.*[^\n]*'
 RE_EOL_COMMENT = re.compile(EOL_COMMENT, re.MULTILINE)
-LINE = r'(?P<text>[^$]+)?(?:\s+\$\s*(?P<comment>.*))?'
+LINE = r'(?P<text>\s*[^ $][^$]*)?(?:\s*\$\s*(?P<comment>.*))?'  # text should contain at list one non space character
 RE_LINE = re.compile(LINE)
 FLOAT = r'[-+]?\d*\.?\d+(?:e[-+]?\d+)?'
 INTEGER = r'\d+'
-
+RE_EMPTY_LINE = re.compile(r"\s*")
 
 def ensure_lower(text: str):
     if not text.islower():
@@ -52,19 +52,22 @@ def extract_comments(text):
             trailing_comment = []
 
     for i, line in enumerate(lines):
-        match = RE_LINE.fullmatch(line)
-        assert match is not None
-        groupdict = match.groupdict()
-        t = groupdict["text"]
-        c = groupdict["comment"]
-        if t:
-            cleaned_text.append(t)
-            add_trailing_to_previous_item()
-            if c is not None:
-                comments.append((i + 1, [c]))  # lexer counts lines from 1
+        if RE_EMPTY_LINE.fullmatch(line):
+            cleaned_text.append(line)
         else:
-            assert c is not None, "If there's no text, then at least comment should present"
-            trailing_comment.append(c)
+            match = RE_LINE.fullmatch(line)
+            assert match is not None
+            groupdict = match.groupdict()
+            t = groupdict["text"]
+            c = groupdict["comment"]
+            if t:
+                cleaned_text.append(t)
+                add_trailing_to_previous_item()
+                if c is not None:
+                    comments.append((i + 1, [c]))  # lexer counts lines from 1
+            else:
+                assert c is not None, "If there's no text, then at least comment should present"
+                trailing_comment.append(c)
 
     assert cleaned_text, "There should be some  text in a card"
 

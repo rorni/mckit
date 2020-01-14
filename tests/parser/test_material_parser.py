@@ -40,7 +40,6 @@ def test_test_composition_lexer(text, expected_types, expected_values):
     assert result == expected_values
 
 
-
 @pytest.mark.parametrize("text, expected", [
     (
         """m1
@@ -63,7 +62,7 @@ def test_test_composition_lexer(text, expected_types, expected_values):
         Composition(
             weight=[(Element(1001, lib='21c'), 1.0)],
             name=1000,
-            comment=['$ trailing comment1', '$ trailing comment2']
+            comment=['trailing comment1', 'trailing comment2']
         )
     ),
     (
@@ -76,7 +75,7 @@ c bzzzzzz
         Composition(
             weight=[(Element(1001, lib='21c'), 1.0)],
             name=1000,
-            comment=['$ trailing comment1', '$ trailing comment2']
+            comment=['trailing comment1', 'trailing comment2']
         )
     ),
     (
@@ -89,7 +88,7 @@ c bzzzzzz
         Composition(
             weight=[(Element(1001, lib='21c'), 1.0)],
             name=1000,
-            comment=['$ trailing comment1', '$ trailing comment2'],
+            comment=['trailing comment1', 'trailing comment2'],
             gas=1,
         )
     ),
