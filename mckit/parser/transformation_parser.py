@@ -1,15 +1,13 @@
 import sly
-import re
 import mckit.transformation as tr
+from mckit.parser.common import Lexer as LexerBase
 import mckit.parser.common.utils as cmn
 from mckit.parser.common.utils import drop_c_comments
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
-class Lexer(sly.Lexer):
+class Lexer(LexerBase):
     tokens = {NAME, FLOAT, INTEGER}
-    ignore = ' \t'
-    reflags = re.IGNORECASE | re.MULTILINE
 
     NAME = r'\s{0,5}\*?tr\d+'
     FLOAT = cmn.FLOAT
@@ -30,22 +28,11 @@ class Lexer(sly.Lexer):
 
     @_(cmn.FLOAT)
     def FLOAT(self, t):
-        try:
-            i_value = int(t.value)
-            t.type = 'INTEGER'
-            t.value = i_value
-        except ValueError:
-            t.value = float(t.value)
-        return t
+        return LexerBase.on_float(t, use_zero=False)
 
     @_(cmn.INTEGER)
     def INTEGER(self, t):
-        t.value = int(t.value)
-        return t
-
-    @_(r'\n+')
-    def ignore_newline(self, t):
-        self.lineno += len(t.value)
+        return LexerBase.on_integer(t, use_zero=False)
 
 
 # noinspection PyUnresolvedReferences
@@ -96,6 +83,7 @@ class Parser(sly.Parser):
     @_('INTEGER')
     def float(self, p):
         return float(p.INTEGER)
+
 
 
 def parse(text):

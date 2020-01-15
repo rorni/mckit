@@ -10,16 +10,18 @@ class Lexer(sly.Lexer):
     ignore = ' \t'
     reflags = re.IGNORECASE | re.MULTILINE
 
-    def on_float(self, token):
+    @staticmethod
+    def on_float(token, use_zero=True):
         try:
-            token = self.on_integer(token)
+            token = Lexer.on_integer(token, use_zero)
         except ValueError:
             token.value = float(token.value)
         return token
 
-    def on_integer(self, token):
+    @staticmethod
+    def on_integer(token, use_zero=True):
         token.value = int(token.value)
-        if token.value == 0:
+        if use_zero and token.value == 0:
             token.type = 'ZERO'
         else:
             token.type = 'INTEGER'

@@ -8,9 +8,6 @@ from mckit.parser.common.Lexer import Lexer as LexerBase
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(LexerBase):
-    literals = {':', '(', ')'}
-    ignore = ' \t'
-    reflags = re.IGNORECASE | re.MULTILINE
     tokens = {NAME, FRACTION, OPTION, FLOAT}
 
     OPTION = r'(?:(?:gas|estep|cond)\s+\d+)|(?:(?:n|p|pn|e)lib\s+\S+)'
@@ -32,18 +29,9 @@ class Lexer(LexerBase):
             t = self.on_integer(t)
         return t
 
-    # @_(r'\$.*$')
-    # def EOL_COMMENT(self, t):
-    #     t.value = t.value[1:].strip()
-    #     return t
-
     @_(cmn.FLOAT)
     def FLOAT(self, token):
-        return self.on_float(token)
-
-    # @_(cmn.INTEGER)
-    # def INTEGER(self, token):
-    #     return self.on_integer(token)
+        return LexerBase.on_float(token)
 
 
 # noinspection PyUnresolvedReferences
@@ -73,11 +61,6 @@ class Parser(sly.Parser):
             options['comment'] = self.trailing_comments
 
         return mat.Composition(atomic=atomic, weight=weight, **options)
-
-    # @_('composition_a comments')
-    # def composition(self, p):
-    #     name, fractions, options = p.composition_a
-    #     return Parser.build_composition(name, fractions, options, p.comments)
 
     @_('composition_a')
     def composition(self, p):
@@ -137,19 +120,6 @@ class Parser(sly.Parser):
         if option in ("gas", "estep", "cond"):
             value = int(value)
         return option, value
-
-    # @_('comments comment')
-    # def comments(self, p):
-    #     p.comments.append(p.comment)
-    #     return p.comments
-    #
-    # @_('comment')
-    # def comments(self, p):
-    #     return [p.comment]
-    #
-    # @_('EOL_COMMENT')
-    # def comment(self, p):
-    #     return p.EOL_COMMENT
 
 
 def parse(text):

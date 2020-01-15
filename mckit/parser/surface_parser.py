@@ -1,7 +1,7 @@
 from typing import List, Tuple, Optional, NoReturn, Dict, Union, NewType, Callable
 import sly
-import re
 import mckit.surface as surf
+from mckit.parser.common import Lexer as LexerBase
 import mckit.parser.common.utils as cmn
 from mckit.parser.common.utils import drop_c_comments
 
@@ -14,6 +14,15 @@ SURFACE_TYPES = {
     'SQ', 'GQ',
     'X', 'Y', 'Z',
 }
+
+
+def intern_surface_type(word: str):
+    word = cmn.ensure_upper(word)
+    for w in SURFACE_TYPES:
+        if w == word:
+            return w
+    return None
+
 
 OnAbsentTransformationStrategy = NewType(
     "OnAbsentTransformationStrategy",
@@ -40,19 +49,9 @@ def ignore_on_absent_transformation_strategy(name: int) -> DummyTransformation:
     return None
 
 
-def intern_surface_type(word: str):
-    word = cmn.ensure_upper(word)
-    for w in SURFACE_TYPES:
-        if w == word:
-            return w
-    return None
-
-
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
-class Lexer(sly.Lexer):
+class Lexer(LexerBase):
     tokens = {MODIFIER, SURFACE_TYPE, FLOAT, INTEGER}
-    ignore = ' \t'
-    reflags = re.IGNORECASE | re.MULTILINE
 
     MODIFIER = r'\*|\+'
     SURFACE_TYPE = r'[a-z]+(?:/[a-z]+)?'
@@ -70,22 +69,11 @@ class Lexer(sly.Lexer):
 
     @_(cmn.FLOAT)
     def FLOAT(self, t):
-        try:
-            i_value = int(t.value)
-            t.type = 'INTEGER'
-            t.value = i_value
-        except ValueError:
-            t.value = float(t.value)
-        return t
+        return LexerBase.on_float(t, use_zero=False)
 
     @_(cmn.INTEGER)
     def INTEGER(self, t):
-        t.value = int(t.value)
-        return t
-
-    @_(r'\n+')
-    def ignore_newline(self, t):
-        self.lineno += len(t.value)
+        return LexerBase.on_integer(t, use_zero=False)
 
 
 # noinspection PyUnresolvedReferences

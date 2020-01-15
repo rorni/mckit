@@ -46,3 +46,7 @@ def test_transformation_parser(text, expected):
     actual = trp.parse(text)
     approx = Transformation.approximator()
     assert approx(actual, expected)
+
+
+if __name__ == '__main__':
+    pytest.main()

@@ -302,7 +302,6 @@ def p_model_without_data(p):
     p[0] = p[1], p[3], p[5], None
 
 
-
 def p_cell_cards(p):
     """cell_cards : cell_cards separator cell_card
                   | cell_card

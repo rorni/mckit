@@ -79,7 +79,7 @@ class Kind(IntEnum):
         return Kind.GENERIC
 
 
-@attrs
+@attrs(str=False)
 class Card(object):
     """
     Generic MCNP card raw text item
@@ -93,42 +93,45 @@ class Card(object):
 
     # noinspection PyUnusedLocal,PyUnresolvedReferences
     @kind.validator
-    def check(self, attribute, value):
+    def check(self, attribute, value) -> None:
         if self.kind is None:
             self.kind = Kind.from_card_text(self.text)
 
     @property
-    def is_comment(self):
+    def is_comment(self) -> bool:
         return self.kind is Kind.COMMENT
 
     @property
-    def is_material(self):
+    def is_material(self) -> bool:
         return self.kind is Kind.MATERIAL
 
 
     @property
-    def is_transformation(self):
+    def is_transformation(self) -> bool:
         return self.kind is Kind.TRANSFORMATION
 
     @property
-    def is_cell(self):
+    def is_cell(self) -> bool:
         return self.kind is Kind.CELL
 
 
     @property
-    def is_surface(self):
+    def is_surface(self) -> bool:
         return self.kind is Kind.SURFACE
 
     @property
-    def is_sdef(self):
+    def is_sdef(self) -> bool:
         return self.kind is Kind.SDEF
 
     @property
-    def is_tally(self):
+    def is_tally(self) -> bool:
         return self.kind is Kind.TALLY
 
-    def get_clean_text(self):
+    def get_clean_text(self) -> str:
         return get_clean_text(self.text)
+
+    def __str__(self) -> str:
+        return self.text
 
 
 @attrs
@@ -143,7 +146,7 @@ class InputSections(object):
 
     # noinspection PyUnusedLocal,PyUnresolvedReferences
     @is_continue.validator
-    def check(self, attribute, value):
+    def check(self, attribute, value) -> None:
         if self.is_continue:
             if self.cell_cards or self.surface_cards:
                 raise ValueError("Cells and Surfaces shouldn't present in 'continue' mode model")
