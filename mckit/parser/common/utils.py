@@ -1,4 +1,5 @@
 import re
+from typing import Iterable
 
 C_COMMENT = r'\n\s{0,5}[cC]\s[^\n]*'
 RE_C_COMMENT = re.compile(C_COMMENT, re.MULTILINE)
@@ -9,6 +10,7 @@ RE_LINE = re.compile(LINE)
 FLOAT = r'[-+]?\d*\.?\d+(?:e[-+]?\d+)?'
 INTEGER = r'\d+'
 RE_EMPTY_LINE = re.compile(r"\s*")
+
 
 def ensure_lower(text: str):
     if not text.islower():
@@ -86,5 +88,11 @@ class ParseError(ValueError):
     """Parsing exception"""
 
 
-# noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
-
+def internalize(word: str, words: Iterable[str]) -> str:
+    """
+    Replaces given `word` with the equal word from the list `words` to reuse the object for repeating small words.
+    """
+    for w in words:
+        if w == word:
+            return w, True
+    return word, False

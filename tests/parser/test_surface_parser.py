@@ -1,5 +1,6 @@
 import pytest
 
+import mckit.parser.common.transformation_index as ti
 import mckit.parser.surface_parser as srp
 from mckit.surface import (
     create_surface
@@ -28,7 +29,7 @@ def test_surface_lexer(text, expected):
     ("*1 P 1.5 1.4 1.3 1.2", create_surface("P", 1.5, 1.4, 1.3, 1.2, name=1, modifier='*')),
 ])
 def test_good_path(text, expected):
-    actual = srp.parse(text, transformations={})
+    actual = srp.parse(text)
     assert actual.mcnp_words() == expected.mcnp_words()
 
 
@@ -46,22 +47,21 @@ def test_absent_surface_with_ignore_strategy(text, expected):
     ("1 2 PX 0", 2),
 ])
 def test_absent_surface_with_raise_strategy(text, msg_contains):
-    with pytest.raises(KeyError, match=f"Transformation {msg_contains} is not found"):
+    with pytest.raises(KeyError, match=f"Transformation #{msg_contains} is not found"):
         srp.parse(
             text,
-            transformations={1: srp.DummyTransformation(1)}
+            transformations=ti.TransformationStrictIndex()
         )
 
 
 # noinspection PyTypeChecker
 @pytest.mark.parametrize("text,expected", [
-    ("1 2 PX 0.1", create_surface("PX", 0.1, transform=srp.DummyTransformation(2))),
+    ("1 2 PX 0.1", create_surface("PX", 0.1, transform=ti.DummyTransformation(2))),
 ])
 def test_absent_surface_with_dummy_strategy(text, expected):
     actual = srp.parse(
         text,
-        transformations={1: srp.DummyTransformation(1)},
-        on_absent_transformation=srp.dummy_on_absent_transformation_strategy
+        transformations=ti.TransformationDummyIndex(),
     )
     assert actual == expected
 

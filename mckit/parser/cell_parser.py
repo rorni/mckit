@@ -6,38 +6,21 @@ import sly
 from mckit.body import Surface, Shape, Body
 from mckit.material import Composition, Material
 from mckit.transformation import Transformation
-import mckit.parser.common.utils as cmn
-from mckit.parser.surface_parser import (
-    OnAbsentTransformationStrategy,
-    DummyTransformation,
-    raise_on_absent_transformation_strategy,
-    dummy_on_absent_transformation_strategy,
-    ignore_on_absent_transformation_strategy
-)
-from mckit.parser.common.Lexer import Lexer as LexerBase
+import mckit.parser.common.utils as pu
 
-OnAbsentSurfaceStrategy = NewType(
-    "OnAbsentTransformationStrategy",
-    Callable[[int], Optional[Surface]]
-)
+from mckit.parser.common import Lexer as LexerBase, Index, IgnoringIndex
+
+CELL_WORDS = {
+    'U', 'MAT', 'LAT', 'TMP', 'RHO', 'VOL',
+}
 
 
-class DummySurface(Surface):
-    """To substitute a surface when it's not found"""
-    def __init__(self, name: int):
-        super().__init__(name=name)
-
-
-def raise_on_absent_surface_strategy(name: int) -> Optional[Surface]:
-    raise KeyError(f"Surface {name} is not found")
-
-
-def dummy_on_absent_surface_strategy(name: int) -> Optional[Surface]:
-    return DummyTransformation(name)
-
-
-def ignore_on_absent_surface_strategy(_: int) -> Optional[Surface]:
-    return None
+def intern_cell_word(word: str):
+    word = pu.ensure_upper(word)
+    word, res = pu.internalize(word, CELL_WORDS)
+    if not res:
+        raise pu.ParseError(f"'{word}' is not a valid word for cell specification")
+    return word
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
@@ -56,11 +39,11 @@ class Lexer(LexerBase):
     P = 'P'
     E = 'E'
 
-    @_(cmn.FLOAT)
+    @_(pu.FLOAT)
     def FLOAT(self, token):
         return self.on_float(token)
 
-    @_(cmn.INTEGER)
+    @_(pu.INTEGER)
     def INTEGER(self, token):
         res = self.on_integer(token)
         if res == 0:
@@ -333,15 +316,15 @@ class Parser(sly.Parser):
 
     @_('N', 'P', 'E')
     def particle(self, p):
-        return cmn.ensure_upper(p)
+        return pu.ensure_upper(p)
 
     @_('FLOAT_ATTR float')
     def float_attribute(self, p):
-        return {p.FLOAT_ATTR: p.float}
+        return {intern_cell_word(p.FLOAT_ATTR): p.float}
 
     @_('INT_ATTR integer')
     def int_attribute(self, p):
-        return {p.INT_ATTR: p.integer}
+        return {intern_cell_word(p.INT_ATTR): p.integer}
 
     @_('FLOAT')
     def float(self, p):
@@ -356,9 +339,18 @@ class Parser(sly.Parser):
         return p[0]
 
 
-def parse(text, surfaces, transformations, compositions):
-    text = cmn.drop_c_comments(text)
-    text, comments, trailing_comments = cmn.extract_comments(text)
+def parse(
+    text: str,
+    surfaces: Index = None,
+    transformations: Index = None,
+    compositions: Index = None
+) -> Surface:
+    surfaces, transformations, compositions = map(
+        lambda x: IgnoringIndex if x is None else x,
+        [surfaces, transformations, compositions]
+    )
+    text = pu.drop_c_comments(text)
+    text, comments, trailing_comments = pu.extract_comments(text)
     lexer = Lexer()
     parser = Parser(surfaces, transformations, compositions, comments, trailing_comments)
     result = parser.parse(lexer.tokenize(text))
