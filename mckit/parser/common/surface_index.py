@@ -1,19 +1,20 @@
 from typing import Optional
 
-from mckit import surface
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+from mckit.surface import EX, Plane
 from mckit.parser.common import Index, NumberedItemNotFound
 
 
-class DummySurface(surface.Surface):
+class DummySurface(Plane):
     """To substitute surface when it's not found"""
     def __init__(self, name: int):
-        super().__init__(name=name, comment="dummy")
+        super().__init__(EX, 0.0, name=name, comment="dummy")
 
-    def transform(self, tr):
-        raise NotImplementedError(
-            "Dummy surface cannot transform and this is intended.\n \
-             Please, remove it from a model or replace with real surface."
-        )
+    def __str__(self):
+        return self.name()
+
+    def __repr__(self):
+        return f"DummySurface({self.name()})"
 
 
 def raise_on_absent_surface_strategy(name: int) -> Optional[DummySurface]:

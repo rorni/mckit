@@ -44,7 +44,7 @@ class Card(ABC):
         for k in other.options.keys():
             if k not in self.options:
                 return False
-        for k, v in self.options:
+        for k, v in self.options.items():
             if k not in other.options:
                 return False
             my = self.options[k]

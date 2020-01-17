@@ -21,6 +21,7 @@ from .card import Card
 import mckit.body
 
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 __all__ = [
     'create_surface',
     'Plane',
@@ -30,6 +31,10 @@ __all__ = [
     'GQuadratic',
     'Cylinder',
     'Surface',
+    'ORIGIN',
+    'EX',
+    'EY',
+    'EZ',
 ]
 
 

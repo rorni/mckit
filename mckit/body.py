@@ -2,7 +2,7 @@ import os
 from functools import reduce
 from itertools import product, groupby, permutations
 import typing as tp
-from typing import Iterable, Union, Any, NoReturn
+from typing import Iterable, List, Union, NewType, Dict, Any, NoReturn
 from multiprocessing import Pool
 import numpy as np
 from click import progressbar
@@ -17,7 +17,7 @@ from .transformation import Transformation
 from .card import Card
 
 
-__all__ = ['Shape', 'Body', 'simplify']
+__all__ = ['Shape', 'Body', 'simplify', 'GLOBAL_BOX', 'Card', 'TGeometry', 'TGeometry']
 
 
 class Shape(_Shape):
@@ -95,9 +95,9 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._hash = hash_value
 
-
     def __str__(self):
-        return print_card(self._get_words(None))
+        words = print_card(self._get_words('U'))
+        return words
 
     def _get_words(self, parent_opc=None):
         """Gets list of words that describe the shape.
@@ -507,6 +507,10 @@ class Shape(_Shape):
         return operands.pop()
 
 
+TOperation = NewType('TOperation', str)
+TGeometry = NewType('TGeometry', Union[List[Union[Surface, TOperation]], Shape, 'Body'])
+
+
 class Body(Card):
     """Represents MCNP's cell.
 
@@ -531,7 +535,11 @@ class Body(Card):
     union(other)
         Returns an union of this cell with the other.
     """
-    def __init__(self, geometry, **options):
+    def __init__(
+        self,
+        geometry: TGeometry,
+        **options: Dict[str, Any]
+    ) -> None:
         if isinstance(geometry, list):
             geometry = Shape.from_polish_notation(geometry)
         elif isinstance(geometry, Body):

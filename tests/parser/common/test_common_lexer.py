@@ -4,7 +4,7 @@ import pytest
 import sly
 
 import mckit.parser.common as cmn
-from mckit.parser.common.Lexer import ParseError, Lexer as LexerBase
+from mckit.parser.common.Lexer import Lexer as LexerBase, LexError
 
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences
@@ -46,7 +46,7 @@ def test_derived_lexer(text, expected_types, expected_values):
 ])
 def test_bad_path(text, msg_contains):
     lexer = DerivedLexer()
-    with pytest.raises(ParseError, match=msg_contains):
+    with pytest.raises(LexError, match=msg_contains):
         for _ in lexer.tokenize(text):
             pass
 
