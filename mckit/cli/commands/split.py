@@ -9,12 +9,12 @@ materials.txt, transformations.txt, sdef.txt, cards.txt
 """
 import logging
 from pathlib import Path
-import typing as tp
-from typing import List, Iterable
+from typing import Iterable, Union
 
 import mckit.parser.mcnp_section_parser as sp
 from mckit.parser.mcnp_section_parser import Card
-from .common import check_if_path_exists, MCNP_ENCODING
+from .common import check_if_path_exists
+from ...constants import MCNP_ENCODING
 
 OUTER_LINE = "=" * 40
 INNER_LINE = "-" * 40
@@ -46,45 +46,9 @@ def print_cards(
                 print(card.text, file=fid)
 
 
-def distribute_cards(
-        cards: Iterable[Card]
-) -> tp.Tuple[List[Card], List[Card], List[Card], List[Card], List[Card]]:
-    comment: tp.Optional[sp.Card] = None
-
-    def append(_cards: List[Card], _card: Card) -> None:
-        nonlocal comment
-        if comment:
-            _cards.append(comment)
-            comment = None
-        _cards.append(_card)
-
-    materials, transformations, sdef, tallies, others = [], [], [], [], []
-    # type: List[Card], List[Card], List[Card], List[Card], List[Card]
-
-    for card in cards:
-        if card.is_comment:
-            assert comment is None
-            comment = card
-        elif card.is_material:
-            append(materials, card)
-        elif card.is_transformation:
-            append(transformations, card)
-        elif card.is_sdef:
-            append(sdef, card)
-        elif card.is_tally:
-            append(tallies, card)
-        else:
-            append(others, card)
-
-    if comment:
-        others.append(comment)
-
-    return materials, transformations, sdef, tallies, others
-
-
 def split(
         output_dir: Path,
-        mcnp_file_name: tp.Union[str, Path],
+        mcnp_file_name: Union[str, Path],
         override: bool,
         separators=False,
 ) -> None:
@@ -99,7 +63,7 @@ def split(
     print_cards(sections.cell_cards, output_dir, "cells.txt", override)
     print_cards(sections.surface_cards, output_dir, "surfaces.txt", override)
     if sections.data_cards:
-        materials, transformations, sdef, tallies, others = distribute_cards(sections.data_cards)
+        materials, transformations, sdef, tallies, others = sp.distribute_cards(sections.data_cards)
         print_cards(materials, output_dir, "materials.txt", override)
         print_cards(transformations, output_dir, "transformations.txt", override)
         print_cards(sdef, output_dir, "sdef.txt", override)

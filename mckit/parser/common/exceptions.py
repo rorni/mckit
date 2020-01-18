@@ -1,4 +1,4 @@
-class NumberedItemNotFound(KeyError):
+class NumberedItemNotFoundError(KeyError):
     kind: str = ''
 
     def __init__(self, item: int, *args, **kwargs):
@@ -10,6 +10,6 @@ class NumberedItemNotFound(KeyError):
 
 
 
-class CellNotFound(NumberedItemNotFound):
+class CellNotFoundError(NumberedItemNotFoundError):
     kind = 'Cell'
 

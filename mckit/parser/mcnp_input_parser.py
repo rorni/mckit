@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-
+from typing import Union
 import re
 from collections import deque
-
+from pathlib import Path
 import ply.lex as lex
 import ply.yacc as yacc
 
@@ -10,7 +10,7 @@ from ..material import Element, Composition, Material
 from ..transformation import Transformation
 from ..surface import create_surface
 from ..body import Body
-from ..universe import produce_universes
+from ..universe import produce_universes, Universe
 
 __DEBUG__ = False
 if __DEBUG__:
@@ -702,28 +702,10 @@ mcnp_input_parser = yacc.yacc(
 )
 
 
-def read_mcnp(filename, encoding='cp1251'):
-    """Reads MCNP model from file and creates corresponding objects.
-
-    Parameters
-    ----------
-    filename : str
-        File that contains MCNP model.
-
-    Returns
-    -------
-    title : str
-        Title of the MCNP model.
-    cells : dict
-        Dictionary of cell data. cell_name -> cell_data. The later is again
-        a dict.
-    surfaces : dict
-        Dictionary of surface data. surf_name -> surf_data. The later is again
-        a dict of surface parameters.
-    data : dict
-        Dictionary of data cards. data_type -> data_name -> data. The later is
-        again a dict.
-    """
+def read_mcnp(
+        filename: Union[str, Path],
+        encoding: str = 'cp1251',
+) -> Universe:
     with open(filename, encoding=encoding) as f:
         text = f.read()
     text = text.rstrip() + '\n'  # float number spec requires end of line or space after float

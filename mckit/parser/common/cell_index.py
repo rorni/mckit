@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import Optional, Iterable
 
 from mckit.body import Body, Card, GLOBAL_BOX
 from mckit.constants import MIN_BOX_VOLUME
-from mckit.parser.common import Index, NumberedItemNotFound
+from mckit.parser.common import Index, NumberedItemNotFoundError
 
 
 class DummyCell(Body):
@@ -19,7 +19,7 @@ class DummyCell(Body):
         return Card.__eq__(self, other)
 
     def is_equivalent_to(self, other):
-        return self._name
+        return self.name() == other.name()
 
     @property
     def shape(self):
@@ -43,7 +43,7 @@ class DummyCell(Body):
 
 
 def raise_on_absent_cell_strategy(name: int) -> Optional[DummyCell]:
-    raise CellNotFound(name)
+    raise CellNotFoundError(name)
 
 
 def dummy_on_absent_cell_strategy(name: int) -> Optional[DummyCell]:
@@ -54,11 +54,17 @@ class CellStrictIndex(Index):
     def __init__(self, **kwargs):
         super().__init__(raise_on_absent_cell_strategy, kwargs)
 
+    @classmethod
+    def from_iterable(cls, items: Iterable[Body]) -> 'CellStrictIndex':
+        index = cls()
+        index.update((c.name(), c) for c in items)
+        return index
+
 
 class CellDummyIndex(Index):
     def __init__(self, **kwargs):
         super().__init__(dummy_on_absent_cell_strategy, kwargs)
 
 
-class CellNotFound(NumberedItemNotFound):
+class CellNotFoundError(NumberedItemNotFoundError):
     kind = 'Cell'

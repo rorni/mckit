@@ -1,17 +1,17 @@
-from typing import Optional
+from typing import Optional, Iterable
 
-from mckit import surface as surf
-from mckit.parser.common import Index, NumberedItemNotFound
+from mckit.transformation import Transformation
+from mckit.parser.common import Index, NumberedItemNotFoundError
 
 
-class DummyTransformation(surf.Transformation):
+class DummyTransformation(Transformation):
     """To substitute transformation when it's not found"""
     def __init__(self, name: int):
         super().__init__(name=name, comment="dummy")
 
 
 def raise_on_absent_transformation_strategy(name: int) -> Optional[DummyTransformation]:
-    raise TransformationNotFound(name)
+    raise TransformationNotFoundError(name)
 
 
 def dummy_on_absent_transformation_strategy(name: int) -> Optional[DummyTransformation]:
@@ -22,11 +22,17 @@ class TransformationStrictIndex(Index):
     def __init__(self, **kwargs):
         super().__init__(raise_on_absent_transformation_strategy, kwargs)
 
+    @classmethod
+    def from_iterable(cls, items: Iterable[Transformation]) -> 'TransformationStrictIndex':
+        index = cls()
+        index.update((c.name(), c) for c in items)
+        return index
+
 
 class TransformationDummyIndex(Index):
     def __init__(self, **kwargs):
         super().__init__(dummy_on_absent_transformation_strategy, kwargs)
 
 
-class TransformationNotFound(NumberedItemNotFound):
+class TransformationNotFoundError(NumberedItemNotFoundError):
     kind = 'Transformation'

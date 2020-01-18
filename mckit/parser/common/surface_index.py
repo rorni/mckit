@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import Optional, Iterable
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from mckit.surface import EX, Plane
-from mckit.parser.common import Index, NumberedItemNotFound
+from mckit.surface import EX, Plane, Surface
+from mckit.parser.common import Index, NumberedItemNotFoundError
 
 
 class DummySurface(Plane):
@@ -18,7 +18,7 @@ class DummySurface(Plane):
 
 
 def raise_on_absent_surface_strategy(name: int) -> Optional[DummySurface]:
-    raise SurfaceNotFound(name)
+    raise SurfaceNotFoundError(name)
 
 
 def dummy_on_absent_surface_strategy(name: int) -> Optional[DummySurface]:
@@ -29,11 +29,17 @@ class SurfaceStrictIndex(Index):
     def __init__(self, **kwargs):
         super().__init__(raise_on_absent_surface_strategy, kwargs)
 
+    @classmethod
+    def from_iterable(cls, items: Iterable[Surface]) -> 'SurfaceStrictIndex':
+        index = cls()
+        index.update((c.name(), c) for c in items)
+        return index
+
 
 class SurfaceDummyIndex(Index):
     def __init__(self, **kwargs):
         super().__init__(dummy_on_absent_surface_strategy, kwargs)
 
 
-class SurfaceNotFound(NumberedItemNotFound):
+class SurfaceNotFoundError(NumberedItemNotFoundError):
     kind = 'Surface'

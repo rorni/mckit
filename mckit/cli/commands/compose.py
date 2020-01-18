@@ -9,7 +9,8 @@ from pathlib import Path
 from functools import reduce
 import tomlkit as tk
 import mckit as mk
-from .common import save_mcnp, MCNP_ENCODING
+from .common import save_mcnp
+from ...constants import MCNP_ENCODING
 
 
 def compose(output, fill_descriptor_path, source, override):

@@ -1,8 +1,8 @@
 import sly
-import mckit.transformation as tr
+from mckit.transformation import Transformation
 from mckit.parser.common import Lexer as LexerBase
 import mckit.parser.common.utils as cmn
-from mckit.parser.common.utils import drop_c_comments
+from mckit.parser.common.utils import drop_c_comments, extract_comments
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
@@ -43,7 +43,7 @@ class Parser(sly.Parser):
     def transformation(self, p):
         name, in_degrees = p.NAME
         translation, rotation, inverted = p.transform_params
-        return tr.Transformation(
+        return Transformation(
             translation=translation,
             rotation=rotation,
             indegrees=in_degrees,
@@ -85,10 +85,12 @@ class Parser(sly.Parser):
         return float(p.INTEGER)
 
 
-
-def parse(text):
+def parse(text: str) -> Transformation:
     text = drop_c_comments(text)
+    text, comments, trailing_comments = extract_comments(text)
     lexer = Lexer()
     parser = Parser()
-    result = parser.parse(lexer.tokenize(text))
+    result: Transformation = parser.parse(lexer.tokenize(text))
+    if trailing_comments:
+        result.options['comment'] = trailing_comments
     return result

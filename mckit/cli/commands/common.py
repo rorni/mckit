@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 from mckit import Universe
 # This is the encoding swallowing non ascii (neither unicode) symbols happening in MCNP models code
-MCNP_ENCODING = "cp1251"
+from mckit.constants import MCNP_ENCODING
 
 
 def check_if_path_exists(path: tp.Union[str, Path], override: bool):

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-
-from collections import defaultdict
-from operator import xor, eq, and_
-from toolz import reduce
+from typing import Iterable, Dict, Any
+from collections import defaultdict, namedtuple
 
 import numpy as np
 from click import progressbar
@@ -75,39 +73,6 @@ def surface_selector(surface_names):
         return [s for s in surfs if s.name() in surface_names]
 
     return selector
-
-
-def produce_universes(cells):
-    """Creates universes from cells.
-
-    The function groups all cells that have equal value of 'universe' option,
-    and the creates corresponding universes. Universe with name 0 is returned
-    only.
-
-    Parameters
-    ----------
-    cells : list[Body]
-        A list of cells.
-
-    Returns
-    -------
-    universe : Universe
-        Main universe.
-    """
-    universes = defaultdict(lambda: (Universe([], name=uname), list()))
-    for c in cells:
-        uname = c.options.get('U', 0)
-        universes[uname][1].append(c)
-        fill = c.options.get('FILL', None)
-        if fill:
-            uname = fill['universe']
-            fill['universe'] = universes[fill['universe']][0]
-    for u, u_cells in universes.values():
-        u.add_cells(u_cells, name_rule='keep')
-    u = universes[0][0]
-    common_mats = u.find_common_materials()
-    u.set_common_materials(common_mats)
-    return u
 
 
 class Universe:
@@ -773,3 +738,38 @@ class Universe:
     @property
     def comment(self):
         return self._comment
+
+
+_UniverseCellsGroup = namedtuple('_UniverseCellsGroup', ['universe', 'cells'])
+
+
+def produce_universes(cells: Iterable[Body]) -> Universe:
+    """Creates groups from cells.
+
+    The function groups all the by 'universe' option value,
+    and creates corresponding groups.
+
+    Parameters
+    ----------
+    cells : Iterable[Body]
+        Cells to process.
+
+    Returns
+    -------
+    universe : Universe
+        The top level universe with name = 0.
+    """
+    groups: Dict[int, _UniverseCellsGroup] = defaultdict(_UniverseCellsGroup)
+    for c in cells:
+        groups[c.options.get('U', 0)].cells.append(c)
+        fill: Dict[str, Any] = c.options.get('FILL', None)
+        if fill is not None:
+            fill_universe_no = fill['universe']
+            fill['universe'] = groups[fill_universe_no][0]
+    for group in groups.values():
+        group.universe.add_cells(group.cells, name_rule='keep')
+    top_universe = groups[0].universe
+    top_universe.set_common_materials(top_universe.find_common_materials())
+    return top_universe
+
+

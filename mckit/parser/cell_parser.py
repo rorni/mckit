@@ -379,9 +379,9 @@ def parse(
             [CellStrictIndex, SurfaceStrictIndex, TransformationStrictIndex, CompositionStrictIndex]
         )
     )
-    # text = pu.drop_c_comments(text)
-    # text, comments, trailing_comments = pu.extract_comments(text)
+    text = pu.drop_c_comments(text)
+    text, comments, trailing_comments = pu.extract_comments(text)
     lexer = Lexer()
-    parser = Parser(cells, surfaces, transformations, compositions)
+    parser = Parser(cells, surfaces, transformations, compositions, comments, trailing_comments)
     result = parser.parse(lexer.tokenize(text))
     return result

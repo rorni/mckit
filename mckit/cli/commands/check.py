@@ -13,7 +13,8 @@ import logging
 from pathlib import Path
 import click
 import mckit as mk
-from .common import save_mcnp, MCNP_ENCODING, get_default_output_directory
+from .common import save_mcnp, get_default_output_directory
+from ...constants import MCNP_ENCODING
 
 
 def check_duplicates(iterable, label, key):

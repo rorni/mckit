@@ -1,6 +1,5 @@
-import re
 import sly
-import mckit.material as mat
+from mckit.material import Composition
 from mckit.parser.common.utils import drop_c_comments, extract_comments
 import mckit.parser.common.utils as cmn
 from mckit.parser.common.Lexer import Lexer as LexerBase
@@ -60,7 +59,7 @@ class Parser(sly.Parser):
         if self.trailing_comments:
             options['comment'] = self.trailing_comments
 
-        return mat.Composition(atomic=atomic, weight=weight, **options)
+        return Composition(atomic=atomic, weight=weight, **options)
 
     @_('composition_a')
     def composition(self, p):
@@ -87,12 +86,12 @@ class Parser(sly.Parser):
     # @_('fraction_a EOL_COMMENT')
     # def fraction(self, p):
     #     name, lib, frac = p.fraction_a
-    #     return mat.Element(name, lib=lib, comment=p.EOL_COMMENT), frac
+    #     return Element(name, lib=lib, comment=p.EOL_COMMENT), frac
     #
     @_('fraction_a')
     def fraction(self, p):
         name, lib, frac = p.fraction_a
-        return mat.Element(name, lib=lib), frac
+        return Element(name, lib=lib), frac
 
     @_('FRACTION FLOAT')
     def fraction_a(self, p):

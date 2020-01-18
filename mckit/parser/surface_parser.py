@@ -1,9 +1,9 @@
 from typing import List, Tuple, Optional
 import sly
-import mckit.surface as surf
-from mckit.parser.common import Lexer as LexerBase, Index, IgnoringIndex
+from  mckit.surface import Surface
+from mckit.parser.common import Lexer as LexerBase, Index, TransformationStrictIndex
 import mckit.parser.common.utils as pu  # parse utils
-from mckit.parser.common.utils import drop_c_comments
+from mckit.parser.common.utils import drop_c_comments, extract_comments
 
 SURFACE_TYPES = {
     'P', 'PX', 'PY', 'PZ',
@@ -69,7 +69,7 @@ class Parser(sly.Parser):
             params: List[float],
             transform,
             modifier,
-    ) -> surf.Surface:
+    ) -> Surface:
         options = {'name': name}
         if transform is not None:
             transformation = self.transformations[transform]
@@ -77,7 +77,7 @@ class Parser(sly.Parser):
                 options['transform'] = transformation
         if modifier is not None:
             options['modifier'] = modifier
-        _surface = surf.create_surface(kind, *params, **options)
+        _surface = create_surface(kind, *params, **options)
         return _surface
 
     @_('MODIFIER  name surface_description')
@@ -130,13 +130,16 @@ class Parser(sly.Parser):
 def parse(
         text: str,
         transformations: Optional[Index] = None,
-) -> surf.Surface:
+) -> Surface:
     if transformations is None:
-        transformations = IgnoringIndex()
+        transformations = TransformationStrictIndex()
     else:
         assert isinstance(transformations, Index)
     text = drop_c_comments(text)
+    text, comments, trailing_comments = extract_comments(text)
     lexer = Lexer()
     parser = Parser(transformations)
     result = parser.parse(lexer.tokenize(text))
+    if trailing_comments:
+        result.options['comment'] = trailing_comments
     return result

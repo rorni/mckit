@@ -4,8 +4,8 @@ import os
 import sys
 from functools import reduce
 from operator import xor
-
 import numpy as np
+from typing import Optional, NewType, Tuple, Iterable
 
 from .printer import print_card, MCNP_FORMATS
 from .card import Card
@@ -35,6 +35,10 @@ with open(_path + '/data/isotopes.dat') as f:
             abun = data[i * 3 + 2]
             if abun != '*':
                 _NATURAL_ABUNDANCE[number][isotope] = float(abun) / 100.0
+
+
+TFraction = NewType('TFraction', Tuple[int, float])
+TFractions = NewType('TFractions', Iterable[TFraction])
 
 
 class Composition(Card):
@@ -87,26 +91,34 @@ class Composition(Card):
         return cls._tolerance
 
     # TODO dvp: is there specs using both atomic and weight definitions
-    def __init__(self, atomic=(), weight=(), **options):
+    def __init__(
+            self,
+            atomic: Optional[TFractions] = None,
+            weight: Optional[TFractions] = None,
+            **options
+    ):
         Card.__init__(self, **options)
         self._composition = {}
         elem_w = []
         frac_w = []
-        for elem, frac in weight:
-            if isinstance(elem, Element):
-                elem_w.append(elem)
-            else:
-                elem_w.append(Element(elem))
-            frac_w.append(frac)
+
+        if weight:
+            for elem, frac in weight:
+                if isinstance(elem, Element):
+                    elem_w.append(elem)
+                else:
+                    elem_w.append(Element(elem))
+                frac_w.append(frac)
 
         elem_a = []
         frac_a = []
-        for elem, frac in atomic:
-            if isinstance(elem, Element):
-                elem_a.append(elem)
-            else:
-                elem_a.append(Element(elem))
-            frac_a.append(frac)
+        if atomic:
+            for elem, frac in atomic:
+                if isinstance(elem, Element):
+                    elem_a.append(elem)
+                else:
+                    elem_a.append(Element(elem))
+                frac_a.append(frac)
 
         if len(frac_w) + len(frac_a) > 0:
             I_w = np.sum(frac_w)
@@ -392,7 +404,15 @@ class Material:
         """Gets relative tolerance of Composition comparison."""
         return cls._tolerance
 
-    def __init__(self, atomic=(), weight=(), composition=None, density=None, concentration=None, **options):
+    def __init__(
+            self,
+            atomic: Optional[TFractions] = None,
+            weight: Optional[TFractions] = None,
+            composition: Optional[Composition] = None,
+            density: Optional[float] = None,
+            concentration: Optional[float] = None,
+            **options
+    ):
         # Attributes: _n - atomic density (concentration)
         if isinstance(composition, Composition) and not atomic and not weight:
             self._composition = composition

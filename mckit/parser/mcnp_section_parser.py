@@ -1,7 +1,7 @@
 import logging
 import re
 import sys
-import typing as tp
+from typing import Iterable, List, Optional, Generator, TextIO, Tuple
 from enum import IntEnum
 from attr import attrs, attrib
 
@@ -89,7 +89,7 @@ class Card(object):
     """
 
     text: str = attrib()
-    kind: tp.Optional[Kind] = attrib(default=None)
+    kind: Optional[Kind] = attrib(default=None)
 
     # noinspection PyUnusedLocal,PyUnresolvedReferences
     @kind.validator
@@ -104,7 +104,6 @@ class Card(object):
     @property
     def is_material(self) -> bool:
         return self.kind is Kind.MATERIAL
-
 
     @property
     def is_transformation(self) -> bool:
@@ -136,12 +135,12 @@ class Card(object):
 
 @attrs
 class InputSections(object):
-    title: tp.Optional[str] = attrib(default=None)
-    cell_cards: tp.Optional[tp.List[Card]] = attrib(default=None)
-    surface_cards: tp.Optional[tp.List[Card]] = attrib(default=None)
-    data_cards: tp.Optional[tp.List[Card]] = attrib(default=None)
-    message: tp.Optional[str] = attrib(default=None)
-    remainder: tp.Optional[str] = attrib(default=None)
+    title: Optional[str] = attrib(default=None)
+    cell_cards: Optional[List[Card]] = attrib(default=None)
+    surface_cards: Optional[List[Card]] = attrib(default=None)
+    data_cards: Optional[List[Card]] = attrib(default=None)
+    message: Optional[str] = attrib(default=None)
+    remainder: Optional[str] = attrib(default=None)
     is_continue: bool = attrib(default=False)
 
     # noinspection PyUnusedLocal,PyUnresolvedReferences
@@ -191,8 +190,12 @@ def split_to_cards(text, kind=None):
             yield Card(card, kind=_kind)
 
 
+def parse_sections(inp: TextIO) -> InputSections:
+    return parse_sections_text(inp.read())
+
+
 # noinspection PyIncorrectDocstring,PyUnresolvedReferences
-def parse_sections(inp: tp.TextIO) -> InputSections:
+def parse_sections_text(text: str) -> InputSections:
     """
     Splits input file to sections according to mcnp input format.
 
@@ -238,7 +241,7 @@ def parse_sections(inp: tp.TextIO) -> InputSections:
     data_cards = None
     remainder = None
 
-    sections = BLANK_LINE_PATTERN.split(inp.read(), 5)
+    sections = BLANK_LINE_PATTERN.split(text, 5)
 
     # The first line can be message or title.
     kw = sections[0][:len("message:")].lower()
@@ -331,9 +334,45 @@ def get_clean_text(text):
     return with_spaces_normalized
 
 
-def clean_mcnp_cards(iterable):
+def clean_mcnp_cards(iterable: Iterable[Card]) -> Generator[Card]:
     for x in iterable:
         if x.kind is not Kind.COMMENT:
             clean_text = x.get_clean_text()
             t = Card(clean_text, kind=x.kind)
             yield t
+
+
+def distribute_cards(
+        cards: Iterable[Card]
+) -> Tuple[List[Card], List[Card], List[Card], List[Card], List[Card]]:
+    comment: Optional[Card] = None
+
+    def append(_cards: List[Card], _card: Card) -> None:
+        nonlocal comment
+        if comment:
+            _cards.append(comment)
+            comment = None
+        _cards.append(_card)
+
+    materials, transformations, sdef, tallies, others = [], [], [], [], []
+    # type: List[Card], List[Card], List[Card], List[Card], List[Card]
+
+    for card in cards:
+        if card.is_comment:
+            assert comment is None
+            comment = card
+        elif card.is_material:
+            append(materials, card)
+        elif card.is_transformation:
+            append(transformations, card)
+        elif card.is_sdef:
+            append(sdef, card)
+        elif card.is_tally:
+            append(tallies, card)
+        else:
+            append(others, card)
+
+    if comment:
+        others.append(comment)
+
+    return materials, transformations, sdef, tallies, others

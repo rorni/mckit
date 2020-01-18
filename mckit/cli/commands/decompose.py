@@ -14,7 +14,8 @@ from pathlib import Path
 import click
 import tomlkit as tk
 import mckit as mk
-from .common import save_mcnp, MCNP_ENCODING
+from .common import save_mcnp
+from ...constants import MCNP_ENCODING
 
 
 def get_default_output_directory(source):

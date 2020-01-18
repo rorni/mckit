@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List
 import pytest
 import mckit.parser.cell_parser as clp
 from mckit.body import (
@@ -7,23 +7,19 @@ from mckit.body import (
 from mckit.parser.common import (
     CellStrictIndex,
     DummySurface, SurfaceStrictIndex,
-    DummyMaterial, DummyComposition, CompositionStrictIndex
+    DummyMaterial, DummyComposition, CompositionStrictIndex,
+    Index
 )
-from mckit.surface import Surface
-from mckit.material import Composition, Material
+from mckit.material import Material
 from mckit.transformation import Transformation
 
 
-# def test_dummy_material():
-#     o = DummyMaterial(1, 1.0)
-#     assert isinstance(o, Material)
-
 def create_cell(
-    cell_no: int,
-    geometry: TGeometry,
-    material: Optional[Material] = None,
-    transformation: Optional[Transformation] = None,
-    **options
+        cell_no: int,
+        geometry: TGeometry,
+        material: Optional[Material] = None,
+        transformation: Optional[Transformation] = None,
+        **options
 ):
     if not options:
         options = dict()
@@ -48,14 +44,14 @@ def create_cell(
 
 @pytest.mark.parametrize("text,expected_types,expected_values", [
     (
-        "1 0",
-        ["INTEGER", "ZERO"],
-        [1, 0]
+            "1 0",
+            ["INTEGER", "ZERO"],
+            [1, 0]
     ),
     (
-        "1 1 -0.083",
-        ["INTEGER", "INTEGER", "FLOAT"],
-        [1, 1, -0.083]
+            "1 1 -0.083",
+            ["INTEGER", "INTEGER", "FLOAT"],
+            [1, 1, -0.083]
     ),
 ])
 def test_cell_lexer(text, expected_types, expected_values):
@@ -131,22 +127,17 @@ def test_parser_with_attributes(text, expected, surfaces):
 ])
 def test_parser_with_like_spec(text, expected, surfaces, cells):
     surfaces_index = create_dummy_surface_index(surfaces)
-    cells_index = CellStrictIndex()
-    cells_index.update((c.name(), c) for c in cells)
+    cells_index = CellStrictIndex.from_iterable(cells)
     actual = clp.parse(text, cells=cells_index, surfaces=surfaces_index)
     assert actual == expected
 
 
-def create_dummy_surface_index(surfaces: List[int]) -> Dict[int, Surface]:
-    surfaces_index = SurfaceStrictIndex()
-    surfaces_index.update((s, DummySurface(s)) for s in surfaces)
-    return surfaces_index
+def create_dummy_surface_index(surfaces: List[int]) -> Index:
+    return SurfaceStrictIndex.from_iterable(map(DummySurface, surfaces))
 
 
-def create_dummy_composition_index(compositions: List[int]) -> Dict[int, Composition]:
-    composition_index = CompositionStrictIndex()
-    composition_index.update((s, DummyComposition(s)) for s in compositions)
-    return composition_index
+def create_dummy_composition_index(compositions: List[int]) -> Index:
+    return CompositionStrictIndex.from_iterable(map(DummyComposition, compositions))
 
 
 if __name__ == '__main__':
