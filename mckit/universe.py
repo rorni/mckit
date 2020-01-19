@@ -443,8 +443,7 @@ class Universe:
         for c in self:
             surfs.update(c.shape.get_surfaces())
             if inner and 'FILL' in c.options.keys():
-                surfs.update(c.options['FILL']['universe'].get_surfaces(
-                    inner).values())
+                surfs.update(c.options['FILL']['universe'].get_surfaces(inner))
         return surfs
 
     def get_materials(self, recursive=False):
@@ -769,6 +768,7 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
         else:
             new_group = _UniverseCellsGroup(universe=Universe([], universe_no), cells=[c])
             groups[universe_no] = new_group
+    for c in cells:
         fill: Dict[str, Any] = c.options.get('FILL', None)
         if fill is not None:
             fill_universe_no = fill['universe']

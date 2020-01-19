@@ -81,7 +81,7 @@ tokens = [
     'continue',
     'separator',
     'surface_type',
-    'int_number',
+    '+++++++++++++++++++++++++++++++',
     'flt_number',
     'keyword',
     'title',
@@ -708,6 +708,12 @@ def read_mcnp(
 ) -> Universe:
     with open(filename, encoding=encoding) as f:
         text = f.read()
+    return read_mcnp_text(text)
+
+
+def read_mcnp_text(
+        text: str,
+) -> Universe:
     text = text.rstrip() + '\n'  # float number spec requires end of line or space after float
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(

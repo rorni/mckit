@@ -1,5 +1,4 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+from typing import List
 import logging
 import sys
 
@@ -169,24 +168,17 @@ def concat(
 
 # noinspection PyCompatibility
 @mckit.command()
-@click.pass_context
-@click.option(
-    "--output", "-o",
-    metavar="<output>",
-    type=click.Path(exists=False),
-    required=False,
-    help="File to write the concatenated parts",
-)
 @click.argument(
-    "source",
+    "sources",
     metavar="<source>",
     type=click.Path(exists=True),
-    nargs=1,
+    nargs=-1,
     required=True,
 )
-def check(ctx, output, source):
-    override = ctx.obj['OVERRIDE']
-    do_check(source, output, override)
+def check(sources: List[click.Path]) -> None:
+    for source in sources:
+        do_check(source)
+
 
 if __name__ == '__main__':
     mckit(obj={})
