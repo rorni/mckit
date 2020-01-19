@@ -1,10 +1,10 @@
-import typing as tp
 from typing import (
-    Callable, Iterable, Union, Optional, NoReturn, NewType
+    Optional
 )
 import sly
-from mckit.body import Surface, Shape, Body
-from mckit.material import Composition, Material
+from mckit.body import Shape, Body
+from mckit.surface import Surface
+from mckit.material import Material
 from mckit.transformation import Transformation
 import mckit.parser.common.utils as pu
 
@@ -46,15 +46,14 @@ class Lexer(LexerBase):
     def FLOAT(self, token):
         return self.on_float(token)
 
-    # @_(pu.INTEGER)
-    # def INTEGER(self, token):
-    #     res = self.on_integer(token)
-    #     if res == 0:
-    #         token.type = 'ZERO'
-    #         token.value = 0
-    #     else:
-    #         token.value = res
-    #     return token
+
+def deep_copy_dict(a: dict):
+    res = {}
+    for k, v in a.items():
+        if isinstance(v, dict):
+            v = deep_copy_dict(v)
+        res[k] = v
+    return res
 
 
 # noinspection PyUnresolvedReferences
@@ -62,13 +61,13 @@ class Parser(sly.Parser):
     tokens = Lexer.tokens
 
     def __init__(
-        self,
-        cells,
-        surfaces,
-        transformations,
-        compositions,
-        comments=None,
-        trailing_comments=None,
+            self,
+            cells,
+            surfaces,
+            transformations,
+            compositions,
+            comments=None,
+            trailing_comments=None,
     ):
         sly.Parser.__init__(self)
         self._cells = cells
@@ -109,7 +108,7 @@ class Parser(sly.Parser):
 
     @_('INTEGER cell_material cell_spec')
     def cell(self, p):
-        geometry, options = p.cell_spec     # type: TGeometry, Optional[Dict[str, Any]]
+        geometry, options = p.cell_spec  # type: TGeometry, Optional[Dict[str, Any]]
         assert options is None or isinstance(options, dict)
         if options is None:
             options = {'name': p.INTEGER}
@@ -128,7 +127,7 @@ class Parser(sly.Parser):
     @_('INTEGER LIKE INTEGER BUT attributes')
     def cell(self, p):
         reference_body = self.cells[p[2]]
-        options = dict(reference_body.options)
+        options = deep_copy_dict(reference_body.options)
         options.update(p.attributes)
         options['name'] = p[0]
         new_body = Body(reference_body, **options)
@@ -139,7 +138,7 @@ class Parser(sly.Parser):
         return p.INTEGER, p.float
 
     @_('ZERO')
-    def cell_material(self, p):
+    def cell_material(self, _):
         return None
 
     @_('expression attributes')
@@ -227,21 +226,21 @@ class Parser(sly.Parser):
 
     @_('"*" FILL integer "(" transform_params ")"')
     def fill_attribute(self, p):
-        transform_params = p.transform_params
-        transform_params['indegrees'] = True
+        translation, rotation, inverted = p.transform_params
+        transformation = Parser.build_transformation(translation, rotation, True, inverted)
         fill = {
             'universe': p.integer,
-            'transform': Transformation(*p.transform_params)
+            'transform': transformation
         }
         return {'FILL': fill}
 
     @_('FILL integer "(" transform_params ")"')
     def fill_attribute(self, p):
-        transform_params = p.transform_params
-        transform_params['indegrees'] = False
+        translation, rotation, inverted = p.transform_params
+        transformation = Parser.build_transformation(translation, rotation, False, inverted)
         fill = {
             'universe': p.integer,
-            transform: Transformation(*p.transform_params)
+            'transform': transformation
         }
         return {'FILL': fill}
 
@@ -251,7 +250,7 @@ class Parser(sly.Parser):
         transformation = self.transformations[transform_id]
         fill = {
             'universe': p[1],
-            transform: transformation
+            'transform': transformation
         }
         return {'FILL': fill}
 
@@ -283,7 +282,7 @@ class Parser(sly.Parser):
 
     @_('TRCL integer')
     def trcl_attribute(self, p):
-        transform_id: int = p[3]
+        transform_id: int = p.integer
         transformation = self.transformations[transform_id]
         return {'TRCL': transformation}
 
@@ -318,7 +317,10 @@ class Parser(sly.Parser):
     #
     @_('IMP ":" particle_list float_list')
     def imp_attribute(self, p):
-        assert len(p.particle_list) == len(p.float_list), "Lengths of particle and importance values lists differ"
+        lenp = len(p.particle_list)
+        if lenp != len(p.float_list):
+            while len(p.float_list) < lenp:
+                p.float_list.append(p.float_list[-1])
         result = dict(('IMP' + k, v) for k, v in zip(p.particle_list, p.float_list))
         return result
 
@@ -358,7 +360,7 @@ class Parser(sly.Parser):
 
     @_('INTEGER', 'integer')
     def float(self, p):
-        return float(p.INTEGER)
+        return float(p[0])
 
     @_('INTEGER', 'ZERO')
     def integer(self, p):
@@ -366,11 +368,11 @@ class Parser(sly.Parser):
 
 
 def parse(
-    text: str,
-    cells: Optional[Index] = None,
-    surfaces: Optional[Index] = None,
-    transformations: Optional[Index] = None,
-    compositions: Optional[Index] = None,
+        text: str,
+        cells: Optional[Index] = None,
+        surfaces: Optional[Index] = None,
+        transformations: Optional[Index] = None,
+        compositions: Optional[Index] = None,
 ) -> Body:
     cells, surfaces, transformations, compositions = map(
         lambda x: x[1]() if x[0] is None else x[0],

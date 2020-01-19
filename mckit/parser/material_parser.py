@@ -1,5 +1,5 @@
 import sly
-from mckit.material import Composition
+from mckit.material import Composition, Element
 from mckit.parser.common.utils import drop_c_comments, extract_comments
 import mckit.parser.common.utils as cmn
 from mckit.parser.common.Lexer import Lexer as LexerBase
@@ -7,30 +7,28 @@ from mckit.parser.common.Lexer import Lexer as LexerBase
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(LexerBase):
-    tokens = {NAME, FRACTION, OPTION, FLOAT}
-
-    OPTION = r'(?:(?:gas|estep|cond)\s+\d+)|(?:(?:n|p|pn|e)lib\s+\S+)'
+    tokens = {NAME, FRACTION, OPTION}
+    ignore = " \t="
+    OPTION = r'(?:(?:gas|estep|cond)\s*[ =]\s*\d+)|(?:(?:n|p|pn|e)lib\s*[ =]\s*\S+)'
 
     @_(r'm\d+')
     def NAME(self, t):
         t.value = int(t.value[1:])
         return t
 
-    @_(r'\d+(?:\.\d+[cdepuy])')
+    @_(r'\d+(?:\.\d+[cdepuy])?\s+[-+]?\d*\.?\d+(?:e[-+]?\d+)?')
     def FRACTION(self, t):
-        if '.' in t.value:
-            isotope, lib = t.value.split('.')
+        isotop_spec, frac = t.value.split()
+        frac = float(frac)
+        if '.' in isotop_spec:
+            isotope, lib = isotop_spec.split('.')
             isotope = int(isotope)
-            lib = lib[:] # drop dot
             lib = cmn.ensure_lower(lib)
-            t.value = isotope, lib
+            t.value = isotope, lib, frac
         else:
-            t = self.on_integer(t)
+            isotope = int(isotop_spec)
+            t.value = isotope, None, frac
         return t
-
-    @_(cmn.FLOAT)
-    def FLOAT(self, token):
-        return LexerBase.on_float(token)
 
 
 # noinspection PyUnresolvedReferences
@@ -88,15 +86,10 @@ class Parser(sly.Parser):
     #     name, lib, frac = p.fraction_a
     #     return Element(name, lib=lib, comment=p.EOL_COMMENT), frac
     #
-    @_('fraction_a')
+    @_('FRACTION')
     def fraction(self, p):
-        name, lib, frac = p.fraction_a
+        name, lib, frac = p.FRACTION
         return Element(name, lib=lib), frac
-
-    @_('FRACTION FLOAT')
-    def fraction_a(self, p):
-        isotope, lib = p.FRACTION
-        return isotope, lib, p.FLOAT
 
     @_('options option')
     def options(self, p):
@@ -107,16 +100,16 @@ class Parser(sly.Parser):
     @_('option')
     def options(self, p):
         option, value = p.option
-        result = dict()
-        result[option] = value
-        return result
+        return {option: value}
 
     @_('OPTION')
     def option(self, p):
-        option, value = p.OPTION.split()
-        if not option.islower():
-            option = option.lower()
-        if option in ("gas", "estep", "cond"):
+        text: str = p.OPTION
+        if '=' in text:
+            text = text.replace('=', ' ', 1)
+        option, value = text.split()
+        option = cmn.ensure_upper(option)
+        if option in ("GAS", "ESTEP", "COND"):
             value = int(value)
         return option, value
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Dict, Any
+from typing import Iterable, Dict, Any, List
 from collections import defaultdict, namedtuple
-
+from attr import attrs, attrib
 import numpy as np
 from click import progressbar
 
@@ -181,7 +181,6 @@ class Universe:
             if not c.is_equivalent_to(other[i]):
                 return False
         return True
-
 
     def add_cells(self, cells, name_rule='new'):
         """Adds new cell to the universe.
@@ -740,7 +739,10 @@ class Universe:
         return self._comment
 
 
-_UniverseCellsGroup = namedtuple('_UniverseCellsGroup', ['universe', 'cells'])
+@attrs
+class _UniverseCellsGroup:
+    universe: Universe = attrib()
+    cells: List[Body] = attrib()
 
 
 def produce_universes(cells: Iterable[Body]) -> Universe:
@@ -759,13 +761,18 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
     universe : Universe
         The top level universe with name = 0.
     """
-    groups: Dict[int, _UniverseCellsGroup] = defaultdict(_UniverseCellsGroup)
+    groups: Dict[int, _UniverseCellsGroup] = {}
     for c in cells:
-        groups[c.options.get('U', 0)].cells.append(c)
+        universe_no: int = c.options.get('U', 0)
+        if universe_no in groups:
+            groups[universe_no].cells.append(c)
+        else:
+            new_group = _UniverseCellsGroup(universe=Universe([], universe_no), cells=[c])
+            groups[universe_no] = new_group
         fill: Dict[str, Any] = c.options.get('FILL', None)
         if fill is not None:
             fill_universe_no = fill['universe']
-            fill['universe'] = groups[fill_universe_no][0]
+            fill['universe'] = groups[fill_universe_no].universe
     for group in groups.values():
         group.universe.add_cells(group.cells, name_rule='keep')
     top_universe = groups[0].universe

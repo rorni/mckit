@@ -1,5 +1,5 @@
 import pytest
-
+from mckit.parser.common import IgnoringIndex
 import mckit.parser.common.transformation_index as ti
 import mckit.parser.surface_parser as srp
 from mckit.surface import (
@@ -14,6 +14,15 @@ from mckit.surface import (
                 ("INTEGER", 1),
                 ("SURFACE_TYPE", "PX"),
                 ("INTEGER", 0),
+            ]
+    ),
+    (
+            "+2 py 2",
+            [
+                ('MODIFIER', '+'),
+                ("INTEGER", 2),
+                ("SURFACE_TYPE", "PY"),
+                ("INTEGER", 2),
             ]
     ),
 ])
@@ -38,7 +47,7 @@ def test_good_path(text, expected):
     ("1 2 PX 0", create_surface("PX", 0.0)),
 ])
 def test_absent_surface_with_ignore_strategy(text, expected):
-    actual = srp.parse(text)
+    actual = srp.parse(text, transformations=IgnoringIndex())
     assert actual == expected
     assert 'transform' not in actual.options
 
@@ -57,6 +66,7 @@ def test_absent_surface_with_raise_strategy(text, msg_contains):
 # noinspection PyTypeChecker
 @pytest.mark.parametrize("text,expected", [
     ("1 2 PX 0.1", create_surface("PX", 0.1, transform=ti.DummyTransformation(2))),
+    ("1 1 SX 4 +5.0", create_surface("SX", 4, 5.0, name=1, transform=ti.DummyTransformation(1))),
 ])
 def test_absent_surface_with_dummy_strategy(text, expected):
     actual = srp.parse(

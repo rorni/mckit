@@ -66,7 +66,7 @@ class Transformation(Card):
         Card.__init__(self, **options)
         translation = np.array(translation, dtype=float)
         if translation.shape != (3,):
-            raise ValueError('Wrong length of translation vector.')
+            raise ValueError(f'Transaction #{self.name()}: wrong length of translation vector.')
 
         if rotation is None:
             u = IDENTITY_ROTATION
@@ -78,7 +78,7 @@ class Transformation(Card):
             if u.shape == (9,):
                 u = u.reshape((3, 3), order='F')
             if u.shape != (3, 3):
-                raise ValueError('Wrong number of rotation parameters.')
+                raise ValueError(f'Transaction #{self.name()}: wrong number of rotation parameters.')
             # normalize auxiliary CS basis and orthogonalize it.
             u, r = np.linalg.qr(u)
             # QR decomposition returns orthogonal matrix u - which is corrected
@@ -93,7 +93,7 @@ class Transformation(Card):
             cos_th = np.sin(ANGLE_TOLERANCE)
             if abs(r[0, 1]) > cos_th or abs(r[0, 2]) > cos_th or \
                     abs(r[1, 2]) > cos_th:
-                raise ValueError('Non-orthogonality is greater than 0.001 rad.')
+                raise ValueError(f'Transaction #{self.name()}: non-orthogonality is greater than 0.001 rad.')
             # To preserve directions of corrected basis vectors.
             for i in range(3):
                 u[:, i] = u[:, i] * np.sign(r[i, i])

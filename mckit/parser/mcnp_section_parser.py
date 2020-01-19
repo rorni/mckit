@@ -5,6 +5,7 @@ from typing import Iterable, List, Optional, Generator, TextIO, Tuple
 from enum import IntEnum
 from attr import attrs, attrib
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -26,7 +27,7 @@ REMOVE_COMMENT_PATTERN = re.compile(
 
 # pattern to split section text to optional "comment" and subsequent MCNP card pairs
 CARD_PATTERN = re.compile(
-    r"(?P<comment>((^\s{,5}c( .*)?\s*$)\n?)+)?(?P<card>^\s{,5}(\*|\w).*(\n((^\s{,5}c.*\n?)*^\s{5,}\S.*\n?)*)?)?",
+    r"(?P<comment>((^\s{,5}c( .*)?\s*$)\n?)+)?(?P<card>^\s{,5}(\*|\+|\w).*(\n((^\s{,5}c.*\n?)*^\s{5,}\S.*\n?)*)?)?",
     flags=re.MULTILINE | re.IGNORECASE
 )
 
@@ -334,7 +335,7 @@ def get_clean_text(text):
     return with_spaces_normalized
 
 
-def clean_mcnp_cards(iterable: Iterable[Card]) -> Generator[Card]:
+def clean_mcnp_cards(iterable: Iterable[Card]) -> Generator[Card, None, None]:
     for x in iterable:
         if x.kind is not Kind.COMMENT:
             clean_text = x.get_clean_text()

@@ -8,30 +8,21 @@ from mckit.material import Composition, Element
 @pytest.mark.parametrize("text, expected_types, expected_values", [
     (
         "1001.21c -1.0",
-        ['FRACTION', 'FLOAT'],
-        [(1001, '21c'), -1.0],
+        ['FRACTION'],
+        [(1001, '21c', -1.0)],
     ),
-    # (
-    #     "1001.21c -1.0  $ comment\n",
-    #     ['FRACTION', 'FLOAT', 'EOL_COMMENT'],
-    #     [(1001, '21c'), -1.0, 'comment'],
-    # ),
-    # (
-    #     """
-    #     1001.21c -1.0  $ comment
-    #     1001.21c -1.0
-    #       $ comment
-    #     """.strip(),
-    #     ['FRACTION', 'FLOAT', 'EOL_COMMENT', 'FRACTION', 'FLOAT', 'EOL_COMMENT'],
-    #     [(1001, '21c'), -1.0, '$ comment', (1001, '21c'), -1.0, 'comment'],
-    # ),
     (
-        "  M100 1000",
-        ['NAME', 'INTEGER'],
-        [100, 1000],
+        "  M100 1000 1.0",
+        ['NAME', 'FRACTION'],
+        [100, (1000, None, 1.0)],
+    ),
+    (
+        "  M100 1000 1.0 gas=1",
+        ['NAME', 'FRACTION', 'OPTION'],
+        [100, (1000, None, 1.0), 'gas=1'],
     ),
 ])
-def test_test_composition_lexer(text, expected_types, expected_values):
+def test_composition_lexer(text, expected_types, expected_values):
     lexer = mp.Lexer()
     tokens = list(lexer.tokenize(text))
     result = list(t.type for t in tokens)
@@ -55,7 +46,7 @@ def test_test_composition_lexer(text, expected_types, expected_values):
     ),
     (
         """M1000
-        1001.21c -1.0 
+        1001.21c -1.0
             $ trailing comment1
             $ trailing comment2
         """,
@@ -68,7 +59,7 @@ def test_test_composition_lexer(text, expected_types, expected_values):
     (
         """M1000
     1001.21c -1.0
-c bzzzzzz 
+c bzzzzzz
         $ trailing comment1
         $ trailing comment2
         """,
@@ -81,7 +72,7 @@ c bzzzzzz
     (
         """M1000
         1001.21c -1.0
-            gas 1 
+            gas 1
             $ trailing comment1
             $ trailing comment2
         """,
@@ -89,8 +80,23 @@ c bzzzzzz
             weight=[(Element(1001, lib='21c'), 1.0)],
             name=1000,
             comment=['trailing comment1', 'trailing comment2'],
-            gas=1,
+            GAS=1,
         )
+    ),
+    (
+        "m1 1001 0.1 1002 0.9",
+        Composition(
+            atomic=[(1001, 0.1), (1002, 0.9)],
+            name=1,
+        )
+    ),
+    (
+            "m3 1001 0.1 1002 0.9 gas=1",
+            Composition(
+                atomic=[(1001, 0.1), (1002, 0.9)],
+                name=3,
+                GAS=1,
+            )
     ),
 ])
 def test_test_composition_parser(text, expected):

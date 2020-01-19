@@ -1,6 +1,6 @@
 from typing import List, Tuple, Optional
 import sly
-from  mckit.surface import Surface
+from mckit.surface import Surface, create_surface
 from mckit.parser.common import Lexer as LexerBase, Index, TransformationStrictIndex
 import mckit.parser.common.utils as pu  # parse utils
 from mckit.parser.common.utils import drop_c_comments, extract_comments
@@ -28,7 +28,7 @@ def intern_surface_type(word: str):
 class Lexer(LexerBase):
     tokens = {MODIFIER, SURFACE_TYPE, FLOAT, INTEGER}
 
-    MODIFIER = r'\*|\+'
+    MODIFIER = r'^\s{,5}(\*|\+)'
     SURFACE_TYPE = r'[a-z]+(?:/[a-z]+)?'
     FLOAT = pu.FLOAT
     INTEGER = pu.INTEGER
