@@ -7,6 +7,9 @@ import mckit.parser.common.utils as m
 
 @pytest.mark.parametrize("text,expected", [
     (
+        "a\nc\nb", "a\nb"
+    ),
+    (
         """m1
  c bzzz
         1001.21c -1.0
@@ -14,6 +17,25 @@ import mckit.parser.common.utils as m
         """m1
         1001.21c -1.0
         """,
+    ),
+    (
+"""
+(
+   a
+)
+c
+(
+   b
+)
+""",
+"""
+(
+   a
+)
+(
+   b
+)
+""",
     ),
 ])
 def test_drop_c_comments(text, expected):

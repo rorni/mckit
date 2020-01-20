@@ -23,6 +23,9 @@ from mckit.parser.surface_parser import parse as parse_surface, Surface
 from mckit.parser.cell_parser import parse as parse_cell, Body
 
 T = NewType('T', Any)
+T1 = NewType('T1', Any)
+T2 = NewType('T2', Any)
+Pair = NewType('Pair', Tuple[T1, T2])
 YieldGenerator = NewType('YieldGenerator', Generator[T, None, None])
 
 
@@ -59,11 +62,11 @@ def from_stream(stream: TextIO) -> ParseResult:
 def from_text(text: str) -> ParseResult:
     sections: InputSections = parse_sections_text(text)
     if sections.data_cards:
-        text_materials, text_transformations, _, _, _ = distribute_cards(sections.data_cards)
+        text_compositios, text_transformations, _, _, _ = distribute_cards(sections.data_cards)
         # type: List[TextCard], List[TextCard]
         transformations = parse_transformations(text_transformations)
         transformations_index = TransformationStrictIndex.from_iterable(transformations)
-        compositions = parse_compositions(text_materials)
+        compositions = parse_compositions(text_compositios)
         compositions_index = CompositionStrictIndex.from_iterable(compositions)
     else:
         transformations = None
@@ -94,49 +97,54 @@ TSectionGenerator = NewType(
 )
 
 
+def join_comments(
+        text_cards: Iterable[TextCard]
+):
+    def _iter():
+        comment: Optional[TextCard] = None
+        for card in text_cards:
+            if card.is_comment:
+                assert comment is None, f"Comment is already set {comment[:70]}"
+                comment = card.text
+            else:
+                assert not card.is_comment, f"Pair of comment is found, second one is: {comment[:70]}"
+                yield card, comment
+                comment = None
+    return list(_iter())
+
+
 def parse_section(
         text_cards: Iterable[TextCard],
         expected_kind: Kind,
         parser: Callable[[str], Card]
 ) -> TSectionGenerator:
+    text_cards_with_comments = join_comments(text_cards)
+
     def iterator() -> TSectionGenerator:
-        comment: Optional[str] = None
-        for text_card in text_cards:
-            if text_card.is_comment:
-                assert comment is None
-                comment = text_card.text
-            else:
-                assert text_card.kind is expected_kind
-                card = parser(text_card.text)
-                assert card, "Failed to create card"
-                if comment:
-                    card.options['comment_above'] = comment
-                    comment = None
-                card.options['original'] = text_card.text
-                yield card
+        for text_card, comment in text_cards_with_comments:
+            assert text_card.kind is expected_kind
+            card = parser(text_card.text)
+            assert card, "Failed to create card"
+            if comment:
+                card.options['comment_above'] = comment
+            card.options['original'] = text_card.text
+            yield card
 
     return iterator()
 
 
 def parse_transformations(text_cards: Iterable[TextCard]) -> List[Transformation]:
-    return list(
-        i for i in parse_section(text_cards, Kind.TRANSFORMATION, parse_transformation)
-    )
+    return list(parse_section(text_cards, Kind.TRANSFORMATION, parse_transformation))
 
 
 def parse_compositions(text_cards: Iterable[TextCard]) -> List[Composition]:
-    return list(
-        i for i in parse_section(text_cards, Kind.MATERIAL, parse_composition)
-    )
+    return list(parse_section(text_cards, Kind.MATERIAL, parse_composition))
 
 
 def parse_surfaces(text_cards: Iterable[TextCard], transformations: Index) -> List[Surface]:
     def parser(text: str):
         return parse_surface(text, transformations=transformations)
-
-    return list(
-        i for i in parse_section(text_cards, Kind.SURFACE, parser)
-    )
+    return list(parse_section(text_cards, Kind.SURFACE, parser))
 
 
 def extract_number(text_card: TextCard):
@@ -151,7 +159,7 @@ class MissedCellsError(RuntimeError):
 
     @classmethod
     def from_text_cards(cls, missed_cells: Iterable[TextCard]):
-        missed_cells_numbers: List[int] = list(i for i in map(extract_number, missed_cells))
+        missed_cells_numbers: List[int] = list(map(extract_number, missed_cells))
         return cls(missed_cells_numbers)
 
 
@@ -161,10 +169,11 @@ def parse_cells(
         compositions: Index,
         transformations: Index,
 ) -> Tuple[List[Body], CellStrictIndex]:
-    size = len(text_cards)
+    text_cards_with_comments = join_comments(text_cards)
+    size = len(text_cards_with_comments)
     cells_index = CellStrictIndex()
-    cells_to_process = list(i for i in range(size))
-    cells = list(i for i in repeat(None, size))
+    cells_to_process = list(range(size))
+    cells = list(repeat(None, size))
 
     def parser(text: str):
         return parse_cell(
@@ -177,34 +186,27 @@ def parse_cells(
 
     while cells_to_process:
         cells_to_process_length = len(cells_to_process)
-        comment: Optional[str] = None
         new_cells_to_process = []
         for i in cells_to_process:
-            text_card = text_cards[i]
-            if text_card.is_comment:
-                assert comment is None
-                comment = text_card.text
+            text_card, comment = text_cards_with_comments[i]
+            assert text_card.kind is Kind.CELL
+            try:
+                card: Body = parser(text_card.text)
+                assert card is not None, "Failed to process cell %s" % text_card.text[:70]
+            except CellNotFoundError:
                 new_cells_to_process.append(i)
-            else:
-                assert text_card.kind is Kind.CELL
-                try:
-                    card: Body = parser(text_card.text)
-                    assert card is not None, "Failed to process cell %s" % text_card.text[:70]
-                except CellNotFoundError:
-                    new_cells_to_process.append(i)
-                    continue
-                if comment:
-                    card.options['comment_above'] = comment
-                    comment = None
-                    assert new_cells_to_process[-1] == i - 1, "Comment should be in cards to process list"
-                    new_cells_to_process = new_cells_to_process[:-1]
-                card.options['original'] = text_card.text
-                cells[i] = card
-                cells_index[card.name()] = card
+                continue
+            if comment:
+                card.options['comment_above'] = comment
+            card.options['original'] = text_card.text
+            cells[i] = card
+            cells_index[card.name()] = card
         if cells_to_process_length == len(new_cells_to_process):
             missed_cells_cards = list(text_cards[i] for i in new_cells_to_process)
             raise MissedCellsError.from_text_cards(missed_cells_cards)
         cells_to_process = new_cells_to_process
+
     if any(map(lambda c: c is None, cells)):
-        cells = list(c for c in cells if c is not None)
+        cells = list(filter(lambda c: c is not None, cells))
+
     return cells, cells_index

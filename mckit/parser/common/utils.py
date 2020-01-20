@@ -1,7 +1,7 @@
 import re
 from typing import Iterable
 
-C_COMMENT = r'\n\s{0,5}[cC]\s[^\n]*'
+C_COMMENT = r'(^|(?<=\n))\s{0,5}[cC]([ ][^\n]*)?\n?'
 RE_C_COMMENT = re.compile(C_COMMENT, re.MULTILINE)
 EOL_COMMENT = r'\$.*[^\n]*'
 RE_EOL_COMMENT = re.compile(EOL_COMMENT, re.MULTILINE)
@@ -25,7 +25,8 @@ def ensure_upper(text: str):
 
 
 def drop_c_comments(text):
-    if RE_C_COMMENT.search(text) is not None:
+    has_comments = RE_C_COMMENT.search(text)
+    if has_comments:
         text = RE_C_COMMENT.sub('', text)
     return text
 

@@ -1,12 +1,7 @@
 """
-Tests with benchmarks on large mcnp files.
-
-To use it install plugin pytest-benchmark (https://pytest-benchmark.readthedocs.io/en/latest/index.html#)
-    conda install pytest-benchmark
-    or
-    pip install pytest-benchmark
+Code to profile on large mcnp files.
+Not using pytest.
 """
-import pytest
 from zipfile import ZipFile
 from mckit.utils.resource import path_resolver
 from mckit.constants import MCNP_ENCODING
@@ -19,15 +14,16 @@ with ZipFile(data_filename_resolver("data/4M.zip")) as data_archive:
 
 
 def test_old_mcnp_reading(benchmark):
-    universe: Universe = benchmark(read_mcnp_text, CLITE_TEXT)
+    universe: Universe = read_mcnp_text(CLITE_TEXT)
     assert len(universe) == 150
 
 
 def test_sly_mcnp_reading(benchmark):
-    result: ParseResult = benchmark(from_text, CLITE_TEXT)
+    result: ParseResult = from_text(CLITE_TEXT)
     assert result.title == "C-LITE VERSION 1 RELEASE 131031 ISSUED 31/10/2013 - Halloween edition"
     assert len(result.universe) == 150
 
 
-if __name__ == '__main__':
-    pytest.main()
+if __name__ == "__main__":
+    test_old_mcnp_reading()
+    test_sly_mcnp_reading()

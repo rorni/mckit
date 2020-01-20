@@ -81,7 +81,7 @@ tokens = [
     'continue',
     'separator',
     'surface_type',
-    '+++++++++++++++++++++++++++++++',
+    'int_number',
     'flt_number',
     'keyword',
     'title',

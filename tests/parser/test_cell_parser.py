@@ -134,58 +134,22 @@ def test_parser_with_like_spec(text, expected, surfaces, cells):
 
 @pytest.mark.parametrize("text,expected", [
     (
-        """93    0   ((
-            16 24   -87 92     -89 -90 -91 :
-            16 24   -93 88     -89 -90 -91 :
-            16 24    94 93 -95 -89 -90 -91 :
-            16 24   95 -96     -89 -90 -91 (97:98:99:100:101) :
-            16 24   96 -92     -89 -90 -91 (102:103:104:105:106) 
+        """93    0   (
+            16 24   
           )
-          (
-            -466:467:468:-469                                                   $ UPPER PORT OPENING THROUGH BIOSHIELD, CENTRAL
-          )
-          (
-            -482:483:484:-485                                                   $ UPPER PORT OPENING THROUGH BIOSHIELD, Y+ [-20-DEGREE CLOCKWISE]
-          )
-          (
-            -498:499:500:-501                                                   $ UPPER PORT OPENING THROUGH BIOSHIELD, Y- [+20-DEGREE CLOCKWISE]
-          )
-          (
-           -514:515:516:-517                                                    $ EQ. PORT OPENING THROUGH BIOSHIELD, CENTRAL
-          )
-          (
-           -530:531:532:-533                                                    $ EQ. PORT OPENING THROUGH BIOSHIELD, Y+ [-20-DEGREE CLOCKWISE]
-          )
-          (
-           -546:547:548:-549                                                    $ EQ. PORT OPENING THROUGH BIOSHIELD, Y- [+20-DEGREE CLOCKWISE]
-          )
-          (
-           -562:563:564:-565                                                    $ LOWER PORT OPENING THROUGH BIOSHIELD, CENTRAL
-          )
-          (                                                                     $ LOWER PORT PLUG (Y-)
-            1451:-1452:1453:-1454 : -85 -74 : 79 74 :-434:91
-          )
-C                                                                               $ LOWER PORT PLUG (Y+)
-           (90:-16:1456:-1455:1457:-1460: -1458 1459 )
-           (1455:1461:-16:1462:
-             -1463:-1466: 1464 1465 :-1467:-1468: 1469 1470 :75)
-           (-1461:-16:-1466:-1471:1472:1473: 75 76 74 : -81 -74 ))
 C
           (
-            -565:+563:-16:-482                                                  $ LOWER PORT OPENING THROUGH BIOSHIELD, Y+ [-20-DEGREE CLOCKWISE]
+            -565:+563
           )
-          IMP:N=1.000000  IMP:P=1.000000
-          FILL=93
         """, 93
-    )
+    ),
 ])
-def test_failures(text, expected):
+def test_found_failures(text, expected):
     surfaces_index = SurfaceDummyIndex()
     cells_index = CellDummyIndex()
     actual = clp.parse(text, cells=cells_index, surfaces=surfaces_index)
     assert actual is not None
     assert actual.name() == expected
-
 
 
 def create_dummy_surface_index(surfaces: List[int]) -> Index:

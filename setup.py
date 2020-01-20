@@ -169,7 +169,7 @@ setup(
         'sly',
     ],
     ext_modules=extensions,
-    tests_require=['pytest', 'pytest-cov>=2.3.1'],
+    tests_require=['pytest', 'pytest-cov>=2.3.1', 'pytest-benchmark'],
     cmdclass={'test': PyTest},
     entry_points={
         'console_scripts': [

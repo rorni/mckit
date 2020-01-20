@@ -1,7 +1,31 @@
+import math
 import numpy as np
 
 
 MAX_DIGITS = np.finfo(float).precision
+
+
+def digits_in_fraction_for_str(value: float, reltol: float = 1e-12, resolution: float = None) -> int:
+    if value == 0.0:
+        return 0
+    if value < 0.0:
+        value = -value
+    if resolution and value < resolution:
+        return 0
+    max_remainder = value * reltol
+    s_value = str(value)
+    _, s_rem = s_value.split('.')
+
+    def _iter():
+        ord0 = ord('0')
+        m = 0.1
+        for c in s_rem:
+            yield m * (ord(c) - ord0)
+            m *= 0.1
+
+    rem = np.flip(np.fromiter(_iter(), np.float))
+    n = np.searchsorted(rem, max_remainder)
+    return rem.size - n
 
 
 def significant_digits(value, reltol=1.e-12, resolution=None):
@@ -22,7 +46,7 @@ def significant_digits(value, reltol=1.e-12, resolution=None):
     digits : int
         The number of digits.
     """
-    if resolution and abs(value) < resolution:
+    if value == 0.0 or resolution and abs(value) < resolution:
         return 0
     dec = get_decades(value)
     low = min(dec, 0)
@@ -42,9 +66,22 @@ def significant_digits(value, reltol=1.e-12, resolution=None):
         return high
 
 
+# LG2 = math.log10(2.0)
+
+
 def get_decades(value):
+    # TODO dvp: check if math.frexp is applicable, this mostly works but some test for pretty_print fail.
+    # if value == 0.0:
+    #     return 0
+    # mantissa, exponent = math.frexp(value)  # type: float, int
+    # if -0.5 <= mantissa <= 0.5:
+    #     decades: int = math.floor(LG2 * (exponent - 1))
+    # else:
+    #     decades: int = math.floor(LG2 * exponent)
+    # return decades
+
     if value != 0:
-        decpow = np.log10(abs(value))
+        decpow = np.log10(abs(value))   # TODO dvp: log10 will be called billion times on C-model
     else:
         decpow = 0
     decades = np.trunc(decpow)

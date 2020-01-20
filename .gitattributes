@@ -8,6 +8,7 @@
 *.zip binary
 *.bz2 binary
 *.gz binary
+*.zip binary
 *.npy binary
 *.docx binary
 #*.docx binary diff=word
