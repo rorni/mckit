@@ -15,6 +15,7 @@ from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .card import Card
+from mckit.utils import deep_copy_dict
 
 
 __all__ = ['Shape', 'Body', 'simplify', 'GLOBAL_BOX', 'Card', 'TGeometry', 'TGeometry']
@@ -566,7 +567,8 @@ class Body(Card):
                 return my.has_equivalent_cells(their)
         return result
 
-
+    # TODO dvp: the method is used for printing, we'd better introduce virtual method print(self, out: TextIO)?
+    # TODO dvp: in that case we could just return original text if available
     def mcnp_words(self):
         words = [str(self.name()), ' ']
         if 'MAT' in self.options.keys():
@@ -623,7 +625,8 @@ class Body(Card):
             The result.
         """
         geometry = self._shape.intersection(other)
-        return Body(geometry, **self.options)
+        options = deep_copy_dict(self.options, 'original')
+        return Body(geometry, **options)
 
     def union(self, other):
         """Gets an union if this cell with the other.
@@ -641,7 +644,8 @@ class Body(Card):
             The result.
         """
         geometry = self._shape.union(other)
-        return Body(geometry, **self.options)
+        options = deep_copy_dict(self.options, 'original')
+        return Body(geometry, **options)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
                  min_volume=MIN_BOX_VOLUME, trim_size=1):
@@ -673,7 +677,8 @@ class Body(Card):
         # print('finding optimal solution...')
         variants = self._shape.get_simplest(trim_size)
         # print(len(variants))
-        return Body(variants[0], **self.options)
+        options = deep_copy_dict(self.options, 'original')
+        return Body(variants[0], **options)
 
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
         """Fills this cell by filling universe.
@@ -740,7 +745,8 @@ class Body(Card):
             The result of this cell transformation.
         """
         geometry = self._shape.transform(tr)
-        cell = Body(geometry, **self.options)
+        options = deep_copy_dict(self.options, 'original')
+        cell = Body(geometry, **options)
         fill = cell.options.get('FILL', None)
         if fill:
             tr_in = fill.get('transform', Transformation())

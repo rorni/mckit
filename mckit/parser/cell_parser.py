@@ -12,6 +12,7 @@ from mckit.parser.common import (
     Lexer as LexerBase,
     Index, CellStrictIndex, SurfaceStrictIndex, TransformationStrictIndex, CompositionStrictIndex,
 )
+from mckit.utils import deep_copy_dict
 
 CELL_WORDS = {
     'U', 'MAT', 'LAT', 'TMP', 'RHO', 'VOL',
@@ -45,15 +46,6 @@ class Lexer(LexerBase):
     @_(pu.FLOAT)
     def FLOAT(self, token):
         return self.on_float(token)
-
-
-def deep_copy_dict(a: dict):
-    res = {}
-    for k, v in a.items():
-        if isinstance(v, dict):
-            v = deep_copy_dict(v)
-        res[k] = v
-    return res
 
 
 # noinspection PyUnresolvedReferences

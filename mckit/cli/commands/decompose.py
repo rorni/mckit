@@ -5,17 +5,16 @@
 
 Читает модель, извлекает юниверсы первого уровня и сохраняет их в каталог universes под именем uN.i, где N - номер юниверса.
 Также сохраняет общую модель (без юниверсов) под именем envelopes.i
-Создает спецификацию для сборки модели в виде TOML файла.
+Создает спецификацию для последующей сборки модели в виде TOML файла.
 
 """
 from datetime import datetime
 import logging
 from pathlib import Path
-import click
 import tomlkit as tk
-import mckit as mk
+from mckit import Universe
+from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 from .common import save_mcnp
-from ...constants import MCNP_ENCODING
 
 
 def get_default_output_directory(source):
@@ -40,11 +39,14 @@ def decompose(output, fill_descriptor_path, source, override):
     else:
         output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    model: mk.Universe = mk.read_mcnp(source, encoding=MCNP_ENCODING)
     fill_descriptor = tk.document()
     fill_descriptor.add(tk.comment(f"This is a decomposition of \"{source.name}\" model"))
+    parse_result: ParseResult = from_file(source)
+    if parse_result.title:
+        fill_descriptor.append("title", parse_result.title)
+    model: Universe = parse_result.universe
     if model.comment:
-        fill_descriptor.append("comment", "model.comment")
+        fill_descriptor.append("comment", model.comment)
     fill_descriptor.append("created", datetime.now())
     fill_descriptor.add(tk.nl())
     already_processed_universes = set()
@@ -80,7 +82,7 @@ def decompose(output, fill_descriptor_path, source, override):
             if universe_name not in already_processed_universes:
                 move_universe_attribute_to_comments(universe)
                 save_mcnp(universe, output / fn, override)
-                logger.debug("The universe %s are saved to %s", universe_name, fn)
+                logger.debug("The universe %s has been saved to %s", universe_name, fn)
                 already_processed_universes.add(universe_name)
 
     with open(output / fill_descriptor_path, "w") as fid:
