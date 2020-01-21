@@ -9,6 +9,7 @@ from pathlib import Path
 from functools import reduce
 import tomlkit as tk
 import mckit as mk
+from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 from .common import save_mcnp
 from ...constants import MCNP_ENCODING
 
@@ -33,7 +34,8 @@ def compose(output, fill_descriptor_path, source, override):
                 universe_path = universes_dir / universe_path
                 if not universe_path.exists():
                     raise FileNotFoundError(universe_path)
-            universe = mk.read_mcnp(universe_path, encoding=MCNP_ENCODING)
+            parse_result: ParseResult = from_file(universe_path)
+            universe: mk.Universe = parse_result.universe
             universes[cell_name] = (universe, transformation)
 
     comps = {}
@@ -62,7 +64,9 @@ def compose(output, fill_descriptor_path, source, override):
                     rotaion=transformation[3:],
                     indegrees=True,
                 )
+                cell.options["FILL"]["transform"] = transformation
             else:
+                # TODO dvp: collect and use parse results to implement this: there's an index of transformations
                 raise NotImplementedError(
                     """\
                     Specification of fill with a universe with a named transformation "fill=<...> ( number )" occurs. \

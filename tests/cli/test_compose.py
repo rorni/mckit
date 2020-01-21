@@ -67,3 +67,6 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
         actual = mk.read_mcnp(output)
         expected = mk.read_mcnp(data_filename_resolver(expected))
         assert actual.has_equivalent_cells(expected), "Cells differ"
+
+
+# TODO dvp: add tests for both anonimous and numbered form of universe transformation spectification

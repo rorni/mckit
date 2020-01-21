@@ -1,4 +1,5 @@
 """Functions for printing."""
+from typing import List
 import warnings
 
 from mckit.utils import get_decades
@@ -10,7 +11,7 @@ MCNP_FORMATS = {
 }
 
 
-def print_card(tokens, offset=8, maxcol=80, sep='\n'):
+def print_card(tokens: List[str], offset: int = 8, maxcol: int = 80, sep: str = '\n') -> str:
     """Produce string in MCNP card format.
 
     Parameters

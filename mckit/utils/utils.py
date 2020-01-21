@@ -1,4 +1,4 @@
-import math
+from typing import Any, Optional, Set, Dict
 import numpy as np
 
 
@@ -137,3 +137,17 @@ def round_array(array, digarr):
         result[index] = round_scalar(array[index], digarr[index])
     return result
 
+
+def deep_copy_dict(
+    a: Dict[Any, Any],
+    drop_item: Optional[Any] = None,
+    drop_set: Optional[Set[Any]] = None
+) -> Dict[Any, Any]:
+    res = {}
+    for k, v in a.items():
+        if drop_item is None or k != drop_item:
+            if drop_set is None or k not in drop_set:
+                if isinstance(v, dict):
+                    v = deep_copy_dict(v)
+                res[k] = v
+    return res
