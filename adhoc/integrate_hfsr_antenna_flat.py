@@ -10,34 +10,28 @@ import os
 # import scipy as sp
 # import scipy.constants as sc
 import typing as tp
-import traceback
-from typing import Union, NoReturn, List, Callable, Any
+from typing import NoReturn
 from multiprocessing import Pool
 # from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
-import time
-import timeit
 import toolz
-import click
-import click_log
 import logging
 
 # from joblib import (
 #     Memory,
 #     # Parallel, delayed, wrap_non_picklable_objects, effective_n_jobs
 # )
-from joblib.externals.loky import set_loky_pickler
 
 import dotenv
-from pathlib import Path
 import numpy as np
+
+from mckit.utils import assert_all_paths_exist, get_root_dir
 
 sys.path.append("..")
 
 import mckit as mk
 # from mckit import *
 from mckit.box import Box
-import mckit.geometry as mg
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(
@@ -46,31 +40,6 @@ logging.basicConfig(
     level=logging.DEBUG,
 )
 # LOG = click_log.basic_config(LOG)
-
-
-def assert_all_paths_exist(*paths):
-    def apply(p: Path):
-        assert p.exists(), "Path \"{}\" doesn't exist".format(p)
-    map(apply, paths)
-
-
-def make_dirs(*dirs):
-    def apply(d: Path):
-        d.mkdir(parents=True, exist_ok=True)
-    map(apply, dirs)
-
-
-
-def get_root_dir(environment_variable_name, default):
-    return Path(os.getenv(environment_variable_name, default)).expanduser()
-
-def foreach(func: tp.Callable, iterable: tp.Iterable):
-    "Just drops the result of mapping an 'iterable' with 'func'."
-    for _ in map(func, iterable):
-        pass
-
-def is_sorted(a: np.ndarray) -> bool:
-    return np.all(np.diff(a) > 0)
 
 
 def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:

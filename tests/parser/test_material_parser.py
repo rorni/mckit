@@ -21,6 +21,11 @@ from mckit.material import Composition, Element
         ['NAME', 'FRACTION', 'OPTION'],
         [100, (1000, None, 1.0), 'gas=1'],
     ),
+    (
+            "M17    18000.70c 1.",
+            ['NAME', 'FRACTION'],
+            [17, (18000, "70c", 1.0)],
+    ),
 ])
 def test_composition_lexer(text, expected_types, expected_values):
     lexer = mp.Lexer()
@@ -29,6 +34,7 @@ def test_composition_lexer(text, expected_types, expected_values):
     assert result == expected_types
     result = list(t.value for t in tokens)
     assert result == expected_values
+# M17    18000.70c 1. $Ar 00 weight(%)  100
 
 
 @pytest.mark.parametrize("text, expected", [

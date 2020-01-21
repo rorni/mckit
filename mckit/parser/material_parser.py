@@ -16,7 +16,7 @@ class Lexer(LexerBase):
         t.value = int(t.value[1:])
         return t
 
-    @_(r'\d+(?:\.\d+[cdepuy])?\s+[-+]?\d*\.?\d+(?:e[-+]?\d+)?')
+    @_(r'\d+(?:\.\d+[cdepuy])?\s+[-+]?((\d+(\.\d*)?)|(\.\d+))([eE][-+]?\d+)?')
     def FRACTION(self, t):
         isotop_spec, frac = t.value.split()
         frac = float(frac)
