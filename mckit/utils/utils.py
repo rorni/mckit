@@ -172,11 +172,5 @@ def get_root_dir(environment_variable_name, default):
     return Path(os.getenv(environment_variable_name, default)).expanduser()
 
 
-def foreach(func: tp.Callable, iterable: tp.Iterable):
-    "Just drops the result of mapping an 'iterable' with 'func'."
-    for _ in map(func, iterable):
-        pass
-
-
 def is_sorted(a: np.ndarray) -> bool:
     return np.all(np.diff(a) > 0)
