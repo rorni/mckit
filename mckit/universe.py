@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from typing import Iterable, Dict, Any, List
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from attr import attrs, attrib
 import numpy as np
 from click import progressbar

@@ -1,9 +1,8 @@
 import os
-import typing as tp
 from pathlib import Path
 from typing import Any, Optional, Set, Dict
 import numpy as np
-
+from numpy import ndarray
 
 MAX_DIGITS = np.finfo(float).precision
 
@@ -84,7 +83,7 @@ def get_decades(value):
     # return decades
 
     if value != 0:
-        decpow = np.log10(abs(value))   # TODO dvp: log10 will be called billion times on C-model
+        decpow = np.log10(abs(value))  # TODO dvp: log10 will be called billion times on C-model
     else:
         decpow = 0
     decades = np.trunc(decpow)
@@ -93,7 +92,11 @@ def get_decades(value):
     return int(decades)
 
 
-def significant_array(array, reltol=1.e-12, resolution=None):
+def significant_array(
+        array: ndarray,
+        reltol: float = 1.e-12,
+        resolution: float = None,
+) -> ndarray:
     """The minimum number of significant digits to provide relative tolerance.
     """
     result = np.empty_like(array, dtype=int)
@@ -120,7 +123,7 @@ def round_scalar(value, digits):
     return round(value, digits)
 
 
-def round_array(array, digarr):
+def round_array(array: ndarray, digarr: ndarray):
     """Rounds array to desired precision.
 
     Parameters
@@ -142,9 +145,9 @@ def round_array(array, digarr):
 
 
 def deep_copy_dict(
-    a: Dict[Any, Any],
-    drop_item: Optional[Any] = None,
-    drop_set: Optional[Set[Any]] = None
+        a: Dict[Any, Any],
+        drop_item: Optional[Any] = None,
+        drop_set: Optional[Set[Any]] = None
 ) -> Dict[Any, Any]:
     res = {}
     for k, v in a.items():
@@ -159,12 +162,14 @@ def deep_copy_dict(
 def assert_all_paths_exist(*paths):
     def apply(p: Path):
         assert p.exists(), "Path \"{}\" doesn't exist".format(p)
+
     map(apply, paths)
 
 
 def make_dirs(*dirs):
     def apply(d: Path):
         d.mkdir(parents=True, exist_ok=True)
+
     map(apply, dirs)
 
 
@@ -174,4 +179,3 @@ def get_root_dir(environment_variable_name, default):
 
 def is_sorted(a: np.ndarray) -> bool:
     return np.all(np.diff(a) > 0)
-
