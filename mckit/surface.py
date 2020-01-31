@@ -195,11 +195,11 @@ class Surface(Card):
     def __init__(self, **options):
         Card.__init__(self, **options)
 
-    def __hash__(self):
-        return id(self)
-
-    def __eq__(self, other):
-        return id(self) == id(other)
+    # def __hash__(self):
+    #     return id(self)
+    #
+    # def __eq__(self, other):
+    #     return id(self) == id(other)
 
     def __getstate__(self):
         return self.options
@@ -247,17 +247,19 @@ class Plane(Surface, _Plane):
                              Transformation instance.
     """
     def __init__(self, normal, offset, **options):
-        if 'transform' in options.keys():
-            tr = options.pop('transform')
-            v, k = tr.apply2plane(normal, offset)
-        else:
-            v = np.array(normal)
-            k = offset
+        # if 'transform' in options.keys():
+        #     tr = options.pop('transform')
+        #     v, k = tr.apply2plane(normal, offset)
+        # else:
+        #     v = np.array(normal)
+        #     k = offset
+        v = np.asarray(normal, dtype=np.float)
+        k = float(offset)
         length = np.linalg.norm(v)
         v = v / length
         k /= length
-        self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        # self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        # self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
         self.normal = normal
@@ -265,17 +267,18 @@ class Plane(Surface, _Plane):
 
     def copy(self):
         instance = Plane.__new__(Plane, self._v, self._k)
-        instance._k_digits = self._k_digits
-        instance._v_digits = self._v_digits
+        # instance._k_digits = self._k_digits
+        # instance._v_digits = self._v_digits
         Surface.__init__(instance, **self.options)
         _Plane.__init__(instance, self._v, self._k)
         return instance
 
     def __hash__(self):
-        result = hash(self._get_k())
-        for v in self._get_v():
-            result ^= hash(v)
-        return result
+        # result = hash(self._get_k())
+        # for v in self._get_v():
+        #     result ^= hash(v)
+        # return result
+        return make_hash(self._get_k(), self.get_v())
 
     def __eq__(self, other):
         if not isinstance(other, Plane):
@@ -286,18 +289,43 @@ class Plane(Surface, _Plane):
                     return False
             return self._get_k() == other._get_k()
 
+    @property
+    def transformation(self) -> Optional[Transformation]:
+        transformation: Transformation = self.options.get('transform', None)
+        return transformation
+
+    def apply_transformation(self) -> 'Plane':
+        if 'transform' in self.options.keys():
+            tr = self.options.pop('transform')
+            v, k = tr.apply2plane(self._v, self._k)
+        else:
+            return self
+        options = deep_copy_dict(self.options, drop_item='original')
+        return Plane(v, k, transform=None, **options)
+
+    def transform(self, tr: Transformation) -> 'Plane':
+        if tr is None:
+            return self
+        my_transformation: Transformation = self.transformation
+        if my_transformation:
+            if tr is my_transformation:
+                return self
+            tr = tr.apply2transform(my_transformation)
+        options = deep_copy_dict(self.options, drop_item='original')
+        return Plane(self._v, self._k, transform=tr, **options)
+
     def _get_k(self):
-        return round_scalar(self._k, self._k_digits)
+        # return round_scalar(self._k, self._k_digits)
+        return self._k
 
     def _get_v(self):
-        return round_array(self._v, self._v_digits)
+        # return round_array(self._v, self._v_digits)
+        return self._v
 
     def reverse(self):
         """Gets the surface with reversed normal."""
-        return Plane(-self._v, -self._k)
-
-    def transform(self, tr):
-        return Plane(self._v, self._k, transform=tr, **self.options)
+        options = deep_copy_dict(self.options, drop_item='original')
+        return Plane(-self._v, -self._k, **options)
 
     def mcnp_words(self):
         words = Surface.mcnp_words(self)
@@ -317,13 +345,14 @@ class Plane(Surface, _Plane):
         return print_card(words)
 
     def __getstate__(self):
-        return self._v, self._k, self._k_digits, self._v_digits, Surface.__getstate__(self)
+        # return self._v, self._k, self._k_digits, self._v_digits, Surface.__getstate__(self)
+        return self._v, self._k, Surface.__getstate__(self)
 
     def __setstate__(self, state):
-        v, k, _k_digits, _v_digits, options = state
+        v, k, options = state
         _Plane.__init__(self, v, k)
         Surface.__setstate__(self, options)
-        self._k_digits, self._v_digits = _k_digits, _v_digits
+        # self._k_digits, self._v_digits = _k_digits, _v_digits
 
 
 class Sphere(Surface, _Sphere):

@@ -176,6 +176,7 @@ class TestPlane:
     ])
     def test_init(self, transform, norm, offset, v, k):
         surf = Plane(norm, offset, transform=transform)
+        surf = surf.apply_transformation()
         v, k = transform.apply2plane(v, k)
         np.testing.assert_array_almost_equal(v, surf._v)
         np.testing.assert_array_almost_equal(k, surf._k)
@@ -224,9 +225,9 @@ class TestPlane:
         ([0, 1, 0], -2),
     ])
     def test_transform(self, transform, norm, offset):
-        ans_surf = Plane(norm, offset, transform=transform)
+        ans_surf = Plane(norm, offset, transform=transform).apply_transformation()
         surf = Plane(norm, offset)
-        surf_tr = surf.transform(transform)
+        surf_tr = surf.transform(transform).apply_transformation()
         np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
         np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
 
@@ -235,11 +236,12 @@ class TestPlane:
         ([1, 0, 0], -2, {'name': 3}),
         ([0, 1, 0], -2, {'name': 4, 'comments': ['abc', 'def']}),
     ])
-    def test_pickle(self, norm, offset, options):
+    def test_pickle(self, tmpdir, norm, offset, options):
         surf = Plane(norm, offset, **options)
-        with open('test.pic', 'bw') as f:
+        tmp_file = str(tmpdir.join('test.pic'))
+        with open(tmp_file, 'bw') as f:
             pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open('test.pic', 'br') as f:
+        with open(tmp_file, 'br') as f:
             surf_un = pickle.load(f)
         np.testing.assert_array_almost_equal(surf._v, surf_un._v)
         np.testing.assert_almost_equal(surf._k, surf_un._k)

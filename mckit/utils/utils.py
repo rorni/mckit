@@ -1,8 +1,12 @@
+# import copy
 import os
+import functools
+import collections
 from pathlib import Path
-from typing import Any, Optional, Set, Dict
+from typing import Any, Optional, Set, Dict, Iterable, Hashable, Union, Mapping
 import numpy as np
 from numpy import ndarray
+
 
 MAX_DIGITS = np.finfo(float).precision
 
@@ -150,6 +154,7 @@ def deep_copy_dict(
         drop_set: Optional[Set[Any]] = None
 ) -> Dict[Any, Any]:
     res = {}
+    # TODO dvp: can we use copy.deepcopy()? Think why doesn't `dict` class have `__hash__` and `__deep_copy__` methods?
     for k, v in a.items():
         if drop_item is None or k != drop_item:
             if drop_set is None or k not in drop_set:
@@ -157,6 +162,65 @@ def deep_copy_dict(
                     v = deep_copy_dict(v)
                 res[k] = v
     return res
+
+
+@functools.singledispatch
+def make_hashable(x):
+    raise TypeError(f"Don't know how to make {type(x).__name__} objects hashable")
+
+
+@make_hashable.register
+def _(x: collections.abc.Hashable):
+    return x
+
+
+@make_hashable.register
+def _(x: str):
+    return x
+
+
+@make_hashable.register
+def _(x: collections.abc.Mapping):
+    return tuple(map(lambda i: (i[0], make_hashable(i[1])), x.items()))
+
+
+@make_hashable.register
+def _(x: collections.abc.Iterable) -> int:
+    return tuple(map(make_hashable, x))
+
+
+def make_hash(*items) -> int:
+    if 1 < len(items):
+        return make_hash(tuple(map(make_hash, items)))
+    return hash(make_hashable(items[0]))
+
+
+
+# def make_hash(*items) -> int:
+#     """
+#     Makes a hash from a dictionary, list, tuple or set to any level, that contains
+#     only other hashable types (including any iterables, and
+#     dictionaries).
+#
+#     Modification from: https://stackoverflow.com/questions/5884066/hashing-a-dictionary/22003440#22003440
+#     """
+#
+#     if 1 < len(items):
+#         return hash(tuple(map(make_hash, items)))
+#     else:
+#         item = items[0]
+#         cls = type(item)
+#         if issubclass(cls, Hashable):
+#             return hash(item)
+#         if issubclass(cls, Iterable):
+#             if issubclass(cls, Dict):
+#                 new_o = copy.deepcopy(item)
+#                 for k, v in new_o.items():
+#                     new_o[k] = make_hash(v)
+#                 return hash(tuple(frozenset(sorted(new_o.items()))))
+#             else:
+#                 return hash(tuple(map(make_hash, item)))
+#         raise NotImplementedError(f"Correct the logic of make_hash() method for the type {cls}")
 
 
 def assert_all_paths_exist(*paths):

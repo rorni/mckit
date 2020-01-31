@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from mckit.utils import digits_in_fraction_for_str, significant_digits, get_decades
+from mckit.utils import digits_in_fraction_for_str, significant_digits, get_decades, make_hash
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -55,4 +55,9 @@ def test_digits_in_fraction(value, reltol, resolution, expected):
     assert actual == expected
 
 
-
+@pytest.mark.parametrize("values", [
+    ('abc',),
+    ({1: {'a': 2}}, np.arange(10)),
+])
+def test_make_hash(values):
+    make_hash(*values)
