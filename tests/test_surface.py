@@ -667,7 +667,7 @@ class TestCone:
          np.array([1, 2, 3]) / np.sqrt(14), 0.25)
     ])
     def test_init(self, transform, apex, axis, tan2, ap, ax, t2):
-        surf = Cone(apex, axis, tan2, transform=transform)
+        surf = Cone(apex, axis, tan2, transform=transform).apply_transformation()
         ap = transform.apply2point(ap)
         ax = transform.apply2vector(ax)
         np.testing.assert_array_almost_equal(ap, surf._apex)
@@ -809,12 +809,9 @@ class TestCone:
         ([1, 2, 3],
          np.array([1, 2, 3]) / np.sqrt(14), 0.25, +1, {}),
     ])
-    def test_pickle(self, apex, axis, t2, sheet, options):
+    def test_pickle(self, tmpdir, apex, axis, t2, sheet, options):
         surf = Cone(apex, axis, t2, sheet, **options)
-        with open('test.pic', 'bw') as f:
-            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open('test.pic', 'br') as f:
-            surf_un = pickle.load(f)
+        surf_un = pass_through_pickle(surf, tmpdir)
         self.assert_cone(surf, surf_un)
 
     surfs = [
@@ -860,9 +857,9 @@ class TestCone:
     @pytest.mark.parametrize('box', [Box([3, 2, -4], 10, 10, 10)])
     def test_transform2(self, transform, surf, box):
         points = box.generate_random_points(10000)
-        test = surf.test_points(points)
+        test = surf.round().test_points(points)
         new_pts = transform.apply2point(points)
-        new_surf = surf.transform(transform)
+        new_surf = surf.transform(transform).round()
         new_test = new_surf.test_points(new_pts)
         np.testing.assert_array_equal(test, new_test)
 
@@ -901,9 +898,11 @@ class TestCone:
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
-    def test_equality(self, i1, s1, i2, s2):
-        result = (s1 == s2)
-        assert result == bool(self.eq_matrix[i1][i2])
+    def test_round_equality(self, i1, s1, i2, s2):
+        if i1 < i2:
+            s1, s2 = s1.round(), s2.round()
+            result = (s1 == s2)
+            assert result == bool(self.eq_matrix[i1][i2])
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))

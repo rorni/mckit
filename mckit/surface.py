@@ -103,7 +103,7 @@ def create_surface(kind, *params, **options):
         else:
             r0 = ORIGIN
         R = params[-1]
-        return Cylinder(r0, axis, R, **options)
+        return Cylinder(r0, axis, R, assume_normalized=assume_normalized, **options)
     # -------- Cone ---------------
     elif kind[0] == 'K':
         if kind[1] == '/':
@@ -113,7 +113,7 @@ def create_surface(kind, *params, **options):
             r0 = params[0] * axis
             ta = np.sqrt(params[1])
         sheet = 0 if len(params) % 2 == 0 else int(params[-1])
-        return Cone(r0, axis, ta, sheet, **options)
+        return Cone(r0, axis, ta, sheet, assume_normalized=assume_normalized, **options)
     # ---------- GQ -----------------
     elif kind == 'GQ':
         A, B, C, D, E, F, G, H, J, k = params
@@ -526,8 +526,7 @@ class Sphere(Surface, _Sphere):
         # Surface.__init__(instance, **self.options)
         # _Sphere.__init__(instance, self._center, self._radius)
         # return instance
-        options = deep_copy_dict(self.options)
-        return Sphere(self._center, self._radius, **options)
+        return Sphere(self._center, self._radius, deepcopy(self.options))
 
     __deepcopy__ = copy
 
@@ -828,34 +827,68 @@ class Cone(Surface, _Cone):
             transform = tr - transformation to be applied to the cone being
                              created. Transformation instance.
     """
-    def __init__(self, apex, axis, ta, sheet=0, **options):
-        if 'transform' in options.keys():
-            tr = options.pop('transform')
-            apex = tr.apply2point(apex)
-            axis = tr.apply2vector(axis)
-        axis = np.array(axis) / np.linalg.norm(axis)
+    def __init__(self, apex, axis, ta, sheet=0, assume_normalized=False, **options):
+        # if 'transform' in options.keys():
+        #     tr = options.pop('transform')
+        #     apex = tr.apply2point(apex)
+        #     axis = tr.apply2vector(axis)
+        axis = np.asarray(axis, dtype=np.float)
+        if not assume_normalized:
+            axis, is_ort = internalize_ort(axis)
+            if not is_ort:
+                axis /= np.linalg.norm(axis)
         maxdir = np.argmax(np.abs(axis))
         if axis[maxdir] < 0:
             axis *= -1
             sheet *= -1
-        apex = np.array(apex)
-        self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._apex_digits = significant_array(apex, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-
+        apex = np.asarray(apex, dtype=np.float)
+        # self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        # self._apex_digits = significant_array(apex, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
-        # TODO: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
+        # TODO rnr: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
         _Cone.__init__(self, apex, axis, ta, sheet)
-        self._t2_digits = significant_digits(self._t2, constants.FLOAT_TOLERANCE)
+        # self._t2_digits = significant_digits(self._t2, constants.FLOAT_TOLERANCE)
+
+    def apply_transformation(self) -> 'Cone':
+        if 'transform' in self.options.keys():
+            tr = self.options.pop('transform')
+            apex = tr.apply2point(self._apex)
+            axis = tr.apply2vector(self._axis)
+            ta = np.sqrt(self._t2)
+            sheet = self._sheet
+            options = self.clean_options()
+            return Cone(apex, axis, ta, sheet, assume_normalized=True, **options)
+        else:
+            return self
+
+    def round(self):
+        res = self.apply_transformation()
+        apex = res._apex
+        apex_digits = significant_array(apex, constants.FLOAT_TOLERANCE, constants.FLOAT_TOLERANCE)
+        apex = round_array(apex, apex_digits)
+        axis = res._axis
+        axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, constants.FLOAT_TOLERANCE)
+        axis = round_array(axis, axis_digits)
+        ta = np.sqrt(self._t2)
+        ta_digits = significant_digits(ta, constants.FLOAT_TOLERANCE)
+        ta = round_scalar(ta, ta_digits)
+        sheet = self._sheet
+        options = self.clean_options()
+        return Cone(apex, axis, ta, sheet, assume_normalized=True, **options)
 
     def copy(self):
+        # ta = np.sqrt(self._t2)
+        # instance = Cone.__new__(Cone, self._apex, self._axis, ta, self._sheet)
+        # instance._axis_digits = self._axis_digits
+        # instance._apex_digits = self._apex_digits
+        # instance._t2_digits = self._t2_digits
+        # Surface.__init__(instance, **self.options)
+        # _Cone.__init__(instance, self._apex, self._axis, ta, self._sheet)
+        # return instance
         ta = np.sqrt(self._t2)
-        instance = Cone.__new__(Cone, self._apex, self._axis, ta, self._sheet)
-        instance._axis_digits = self._axis_digits
-        instance._apex_digits = self._apex_digits
-        instance._t2_digits = self._t2_digits
-        Surface.__init__(instance, **self.options)
-        _Cone.__init__(instance, self._apex, self._axis, ta, self._sheet)
-        return instance
+        return Cone(self._apex, self._axis, ta, self._sheet, assume_normalized=True, **deepcopy(self.options))
+
+    __deepcopy__ = copy
 
     def __getstate__(self):
         return self._apex, self._axis, self._t2, self._sheet, Surface.__getstate__(self)
@@ -866,86 +899,120 @@ class Cone(Surface, _Cone):
         Surface.__setstate__(self, options)
 
     def __hash__(self):
-        result = hash(self._get_t2()) ^ hash(self._sheet)
-        for c in self._get_apex():
-            result ^= hash(c)
-        for a in self._get_axis():
-            result ^= hash(a)
-        return result
+        # result = hash(self._get_t2()) ^ hash(self._sheet)
+        # for c in self._get_apex():
+        #     result ^= hash(c)
+        # for a in self._get_axis():
+        #     result ^= hash(a)
+        # return result
+        return make_hash(self._t2, self._sheet, self._apex, self._axis)
 
     def __eq__(self, other):
+
+        if self is other:
+            return True
+
         if not isinstance(other, Cone):
             return False
-        else:
-            for x, y in zip(self._get_apex(), other._get_apex()):
-                if x != y:
-                    return False
-            for x, y in zip(self._get_axis(), other._get_axis()):
-                if x != y:
-                    return False
-            return self._get_t2() == other._get_t2() and self._sheet == other._sheet
+
+        if np.array_equal(self._apex, other._apex):
+            if np.array_equal(self._axis, other._axis):
+                if self._get_t2() == other._get_t2() and self._sheet == other._sheet:
+                    return self.compare_transformations(other.transformation)
+
+        return False
+
+    def is_close(self, other):
+
+        if self is other:
+            return True
+
+        if not isinstance(other, Cone):
+            return False
+
+        if np.array_equal(self._apex, other._apex):
+            if np.array_equal(self._axis, other._axis):
+                if self._get_t2() == other._get_t2() and self._sheet == other._sheet:
+                    return self.compare_transformations(other.transformation)
+
+        return False
 
     def _get_axis(self):
-        return round_array(self._axis, self._axis_digits)
+        # return round_array(self._axis, self._axis_digits)
+        return self._axis
 
     def _get_apex(self):
-        return round_array(self._apex, self._apex_digits)
+        # return round_array(self._apex, self._apex_digits)
+        return self._apex
 
     def _get_t2(self):
-        return round_scalar(self._t2, self._t2_digits)
+        # return round_scalar(self._t2, self._t2_digits)
+        return self._t2
 
     def transform(self, tr):
-        cone = Cone(self._apex, self._axis, np.sqrt(self._t2),
-                    sheet=0, transform=tr, **self.options)
-        if self._sheet != 0:
-            plane = Plane(self._axis, -np.dot(self._axis, self._apex), name=1, transform=tr)
-            if self._sheet == +1:
-                op = 'C'
-            else:
-                op = 'S'
-            return mckit.body.Shape('U', cone, mckit.body.Shape(op, plane))
+        if tr is None:
+            return self
+        tr = self.combine_transformations(tr)
+        options = self.clean_options()
+        cone = Cone(self._apex, self._axis, np.sqrt(self._t2), sheet=self._sheet, transform=tr, **options)
+        # if self._sheet != 0:
+        #     plane = Plane(self._axis, -np.dot(self._axis, self._apex), name=1, transform=tr)
+        #     if self._sheet == +1:
+        #         op = 'C'
+        #     else:
+        #         op = 'S'
+        #     return mckit.body.Shape('U', cone, mckit.body.Shape(op, plane))
+        #     # TODO dvp: cool return type change, but is it possible to return just Cone here?
         return cone
 
-    def mcnp_words(self):
+    def mcnp_words(self, pretty=False):
         words = Surface.mcnp_words(self)
-        if np.all(self._get_axis() == np.array([1.0, 0.0, 0.0])):
-            if self._get_apex()[1] == 0.0 and self._get_apex()[2] == 0.0:
+        axis = self._axis
+        apex = self._apex
+        if np.array_equal(axis, EX):
+            if apex[1] == 0.0 and apex[2] == 0.0:
                 words.append('KX')
-                words.append(' ')
-                v = self._apex[0]
-                p = self._apex_digits[0]
-                words.append(pretty_float(v, p))
+                # words.append(' ')
+                # v = self._apex[0]
+                # p = self._apex_digits[0]
+                # words.append(pretty_float(v, p))
+                add_float(words, apex[0], pretty)
             else:
                 words.append('K/X')
-                for v, p in zip(self._apex, self._apex_digits):
-                    words.append(' ')
-                    words.append(pretty_float(v, p))
-        elif np.all(self._get_axis() == np.array([0.0, 1.0, 0.0])):
-            if self._get_apex()[0] == 0.0 and self._get_apex()[2] == 0.0:
+                for v in apex:
+                    # words.append(' ')
+                    # words.append(pretty_float(v, p))
+                    add_float(words, v, pretty)
+        elif np.array_equal(axis, EY):
+            if apex[0] == 0.0 and apex[2] == 0.0:
                 words.append('KY')
-                words.append(' ')
-                v = self._apex[1]
-                p = self._apex_digits[1]
-                words.append(pretty_float(v, p))
+                # words.append(' ')
+                # v = self._apex[1]
+                # p = self._apex_digits[1]
+                # words.append(pretty_float(v, p))
+                add_float(words, apex[1], pretty)
             else:
                 words.append('K/Y')
-                for v, p in zip(self._apex, self._apex_digits):
-                    words.append(' ')
-                    words.append(pretty_float(v, p))
-        elif np.all(self._get_axis() == np.array([0.0, 0.0, 1.0])):
-            if self._get_apex()[0] == 0.0 and self._get_apex()[1] == 0.0:
+                for v in apex:
+                    # words.append(' ')
+                    # words.append(pretty_float(v, p))
+                    add_float(words, v, pretty)
+        elif np.array_equal(axis,  EZ):
+            if apex[0] == 0.0 and apex[1] == 0.0:
                 words.append('KZ')
-                words.append(' ')
-                v = self._apex[2]
-                p = self._apex_digits[2]
-                words.append(pretty_float(v, p))
+                # words.append(' ')
+                # v = self._apex[2]
+                # p = self._apex_digits[2]
+                # words.append(pretty_float(v, p))
+                add_float(words, apex[2], pretty)
             else:
                 words.append('K/Z')
-                for v, p in zip(self._apex, self._apex_digits):
-                    words.append(' ')
-                    words.append(pretty_float(v, p))
+                for v in apex:
+                    # words.append(' ')
+                    # words.append(pretty_float(v, p))
+                    add_float(words, v, pretty)
         else:
-            nx, ny, nz = self._axis
+            nx, ny, nz = axis
             a = 1 + self._t2
             m = np.array([[1-a*nx**2, -a*nx*ny, -a*nx*nz],
                           [-a*nx*ny, 1-a*ny**2, -a*ny*nz],
@@ -953,14 +1020,15 @@ class Cone(Surface, _Cone):
             v = np.zeros(3)
             k = 0
             m, v, k = Transformation(translation=self._apex).apply2gq(m, v, k)
-            return GQuadratic(m, v, k, **self.options).mcnp_repr()
-        words.append(' ')
-        v = self._t2
-        p = self._t2_digits
-        words.append(pretty_float(v, p))
+            return GQuadratic(m, v, k, self.clean_options()).mcnp_repr(pretty)
+        # words.append(' ')
+        # v = self._t2
+        # p = self._t2_digits
+        # words.append(pretty_float(v, p))
+        add_float(words, self._t2, pretty)
         if self._sheet != 0:
             words.append(' ')
-            words.append('{0:d}'.format(self._sheet))
+            words.append(str(self._sheet))
         return words
 
 

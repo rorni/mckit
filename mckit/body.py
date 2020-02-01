@@ -223,9 +223,9 @@ class Shape(_Shape):
         Hash is 'xor' for hash values of all arguments together with opc hash.
         """
         if opc == 'C':  # C and S can be present only with Surface instance.
-            self._hash = ~hash(args[0]) # ^ self._opc_hash[opc]
+            self._hash = ~hash(args[0])
         elif opc == 'S':
-            self._hash = hash(args[0]) # ^ self._opc_hash[opc]
+            self._hash = hash(args[0])
         else:
             self._hash = self._opc_hash[opc]
             for a in args:
