@@ -16,18 +16,14 @@ class Card(ABC):
         """Returns card's name."""
         return self.options.get('name', None)
 
-    def rename(self, new_name) -> None:
+    def rename(self, new_name) -> 'Card':
         """Renames the card.
-
-        Parameters
-        ----------
-        new_name : int
-            New card's name. 
         """
         self.options['name'] = new_name
+        return self
 
     @abstractmethod
-    def mcnp_words(self):
+    def mcnp_words(self, pretty=False):
         """Gets a list of card words."""
 
     @property
@@ -41,12 +37,12 @@ class Card(ABC):
     def drop_original(self) -> None:
         del self.options['original']
 
-    def mcnp_repr(self):
+    def mcnp_repr(self, pretty=False):
         """Gets str representation of the card."""
         if self.has_original:
             return self.original  # TODO dvp: print leading comment as well
         else:
-            words = self.mcnp_words()
+            words = self.mcnp_words(pretty)
             return print_card(words)
 
     def __str__(self):  # TODO dvp: option `name` is printed twice, should be explicit property of this class instance

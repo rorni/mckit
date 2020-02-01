@@ -3,10 +3,11 @@
 
 import numpy as np
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import ORIGIN
 from .card import Card
-from .printer import pretty_float
-from functools import wraps
+from .utils import make_hash
+from .constants import FLOAT_TOLERANCE
 
 __all__ = ['Transformation', 'IDENTITY_ROTATION']
 
@@ -64,14 +65,17 @@ class Transformation(Card):
                  indegrees=False, inverted=False, **options):
 
         Card.__init__(self, **options)
-        translation = np.array(translation, dtype=float)
+
+        if translation is not ORIGIN:
+            translation = np.asarray(translation, dtype=float)
+
         if translation.shape != (3,):
             raise ValueError(f'Transaction #{self.name()}: wrong length of translation vector.')
 
         if rotation is None:
             u = IDENTITY_ROTATION
         else:
-            u = np.array(rotation, dtype=float)
+            u = np.asarray(rotation, dtype=float)
             if indegrees:
                 u = np.cos(np.multiply(u, np.pi / 180.0))
             # TODO: Implement creation from reduced rotation parameter set.
@@ -117,12 +121,12 @@ class Transformation(Card):
                 break
         return prec + 1
 
-    def _calculate_hash(self, u, t):
-        self._hash = 0
-        for v in t:
-            self._hash ^= hash(v)
-        for v in u.ravel():
-            self._hash ^= hash(v)
+    # def _calculate_hash(self, u, t):
+    #     self._hash = 0
+    #     for v in t:
+    #         self._hash ^= hash(v)
+    #     for v in u.ravel():
+    #         self._hash ^= hash(v)
 
     def mcnp_words(self):
         name = self.name()
@@ -136,17 +140,24 @@ class Transformation(Card):
         words = []
         for v in self._t:
             words.append(' ')
-            words.append("{:.10g}".format(v))
+            words.append("{:.10g}".format(v))  # TODO dvp: check if precision 13 is necessary
         for v in self._u.transpose().ravel():
             words.append(' ')
             words.append("{:.10g}".format(np.arccos(v) * 180 / np.pi))
         return words
 
     def __hash__(self):
-        return id(self)
+        return make_hash(self._t, self._u)
 
     def __eq__(self, other):
-        return id(self) == id(other)
+        if self is other:
+            return True
+        if not isinstance(other, Transformation):
+            return False
+        if np.array_equal(self._u, other._u):
+            if np.array_equal(self._t, other._t):
+                return True
+        return False
 
     def __getitem__(self, key):
         return self.options.get(key, None)
@@ -281,19 +292,15 @@ class Transformation(Card):
         t1 = -np.dot(u1, self._t)
         return Transformation(translation=t1, rotation=u1)
 
-    @staticmethod
-    def approximator(rtol: float = 1e-05, atol: float = 1e-08, equal_nan=False):
-        """Compares two transformations with a given tolerances"""
-
-        @wraps(Transformation.approximator)
-        def _call(a: Transformation, b: Transformation) -> bool:
-            if np.all(np.isclose(a._t, b._t, rtol, atol, equal_nan)):
-                if a._u is not None:
-                    if b._u is not None:
-                        if np.all(np.isclose(a._u, b._u, rtol, atol, equal_nan)):
-                            return True
-                else:
-                    return b._u is None
-            return False
-
-        return _call
+    def is_close(
+            self,
+            other: 'Transformation',
+            rtol: float = FLOAT_TOLERANCE,
+            atol: float = FLOAT_TOLERANCE,
+            equal_nan: bool = False,
+    ) -> bool:
+        """Compares with other transformation with a given tolerances"""
+        if np.allclose(self._t, other._t, rtol, atol, equal_nan):
+            if np.allclose(self._u, other._u, rtol, atol, equal_nan):
+                return True
+        return False

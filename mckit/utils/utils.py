@@ -1,40 +1,43 @@
-# import copy
+from copy import deepcopy
 import os
 import functools
 import collections
 from pathlib import Path
-from typing import Any, Optional, Set, Dict, Iterable, Hashable, Union, Mapping
+from typing import Any, Dict
 import numpy as np
 from numpy import ndarray
-
+from ..constants import FLOAT_TOLERANCE
 
 MAX_DIGITS = np.finfo(float).precision
 
+# def digits_in_fraction_for_str(
+#         value: float,
+#         reltol: float = FLOAT_TOLERANCE,
+#         resolution: float = None
+# ) -> int:
+#     if value == 0.0:
+#         return 0
+#     if value < 0.0:
+#         value = -value
+#     if resolution and value < resolution:
+#         return 0
+#     max_remainder = value * reltol
+#     s_value = str(value)
+#     _, s_rem = s_value.split('.')
+#
+#     def _iter():
+#         ord0 = ord('0')
+#         m = 0.1
+#         for c in s_rem:
+#             yield m * (ord(c) - ord0)
+#             m *= 0.1
+#
+#     rem = np.flip(np.fromiter(_iter(), np.float))
+#     n = np.searchsorted(rem, max_remainder)
+#     return rem.size - n
 
-def digits_in_fraction_for_str(value: float, reltol: float = 1e-12, resolution: float = None) -> int:
-    if value == 0.0:
-        return 0
-    if value < 0.0:
-        value = -value
-    if resolution and value < resolution:
-        return 0
-    max_remainder = value * reltol
-    s_value = str(value)
-    _, s_rem = s_value.split('.')
 
-    def _iter():
-        ord0 = ord('0')
-        m = 0.1
-        for c in s_rem:
-            yield m * (ord(c) - ord0)
-            m *= 0.1
-
-    rem = np.flip(np.fromiter(_iter(), np.float))
-    n = np.searchsorted(rem, max_remainder)
-    return rem.size - n
-
-
-def significant_digits(value, reltol=1.e-12, resolution=None):
+def significant_digits(value, reltol=FLOAT_TOLERANCE, resolution=None):
     """The minimum number of significant digits to provide relative tolerance.
 
     Parameters
@@ -98,10 +101,10 @@ def get_decades(value):
 
 def significant_array(
         array: ndarray,
-        reltol: float = 1.e-12,
+        reltol: float = FLOAT_TOLERANCE,
         resolution: float = None,
 ) -> ndarray:
-    """The minimum number of significant digits to provide relative tolerance.
+    """The minimum number of significant digits to provide the desired relative and absolute tolerances.
     """
     result = np.empty_like(array, dtype=int)
     for index in zip(*map(np.ravel, np.indices(array.shape))):
@@ -148,19 +151,45 @@ def round_array(array: ndarray, digarr: ndarray):
     return result
 
 
+@functools.singledispatch
+def is_in(where, x) -> bool:
+    return x is where or x == where
+
+
+@is_in.register
+def _(where: str, x) -> bool:
+    return x is where or x == where
+
+
+@is_in.register
+def _(where: collections.abc.Callable, x) -> bool:
+    return where(x)
+
+
+@is_in.register
+def _(where: collections.abc.Container, x) -> bool:
+    return x in where
+
+
+def check_if_is_in(x, *places):
+    if 1 < len(places):
+        for i in places:
+            if is_in(i, x):
+                return True
+    else:
+        return is_in(places[0], x)
+
+
 def deep_copy_dict(
         a: Dict[Any, Any],
-        drop_item: Optional[Any] = None,
-        drop_set: Optional[Set[Any]] = None
+        *drop_items,
 ) -> Dict[Any, Any]:
     res = {}
-    # TODO dvp: can we use copy.deepcopy()? Think why doesn't `dict` class have `__hash__` and `__deep_copy__` methods?
     for k, v in a.items():
-        if drop_item is None or k != drop_item:
-            if drop_set is None or k not in drop_set:
-                if isinstance(v, dict):
-                    v = deep_copy_dict(v)
-                res[k] = v
+        if drop_items is None or not check_if_is_in(k, *drop_items):
+            if isinstance(v, dict):
+                v = deep_copy_dict(v, *drop_items)
+            res[k] = deepcopy(v)
     return res
 
 
@@ -243,3 +272,10 @@ def get_root_dir(environment_variable_name, default):
 
 def is_sorted(a: np.ndarray) -> bool:
     return np.all(np.diff(a) > 0)
+
+
+def prettify_float(x: float, fmt="{:.13g}") -> str:
+    if x.is_integer():
+        return str(int(x))
+    else:
+        return fmt.format(x)

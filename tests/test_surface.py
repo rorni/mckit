@@ -3,8 +3,9 @@ import numpy as np
 import pickle
 
 from mckit.transformation import Transformation
-from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
-    create_surface
+from mckit.surface import (
+    Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, create_surface,
+)
 from mckit.box import Box
 
 
@@ -20,6 +21,15 @@ def transform(request):
 @pytest.fixture(scope='module')
 def box():
     return Box([0, 0, 0], 2, 2, 2)
+
+
+def pass_through_pickle(surf, tmpdir):
+    temp_file = str(tmpdir.join('test.pic'))
+    with open(temp_file, 'bw') as f:
+        pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+    with open(temp_file, 'br') as f:
+        surf_un = pickle.load(f)
+    return surf_un
 
 
 @pytest.mark.parametrize('cls, kind, params, expected', [
@@ -238,11 +248,7 @@ class TestPlane:
     ])
     def test_pickle(self, tmpdir, norm, offset, options):
         surf = Plane(norm, offset, **options)
-        tmp_file = str(tmpdir.join('test.pic'))
-        with open(tmp_file, 'bw') as f:
-            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open(tmp_file, 'br') as f:
-            surf_un = pickle.load(f)
+        surf_un = pass_through_pickle(surf, tmpdir)
         np.testing.assert_array_almost_equal(surf._v, surf_un._v)
         np.testing.assert_almost_equal(surf._k, surf_un._k)
         assert surf.options == surf_un.options
@@ -289,15 +295,15 @@ class TestPlane:
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
-    def test_eq(self, i1, s1, i2, s2):
-        result = (s1 == s2)
+    def test_close(self, i1: int, s1: Plane, i2: int, s2: Plane) -> None:
+        result = s1.is_close(s2)
         assert result == bool(self.eq_matrix[i1][i2])
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
     def test_hash(self, i1, s1, i2, s2):
         if self.eq_matrix[i1][i2]:
-            assert hash(s1) == hash(s2)
+            assert hash(s1.round()) == hash(s2.round())
 
     @pytest.mark.parametrize('coeffs', [
         [0, 2, 1, 3], [4, -1, 2, 0], [-1, 0, 0, 5], [-4, -4, 3, 3]
@@ -315,9 +321,21 @@ class TestPlane:
         '5 P 0.707106781187 0.707106781187 0 -2.828427124746',
         '5 P 0.707106781187 0.707106781187 0 -2.828427124746'
     ]))
+    def test_mcnp_pretty_repr(self, surface, answer):
+        desc = surface.round().mcnp_repr(pretty=True)
+        assert desc == answer
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 PX 5', '1 PX 5.000000000001', '1 PX 4.999999999999', '1 PX 5.00000000001',
+        '2 PY 5', '2 PY 5.000000000001', '2 PY 4.999999999999', '2 PY 5.00000000001',
+        '3 PZ 5', '3 PZ 5.000000000001', '3 PZ 4.999999999999', '3 PZ 5.00000000001',
+        '4 P 1 5e-13 -5e-13 5', '4 P -5e-13 1 5e-13 5.000000000001', '4 P 5e-13 -5e-13 1 4.999999999999',
+        '5 P 0.7071067811865 0.7071067811865 0 -2.828427124746',
+        '5 P 0.7071067811865 0.7071067811865 0 -2.828427124746'
+    ]))
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
-        assert desc == answer
+        assert desc == answer, "Should print values exactly with 13 digits precision, and round integer values"
 
 
 class TestSphere:
@@ -325,7 +343,7 @@ class TestSphere:
         ([1, 2, 3], 5, np.array([1, 2, 3]), 5)
     ])
     def test_init(self, transform, center, radius, c, r):
-        surf = Sphere(center, radius, transform=transform)
+        surf = Sphere(center, radius, transform=transform).apply_transformation()
         c = transform.apply2point(c)
         np.testing.assert_array_almost_equal(c, surf._center)
         np.testing.assert_array_almost_equal(r, surf._radius)
@@ -378,12 +396,9 @@ class TestSphere:
         ([1, 2, 3], 5, {'name': 2}),
         ([1, 2, 3], 5, {'name': 3, 'comment': ['abc', 'def']}),
     ])
-    def test_pickle(self, center, radius, options):
+    def test_pickle(self, tmpdir, center, radius, options):
         surf = Sphere(center, radius, **options)
-        with open('test.pic', 'bw') as f:
-            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open('test.pic', 'br') as f:
-            surf_un = pickle.load(f)
+        surf_un = pass_through_pickle(surf, tmpdir)
         np.testing.assert_array_almost_equal(surf._center, surf_un._center)
         np.testing.assert_almost_equal(surf._radius, surf_un._radius)
         assert surf.options == surf_un.options
@@ -431,14 +446,14 @@ class TestSphere:
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
     def test_equality(self, i1, s1, i2, s2):
-        result = (s1 == s2)
+        result = (s1.round() == s2.round())
         assert result == bool(self.eq_matrix[i1][i2])
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
     def test_hash(self, i1, s1, i2, s2):
         if self.eq_matrix[i1][i2]:
-            assert hash(s1) == hash(s2)
+            assert hash(s1.round()) == hash(s2.round())
 
     @pytest.mark.parametrize('surface, answer', zip(surfs, [
         '1 SO 1', '1 SO 1', '1 SO 2', '2 SX 5 4', '2 SX 5 4',
@@ -447,9 +462,33 @@ class TestSphere:
         '3 SY 5 4', '3 SZ 5 4', '4 S 4.3 8.2 -1.4 3.5',
         '4 S 4.3 8.2 -1.4 3.5'
     ]))
+    def test_mcnp_pretty_repr(self, surface, answer):
+        desc = surface.round().mcnp_repr(pretty=True)
+        assert desc == answer
+
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 SO 1',                                       # 0
+        '1 SO 1.000000000001',                          # 1
+        '1 SO 2',                                       # 2
+        '2 SX 5 4',                                     # 3
+        '2 SX 5.000000000001 4',                        # 4
+        '2 SX 4.999999999999 4.000000000001',           # 5
+        '2 SY 5 4',
+        '2 SY 5.000000000001 4',
+        '2 SY 4.999999999999 4.000000000001',           # 8
+        '2 SZ 5 4',
+        '2 SZ 5.000000000001 4',                        # 10
+        '2 SZ 4.999999999999 4.000000000001',           # 11
+        '3 S 5 1e-13 -1e-13 4.000000000001',            # 12
+        '3 S 1e-13 5 -1e-13 3.999999999999',            # 13
+        '3 S 1e-13 -1e-13 5 4.000000000001',            # 14
+        '4 S 4.3 8.2 -1.4 3.5',
+        '4 S 4.299999999999 8.200000000001 -1.400000000001 3.500000000001',
+    ]))
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
-        assert desc == answer
+        assert desc == answer, "Should print exact values"
 
 
 class TestCylinder:
@@ -458,7 +497,7 @@ class TestCylinder:
           5)
     ])
     def test_init(self, transform, point, axis, radius, pt, ax, rad):
-        surf = Cylinder(point, axis, radius, transform=transform)
+        surf = Cylinder(point, axis, radius, transform=transform).apply_transformation()
         pt = transform.apply2point(pt)
         ax = transform.apply2vector(ax)
         pt = pt - ax * np.dot(ax, pt)
@@ -512,12 +551,9 @@ class TestCylinder:
         ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5, {'name': 1}),
         ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5, {'name': 2}),
     ])
-    def test_pickle(self, point, axis, radius, options):
+    def test_pickle(self, tmpdir, point, axis, radius, options):
         surf = Cylinder(point, axis, radius, **options)
-        with open('test.pic', 'bw') as f:
-            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open('test.pic', 'br') as f:
-            surf_un = pickle.load(f)
+        surf_un = pass_through_pickle(surf, tmpdir)
         np.testing.assert_array_almost_equal(surf._pt, surf_un._pt)
         np.testing.assert_array_almost_equal(surf._axis, surf_un._axis)
         np.testing.assert_almost_equal(surf._radius, surf_un._radius)
@@ -573,7 +609,8 @@ class TestCylinder:
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
-    def test_equality(self, i1, s1, i2, s2):
+    def test_round_equality(self, i1, s1, i2, s2):
+        s1, s2 = s1.round(), s2.round()
         result = (s1 == s2)
         assert result == bool(self.eq_matrix[i1][i2])
 
@@ -581,7 +618,7 @@ class TestCylinder:
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
     def test_hash(self, i1, s1, i2, s2):
         if self.eq_matrix[i1][i2]:
-            assert hash(s1) == hash(s2)
+            assert hash(s1.round()) == hash(s2.round())
 
     @pytest.mark.parametrize('surface, answer', zip(surfs, [
         '1 CX 1', '1 CX 1', '1 CY 1', '1 CY 1', '1 CZ 1', '1 CZ 1',
@@ -589,6 +626,33 @@ class TestCylinder:
         '2 C/Y 1 -2 3', '2 C/Z 1 -2 3', '2 C/Z 1 -2 3',
         '3 C/X 1 -2 3', '3 C/X 1 -2 3', '3 C/Y 1 -2 3',
         '3 C/Y 1 -2 3', '3 C/Z 1 -2 3', '3 C/Z 1 -2 3'
+    ]))
+    def test_mcnp_prety_repr(self, surface, answer):
+        desc = surface.round().mcnp_repr(True)
+        print(surface.mcnp_repr())
+        print("{0:.15e}".format(surface._pt[0]))
+        assert desc == answer
+
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 CX 1',                                                   # 0
+        '1 CX 1.000000000001',
+        '1 CY 1',
+        '1 CY 1.000000000001',
+        '1 CZ 1',
+        '1 CZ 1.000000000001',                                      # 5
+        '2 C/X 1 -2 3',
+        '2 C/X 0.9999999999995 -1.999999999999 2.999999999999',
+        '2 C/Y 1 -2 3',
+        '2 C/Y 0.9999999999995 -1.999999999999 2.999999999999',
+        '2 C/Z 1 -2 3',                                             # 10
+        '2 C/Z 0.9999999999995 -1.999999999999 2.999999999999',
+        '3 GQ 0 1 1 -0 0 0 0 -2 4 -4',
+        '3 GQ 0 1 1 0 0 -0 -1e-12 -2 4 -3.999999999995',
+        '3 GQ 1 0 1 -0 0 0 -2 0 4 -4',
+        '3 GQ 1 0 1 0 -0 0 -2 -1e-12 4 -3.999999999995',            # 15
+        '3 GQ 1 1 0 0 0 -0 -2 4 0 -4',
+        '3 GQ 1 1 0 0 -0 0 -2 4 -0 -4'                              # 17
     ]))
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()

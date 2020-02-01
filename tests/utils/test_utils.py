@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from mckit.utils import digits_in_fraction_for_str, significant_digits, get_decades, make_hash
+from mckit.utils import *
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -55,9 +55,34 @@ def test_digits_in_fraction(value, reltol, resolution, expected):
     assert actual == expected
 
 
+@pytest.mark.parametrize("dictionary, drop_items, expected", [
+    ({'a': 1, 'b': 2}, 'b', {'a': 1}),
+    ({'a': 1, 'b': 2, 'c': 3}, frozenset('b c'.split()), {'a': 1}),
+    ({'a': 1, 'b': {'c': 3}}, 'c', {'a': 1, 'b': {}}),
+    ({'a': 1, 'b': {'c': 3}}, lambda x: x == 'a', {'b': {'c': 3}}),
+])
+def test_deep_copy_dict(dictionary, drop_items, expected):
+    actual = deep_copy_dict(dictionary, drop_items)
+    assert actual == expected
+
+
 @pytest.mark.parametrize("values", [
     ('abc',),
     ({1: {'a': 2}}, np.arange(10)),
+    (None,),
 ])
 def test_make_hash(values):
     make_hash(*values)
+
+
+@pytest.mark.parametrize("value, expected", [
+    (1.0, "1"),
+    (0.000000000001, "1e-12"),
+    (0.00000000000101, "1.01e-12"),
+    (5.00000000001, "5.00000000001"),
+    (-2.828427124746, "-2.828427124746")
+])
+def test_prettify_float(value, expected):
+    actual = prettify_float(value)
+    assert actual == expected
+

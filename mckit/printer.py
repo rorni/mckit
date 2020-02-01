@@ -1,9 +1,9 @@
 """Functions for printing."""
-from typing import List
+from typing import List, Optional, Any
 import warnings
 
-from mckit.utils import get_decades
-
+from mckit.utils import get_decades, significant_digits
+import mckit.constants as constants
 
 MCNP_FORMATS = {
     'importance': '{0:.3f}',
@@ -80,7 +80,10 @@ def separate(tokens, sep=' '):
     return sep_tokens
 
 
-def print_option(option, value):
+def print_option(
+    option: str,
+    value: Any,
+) -> List[str]:
     name = option[:3]
     par = option[3:]
     if name == 'IMP' and (par == 'N' or par == 'P' or par == 'E'):
@@ -103,7 +106,7 @@ def print_option(option, value):
         raise ValueError("Incorrect option name: {0}".format(option))
 
 
-def pretty_float(value, frac_digits):
+def pretty_float(value, frac_digits: Optional[int] = None) -> str:
     """Pretty print of the float number.
 
     Parameters
@@ -113,6 +116,12 @@ def pretty_float(value, frac_digits):
     frac_digits : int
         The number of digits after decimal point.
     """
+    if frac_digits is None:
+        frac_digits = significant_digits(
+            value,
+            constants.FLOAT_TOLERANCE,
+            resolution=constants.FLOAT_TOLERANCE,
+        )
     decades = get_decades(value)
     format_f = '{{0:.{0}f}}'.format(max(frac_digits, 0))
     format_e = '{{0:.{0}e}}'.format(max(frac_digits + decades, 0))
