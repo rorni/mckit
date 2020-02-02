@@ -148,7 +148,7 @@ def create_surface(kind, *params, **options):
                     raise ValueError('Points must belong to the one sheet.')
                 h0 = (abs(r1) * h2 - abs(r2) * h1) / (abs(r1) - abs(r2))
                 ta = abs((r1 - r2) / (h1 - h2))
-                s = round((h1 - h0) / abs(h1 - h0))
+                s = int(round((h1 - h0) / abs(h1 - h0)))  # TODO: dvp check this conversion: was without int()
                 return Cone(axis * h0, axis, ta, sheet=s, **options)
         elif len(params) == 6:
             # TODO: Implement creation of surface by 3 points.
