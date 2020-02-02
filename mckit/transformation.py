@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Represents transformations."""
-
+from typing import Callable, Any
 import numpy as np
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -8,6 +8,7 @@ from .geometry import ORIGIN
 from .card import Card
 from .utils import make_hash
 from .constants import FLOAT_TOLERANCE
+from .utils.tolerance import tolerance_estimator
 
 __all__ = ['Transformation', 'IDENTITY_ROTATION']
 
@@ -295,12 +296,9 @@ class Transformation(Card):
     def is_close(
             self,
             other: 'Transformation',
-            rtol: float = FLOAT_TOLERANCE,
-            atol: float = FLOAT_TOLERANCE,
-            equal_nan: bool = False,
+            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
     ) -> bool:
-        """Compares with other transformation with a given tolerances"""
-        if np.allclose(self._t, other._t, rtol, atol, equal_nan):
-            if np.allclose(self._u, other._u, rtol, atol, equal_nan):
-                return True
-        return False
+        return estimator(
+            (self._t, self._u),
+            (other._t, other._u),
+        )

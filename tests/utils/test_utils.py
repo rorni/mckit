@@ -40,18 +40,19 @@ def test_significant_digits(value, reltol, resolution, expected):
     assert actual == expected
 
 
-@pytest.mark.parametrize("value, reltol, resolution, expected", [
-    (1.0, 1e-12, None, 0),
-    (1.1, 1e-12, None, 1),
-    (11.0, 1e-12, None, 0),
-    (11.12, 1e-12, None, 2),
-    (11.123, 1e-12, None, 3),
-    (1.123456789123456, 1e-12, None, 12),
-    (0.0001, 1e-12, None, 0),
-    (0.000123456, 1e-12, None, 9),
+@pytest.mark.parametrize("a, b, expected", [
+    (None, None, True),
+    (None, 'a', False),
+    ('abc', 'abc', True),
+    (1, 1, True),
+    (1, -1, False),
+    (np.arange(10), np.arange(10), True),
+    ([1, 'a', np.arange(3)], [1, 'a', np.arange(3)], True),
+    ([1, 'a', np.arange(3)], [2, 'a', np.arange(3)], False),
+    ([1, 'a', np.arange(3)], [1, 'a', np.arange(3), 'a'], False),
 ])
-def test_digits_in_fraction(value, reltol, resolution, expected):
-    actual = digits_in_fraction_for_str(value, reltol, resolution)
+def test_are_equal(a, b, expected):
+    actual = are_equal(a, b)
     assert actual == expected
 
 
@@ -62,7 +63,7 @@ def test_digits_in_fraction(value, reltol, resolution, expected):
     ({'a': 1, 'b': {'c': 3}}, lambda x: x == 'a', {'b': {'c': 3}}),
 ])
 def test_deep_copy_dict(dictionary, drop_items, expected):
-    actual = deep_copy_dict(dictionary, drop_items)
+    actual = filter_dict(dictionary, drop_items)
     assert actual == expected
 
 

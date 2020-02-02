@@ -296,7 +296,7 @@ class TestPlane:
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
     def test_close(self, i1: int, s1: Plane, i2: int, s2: Plane) -> None:
-        result = s1.is_close(s2)
+        result = s1.is_close_to(s2)
         assert result == bool(self.eq_matrix[i1][i2])
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
@@ -663,7 +663,7 @@ class TestCylinder:
 
 class TestCone:
     @pytest.mark.parametrize('apex, axis, tan2, ap, ax, t2', [
-        ([1, 2, 3], [1, 2, 3], 0.5, [1, 2, 3],
+        ([1, 2, 3], [1, 2, 3], 0.25, [1, 2, 3],
          np.array([1, 2, 3]) / np.sqrt(14), 0.25)
     ])
     def test_init(self, transform, apex, axis, tan2, ap, ax, t2):
@@ -719,58 +719,62 @@ class TestCone:
           )
     ])
     def test_point_test(self, sheet, case, point, expected):
-        surf = Cone([-3, 1, 2], [1, 0, 0], 1 / np.sqrt(3), sheet)
+        surf = Cone([-3, 1, 2], [1, 0, 0], 1.0 / 3.0, sheet)
         result = surf.test_points(point)
         np.testing.assert_array_equal(result, expected[case])
 
     @pytest.mark.parametrize('params', [
-        ([0, 0, 0], [1, 0, 0], 0.5, 0), ([0, 0, 0], [1, 0, 0], 0.5, -1, 0),
-        ([0, 0, 0], [1, 0, 0], 0.5, +1, 0),
-        ([0, 1.4, 0], [1, 0, 0], 0.5, 0), ([0, 1.4, 0], [1, 0, 0], 0.5, -1, 0),
-        ([0, 1.4, 0], [1, 0, 0], 0.5, +1, 0),
-        ([0, 1.6, 0], [1, 0, 0], 0.5, +1),
-        ([0, 1.6, 0], [1, 0, 0], 0.5, -1, +1),
-        ([0, 1.6, 0], [1, 0, 0], 0.5, +1, +1),
-        ([0, -1.4, 0], [1, 0, 0], 0.5, 0),
-        ([0, -1.4, 0], [1, 0, 0], 0.5, -1, 0),
-        ([0, -1.4, 0], [1, 0, 0], 0.5, +1, 0),
-        ([0, -1.6, 0], [1, 0, 0], 0.5, +1),
-        ([0, -1.6, 0], [1, 0, 0], 0.5, -1, +1),
-        ([0, -1.6, 0], [1, 0, 0], 0.5, +1, +1),
-        ([-1, 1.9, 0], [1, 0, 0], 0.5, 0),
-        ([-1, 1.9, 0], [1, 0, 0], 0.5, -1, +1),
-        ([-1, 1.9, 0], [1, 0, 0], 0.5, +1, 0),
-        ([1, 2.1, 0], [1, 0, 0], 0.5, +1),
-        ([1, 2.1, 0], [1, 0, 0], 0.5, -1, +1),
-        ([1, 2.1, 0], [1, 0, 0], 0.5, +1, +1),
-        ([3.9, 0, 0], [1, 0, 0], 0.5, -1),
-        ([3.9, 0, 0], [1, 0, 0], 0.5, -1, -1),
-        ([3.9, 0, 0], [1, 0, 0], 0.5, +1, +1),
-        ([-3.9, 0, 0], [1, 0, 0], 0.5, -1),
-        ([-3.9, 0, 0], [1, 0, 0], 0.5, -1, +1),
-        ([-3.9, 0, 0], [1, 0, 0], 0.5, +1, -1),
-        ([0, 0, -3.9], [0, 0, 1], 0.5, -1),
-        ([0, 0, -3.9], [0, 0, 1], 0.5, -1, +1),
-        ([0, 0, -3.9], [0, 0, 1], 0.5, +1, -1),
-        ([0, 0, 3.9], [0, 0, 1], 0.5, -1),
-        ([0, 0, 3.9], [0, 0, 1], 0.5, -1, -1),
-        ([0, 0, 3.9], [0, 0, 1], 0.5, +1, +1),
-        ([0, -3.9, 0], [0, 1, 0], 0.5, -1),
-        ([0, -3.9, 0], [0, 1, 0], 0.5, -1, +1),
-        ([0, -3.9, 0], [0, 1, 0], 0.5, +1, -1),
-        ([3.8, 0, 0], [1, 0, 0], 0.5, 0), ([3.8, 0, 0], [1, 0, 0], 0.5, -1, 0),
-        ([3.8, 0, 0], [1, 0, 0], 0.5, +1, +1),
-        ([-3.8, 0, 0], [1, 0, 0], 0.5, 0),
-        ([-3.8, 0, 0], [1, 0, 0], 0.5, -1, +1),
-        ([-3.8, 0, 0], [1, 0, 0], 0.5, +1, 0),
-        ([0, 0, -3.8], [0, 0, 1], 0.5, 0),
-        ([0, 0, -3.8], [0, 0, 1], 0.5, -1, +1),
-        ([0, 0, -3.8], [0, 0, 1], 0.5, +1, 0),
-        ([0, 0, 3.8], [0, 0, 1], 0.5, 0), ([0, 0, 3.8], [0, 0, 1], 0.5, -1, 0),
-        ([0, 0, 3.8], [0, 0, 1], 0.5, +1, +1),
-        ([0, -3.8, 0], [0, 1, 0], 0.5, 0),
-        ([0, -3.8, 0], [0, 1, 0], 0.5, -1, +1),
-        ([0, -3.8, 0], [0, 1, 0], 0.5, +1, 0)
+        ([0, 0, 0], [1, 0, 0], 0.25, 0),
+        ([0, 0, 0], [1, 0, 0], 0.25, -1, 0),
+        ([0, 0, 0], [1, 0, 0], 0.25, +1, 0),
+        ([0, 1.4, 0], [1, 0, 0], 0.25, 0),
+        ([0, 1.4, 0], [1, 0, 0], 0.25, -1, 0),
+        ([0, 1.4, 0], [1, 0, 0], 0.25, +1, 0),
+        ([0, 1.6, 0], [1, 0, 0], 0.25, +1),
+        ([0, 1.6, 0], [1, 0, 0], 0.25, -1, +1),
+        ([0, 1.6, 0], [1, 0, 0], 0.25, +1, +1),
+        ([0, -1.4, 0], [1, 0, 0], 0.25, 0),
+        ([0, -1.4, 0], [1, 0, 0], 0.25, -1, 0),
+        ([0, -1.4, 0], [1, 0, 0], 0.25, +1, 0),
+        ([0, -1.6, 0], [1, 0, 0], 0.25, +1),
+        ([0, -1.6, 0], [1, 0, 0], 0.25, -1, +1),
+        ([0, -1.6, 0], [1, 0, 0], 0.25, +1, +1),
+        ([-1, 1.9, 0], [1, 0, 0], 0.25, 0),
+        ([-1, 1.9, 0], [1, 0, 0], 0.25, -1, +1),
+        ([-1, 1.9, 0], [1, 0, 0], 0.25, +1, 0),
+        ([1, 2.1, 0], [1, 0, 0], 0.25, +1),
+        ([1, 2.1, 0], [1, 0, 0], 0.25, -1, +1),
+        ([1, 2.1, 0], [1, 0, 0], 0.25, +1, +1),
+        ([3.9, 0, 0], [1, 0, 0], 0.25, -1),
+        ([3.9, 0, 0], [1, 0, 0], 0.25, -1, -1),
+        ([3.9, 0, 0], [1, 0, 0], 0.25, +1, +1),
+        ([-3.9, 0, 0], [1, 0, 0], 0.25, -1),
+        ([-3.9, 0, 0], [1, 0, 0], 0.25, -1, +1),
+        ([-3.9, 0, 0], [1, 0, 0], 0.25, +1, -1),
+        ([0, 0, -3.9], [0, 0, 1], 0.25, -1),
+        ([0, 0, -3.9], [0, 0, 1], 0.25, -1, +1),
+        ([0, 0, -3.9], [0, 0, 1], 0.25, +1, -1),
+        ([0, 0, 3.9], [0, 0, 1], 0.25, -1),
+        ([0, 0, 3.9], [0, 0, 1], 0.25, -1, -1),
+        ([0, 0, 3.9], [0, 0, 1], 0.25, +1, +1),
+        ([0, -3.9, 0], [0, 1, 0], 0.25, -1),
+        ([0, -3.9, 0], [0, 1, 0], 0.25, -1, +1),
+        ([0, -3.9, 0], [0, 1, 0], 0.25, +1, -1),
+        ([3.8, 0, 0], [1, 0, 0], 0.25, 0),
+        ([3.8, 0, 0], [1, 0, 0], 0.25, -1, 0),
+        ([3.8, 0, 0], [1, 0, 0], 0.25, +1, +1),
+        ([-3.8, 0, 0], [1, 0, 0], 0.25, 0),
+        ([-3.8, 0, 0], [1, 0, 0], 0.25, -1, +1),
+        ([-3.8, 0, 0], [1, 0, 0], 0.25, +1, 0),
+        ([0, 0, -3.8], [0, 0, 1], 0.25, 0),
+        ([0, 0, -3.8], [0, 0, 1], 0.25, -1, +1),
+        ([0, 0, -3.8], [0, 0, 1], 0.25, +1, 0),
+        ([0, 0, 3.8], [0, 0, 1], 0.25, 0),
+        ([0, 0, 3.8], [0, 0, 1], 0.25, -1, 0),
+        ([0, 0, 3.8], [0, 0, 1], 0.25, +1, +1),
+        ([0, -3.8, 0], [0, 1, 0], 0.25, 0),
+        ([0, -3.8, 0], [0, 1, 0], 0.25, -1, +1),
+        ([0, -3.8, 0], [0, 1, 0], 0.25, +1, 0)
     ])
     def test_box_test(self, box, params):
         *param, ans = params
@@ -778,8 +782,7 @@ class TestCone:
         assert surf.test_box(box) == ans
 
     @pytest.mark.parametrize('apex, axis, t2', [
-        ([1, 2, 3],
-         np.array([1, 2, 3]) / np.sqrt(14), 0.25),
+        ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 0.25),
     ])
     def test_transform(self, transform, apex, axis, t2):
         ans_surf = Cone(apex, axis, t2, transform=transform)
@@ -815,42 +818,42 @@ class TestCone:
         self.assert_cone(surf, surf_un)
 
     surfs = [
-        create_surface('KX', 4, 0.5, name=1),                                    # 0
-        create_surface('KX', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 1
-        create_surface('KY', 4, 0.5, name=1),                                    # 2
-        create_surface('KY', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 3
-        create_surface('KZ', 4, 0.5, name=1),                                    # 4
-        create_surface('KZ', 4 - 1.e-12, 0.5 + 1.e-13, name=1),                  # 5
-        create_surface('K/X', 3, 2, -4, 0.5, name=2),                            # 6
-        create_surface('K/X', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 7
+        create_surface('KX', 4, 0.25, name=1),                                    # 0
+        create_surface('KX', 4 - 1.e-12, 0.25 + 1.e-13, name=1),                  # 1
+        create_surface('KY', 4, 0.25, name=1),                                    # 2
+        create_surface('KY', 4 - 1.e-12, 0.25 + 1.e-13, name=1),                  # 3
+        create_surface('KZ', 4, 0.25, name=1),                                    # 4
+        create_surface('KZ', 4 - 1.e-12, 0.25 + 1.e-13, name=1),                  # 5
+        create_surface('K/X', 3, 2, -4, 0.25, name=2),                            # 6
+        create_surface('K/X', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.25 - 1.e-13,  # 7
                        name=2),
-        create_surface('K/Y', 3, 2, -4, 0.5, name=2),                            # 8
-        create_surface('K/Y', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 9
+        create_surface('K/Y', 3, 2, -4, 0.25, name=2),                            # 8
+        create_surface('K/Y', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.25 - 1.e-13, # 9
                        name=2),
-        create_surface('K/Z', 3, 2, -4, 0.5, name=2),                            # 10
-        create_surface('K/Z', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 11
+        create_surface('K/Z', 3, 2, -4, 0.25, name=2),                            # 10
+        create_surface('K/Z', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.25 - 1.e-13, # 11
                        name=2),
-        Cone([3, 2, -4], [1, 1.e-13, -1.e-13], np.sqrt(0.5), name=3),            # 12
-        Cone([3, 2, -4], [1.e-13, 1, -1.e-13], np.sqrt(0.5), name=3),            # 13
-        Cone([3, 2, -4], [1.e-13, -1.e-13, 1], np.sqrt(0.5), name=3),            # 14
-        Cone([3, 2, -4], [-1, 1.e-13, -1.e-13], np.sqrt(0.5), name=4),           # 15
-        Cone([3, 2, -4], [1.e-13, -1, -1.e-13], np.sqrt(0.5), name=4),           # 16
-        Cone([3, 2, -4], [1.e-13, -1.e-13, -1], np.sqrt(0.5), name=4),           # 17
-        create_surface('K/X', 3, 2, -4, 0.5, 1, name=5),                         # 18
-        create_surface('K/X', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 19
+        Cone([3, 2, -4], [1, 1.e-13, -1.e-13], 0.25, name=3),            # 12
+        Cone([3, 2, -4], [1.e-13, 1, -1.e-13], 0.25, name=3),            # 13
+        Cone([3, 2, -4], [1.e-13, -1.e-13, 1], 0.25, name=3),            # 14
+        Cone([3, 2, -4], [-1, 1.e-13, -1.e-13], 0.25, name=4),           # 15
+        Cone([3, 2, -4], [1.e-13, -1, -1.e-13], 0.25, name=4),           # 16
+        Cone([3, 2, -4], [1.e-13, -1.e-13, -1], 0.25, name=4),           # 17
+        create_surface('K/X', 3, 2, -4, 0.25, 1, name=5),                         # 18
+        create_surface('K/X', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.25 - 1.e-13, # 19
                        1, name=5),
-        create_surface('K/Y', 3, 2, -4, 0.5, 1, name=5),                         # 20
-        create_surface('K/Y', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 21
+        create_surface('K/Y', 3, 2, -4, 0.25, 1, name=5),                         # 20
+        create_surface('K/Y', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.25 - 1.e-13, # 21
                        1, name=5),
-        create_surface('K/Z', 3, 2, -4, 0.5, 1, name=5),                         # 22
-        create_surface('K/Z', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.5 - 1.e-13, # 23
+        create_surface('K/Z', 3, 2, -4, 0.25, 1, name=5),                         # 22
+        create_surface('K/Z', 3 - 1.e-12, 2 + 1.e-12, -4 + 1.e-12, 0.25 - 1.e-13, # 23
                        1, name=5),
-        Cone([3, 2, -4], [1, 1.e-13, -1.e-13], np.sqrt(0.5), sheet=1, name=6),   # 24
-        Cone([3, 2, -4], [1.e-13, 1, -1.e-13], np.sqrt(0.5), sheet=1, name=6),   # 25
-        Cone([3, 2, -4], [1.e-13, -1.e-13, 1], np.sqrt(0.5), sheet=1, name=6),   # 26
-        Cone([3, 2, -4], [-1, 1.e-13, -1.e-13], np.sqrt(0.5), sheet=1, name=7),  # 27
-        Cone([3, 2, -4], [1.e-13, -1, -1.e-13], np.sqrt(0.5), sheet=1, name=7),  # 28
-        Cone([3, 2, -4], [1.e-13, -1.e-13, -1], np.sqrt(0.5), sheet=1, name=7)   # 29
+        Cone([3, 2, -4], [1, 1.e-13, -1.e-13], 0.25, sheet=1, name=6),   # 24
+        Cone([3, 2, -4], [1.e-13, 1, -1.e-13], 0.25, sheet=1, name=6),   # 25
+        Cone([3, 2, -4], [1.e-13, -1.e-13, 1], 0.25, sheet=1, name=6),   # 26
+        Cone([3, 2, -4], [-1, 1.e-13, -1.e-13], 0.25, sheet=1, name=7),  # 27
+        Cone([3, 2, -4], [1.e-13, -1, -1.e-13], 0.25, sheet=1, name=7),  # 28
+        Cone([3, 2, -4], [1.e-13, -1.e-13, -1], 0.25, sheet=1, name=7)   # 29
     ]
 
     @pytest.mark.parametrize('surf', surfs)
@@ -901,30 +904,95 @@ class TestCone:
     def test_round_equality(self, i1, s1, i2, s2):
         if i1 < i2:
             s1, s2 = s1.round(), s2.round()
-            result = (s1 == s2)
-            assert result == bool(self.eq_matrix[i1][i2])
+            if self.eq_matrix[i1][i2]:
+                assert s1 == s2, f"Rounded surfaces {i1} and {i2}, should be equal "
+                assert s2 == s1, "Equality result shouldn't depend on order"
+            else:
+                assert s1 != s2, f"Rounded surfaces {i1} and {i2}, should not be equal "
+                assert s2 != s1, "Inequality result shouldn't depend on order"
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
-    def test_hash(self, i1, s1, i2, s2):
-        if self.eq_matrix[i1][i2]:
-            assert hash(s1) == hash(s2)
+    def test_round_hash(self, i1, s1, i2, s2):
+        if i1 < i2:
+            s1, s2 = s1.round(), s2.round()
+            if self.eq_matrix[i1][i2]:
+                assert hash(s1) == hash(s2), "The hash should be equal for equal objects"
+
+    @pytest.mark.parametrize('surf', surfs)
+    def test_copy(self, surf):
+        copied_surf = surf.copy()
+        assert surf == copied_surf, "The copy should be exactly equal to the original"
+        assert copied_surf == surf, "Equality result shouldn't depend on order"
 
     @pytest.mark.parametrize('surface, answer', zip(surfs, [
-        '1 KX 4 0.5', '1 KX 4 0.5', '1 KY 4 0.5', '1 KY 4 0.5',
-        '1 KZ 4 0.5', '1 KZ 4 0.5', '2 K/X 3 2 -4 0.5',
-        '2 K/X 3 2 -4 0.5', '2 K/Y 3 2 -4 0.5',
-        '2 K/Y 3 2 -4 0.5', '2 K/Z 3 2 -4 0.5',
-        '2 K/Z 3 2 -4 0.5', '3 K/X 3 2 -4 0.5',
-        '3 K/Y 3 2 -4 0.5', '3 K/Z 3 2 -4 0.5',
-        '4 K/X 3 2 -4 0.5', '4 K/Y 3 2 -4 0.5',
-        '4 K/Z 3 2 -4 0.5', '5 K/X 3 2 -4 0.5 1',
-        '5 K/X 3 2 -4 0.5 1', '5 K/Y 3 2 -4 0.5 1',
-        '5 K/Y 3 2 -4 0.5 1', '5 K/Z 3 2 -4 0.5 1',
-        '5 K/Z 3 2 -4 0.5 1', '6 K/X 3 2 -4 0.5 1',
-        '6 K/Y 3 2 -4 0.5 1', '6 K/Z 3 2 -4 0.5 1',
-        '7 K/X 3 2 -4 0.5 -1', '7 K/Y 3 2 -4 0.5 -1',
-        '7 K/Z 3 2 -4 0.5 -1'
+        '1 KX 4 0.25',
+        '1 KX 4 0.25',
+        '1 KY 4 0.25',
+        '1 KY 4 0.25',
+        '1 KZ 4 0.25',
+        '1 KZ 4 0.25',
+        '2 K/X 3 2 -4 0.25',
+        '2 K/X 3 2 -4 0.25',
+        '2 K/Y 3 2 -4 0.25',
+        '2 K/Y 3 2 -4 0.25',
+        '2 K/Z 3 2 -4 0.25',
+        '2 K/Z 3 2 -4 0.25',
+        '3 K/X 3 2 -4 0.25',
+        '3 K/Y 3 2 -4 0.25',
+        '3 K/Z 3 2 -4 0.25',
+        '4 K/X 3 2 -4 0.25',
+        '4 K/Y 3 2 -4 0.25',
+        '4 K/Z 3 2 -4 0.25',
+        '5 K/X 3 2 -4 0.25 1',
+        '5 K/X 3 2 -4 0.25 1',
+        '5 K/Y 3 2 -4 0.25 1',
+        '5 K/Y 3 2 -4 0.25 1',
+        '5 K/Z 3 2 -4 0.25 1',
+        '5 K/Z 3 2 -4 0.25 1',
+        '6 K/X 3 2 -4 0.25 1',
+        '6 K/Y 3 2 -4 0.25 1',
+        '6 K/Z 3 2 -4 0.25 1',
+        '7 K/X 3 2 -4 0.25 -1',
+        '7 K/Y 3 2 -4 0.25 -1',
+        '7 K/Z 3 2 -4 0.25 -1'
+    ]))
+    def test_mcnp_pretty_repr(self, surface, answer):
+        desc = surface.round().mcnp_repr(pretty=True)
+        assert desc == answer
+
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 KX 4 0.25',
+        '1 KX 3.999999999999 0.2500000000001',            # 1
+        '1 KY 4 0.25',
+        '1 KY 3.999999999999 0.2500000000001',            # 3
+        '1 KZ 4 0.25',
+        '1 KZ 3.999999999999 0.2500000000001',            # 5
+        '2 K/X 3 2 -4 0.25',
+        '2 K/X 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999',   # 7
+        '2 K/Y 3 2 -4 0.25',
+        '2 K/Y 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999',  # 9
+        '2 K/Z 3 2 -4 0.25',
+        '2 K/Z 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999',   # 11
+        '3 GQ -0.25 1 1 -0 0 0 1.500000000002 -4 8 17.75',                       # 12
+        '3 GQ 1 -0.25 1 -0 0 0 -6 1.000000000002 8 24',                          # 13
+        '3 GQ 1 1 -0.25 0 0 -0 -6 -4 -2 9',                                      # 14
+        '4 GQ -0.25 1 1 0 0 -0 1.499999999998 -4 8 17.75',                       # 15
+        '4 GQ 1 -0.25 1 0 -0 0 -6 0.999999999998 8 24',                          # 16
+        '4 GQ 1 1 -0.25 0 -0 0 -6 -4 -2 9',                                      # 17
+        '5 K/X 3 2 -4 0.25 1',
+        '5 K/X 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999 1',  # 19
+        '5 K/Y 3 2 -4 0.25 1',
+        '5 K/Y 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999 1',  # 21
+        '5 K/Z 3 2 -4 0.25 1',
+        '5 K/Z 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999 1',  # 23
+        '6 GQ -0.25 1 1 -0 0 0 1.500000000002 -4 8 17.75',                        # 24
+        '6 GQ 1 -0.25 1 -0 0 0 -6 1.000000000002 8 24',                           # 25
+        '6 GQ 1 1 -0.25 0 0 -0 -6 -4 -2 9',                                       # 26
+        '7 GQ -0.25 1 1 0 0 -0 1.499999999998 -4 8 17.75',                        # 27
+        '7 GQ 1 -0.25 1 0 -0 0 -6 0.999999999998 8 24',                           # 28
+        '7 GQ 1 1 -0.25 0 -0 0 -6 -4 -2 9'                                        # 29
     ]))
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
@@ -936,7 +1004,7 @@ class TestTorus:
         ([1, 2, 3], [0, 0, 1], 4, 2, 1, [1, 2, 3], [0, 0, 1], 4, 2, 1)
     ])
     def test_init(self, transform, center, axis, R, A, B, c, ax, r, a, b):
-        surf = Torus(center, axis, R, A, B, transform=transform)
+        surf = Torus(center, axis, R, A, B, transform=transform).round()
         c = transform.apply2point(c)
         ax = transform.apply2vector(ax)
         np.testing.assert_array_almost_equal(c, surf._center)
@@ -1031,12 +1099,9 @@ class TestTorus:
         ([1, 2, 3], [0, 0, 1], 4, 2, 1, {}),
         ([1, 2, 3], [0, 0, 1], 4, 2, 1, {'name': 4}),
     ])
-    def test_pickle(self, point, axis, radius, a, b, options):
+    def test_pickle(self, tmpdir, point, axis, radius, a, b, options):
         surf = Torus(point, axis, radius, a, b, **options)
-        with open('test.pic', 'bw') as f:
-            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open('test.pic', 'br') as f:
-            surf_un = pickle.load(f)
+        surf_un = pass_through_pickle(surf, tmpdir)
         self.assert_torus(surf, surf_un)
 
     surfs = [
@@ -1065,14 +1130,19 @@ class TestTorus:
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
-    def test_equality(self, i1, s1, i2, s2):
-        result = (s1 == s2)
-        assert result == bool(self.eq_matrix[i1][i2])
+    def test_round_equality(self, i1, s1, i2, s2):
+        if i1 < i2:
+            s1, s2 = s1.round(), s2.round()
+            if self.eq_matrix[i1][i2]:
+                assert s1 == s2
+            else:
+                assert s1 != s2
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
     def test_hash(self, i1, s1, i2, s2):
         if self.eq_matrix[i1][i2]:
+            s1, s2 = s1.round(), s2.round()
             assert hash(s1) == hash(s2)
 
     @pytest.mark.parametrize('surface, answer', zip(surfs, [
@@ -1082,9 +1152,27 @@ class TestTorus:
         '3 TZ 1 2 3 4 2 1', '3 TZ 1 2 3 4 2 1',
         '3 TZ 1 2 3 4 2 1'
     ]))
+    def test_mcnp_round_repr(self, surface, answer):
+        desc = surface.round().mcnp_repr(pretty=True)
+        assert desc == answer
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 TX 1 2 3 4 2 1',
+        '1 TX 0.9999999999999 2.000000000001 2.999999999999 3.999999999999 2 0.9999999999995',  # 1
+        '1 TX 1 2 3 4 2 1',  # 2
+        '2 TY 1 2 3 4 2 1',
+        '2 TY 0.9999999999999 2.000000000001 2.999999999999 3.999999999999 2 0.9999999999995',
+        '2 TY 1 2 3 4 2 1',
+        '3 TZ 1 2 3 4 2 1',
+        '3 TZ 0.9999999999999 2.000000000001 2.999999999999 3.999999999999 2 0.9999999999995',  # 7
+        '3 TZ 1 2 3 4 2 1'   # 8
+    ]))
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
-        assert desc == answer
+        if '\n' in desc:
+            assert desc.split() == answer.split()
+        else:
+            assert desc == answer
 
 
 class TestGQuadratic:

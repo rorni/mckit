@@ -1,9 +1,10 @@
+from typing import Any, Dict
 from copy import deepcopy
 import os
 import functools
+import itertools
 import collections
 from pathlib import Path
-from typing import Any, Dict
 import numpy as np
 from numpy import ndarray
 from ..constants import FLOAT_TOLERANCE
@@ -112,7 +113,7 @@ def significant_array(
     return result
 
 
-def round_scalar(value, digits):
+def round_scalar(value, digits=None):
     """Rounds scalar value to represent the value in minimal form.
 
     Parameters
@@ -127,10 +128,12 @@ def round_scalar(value, digits):
     result : float
         Rounded value.
     """
+    if digits is None:
+        digits = significant_digits(value, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
     return round(value, digits)
 
 
-def round_array(array: ndarray, digarr: ndarray):
+def round_array(array: ndarray, digarr: ndarray = None):
     """Rounds array to desired precision.
 
     Parameters
@@ -145,6 +148,8 @@ def round_array(array: ndarray, digarr: ndarray):
     result : numpy.ndarray
         Rounded array.
     """
+    if digarr is None:
+        digarr = significant_array(array, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
     result = np.empty_like(array)
     for index in zip(*map(np.ravel, np.indices(array.shape))):
         result[index] = round_scalar(array[index], digarr[index])
@@ -152,13 +157,48 @@ def round_array(array: ndarray, digarr: ndarray):
 
 
 @functools.singledispatch
+def are_equal(a, b) -> bool:
+    return a is b or a == b
+
+
+@are_equal.register
+def _(a: str, b) -> bool:
+    return a is b or a == b
+
+
+@are_equal.register
+def _(a: ndarray, b) -> bool:
+    return np.array_equal(a, b)
+
+
+@are_equal.register
+def _(a: collections.abc.Iterable, b) -> bool:
+    if not issubclass(type(b), collections.abc.Iterable):
+        return False
+    for ai, bi in itertools.zip_longest(a, b):
+        if not are_equal(ai, bi):
+            return False
+    return True
+
+
+@functools.singledispatch
 def is_in(where, x) -> bool:
+    if where is None:
+        return False
     return x is where or x == where
 
 
 @is_in.register
 def _(where: str, x) -> bool:
     return x is where or x == where
+
+
+@is_in.register
+def _(where: tuple, x) -> bool:
+    for i in where:
+        if is_in(i, x):
+            return True
+    return False
 
 
 @is_in.register
@@ -171,25 +211,20 @@ def _(where: collections.abc.Container, x) -> bool:
     return x in where
 
 
-def check_if_is_in(x, *places):
-    if 1 < len(places):
-        for i in places:
-            if is_in(i, x):
-                return True
-    else:
-        return is_in(places[0], x)
-
-
-def deep_copy_dict(
+def filter_dict(
         a: Dict[Any, Any],
         *drop_items,
 ) -> Dict[Any, Any]:
     res = {}
     for k, v in a.items():
-        if drop_items is None or not check_if_is_in(k, *drop_items):
+        # if drop_items is None or not check_if_is_in(k, *drop_items):
+        if drop_items and is_in(drop_items, k):
+            pass
+        else:
             if isinstance(v, dict):
-                v = deep_copy_dict(v, *drop_items)
-            res[k] = deepcopy(v)
+                res[k] = filter_dict(v, *drop_items)
+            else:
+                res[k] = deepcopy(v)
     return res
 
 

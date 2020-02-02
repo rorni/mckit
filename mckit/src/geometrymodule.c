@@ -502,7 +502,7 @@ coneobj_init(ConeObject * self, PyObject * args, PyObject * kwds)
 
     cone_init(&self->surf, (double *) PyArray_DATA(apex),
                            (double *) PyArray_DATA(axis),
-                           ta * ta, sheet);
+                           ta, sheet);
     Py_DECREF(apex);
     Py_DECREF(axis);
     return 0;

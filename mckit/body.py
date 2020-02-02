@@ -15,7 +15,7 @@ from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .card import Card
-from mckit.utils import deep_copy_dict
+from mckit.utils import filter_dict
 
 
 __all__ = ['Shape', 'Body', 'simplify', 'GLOBAL_BOX', 'Card', 'TGeometry', 'TGeometry']
@@ -625,7 +625,7 @@ class Body(Card):
             The result.
         """
         geometry = self._shape.intersection(other)
-        options = deep_copy_dict(self.options, 'original')
+        options = filter_dict(self.options, 'original')
         return Body(geometry, **options)
 
     def union(self, other):
@@ -644,7 +644,7 @@ class Body(Card):
             The result.
         """
         geometry = self._shape.union(other)
-        options = deep_copy_dict(self.options, 'original')
+        options = filter_dict(self.options, 'original')
         return Body(geometry, **options)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
@@ -677,7 +677,7 @@ class Body(Card):
         # print('finding optimal solution...')
         variants = self._shape.get_simplest(trim_size)
         # print(len(variants))
-        options = deep_copy_dict(self.options, 'original')
+        options = filter_dict(self.options, 'original')
         return Body(variants[0], **options)
 
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
@@ -745,7 +745,7 @@ class Body(Card):
             The result of this cell transformation.
         """
         geometry = self._shape.transform(tr)
-        options = deep_copy_dict(self.options, 'original')
+        options = filter_dict(self.options, 'original')
         cell = Body(geometry, **options)
         fill = cell.options.get('FILL', None)
         if fill:
