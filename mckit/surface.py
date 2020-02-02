@@ -842,12 +842,12 @@ class Cone(Surface, _Cone):
             axis *= -1
             sheet *= -1
         apex = np.asarray(apex, dtype=np.float)
-        # self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        # self._apex_digits = significant_array(apex, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        self._apex_digits = significant_array(apex, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         # TODO rnr: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
         _Cone.__init__(self, apex, axis, ta, sheet)
-        # self._t2_digits = significant_digits(self._t2, constants.FLOAT_TOLERANCE)
+        self._t2_digits = significant_digits(self._t2, constants.FLOAT_TOLERANCE)
 
     def apply_transformation(self) -> 'Cone':
         if 'transform' in self.options.keys():
