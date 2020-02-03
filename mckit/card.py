@@ -1,5 +1,5 @@
 """Features, common for all cards"""
-from typing import Optional, Text
+from typing import Optional, Text, List
 from abc import ABC, abstractmethod
 from toolz import reduce
 from operator import xor
@@ -30,20 +30,19 @@ class Card(ABC):
     def has_original(self) -> bool:
         return 'original' in self.options.keys()
 
+    def mcnp_repr(self, pretty: bool = False) -> List[Text]:
+        """Gets str representation of the card."""
+        # if self.has_original:
+        #     return self.original  # TODO dvp: print leading comment as well
+        # else:
+        return print_card(self.mcnp_words(pretty))
+
     @property
     def original(self) -> Optional[Text]:
         return self.options.get('original', None)
 
     def drop_original(self) -> None:
         del self.options['original']
-
-    def mcnp_repr(self, pretty=False):
-        """Gets str representation of the card."""
-        if self.has_original:
-            return self.original  # TODO dvp: print leading comment as well
-        else:
-            words = self.mcnp_words(pretty)
-            return print_card(words)
 
     def __str__(self):  # TODO dvp: option `name` is printed twice, should be explicit property of this class instance
         return "{}: \"{}\"".format(self.name(), self.options)

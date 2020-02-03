@@ -2,7 +2,7 @@
 from typing import List, Optional, Any
 import warnings
 
-from mckit.utils import get_decades, significant_digits
+from mckit.utils import get_decades, significant_digits, prettify_float
 import mckit.constants as constants
 
 MCNP_FORMATS = {
@@ -138,3 +138,11 @@ CELL_OPTION_GROUPS = (
     ('TRCL',),  # Transformation options
     ('U', 'FILL')  # Universe and fill options
 )
+
+
+def add_float(words: List[str], v: float, pretty: bool) -> None:
+    words.append(' ')
+    if pretty:
+        words.append(pretty_float(v))
+    else:
+        words.append(prettify_float(v))

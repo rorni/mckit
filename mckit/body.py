@@ -100,6 +100,9 @@ class Shape(_Shape):
         words = print_card(self._get_words('U'))
         return words
 
+    def __repr__(self):
+        return f"Shape({self.opc}, {self.args})"
+
     def _get_words(self, parent_opc=None):
         """Gets list of words that describe the shape.
 
@@ -324,7 +327,10 @@ class Shape(_Shape):
         opc = self.opc
         args = []
         for a in self.args:
-            args.append(a.transform(tr))
+            a = a.transform(tr)
+            if isinstance(a, Surface):
+                a = a.apply_transformation()
+            args.append(a)
         return Shape(opc, *args)
 
     def complexity(self):
@@ -539,7 +545,7 @@ class Body(Card):
     def __init__(
         self,
         geometry: TGeometry,
-        **options: Dict[str, Any]
+        **options
     ) -> None:
         if isinstance(geometry, list):
             geometry = Shape.from_polish_notation(geometry)
@@ -549,6 +555,10 @@ class Body(Card):
             raise TypeError("Geometry list or Shape is expected.")
         Card.__init__(self, **options)
         self._shape = geometry
+
+    def __repr__(self):
+        options = str(self.options) if self.options else ''
+        return f"Body({self._shape}, {options})"
 
     def __hash__(self):
         return Card.__hash__(self) ^ hash(self._shape)
@@ -569,7 +579,7 @@ class Body(Card):
 
     # TODO dvp: the method is used for printing, we'd better introduce virtual method print(self, out: TextIO)?
     # TODO dvp: in that case we could just return original text if available
-    def mcnp_words(self):
+    def mcnp_words(self, pretty=False):
         words = [str(self.name()), ' ']
         if 'MAT' in self.options.keys():
             words.append(str(self.options['MAT'].composition.name()))

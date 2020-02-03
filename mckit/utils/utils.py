@@ -223,8 +223,10 @@ def filter_dict(
         else:
             if isinstance(v, dict):
                 res[k] = filter_dict(v, *drop_items)
-            else:
+            elif issubclass(type(v), collections.abc.Collection):
                 res[k] = deepcopy(v)
+            else:
+                res[k] = v
     return res
 
 

@@ -1,16 +1,16 @@
 import pytest
 import numpy as np
 
-from mckit.utils import digits_in_fraction_for_str, significant_digits, get_decades
+from mckit.utils import significant_digits, get_decades
 
 
-def run_digits_in_fraction(a: np.ndarray) -> None:
-    map(digits_in_fraction_for_str, a)
-
-
-def test_digits_in_fraction(benchmark):
-    values = (np.random.rand(1000) - 0.5) * 1000.0
-    benchmark(run_digits_in_fraction, values)
+# def run_digits_in_fraction(a: np.ndarray) -> None:
+#     map(digits_in_fraction_for_str, a)
+#
+#
+# def test_digits_in_fraction(benchmark):
+#     values = (np.random.rand(1000) - 0.5) * 1000.0
+#     benchmark(run_digits_in_fraction, values)
 
 # Name (time in ns)                Min       Max      Mean   StdDev    Median     IQR    Outliers  OPS (Mops/s)  Rounds  Iterations
 # test_digits_in_fraction     186.9630  720.5936  194.0950  26.6555  190.4080  1.2957  3901;10481        5.1521  192753          27

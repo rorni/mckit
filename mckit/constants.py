@@ -10,6 +10,7 @@ __all__ = [
     'TIME_UNITS',
     'FLOAT_TOLERANCE',
     'MCNP_ENCODING',
+    'DROP_OPTIONS'
 ]
 
 MIN_BOX_VOLUME = MIN_VOLUME

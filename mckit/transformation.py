@@ -9,6 +9,7 @@ from .card import Card
 from .utils import make_hash
 from .constants import FLOAT_TOLERANCE
 from .utils.tolerance import tolerance_estimator
+from .printer import add_float
 
 __all__ = ['Transformation', 'IDENTITY_ROTATION']
 
@@ -129,22 +130,24 @@ class Transformation(Card):
     #     for v in u.ravel():
     #         self._hash ^= hash(v)
 
-    def mcnp_words(self):
+    def mcnp_words(self, pretty=False):
         name = self.name()
         if name is None:
             name = 0
         words = ['*', f'TR{name}']
-        words.extend(self.get_words())
+        words.extend(self.get_words(pretty))
         return words
 
-    def get_words(self):
+    def get_words(self, pretty=False):
         words = []
         for v in self._t:
             words.append(' ')
             words.append("{:.10g}".format(v))  # TODO dvp: check if precision 13 is necessary
+            # add_float(words, v, pretty)
         for v in self._u.transpose().ravel():
             words.append(' ')
             words.append("{:.10g}".format(np.arccos(v) * 180 / np.pi))
+            # add_float(words, v, pretty)
         return words
 
     def __hash__(self):

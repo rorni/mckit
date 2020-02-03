@@ -167,7 +167,7 @@ class Composition(Card):
     def __hash__(self):
         return reduce(xor, map(hash, self._composition.keys()))   # TODO dvp: why self._hash is not used
 
-    def mcnp_words(self):
+    def mcnp_words(self, pretty=False):
         words = ['M{0} '.format(self.name())]
         for elem, frac in self._composition.items():
             words.append(elem.mcnp_repr())
