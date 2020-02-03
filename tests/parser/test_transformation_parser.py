@@ -44,8 +44,7 @@ def test_transformation_lexer(text, expected_types, expected_values):
 ])
 def test_transformation_parser(text, expected):
     actual = trp.parse(text)
-    approx = Transformation.approximator()
-    assert approx(actual, expected)
+    assert actual == expected
 
 
 if __name__ == '__main__':

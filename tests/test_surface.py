@@ -1,3 +1,4 @@
+import io
 import pytest
 import numpy as np
 import pickle
@@ -23,18 +24,23 @@ def box():
     return Box([0, 0, 0], 2, 2, 2)
 
 
-def pass_through_pickle(surf, tmpdir):
-    temp_file = str(tmpdir.join('test.pic'))
-    with open(temp_file, 'bw') as f:
-        pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-    with open(temp_file, 'br') as f:
-        surf_un = pickle.load(f)
-    return surf_un
+def pass_through_pickle(surf):
+    with io.BytesIO() as f:
+        pickle.dump(surf, f)
+        f.seek(0)
+        return pickle.load(f)
+
+
+def assert_mcnp_repr(desc, answer):
+    if '\n' in desc:
+        assert desc.split() == answer.split()
+    else:
+        assert desc == answer
 
 
 @pytest.mark.parametrize('cls, kind, params, expected', [
-      (Plane, 'PX', [5.3], {'_v': [1, 0, 0], '_k': -5.3}),
-      (Plane, 'PY', [5.4], {'_v': [0, 1, 0], '_k': -5.4}),
+      (Plane, 'PX', [5.3], {'_v': [1, 0, 0], '_k': -5.3}),                                                       # 0
+      (Plane, 'PY', [5.4], {'_v': [0, 1, 0], '_k': -5.4}),                                                       # 1
       (Plane, 'PZ', [5.5], {'_v': [0, 0, 1], '_k': -5.5}),
       (Plane, 'P', [3.2, -1.4, 5.7, -4.8], {'_v': [0.47867947, -0.20942227, 0.8526478], '_k': 0.7180192041541256}),
       (Plane, 'X', [5.6, 6.7], {'_v': [1, 0, 0], '_k': -5.6}),
@@ -44,7 +50,7 @@ def pass_through_pickle(surf, tmpdir):
       (Plane, 'Y', [5.7, 6.8, 5.7, 6.2], {'_v': [0, 1, 0], '_k': -5.7}),
       (Plane, 'Z', [5.8, -6.9, 5.8, -9.9], {'_v': [0, 0, 1], '_k': -5.8}),
       (Sphere, 'SO', [6.1], {'_center': [0, 0, 0], '_radius': 6.1}),
-      (Sphere, 'SX', [-3.4, 6.2], {'_center': [-3.4, 0, 0], '_radius': 6.2}),
+      (Sphere, 'SX', [-3.4, 6.2], {'_center': [-3.4, 0, 0], '_radius': 6.2}),                                     # 10
       (Sphere, 'SY', [3.5, 6.3], {'_center': [0, 3.5, 0], '_radius': 6.3}),
       (Sphere, 'SZ', [-3.6, 6.4], {'_center': [0, 0, -3.6], '_radius': 6.4}),
       (Sphere, 'S', [3.7, -3.8, 3.9, 6.5], {'_center': [3.7, -3.8, 3.9], '_radius': 6.5}),
@@ -54,7 +60,7 @@ def pass_through_pickle(surf, tmpdir):
       (Cylinder, 'C/X', [4.0, -4.1, 6.9], {'_pt': [0, 4.0, -4.1], '_axis': [1, 0, 0], '_radius': 6.9}),
       (Cylinder, 'C/Y', [-4.2, 4.3, 7.0], {'_pt': [-4.2, 0, 4.3], '_axis': [0, 1, 0], '_radius': 7.0}),
       (Cylinder, 'C/Z', [4.4, 4.5, 7.1], {'_pt': [4.4, 4.5, 0], '_axis': [0, 0, 1], '_radius': 7.1}),
-      (Cylinder, 'X', [1.2, 3.4, 8.4, 3.4], {'_pt': [0, 0, 0], '_axis': [1, 0, 0], '_radius': 3.4}),
+      (Cylinder, 'X', [1.2, 3.4, 8.4, 3.4], {'_pt': [0, 0, 0], '_axis': [1, 0, 0], '_radius': 3.4}),              # 20
       (Cylinder, 'Y', [1.2, 3.4, 8.4, 3.4], {'_pt': [0, 0, 0], '_axis': [0, 1, 0], '_radius': 3.4}),
       (Cylinder, 'Z', [1.2, 3.4, 8.4, 3.4], {'_pt': [0, 0, 0], '_axis': [0, 0, 1], '_radius': 3.4}),
       (Cone, 'KX', [4.6, 0.33], {'_apex': [4.6, 0, 0], '_axis': [1, 0, 0], '_t2': 0.33, '_sheet': 0}),
@@ -64,7 +70,7 @@ def pass_through_pickle(surf, tmpdir):
       (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33], {'_apex': [-5.0, -5.1, 5.2], '_axis': [0, 1, 0], '_t2': 0.33, '_sheet': 0}),
       (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33], {'_apex': [5.3, 5.4, 5.5], '_axis': [0, 0, 1], '_t2': 0.33, '_sheet': 0}),
       (Cone, 'KX', [4.6, 0.33, +1], {'_apex': [4.6, 0, 0], '_axis': [1, 0, 0], '_t2': 0.33, '_sheet': +1}),
-      (Cone, 'KY', [4.7, 0.33, +1], {'_apex': [0, 4.7, 0], '_axis': [0, 1, 0], '_t2': 0.33, '_sheet': +1}),
+      (Cone, 'KY', [4.7, 0.33, +1], {'_apex': [0, 4.7, 0], '_axis': [0, 1, 0], '_t2': 0.33, '_sheet': +1}),       # 30
       (Cone, 'KZ', [-4.8, 0.33, +1], {'_apex': [0, 0, -4.8], '_axis': [0, 0, 1], '_t2': 0.33, '_sheet': +1}),
       (Cone, 'X', [-1.0, 1.0, 1.0, 2.0], {'_apex': [-3.0, 0, 0], '_axis': [1, 0, 0], '_t2': 0.25, '_sheet': +1}),
       (Cone, 'X', [-2.5, 4.5, -0.5, 3.5], {'_apex': [6.5, 0, 0], '_axis': [1, 0, 0], '_t2': 0.25, '_sheet': -1}),
@@ -74,7 +80,7 @@ def pass_through_pickle(surf, tmpdir):
       (Cone, 'Y', [-2.5, 4.5, -0.5, 3.5], {'_apex': [0, 6.5, 0], '_axis': [0, 1, 0], '_t2': 0.25, '_sheet': -1}),
       (Cone, 'Y', [1.0, 2.0, -1.0, 1.0], {'_apex': [0, -3.0, 0], '_axis': [0, 1, 0], '_t2': 0.25, '_sheet': +1}),
       (Cone, 'Y', [-0.5, 3.5, -2.5, 4.5], {'_apex': [0, 6.5, 0], '_axis': [0, 1, 0], '_t2': 0.25, '_sheet': -1}),
-      (Cone, 'Z', [-1.0, 1.0, 1.0, 2.0], {'_apex': [0, 0, -3.0], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': +1}),
+      (Cone, 'Z', [-1.0, 1.0, 1.0, 2.0], {'_apex': [0, 0, -3.0], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': +1}),  # 40
       (Cone, 'Z', [-2.5, 4.5, -0.5, 3.5], {'_apex': [0, 0, 6.5], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': -1}),
       (Cone, 'Z', [1.0, 2.0, -1.0, 1.0], {'_apex': [0, 0, -3.0], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': +1}),
       (Cone, 'Z', [-0.5, 3.5, -2.5, 4.5], {'_apex': [0, 0, 6.5], '_axis': [0, 0, 1], '_t2': 0.25, '_sheet': -1}),
@@ -84,7 +90,7 @@ def pass_through_pickle(surf, tmpdir):
       (Cone, 'KX', [4.6, 0.33, -1], {'_apex': [4.6, 0, 0], '_axis': [1, 0, 0], '_t2': 0.33, '_sheet': -1}),
       (Cone, 'KY', [4.7, 0.33, -1], {'_apex': [0, 4.7, 0], '_axis': [0, 1, 0], '_t2': 0.33, '_sheet': -1}),
       (Cone, 'KZ', [-4.8, 0.33, -1], {'_apex': [0, 0, -4.8], '_axis': [0, 0, 1], '_t2': 0.33, '_sheet': -1}),
-      (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33, -1], {'_apex': [4.9, -5.0, 5.1], '_axis': [1, 0, 0], '_t2': 0.33, '_sheet': -1}),
+      (Cone, 'K/X', [4.9, -5.0, 5.1, 0.33, -1], {'_apex': [4.9, -5.0, 5.1], '_axis': [1, 0, 0], '_t2': 0.33, '_sheet': -1}),  # 50
       (Cone, 'K/Y', [-5.0, -5.1, 5.2, 0.33, -1], {'_apex': [-5.0, -5.1, 5.2], '_axis': [0, 1, 0], '_t2': 0.33, '_sheet': -1}),
       (Cone, 'K/Z', [5.3, 5.4, 5.5, 0.33, -1], {'_apex': [5.3, 5.4, 5.5], '_axis': [0, 0, 1], '_t2': 0.33, '_sheet': -1}),
       (Torus, 'TX', [1, 2, -3, 5, 0.5, 0.8], {'_center': [1, 2, -3], '_axis': [1, 0, 0], '_R': 5, '_a': 0.5, '_b': 0.8}),
@@ -246,9 +252,9 @@ class TestPlane:
         ([1, 0, 0], -2, {'name': 3}),
         ([0, 1, 0], -2, {'name': 4, 'comments': ['abc', 'def']}),
     ])
-    def test_pickle(self, tmpdir, norm, offset, options):
+    def test_pickle(self, norm, offset, options):
         surf = Plane(norm, offset, **options)
-        surf_un = pass_through_pickle(surf, tmpdir)
+        surf_un = pass_through_pickle(surf)
         np.testing.assert_array_almost_equal(surf._v, surf_un._v)
         np.testing.assert_almost_equal(surf._k, surf_un._k)
         assert surf.options == surf_un.options
@@ -322,8 +328,12 @@ class TestPlane:
         '5 P 0.707106781187 0.707106781187 0 -2.828427124746'
     ]))
     def test_mcnp_pretty_repr(self, surface, answer):
-        desc = surface.round().mcnp_repr(pretty=True)
+        s = surface.round()
+        desc = s.mcnp_repr(pretty=True)
         assert desc == answer
+        desc = s.mcnp_repr(pretty=False)
+        assert desc == answer
+
 
     @pytest.mark.parametrize('surface, answer', zip(surfs, [
         '1 PX 5', '1 PX 5.000000000001', '1 PX 4.999999999999', '1 PX 5.00000000001',
@@ -396,9 +406,9 @@ class TestSphere:
         ([1, 2, 3], 5, {'name': 2}),
         ([1, 2, 3], 5, {'name': 3, 'comment': ['abc', 'def']}),
     ])
-    def test_pickle(self, tmpdir, center, radius, options):
+    def test_pickle(self, center, radius, options):
         surf = Sphere(center, radius, **options)
-        surf_un = pass_through_pickle(surf, tmpdir)
+        surf_un = pass_through_pickle(surf)
         np.testing.assert_array_almost_equal(surf._center, surf_un._center)
         np.testing.assert_almost_equal(surf._radius, surf_un._radius)
         assert surf.options == surf_un.options
@@ -445,9 +455,12 @@ class TestSphere:
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
-    def test_equality(self, i1, s1, i2, s2):
-        result = (s1.round() == s2.round())
-        assert result == bool(self.eq_matrix[i1][i2])
+    def test_round_equality(self, i1, s1, i2, s2):
+        s1, s2 = s1.round(), s2.round()
+        if self.eq_matrix[i1][i2]:
+            assert s1 == s2
+        else:
+            assert s1 != s2
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
@@ -463,9 +476,11 @@ class TestSphere:
         '4 S 4.3 8.2 -1.4 3.5'
     ]))
     def test_mcnp_pretty_repr(self, surface, answer):
-        desc = surface.round().mcnp_repr(pretty=True)
+        s = surface.round()
+        desc = s.mcnp_repr(pretty=True)
         assert desc == answer
-
+        desc = s.mcnp_repr(pretty=False)
+        assert desc == answer
 
     @pytest.mark.parametrize('surface, answer', zip(surfs, [
         '1 SO 1',                                       # 0
@@ -551,9 +566,9 @@ class TestCylinder:
         ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5, {'name': 1}),
         ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5, {'name': 2}),
     ])
-    def test_pickle(self, tmpdir, point, axis, radius, options):
+    def test_pickle(self, point, axis, radius, options):
         surf = Cylinder(point, axis, radius, **options)
-        surf_un = pass_through_pickle(surf, tmpdir)
+        surf_un = pass_through_pickle(surf)
         np.testing.assert_array_almost_equal(surf._pt, surf_un._pt)
         np.testing.assert_array_almost_equal(surf._axis, surf_un._axis)
         np.testing.assert_almost_equal(surf._radius, surf_un._radius)
@@ -647,18 +662,21 @@ class TestCylinder:
         '2 C/Y 0.9999999999995 -1.999999999999 2.999999999999',
         '2 C/Z 1 -2 3',                                             # 10
         '2 C/Z 0.9999999999995 -1.999999999999 2.999999999999',
-        '3 GQ 0 1 1 -0 0 0 0 -2 4 -4',
-        '3 GQ 0 1 1 0 0 -0 -1e-12 -2 4 -3.999999999995',
-        '3 GQ 1 0 1 -0 0 0 -2 0 4 -4',
-        '3 GQ 1 0 1 0 -0 0 -2 -1e-12 4 -3.999999999995',            # 15
-        '3 GQ 1 1 0 0 0 -0 -2 4 0 -4',
-        '3 GQ 1 1 0 0 -0 0 -2 4 -0 -4'                              # 17
+        '3 GQ 0 1 1 -1e-13 5e-27 1e-13 3e-13 -2 4 -4',
+        '3 GQ 0 1 1 2e-13 3.999999999999e-26 -4e-13 -1e-12 -2.000000000001 4.000000000002 -3.999999999995',
+        '3 GQ 1 0 1 -1e-13 1e-13 5e-27 -2 3e-13 4 -4',
+        '3 GQ 1 0 1 2e-13 -4e-13 3.999999999999e-26 -2.000000000001 -1e-12 4.000000000002 -3.999999999995',       # 15
+        '3 GQ 1 1 0 5e-27 1e-13 -1e-13 -2 4 3e-13 -4',
+        '3 GQ 1 1 0 1.999999999999e-26 -2e-13 2e-13 -2.000000000001 4.000000000001 -6.000000000001e-13 -3.999999999997',
     ]))
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
         print(surface.mcnp_repr())
         print("{0:.15e}".format(surface._pt[0]))
-        assert desc == answer
+        if '\n' in desc:
+            assert desc.split() == answer.split()
+        else:
+            assert desc == answer
 
 
 class TestCone:
@@ -812,9 +830,9 @@ class TestCone:
         ([1, 2, 3],
          np.array([1, 2, 3]) / np.sqrt(14), 0.25, +1, {}),
     ])
-    def test_pickle(self, tmpdir, apex, axis, t2, sheet, options):
+    def test_pickle(self, apex, axis, t2, sheet, options):
         surf = Cone(apex, axis, t2, sheet, **options)
-        surf_un = pass_through_pickle(surf, tmpdir)
+        surf_un = pass_through_pickle(surf)
         self.assert_cone(surf, surf_un)
 
     surfs = [
@@ -958,7 +976,10 @@ class TestCone:
         '7 K/Z 3 2 -4 0.25 -1'
     ]))
     def test_mcnp_pretty_repr(self, surface, answer):
-        desc = surface.round().mcnp_repr(pretty=True)
+        s = surface.round()
+        desc = s.mcnp_repr(pretty=True)
+        assert desc == answer
+        desc = s.mcnp_repr(pretty=False)
         assert desc == answer
 
 
@@ -975,28 +996,28 @@ class TestCone:
         '2 K/Y 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999',  # 9
         '2 K/Z 3 2 -4 0.25',
         '2 K/Z 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999',   # 11
-        '3 GQ -0.25 1 1 -0 0 0 1.500000000002 -4 8 17.75',                       # 12
-        '3 GQ 1 -0.25 1 -0 0 0 -6 1.000000000002 8 24',                          # 13
-        '3 GQ 1 1 -0.25 0 0 -0 -6 -4 -2 9',                                      # 14
-        '4 GQ -0.25 1 1 0 0 -0 1.499999999998 -4 8 17.75',                       # 15
-        '4 GQ 1 -0.25 1 0 -0 0 -6 0.999999999998 8 24',                          # 16
-        '4 GQ 1 1 -0.25 0 -0 0 -6 -4 -2 9',                                      # 17
+        '3 GQ -0.25 1 1 -2.5e-13 2.5e-26 2.5e-13 1.500000000002 -3.999999999999 7.999999999999 17.75',       # 12
+        '3 GQ 1 -0.25 1  -2.5e-13 2.5e-13 2.5e-26 -5.999999999999 1.000000000002 7.999999999999 24',         # 13
+        '3 GQ 1 1 -0.25  2.5e-26 2.5e-13 -2.5e-13 -6.000000000001 -3.999999999999 -2 9.000000000001',        # 14
+        '4 GQ -0.25 1 1 2.5e-13 2.5e-26 -2.5e-13 1.499999999998 -4.000000000001 8.000000000001 17.75',       # 15
+        '4 GQ 1 -0.25 1 2.5e-13 -2.5e-13 2.5e-26 -6.000000000001 0.9999999999983 8 24',                      # 16
+        '4 GQ 1 1 -0.25 2.5e-26 -2.5e-13 2.5e-13 -5.999999999999 -4.000000000001 -2 8.999999999999',         # 17
         '5 K/X 3 2 -4 0.25 1',
         '5 K/X 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999 1',  # 19
         '5 K/Y 3 2 -4 0.25 1',
         '5 K/Y 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999 1',  # 21
         '5 K/Z 3 2 -4 0.25 1',
         '5 K/Z 2.999999999999 2.000000000001 -3.999999999999 0.2499999999999 1',  # 23
-        '6 GQ -0.25 1 1 -0 0 0 1.500000000002 -4 8 17.75',                        # 24
-        '6 GQ 1 -0.25 1 -0 0 0 -6 1.000000000002 8 24',                           # 25
-        '6 GQ 1 1 -0.25 0 0 -0 -6 -4 -2 9',                                       # 26
-        '7 GQ -0.25 1 1 0 0 -0 1.499999999998 -4 8 17.75',                        # 27
-        '7 GQ 1 -0.25 1 0 -0 0 -6 0.999999999998 8 24',                           # 28
-        '7 GQ 1 1 -0.25 0 -0 0 -6 -4 -2 9'                                        # 29
+        '6 GQ -0.25 1 1 -2.5e-13 2.5e-26 2.5e-13 1.500000000002 -3.999999999999 7.999999999999 17.75',        # 24
+        '6 GQ 1 -0.25 1 -2.5e-13 2.5e-13 2.5e-26 -5.999999999999 1.000000000002 7.999999999999 24',           # 25
+        '6 GQ 1 1 -0.25 2.5e-26 2.5e-13 -2.5e-13 -6.000000000001 -3.999999999999 -2 9.000000000001',          # 26
+        '7 GQ -0.25 1 1 2.5e-13 2.5e-26 -2.5e-13 1.499999999998 -4.000000000001 8.000000000001 17.75',        # 27
+        '7 GQ 1 -0.25 1 2.5e-13 -2.5e-13 2.5e-26 -6.000000000001 0.9999999999983 8 24',                       # 28
+        '7 GQ 1 1 -0.25 2.5e-26 -2.5e-13 2.5e-13 -5.999999999999 -4.000000000001 -2 8.999999999999'  # 29
     ]))
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
-        assert desc == answer
+        assert_mcnp_repr(desc, answer)
 
 
 class TestTorus:
@@ -1099,9 +1120,9 @@ class TestTorus:
         ([1, 2, 3], [0, 0, 1], 4, 2, 1, {}),
         ([1, 2, 3], [0, 0, 1], 4, 2, 1, {'name': 4}),
     ])
-    def test_pickle(self, tmpdir, point, axis, radius, a, b, options):
+    def test_pickle(self, point, axis, radius, a, b, options):
         surf = Torus(point, axis, radius, a, b, **options)
-        surf_un = pass_through_pickle(surf, tmpdir)
+        surf_un = pass_through_pickle(surf)
         self.assert_torus(surf, surf_un)
 
     surfs = [
@@ -1181,7 +1202,7 @@ class TestGQuadratic:
          [1, 2, 3], -4)
     ])
     def test_init(self, transform, m, v, k, _m, _v, _k):
-        surf = GQuadratic(m, v, k, transform=transform)
+        surf = GQuadratic(m, v, k, transform=transform).apply_transformation()
         _m, _v, _k = transform.apply2gq(_m, _v, _k)
         np.testing.assert_array_almost_equal(_m, surf._m)
         np.testing.assert_array_almost_equal(_v, surf._v)
@@ -1226,41 +1247,25 @@ class TestGQuadratic:
         surf = GQuadratic(m, v, k)
         surf_tr = surf.transform(transform)
         self.assert_gq(ans_surf, surf_tr)
+        self.assert_gq(ans_surf.apply_transformation(), surf_tr.apply_transformation())
 
     @staticmethod
     def assert_gq(ans_surf, surf_tr):
-        np.testing.assert_array_almost_equal(ans_surf._m, surf_tr._m)
-        np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
-        np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
-        assert ans_surf.options == surf_tr.options
+        # np.testing.assert_array_almost_equal(ans_surf._m, surf_tr._m)
+        # np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
+        # np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
+        assert surf_tr == ans_surf
+        assert surf_tr.options == ans_surf.options
+        # TODO dvp: move out of class and generalize for all the surfaces
 
     @pytest.mark.parametrize('m, v, k, options', [
         (np.diag([1, 2, 3]), [1, 2, 3], -4, {}),
         (np.diag([1, 2, 3]), [1, 2, 3], -4, {'name': 5}),
     ])
-    def test_pickle(self, tmpdir, m, v, k, options):
+    def test_pickle(self, m, v, k, options):
         surf = GQuadratic(m, v, k, **options)
-        file_name = tmpdir.join('test.pic')
-        with open(file_name, 'bw') as f:
-            pickle.dump(surf, f) #, pickle.HIGHEST_PROTOCOL)
-        with open(file_name, 'br') as f:
-            surf_un = pickle.load(f)
+        surf_un = pass_through_pickle(surf)
         self.assert_gq(surf, surf_un)
-
-
-    @pytest.mark.parametrize('m, v, k, options', [
-        (np.diag([1, 2, 3]), [1, 2, 3], -4, {}),
-        (np.diag([1, 2, 3]), [1, 2, 3], -4, {'name': 5}),
-    ])
-    def test_pickle_in_mem(self, tmpdir, m, v, k, options):
-        import io
-        surf = GQuadratic(m, v, k, **options)
-        with io.BytesIO() as f:
-            pickle.dump(surf, f)
-            f.seek(0)
-            surf_un = pickle.load(f)
-        self.assert_gq(surf, surf_un)
-
 
     surfs = [
         GQuadratic(np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), 3, name=1),
@@ -1283,14 +1288,18 @@ class TestGQuadratic:
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
-    def test_equality(self, i1, s1, i2, s2):
-        result = (s1 == s2)
-        assert result == bool(self.eq_matrix[i1][i2])
+    def test_round_equality(self, i1, s1, i2, s2):
+        s1, s2 = s1.round(), s2.round()
+        if self.eq_matrix[i1][i2]:
+            assert s1 == s2
+        else:
+            assert s1 != s2
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
     @pytest.mark.parametrize('i2, s2', enumerate(surfs))
     def test_hash(self, i1, s1, i2, s2):
         if self.eq_matrix[i1][i2]:
+            s1, s2 = s1.round(), s2.round()
             assert hash(s1) == hash(s2)
 
     @pytest.mark.parametrize('surface, answer', zip(surfs, [
@@ -1301,6 +1310,8 @@ class TestGQuadratic:
         '2 GQ -1 -2 -3 -0.5 -0.8 -0.6 -1 -2 -3 4',
         '2 GQ 1 2 3 0.5 0.8 0.6 1 2 3 -4'
     ]))
-    def test_mcnp_repr(self, surface, answer):
-        desc = surface.mcnp_repr()
+    def test_mcnp_pretty_repr(self, surface, answer):
+        desc = surface.mcnp_repr(pretty=True)
+        assert desc == answer
+        desc = surface.round().mcnp_repr(pretty=False)
         assert desc == answer
