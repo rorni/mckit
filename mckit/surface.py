@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
-
-from abc import ABC, abstractmethod
-
-import numpy as np
-
+from typing import Text, Optional, Callable, List, Tuple
+from abc import abstractmethod
 from . import constants
+from .utils.tolerance import tolerance_estimator
+
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import Plane      as _Plane,    \
-                      Sphere     as _Sphere,   \
-                      Cone       as _Cone,     \
-                      Cylinder   as _Cylinder, \
-                      Torus      as _Torus,    \
-                      GQuadratic as _GQuadratic, \
-                      ORIGIN, EX, EY, EZ
+from .geometry import (
+    Plane as _Plane,
+    Sphere as _Sphere,
+    Cone as _Cone,
+    Cylinder as _Cylinder,
+    Torus as _Torus,
+    GQuadratic as _GQuadratic,
+    ORIGIN, EX, EY, EZ
+)
 from mckit.box import GLOBAL_BOX
-from .printer import print_card, pretty_float
+from .printer import add_float
 from .transformation import Transformation
 from .utils import *
 from .card import Card
-import mckit.body
-
+from .constants import DROP_OPTIONS
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 __all__ = [
@@ -38,6 +38,7 @@ __all__ = [
 ]
 
 
+# noinspection PyPep8Naming
 def create_surface(kind, *params, **options):
     """Creates new surface.
 
@@ -57,25 +58,32 @@ def create_surface(kind, *params, **options):
     surf : Surface
         New surface.
     """
+    params = np.asarray(params, dtype=float)
     kind = kind.upper()
     if kind[-1] == 'X':
         axis = EX
+        assume_normalized = True
     elif kind[-1] == 'Y':
         axis = EY
+        assume_normalized = True
     elif kind[-1] == 'Z':
         axis = EZ
+        assume_normalized = True
+    else:
+        axis = None
+        assume_normalized = False
     # -------- Plane -------------------
     if kind[0] == 'P':
         if len(kind) == 2:
-            return Plane(axis, -params[0], **options)
+            return Plane(axis, -params[0], assume_normalized=assume_normalized, **options)
         else:
-            return Plane(params[:3], -params[3], **options)
+            return Plane(params[:3], -params[3], assume_normalized=assume_normalized, **options)
     # -------- SQ -------------------
     elif kind == 'SQ':
         A, B, C, D, E, F, G, x0, y0, z0 = params
         m = np.diag([A, B, C])
-        v = 2 * np.array([D - A*x0, E - B*y0, F - C*z0])
-        k = A*x0**2 + B*y0**2 + C*z0**2 - 2 * (D*x0 + E*y0 + F*z0) + G
+        v = 2 * np.array([D - A * x0, E - B * y0, F - C * z0])
+        k = A * x0 ** 2 + B * y0 ** 2 + C * z0 ** 2 - 2 * (D * x0 + E * y0 + F * z0) + G
         return GQuadratic(m, v, k, **options)
     # -------- Sphere ------------------
     elif kind[0] == 'S':
@@ -92,26 +100,25 @@ def create_surface(kind, *params, **options):
         A = 1 - axis
         if kind[1] == '/':
             Ax, Az = np.dot(A, EX), np.dot(A, EZ)
-            r0 = params[0] * (Ax * EX + (1 - Ax) * EY) + \
-                 params[1] * ((1 - Az) * EY + Az * EZ)
+            r0 = params[0] * (Ax * EX + (1 - Ax) * EY) + params[1] * ((1 - Az) * EY + Az * EZ)
         else:
             r0 = ORIGIN
         R = params[-1]
-        return Cylinder(r0, axis, R, **options)
+        return Cylinder(r0, axis, R, assume_normalized=assume_normalized, **options)
     # -------- Cone ---------------
     elif kind[0] == 'K':
         if kind[1] == '/':
-            r0 = np.array(params[:3])
-            ta = np.sqrt(params[3])
+            r0 = np.array(params[:3], dtype=float)
+            ta = params[3]
         else:
             r0 = params[0] * axis
-            ta = np.sqrt(params[1])
+            ta = params[1]
         sheet = 0 if len(params) % 2 == 0 else int(params[-1])
-        return Cone(r0, axis, ta, sheet, **options)
+        return Cone(r0, axis, ta, sheet, assume_normalized=assume_normalized, **options)
     # ---------- GQ -----------------
     elif kind == 'GQ':
         A, B, C, D, E, F, G, H, J, k = params
-        m = np.array([[A, 0.5*D, 0.5*F], [0.5*D, B, 0.5*E], [0.5*F, 0.5*E, C]])
+        m = np.array([[A, 0.5 * D, 0.5 * F], [0.5 * D, B, 0.5 * E], [0.5 * F, 0.5 * E, C]])
         v = np.array([G, H, J])
         return GQuadratic(m, v, k, **options)
     # ---------- Torus ---------------------
@@ -134,9 +141,9 @@ def create_surface(kind, *params, **options):
                 if r1 * r2 < 0:
                     raise ValueError('Points must belong to the one sheet.')
                 h0 = (abs(r1) * h2 - abs(r2) * h1) / (abs(r1) - abs(r2))
-                ta = abs((r1 - r2) / (h1 - h2))
-                s = round((h1 - h0) / abs(h1 - h0))
-                return Cone(axis * h0, axis, ta, sheet=s, **options)
+                t2 = ((r1 - r2) / (h1 - h2)) ** 2
+                s = int(round((h1 - h0) / abs(h1 - h0)))  # TODO: dvp check this conversion: was without int()
+                return Cone(axis * h0, axis, t2, sheet=s, **options)
         elif len(params) == 6:
             # TODO: Implement creation of surface by 3 points.
             raise NotImplementedError
@@ -192,14 +199,15 @@ class Surface(Card):
     projection(p)
         Gets projection of point p on the surface.
     """
+
     def __init__(self, **options):
         Card.__init__(self, **options)
 
-    def __hash__(self):
-        return id(self)
-
-    def __eq__(self, other):
-        return id(self) == id(other)
+    # def __hash__(self):
+    #     return id(self)
+    #
+    # def __eq__(self, other):
+    #     return id(self) == id(other)
 
     def __getstate__(self):
         return self.options
@@ -208,7 +216,33 @@ class Surface(Card):
         self.options = state
 
     @abstractmethod
-    def transform(self, tr):
+    def copy(self) -> 'Surface':
+        pass
+
+    @property
+    def transformation(self) -> Optional[Transformation]:
+        transformation: Transformation = self.options.get('transform', None)
+        return transformation
+
+    @abstractmethod
+    def apply_transformation(self) -> 'Surface':
+        """
+        Applies transformation specified for the surface.
+
+        Returns
+        -------
+        A 1new surface with transformed parameters, If there's specified transformation,
+        otherwise returns self.
+        """
+
+    def combine_transformations(self, tr: Transformation) -> Transformation:
+        my_transformation: Transformation = self.transformation
+        if my_transformation:
+            tr = tr.apply2transform(my_transformation)
+        return tr
+
+    @abstractmethod
+    def transform(self, tr: Transformation) -> 'Surface':
         """Applies transformation to this surface.
 
         Parameters
@@ -222,16 +256,72 @@ class Surface(Card):
             The result of this surface transformation.
         """
 
-    def mcnp_words(self):
+    @abstractmethod
+    def is_close_to(
+            self,
+            other: 'Surface',
+            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
+    ) -> bool:
+        """
+        Checks if this surface is close to other one with the given tolerance values.
+        """
+
+    @abstractmethod
+    def round(self) -> 'Surface':
+        """
+        Returns rounded version of self
+        """
+
+    def mcnp_words(self, pretty=False):
         words = []
         mod = self.options.get('modifier', None)
         if mod:
             words.append(mod)
         words.append(str(self.name()))
         words.append(' ')
+        # TODO dvp: add transformations processing in Universe.
+        # tr = self.transformation
+        # if tr is not None:
+        #     words.append(str(tr.name()))
+        #     words.append(' ')
         return words
 
+    def clean_options(self) -> Dict[Text, Any]:
+        return filter_dict(self.options, DROP_OPTIONS)
 
+    def compare_transformations(self, tr: Transformation) -> bool:
+        my_transformation = self.transformation
+        if my_transformation is not None:
+            if tr is None:
+                return False
+            return my_transformation == tr
+        else:
+            return tr is None
+
+    def has_close_transformations(
+            self,
+            tr: Transformation,
+            estimator: Callable[[Any, Any], bool]
+    ) -> bool:
+        my_transformation = self.transformation
+        if my_transformation is None:
+            return tr is None
+        if tr is None:
+            return False
+        return my_transformation.is_close(tr, estimator)
+
+
+def internalize_ort(v: np.ndarray) -> Tuple[np.ndarray, bool]:
+    if v is EX or np.array_equal(v, EX):
+        return EX, True
+    elif v is EY or np.array_equal(v, EY):
+        return EY, True
+    elif v is EZ or np.array_equal(v, EZ):
+        return EZ, True
+    return v, False
+
+
+# noinspection PyProtectedMember,PyTypeChecker
 class Plane(Surface, _Plane):
     """Plane surface class.
 
@@ -246,86 +336,124 @@ class Plane(Surface, _Plane):
             transform = tr - transformation to be applied to this plane.
                              Transformation instance.
     """
-    def __init__(self, normal, offset, **options):
-        if 'transform' in options.keys():
-            tr = options.pop('transform')
-            v, k = tr.apply2plane(normal, offset)
-        else:
-            v = np.array(normal)
-            k = offset
-        length = np.linalg.norm(v)
-        v = v / length
-        k /= length
-        self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+
+    def __init__(self, normal, offset, assume_normalized=False, **options):
+        v = np.asarray(normal, dtype=np.float)
+        k = float(offset)
+        if not assume_normalized:
+            v, is_ort = internalize_ort(v)
+            if not is_ort:
+                length = np.linalg.norm(v)
+                v = v / length
+                k /= length
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
-        self.normal = normal
-        self.offset = offset
+        self._hash = make_hash(self._k, self._v, self.transformation)
+
+    # noinspection PyTypeChecker
+    def round(self):
+        result = self.apply_transformation()
+        k_digits = significant_digits(result._k, constants.FLOAT_TOLERANCE, constants.FLOAT_TOLERANCE)
+        v_digits = significant_array(result._v, constants.FLOAT_TOLERANCE, constants.FLOAT_TOLERANCE)
+        k = round_scalar(result._k, k_digits)
+        v = round_array(result._v, v_digits)
+        return Plane(v, k, transform=None, assume_normalized=True, **result.options)
 
     def copy(self):
-        instance = Plane.__new__(Plane, self._v, self._k)
-        instance._k_digits = self._k_digits
-        instance._v_digits = self._v_digits
-        Surface.__init__(instance, **self.options)
-        _Plane.__init__(instance, self._v, self._k)
+        options = filter_dict(self.options)
+        instance = Plane(self._v, self._k, assume_normalized=True, **options)
         return instance
 
-    def __hash__(self):
-        result = hash(self._get_k())
-        for v in self._get_v():
-            result ^= hash(v)
-        return result
+    # __deepcopy__ = copy
 
-    def __eq__(self, other):
-        if not isinstance(other, Plane):
-            return False
+    def apply_transformation(self) -> 'Plane':
+        if 'transform' in self.options.keys():
+            tr = self.options.pop('transform')
+            v, k = tr.apply2plane(self._v, self._k)
         else:
-            for x, y in zip(self._get_v(), other._get_v()):
-                if x != y:
-                    return False
-            return self._get_k() == other._get_k()
+            return self
+        options = self.clean_options()
+        return Plane(v, k, transform=None, assume_normalized=True, **options)
 
-    def _get_k(self):
-        return round_scalar(self._k, self._k_digits)
+    def transform(self, tr: Transformation) -> 'Plane':
+        if tr is None:
+            return self
+        tr = self.combine_transformations(tr)
+        options = self.clean_options()
+        return Plane(self._v, self._k, transform=tr, assume_normalized=True, **options)
 
-    def _get_v(self):
-        return round_array(self._v, self._v_digits)
+    # def _get_k(self):
+    #     return self._k
+    #
+    # def _get_v(self):
+    #     return self._v
 
     def reverse(self):
         """Gets the surface with reversed normal."""
-        return Plane(-self._v, -self._k)
+        options = self.clean_options()
+        return Plane(-self._v, -self._k, assume_normalized=True, **options)
 
-    def transform(self, tr):
-        return Plane(self._v, self._k, transform=tr, **self.options)
-
-    def mcnp_words(self):
-        words = Surface.mcnp_words(self)
-        if np.all(self._get_v() == EX):
+    def mcnp_words(self, pretty: bool = False) -> List[str]:
+        words = Surface.mcnp_words(self, pretty)
+        if np.array_equal(self._v, EX):
             words.append('PX')
-        elif np.all(self._get_v() == EY):
+        elif np.array_equal(self._v, EY):
             words.append('PY')
-        elif np.all(self._get_v() == EZ):
+        elif np.array_equal(self._v, EZ):
             words.append('PZ')
         else:
             words.append('P')
-            for v, p in zip(self._get_v(), self._v_digits):
-                words.append(' ')
-                words.append(pretty_float(v, p))
-        words.append(' ')
-        words.append(pretty_float(-self._get_k(), self._k_digits))
-        return print_card(words)
+            for v in self._v:
+                add_float(words, v, pretty)
+        add_float(words, -self._k, pretty)  # TODO dvp: check why is offset negated in create_surface()?
+        return words
+
+    def is_close_to(
+            self,
+            other: 'Surface',
+            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
+    ) -> bool:
+        if self is other:
+            return True
+        assert isinstance(other, Plane)
+        if estimator((self._k, self._v), (other._k, other._v)):
+            return self.has_close_transformations(other.transformation, estimator)
+        return False
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        # if not isinstance(other, Plane):
+        #     return False
+        # else:
+        #     for x, y in zip(self._get_v(), other._get_v()):
+        #         if x != y:
+        #             return False
+        #     return self._get_k() == other._get_k()
+        if self is other:
+            return True
+        if not isinstance(other, Plane):
+            return False
+        if are_equal((self._k, self._v), (other._k, other._v)):
+            return self.compare_transformations(other.transformation)
+        return False
 
     def __getstate__(self):
-        return self._v, self._k, self._k_digits, self._v_digits, Surface.__getstate__(self)
+        # return self._v, self._k, self._k_digits, self._v_digits, Surface.__getstate__(self)
+        return self._v, self._k, Surface.__getstate__(self)
 
     def __setstate__(self, state):
-        v, k, _k_digits, _v_digits, options = state
+        v, k, options = state
         _Plane.__init__(self, v, k)
         Surface.__setstate__(self, options)
-        self._k_digits, self._v_digits = _k_digits, _v_digits
+        self._hash = make_hash(self._k, self._v, self.transformation)
+
+    def __repr__(self):
+        return f"Plane({self._v}, {self._k}, {self.options if self.options else ''})"
 
 
+# noinspection PyProtectedMember,PyTypeChecker
 class Sphere(Surface, _Sphere):
     """Sphere surface class.
     
@@ -340,16 +468,16 @@ class Sphere(Surface, _Sphere):
             transform = tr - transformation to be applied to the sphere being
                              created. Transformation instance.
     """
+
     def __init__(self, center, radius, **options):
-        if 'transform' in options.keys():
-            tr = options.pop('transform')
-            center = tr.apply2point(center)
+        # if 'transform' in options.keys():
+        #     tr = options.pop('transform')
+        #     center = tr.apply2point(center)
+        center = np.asarray(center, dtype=np.float)
+        radius = float(radius)
         Surface.__init__(self, **options)
-        self._center_digits = significant_array(np.array(center), constants.FLOAT_TOLERANCE,
-                                                resolution=constants.FLOAT_TOLERANCE)
-        self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE,
-                                                 resolution=constants.FLOAT_TOLERANCE)
         _Sphere.__init__(self, center, radius)
+        self._hash = make_hash(self._radius, self._center, self.transformation)
 
     def __getstate__(self):
         return self._center, self._radius, Surface.__getstate__(self)
@@ -358,73 +486,102 @@ class Sphere(Surface, _Sphere):
         c, r, options = state
         _Sphere.__init__(self, c, r)
         Surface.__setstate__(self, options)
+        self._hash = make_hash(self._radius, self._center, self.transformation)
 
     def copy(self):
-        instance = Sphere.__new__(Sphere, self._center, self._radius)
-        instance._center_digits = self._center_digits
-        instance._radius_digits = self._radius_digits
-        Surface.__init__(instance, **self.options)
-        _Sphere.__init__(instance, self._center, self._radius)
-        return instance
+        return Sphere(self._center, self._radius, **deepcopy(self.options))
+
+    # __deepcopy__ = copy
+
+    def __repr__(self):
+        return f"Sphere({self._center}, {self._radius}, {self.options if self.options else ''})"
 
     def __hash__(self):
-        result = hash(self._get_radius())
-        for c in self._get_center():
-            result ^= hash(c)
-        return result
+        return self._hash
 
     def __eq__(self, other):
+        if self is other:
+            return True
         if not isinstance(other, Sphere):
             return False
-        else:
-            for x, y in zip(self._get_center(), other._get_center()):
-                if x != y:
-                    return False
-            return self._get_radius() == other._get_radius()
+        if are_equal((self._radius, self._center), (other._radius, other._center)):
+            return self.compare_transformations(other.transformation)
+        return False
+
+    def is_close_to(
+            self,
+            other: 'Sphere',
+            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
+    ) -> bool:
+        if self is other:
+            return True
+        if not isinstance(other, Sphere):
+            return False
+        if estimator((self._radius, self._center), (other._radius, other._center)):
+            return self.has_close_transformations(other.transformation, estimator)
+        return False
 
     def _get_center(self):
-        return round_array(self._center, self._center_digits)
+        return self._center
 
     def _get_radius(self):
-        return round_scalar(self._radius, self._radius_digits)
+        return self._radius
 
-    def transform(self, tr):
-        return Sphere(self._center, self._radius, transform=tr, **self.options)
+    def round(self) -> 'Surface':
+        temp = self.apply_transformation()
+        center_digits = significant_array(
+            temp._center,
+            constants.FLOAT_TOLERANCE,
+            resolution=constants.FLOAT_TOLERANCE
+        )
+        center = round_array(temp._center, center_digits)
+        radius_digits = significant_digits(
+            temp._radius,
+            constants.FLOAT_TOLERANCE,
+            resolution=constants.FLOAT_TOLERANCE
+        )
+        radius = round_scalar(temp._radius, radius_digits)
+        options = temp.clean_options()
+        return Sphere(center, radius, transform=None, **options)
 
-    def mcnp_words(self):
-        words = Surface.mcnp_words(self)
-        if np.all(self._get_center() == np.array([0.0, 0.0, 0.0])):
+    def apply_transformation(self) -> 'Sphere':
+        tr = self.transformation
+        if tr is None:
+            return self
+        center = tr.apply2point(self._center)
+        options = self.clean_options()
+        return Sphere(center, self._radius, transform=None, **options)
+
+    def transform(self, tr: Transformation) -> 'Sphere':
+        if tr is None:
+            return self
+        tr = self.combine_transformations(tr)
+        options = self.clean_options()
+        return Sphere(self._center, self._radius, transform=tr, **options)
+
+    def mcnp_words(self, pretty: bool = False) -> List[str]:
+        words = Surface.mcnp_words(self, pretty)
+        c = self._center
+        if np.array_equal(self._center, ORIGIN):
             words.append('SO')
-        elif self._get_center()[0] == 0.0 and self._get_center()[1] == 0.0:
+        elif c[0] == 0.0 and c[1] == 0.0:
             words.append('SZ')
-            words.append(' ')
-            v = self._get_center()[2]
-            p = self._center_digits[2]
-            words.append(pretty_float(v, p))
-        elif self._get_center()[1] == 0.0 and self._get_center()[2] == 0.0:
+            add_float(words, c[2], pretty)
+        elif c[1] == 0.0 and c[2] == 0.0:
             words.append('SX')
-            words.append(' ')
-            v = self._get_center()[0]
-            p = self._center_digits[0]
-            words.append(pretty_float(v, p))
-        elif self._get_center()[0] == 0.0 and self._get_center()[2] == 0.0:
+            add_float(words, c[0], pretty)
+        elif c[0] == 0.0 and c[2] == 0.0:
             words.append('SY')
-            words.append(' ')
-            v = self._get_center()[1]
-            p = self._center_digits[1]
-            words.append(pretty_float(v, p))
+            add_float(words, c[1], pretty)
         else:
             words.append('S')
-            for v, p in zip(self._center, self._center_digits):
-                words.append(' ')
-                words.append(pretty_float(v, p))
-        words.append(' ')
-        v = self._get_radius()
-        p = self._radius_digits
-        words.append(pretty_float(v, p))
-        return print_card(words)
+            for v in c:
+                add_float(words, v, pretty)
+        add_float(words, self._radius, pretty)
+        return words
 
 
+# noinspection PyProtectedMember,PyUnresolvedReferences,DuplicatedCode,PyTypeChecker
 class Cylinder(Surface, _Cylinder):
     """Cylinder surface class.
     
@@ -441,22 +598,25 @@ class Cylinder(Surface, _Cylinder):
             transform = tr - transformation to be applied to the cylinder being
                              created. Transformation instance.
     """
-    def __init__(self, pt, axis, radius, **options):
-        if 'transform' in options.keys():
-            tr = options.pop('transform')
-            pt = tr.apply2point(pt)
-            axis = tr.apply2vector(axis)
-        axis = np.array(axis) / np.linalg.norm(axis)
+
+    def __init__(self, pt, axis, radius, assume_normalized=False, **options):
+        # if 'transform' in options.keys():
+        #     tr = options.pop('transform')
+        #     pt = tr.apply2point(pt)
+        #     axis = tr.apply2vector(axis)
+        axis = np.asarray(axis, dtype=np.float)
+        if not assume_normalized:
+            axis, is_ort = internalize_ort(axis)
+            if not is_ort:
+                axis /= np.linalg.norm(axis)
         maxdir = np.argmax(np.abs(axis))
         if axis[maxdir] < 0:
             axis *= -1
-        pt = np.array(pt)
-        self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        pt = np.asarray(pt, dtype=np.float)
         pt = pt - axis * np.dot(pt, axis)
-        self._pt_digits = significant_array(pt, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
+        self._hash = make_hash(self._radius, self._pt, self._axis, self.transformation)
 
     def __getstate__(self):
         return self._pt, self._axis, self._radius, Surface.__getstate__(self)
@@ -465,106 +625,124 @@ class Cylinder(Surface, _Cylinder):
         pt, axis, radius, options = state
         _Cylinder.__init__(self, pt, axis, radius)
         Surface.__setstate__(self, options)
+        self._hash = make_hash(self._radius, self._pt, self._axis, self.transformation)
 
     def copy(self):
-        instance = Cylinder.__new__(Cylinder, self._pt, self._axis, self._radius)
-        instance._axis_digits = self._axis_digits
-        instance._pt_digits = self._pt_digits
-        instance._radius_digits = self._radius_digits
-        Surface.__init__(instance, **self.options)
-        _Cylinder.__init__(instance, self._pt, self._axis, self._radius)
-        return instance
+        return Cylinder(self._pt, self._axis, self._radius, assume_normalized=True, **deepcopy(self.options))
+
+    def __repr__(self):
+        return f"Cylinder({self._pt}, {self._axis}, {self.options if self.options else ''})"
 
     def __hash__(self):
-        result = hash(self._get_radius())
-        for c in self._get_pt():
-            result ^= hash(c)
-        for a in self._get_axis():
-            result ^= hash(a)
-        return result
+        return self._hash
 
     def __eq__(self, other):
+        if self is other:
+            return True
         if not isinstance(other, Cylinder):
             return False
+        if self._radius == other._radius:
+            if np.array_equal(self._pt, other._pt):
+                if np.array_equal(self._axis, other._axis):
+                    return self.compare_transformations(other.transformation)
+        return False
+
+    def is_close_to(
+            self,
+            other: 'Cylinder',
+            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
+    ) -> bool:
+        if self is other:
+            return True
+        if not isinstance(other, Cone):
+            return False
+        if estimator((self._radius, self._pt, self._axis), (other._radius, other._pt, other._axis)):
+            return self.has_close_transformations(other.transformation, estimator)
+        return False
+
+    def round(self):
+        temp = self.apply_transformation()
+        pt = temp._pt
+        pt_digits = significant_array(
+            pt,
+            constants.FLOAT_TOLERANCE,
+            resolution=constants.FLOAT_TOLERANCE
+        )
+        pt = round_array(pt, pt_digits)
+        axis = temp._axis
+        axis_digits = significant_array(
+            axis,
+            constants.FLOAT_TOLERANCE,
+            resolution=constants.FLOAT_TOLERANCE,
+        )
+        axis = round_array(axis, axis_digits)
+        radius = temp._radius
+        radius_digits = significant_digits(
+            radius,
+            constants.FLOAT_TOLERANCE,
+            resolution=constants.FLOAT_TOLERANCE,
+        )
+        radius = round_scalar(radius, radius_digits)
+        options = self.clean_options()
+        return Cylinder(pt, axis, radius, transform=None, **options)
+
+    def apply_transformation(self) -> Surface:
+        if 'transform' in self.options.keys():
+            tr = self.options.pop('transform')
+            pt = tr.apply2point(self._pt)
+            axis = tr.apply2vector(self._axis)
+            options = self.clean_options()
+            # TODO dvp: actually may create Generic Quadratic. Should we use __new__() for this?
+            return Cylinder(pt, axis, self._radius, assume_normalized=True, **options)
         else:
-            for x, y in zip(self._get_pt(), other._get_pt()):
-                if x != y:
-                    return False
-            for x, y in zip(self._get_axis(), other._get_axis()):
-                if x != y:
-                    return False
-            return self._get_radius() == other._get_radius()
+            return self
 
-    def _get_pt(self):
-        return round_array(self._pt, self._pt_digits)
+    def transform(self, tr: Transformation) -> 'Cylinder':
+        if tr is None:
+            return self
+        tr = self.combine_transformations(tr)
+        options = self.clean_options()
+        return Cylinder(self._pt, self._axis, self._radius, transform=tr, assume_normalized=True, **options)
 
-    def _get_axis(self):
-        return round_array(self._axis, self._axis_digits)
-
-    def _get_radius(self):
-        return round_scalar(self._radius, self._radius_digits)
-
-    def transform(self, tr):
-        return Cylinder(self._pt, self._axis, self._radius, transform=tr,
-                        **self.options)
-
-    def mcnp_words(self):
+    def mcnp_words(self, pretty: bool = False) -> str:
         words = Surface.mcnp_words(self)
-        if np.all(self._get_axis() == np.array([1.0, 0.0, 0.0])):
-            if self._get_pt()[1] == 0.0 and self._get_pt()[2] == 0.0:
+        axis = self._axis
+        pt = self._pt
+        if np.array_equal(axis, EX):
+            if pt[1] == 0.0 and pt[2] == 0.0:
                 words.append('CX')
             else:
                 words.append('C/X')
-                words.append(' ')
-                v = self._get_pt()[1]
-                p = self._pt_digits[1]
-                words.append(pretty_float(v, p))
-                words.append(' ')
-                v = self._get_pt()[2]
-                p = self._pt_digits[2]
-                words.append(pretty_float(v, p))
-        elif np.all(self._get_axis() == np.array([0.0, 1.0, 0.0])):
-            if self._get_pt()[0] == 0.0 and self._get_pt()[2] == 0.0:
+                add_float(words, pt[1], pretty)
+                add_float(words, pt[2], pretty)
+        elif np.array_equal(axis, EY):
+            if pt[0] == 0.0 and pt[2] == 0.0:
                 words.append('CY')
             else:
                 words.append('C/Y')
-                words.append(' ')
-                v = self._get_pt()[0]
-                p = self._pt_digits[0]
-                words.append(pretty_float(v, p))
-                words.append(' ')
-                v = self._get_pt()[2]
-                p = self._pt_digits[2]
-                words.append(pretty_float(v, p))
-        elif np.all(self._get_axis() == np.array([0.0, 0.0, 1.0])):
-            if self._get_pt()[0] == 0.0 and self._get_pt()[1] == 0.0:
+                add_float(words, pt[0], pretty)
+                add_float(words, pt[2], pretty)
+        elif np.array_equal(axis, EZ):
+            if pt[0] == 0.0 and pt[1] == 0.0:
                 words.append('CZ')
             else:
                 words.append('C/Z')
-                words.append(' ')
-                v = self._get_pt()[0]
-                p = self._pt_digits[0]
-                words.append(pretty_float(v, p))
-                words.append(' ')
-                v = self._get_pt()[1]
-                p = self._pt_digits[1]
-                words.append(pretty_float(v, p))
+                add_float(words, pt[0], pretty)
+                add_float(words, pt[1], pretty)
         else:
-            nx, ny, nz = self._axis
-            m = np.array([[1-nx**2, -nx*ny, -nx*nz],
-                          [-nx*ny, 1-ny**2, -ny*nz],
-                          [-nx*nz, -ny*nz, 1-nz**2]])
+            nx, ny, nz = axis
+            m = np.array([[1 - nx ** 2, -nx * ny, -nx * nz],
+                          [-nx * ny, 1 - ny ** 2, -ny * nz],
+                          [-nx * nz, -ny * nz, 1 - nz ** 2]], dtype=float)
             v = np.zeros(3)
-            k = -self._radius**2
+            k = -self._radius ** 2
             m, v, k = Transformation(translation=self._pt).apply2gq(m, v, k)
-            return GQuadratic(m, v, k, **self.options).mcnp_repr()
-        words.append(' ')
-        v = self._get_radius()
-        p = self._radius_digits
-        words.append(pretty_float(v, p))
-        return print_card(words)
+            return GQuadratic(m, v, k, **self.options).mcnp_repr(pretty)
+        add_float(words, self._radius, pretty)
+        return words
 
 
+# noinspection PyProtectedMember,PyUnresolvedReferences,DuplicatedCode,PyTypeChecker
 class Cone(Surface, _Cone):
     """Cone surface class.
 
@@ -574,8 +752,8 @@ class Cone(Surface, _Cone):
         Cone's apex.
     axis : array_like[float]
         Cone's axis.
-    ta : float
-        Tangent of angle between axis and generatrix.
+    t2 : float
+        Square of tangent of angle between axis and generatrix.
     sheet : int
         Cone's sheet.
     options : dict
@@ -583,142 +761,159 @@ class Cone(Surface, _Cone):
             transform = tr - transformation to be applied to the cone being
                              created. Transformation instance.
     """
-    def __init__(self, apex, axis, ta, sheet=0, **options):
-        if 'transform' in options.keys():
-            tr = options.pop('transform')
-            apex = tr.apply2point(apex)
-            axis = tr.apply2vector(axis)
-        axis = np.array(axis) / np.linalg.norm(axis)
+
+    def __init__(
+            self,
+            apex: ndarray,
+            axis: ndarray,
+            t2: float,
+            sheet: int = 0,
+            assume_normalized: bool = False,
+            **options
+    ) -> None:
+        axis = np.asarray(axis, dtype=np.float)
+        if not assume_normalized:
+            axis, is_ort = internalize_ort(axis)
+            if not is_ort:
+                axis /= np.linalg.norm(axis)
         maxdir = np.argmax(np.abs(axis))
         if axis[maxdir] < 0:
             axis *= -1
             sheet *= -1
-        apex = np.array(apex)
-        self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._apex_digits = significant_array(apex, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-
+        apex = np.asarray(apex, dtype=np.float)
         Surface.__init__(self, **options)
-        # TODO: Do something with ta! It is confusing. _Cone accept ta, but returns t2.
-        _Cone.__init__(self, apex, axis, ta, sheet)
-        self._t2_digits = significant_digits(self._t2, constants.FLOAT_TOLERANCE)
+        _Cone.__init__(self, apex, axis, t2, sheet)
+        self._hash = make_hash(self._t2, self._sheet, self._apex, self._axis)
+
+    def apply_transformation(self) -> Surface:
+        if 'transform' in self.options.keys():
+            tr = self.options.pop('transform')
+            apex = tr.apply2point(self._apex)
+            axis = tr.apply2vector(self._axis)
+            sheet = self._sheet
+            options = self.clean_options()
+            return Cone(apex, axis, self._t2, sheet, assume_normalized=True, **options)
+        else:
+            return self
+
+    def round(self) -> Surface:
+        res = self.apply_transformation()
+        apex = round_array(res._apex)
+        axis = round_array(res._axis)
+        t2 = round_scalar(self._t2)
+        sheet = self._sheet
+        options = self.clean_options()
+        # TODO dvp: what if Generic Quadratic is to be returned?
+        return Cone(apex, axis, t2, sheet, assume_normalized=True, **options)
 
     def copy(self):
-        ta = np.sqrt(self._t2)
-        instance = Cone.__new__(Cone, self._apex, self._axis, ta, self._sheet)
-        instance._axis_digits = self._axis_digits
-        instance._apex_digits = self._apex_digits
-        instance._t2_digits = self._t2_digits
-        Surface.__init__(instance, **self.options)
-        _Cone.__init__(instance, self._apex, self._axis, ta, self._sheet)
-        return instance
+        return Cone(self._apex, self._axis, self._t2, self._sheet, assume_normalized=True, **deepcopy(self.options))
+
+    def __repr__(self):
+        return f"Cone({self._apex}, {self._axis}, {self._t2}, {self._sheet}, {self.options if self.options else ''})"
 
     def __getstate__(self):
         return self._apex, self._axis, self._t2, self._sheet, Surface.__getstate__(self)
 
     def __setstate__(self, state):
-        apex, axis, ta, sheet, options = state
-        _Cone.__init__(self, apex, axis, np.sqrt(ta), sheet)
+        apex, axis, t2, sheet, options = state
+        _Cone.__init__(self, apex, axis, t2, sheet)
         Surface.__setstate__(self, options)
+        self._hash = make_hash(self._t2, self._sheet, self._apex, self._axis)
 
     def __hash__(self):
-        result = hash(self._get_t2()) ^ hash(self._sheet)
-        for c in self._get_apex():
-            result ^= hash(c)
-        for a in self._get_axis():
-            result ^= hash(a)
-        return result
+        return self._hash
 
     def __eq__(self, other):
+
+        # noinspection DuplicatedCode
+        if self is other:
+            return True
+
         if not isinstance(other, Cone):
             return False
-        else:
-            for x, y in zip(self._get_apex(), other._get_apex()):
-                if x != y:
-                    return False
-            for x, y in zip(self._get_axis(), other._get_axis()):
-                if x != y:
-                    return False
-            return self._get_t2() == other._get_t2() and self._sheet == other._sheet
 
-    def _get_axis(self):
-        return round_array(self._axis, self._axis_digits)
+        return are_equal(
+            (self._t2, self._sheet, self._apex, self._axis),
+            (other._t2, other._sheet, other._apex, other._axis),
+        )
 
-    def _get_apex(self):
-        return round_array(self._apex, self._apex_digits)
+    def is_close_to(
+            self,
+            other: 'Surface',
+            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
+    ) -> bool:
+        if self is other:
+            return True
+        if not isinstance(other, Cone):
+            return False
+        if estimator((self._apex, self._axis, self._t2), (other._apex, other._axis, other._t2)):
+            return self.has_close_transformations(other.transformation, estimator)
+        return False
 
-    def _get_t2(self):
-        return round_scalar(self._t2, self._t2_digits)
-
-    def transform(self, tr):
-        cone = Cone(self._apex, self._axis, np.sqrt(self._t2),
-                    sheet=0, transform=tr, **self.options)
-        if self._sheet != 0:
-            plane = Plane(self._axis, -np.dot(self._axis, self._apex), name=1, transform=tr)
-            if self._sheet == +1:
-                op = 'C'
-            else:
-                op = 'S'
-            return mckit.body.Shape('U', cone, mckit.body.Shape(op, plane))
+    def transform(self, tr: Transformation) -> 'Cone':
+        if tr is None:
+            return self
+        tr = self.combine_transformations(tr)
+        options = self.clean_options()
+        cone = Cone(self._apex, self._axis, self._t2, sheet=self._sheet, transform=tr, **options)
+        # TODO dvp: check if the following code returning shape instead of Cone is necessary?
+        # TODO dvp: if necessary, then move this to apply_transformation()
+        # if self._sheet != 0:
+        #     plane = Plane(self._axis, -np.dot(self._axis, self._apex), name=1, transform=tr)
+        #     if self._sheet == +1:
+        #         op = 'C'
+        #     else:
+        #         op = 'S'
+        #     return mckit.body.Shape('U', cone, mckit.body.Shape(op, plane))
         return cone
 
-    def mcnp_words(self):
+    def mcnp_words(self, pretty: bool = False) -> List[str]:
         words = Surface.mcnp_words(self)
-        if np.all(self._get_axis() == np.array([1.0, 0.0, 0.0])):
-            if self._get_apex()[1] == 0.0 and self._get_apex()[2] == 0.0:
+        axis = self._axis
+        apex = self._apex
+        if np.array_equal(axis, EX):
+            if apex[1] == 0.0 and apex[2] == 0.0:
                 words.append('KX')
-                words.append(' ')
-                v = self._apex[0]
-                p = self._apex_digits[0]
-                words.append(pretty_float(v, p))
+                add_float(words, apex[0], pretty)
             else:
                 words.append('K/X')
-                for v, p in zip(self._apex, self._apex_digits):
-                    words.append(' ')
-                    words.append(pretty_float(v, p))
-        elif np.all(self._get_axis() == np.array([0.0, 1.0, 0.0])):
-            if self._get_apex()[0] == 0.0 and self._get_apex()[2] == 0.0:
+                for v in apex:
+                    add_float(words, v, pretty)
+        elif np.array_equal(axis, EY):
+            if apex[0] == 0.0 and apex[2] == 0.0:
                 words.append('KY')
-                words.append(' ')
-                v = self._apex[1]
-                p = self._apex_digits[1]
-                words.append(pretty_float(v, p))
+                add_float(words, apex[1], pretty)
             else:
                 words.append('K/Y')
-                for v, p in zip(self._apex, self._apex_digits):
-                    words.append(' ')
-                    words.append(pretty_float(v, p))
-        elif np.all(self._get_axis() == np.array([0.0, 0.0, 1.0])):
-            if self._get_apex()[0] == 0.0 and self._get_apex()[1] == 0.0:
+                for v in apex:
+                    add_float(words, v, pretty)
+        elif np.array_equal(axis, EZ):
+            if apex[0] == 0.0 and apex[1] == 0.0:
                 words.append('KZ')
-                words.append(' ')
-                v = self._apex[2]
-                p = self._apex_digits[2]
-                words.append(pretty_float(v, p))
+                add_float(words, apex[2], pretty)
             else:
                 words.append('K/Z')
-                for v, p in zip(self._apex, self._apex_digits):
-                    words.append(' ')
-                    words.append(pretty_float(v, p))
+                for v in apex:
+                    add_float(words, v, pretty)
         else:
-            nx, ny, nz = self._axis
+            nx, ny, nz = axis
             a = 1 + self._t2
-            m = np.array([[1-a*nx**2, -a*nx*ny, -a*nx*nz],
-                          [-a*nx*ny, 1-a*ny**2, -a*ny*nz],
-                          [-a*nx*nz, -a*ny*nz, 1-a*nz**2]])
+            m = np.array([[1 - a * nx ** 2, -a * nx * ny, -a * nx * nz],
+                          [-a * nx * ny, 1 - a * ny ** 2, -a * ny * nz],
+                          [-a * nx * nz, -a * ny * nz, 1 - a * nz ** 2]])
             v = np.zeros(3)
             k = 0
             m, v, k = Transformation(translation=self._apex).apply2gq(m, v, k)
-            return GQuadratic(m, v, k, **self.options).mcnp_repr()
-        words.append(' ')
-        v = self._t2
-        p = self._t2_digits
-        words.append(pretty_float(v, p))
+            return GQuadratic(m, v, k, **self.clean_options()).mcnp_repr(pretty)
+        add_float(words, self._t2, pretty)
         if self._sheet != 0:
             words.append(' ')
-            words.append('{0:d}'.format(self._sheet))
+            words.append(str(self._sheet))
         return words
 
 
+# noinspection PyProtectedMember,PyUnresolvedReferences,PyTypeChecker
 class GQuadratic(Surface, _GQuadratic):
     """Generic quadratic surface class.
 
@@ -735,22 +930,40 @@ class GQuadratic(Surface, _GQuadratic):
             transform = tr - transformation to be applied to the surface being
                              created. Transformation instance.
     """
-    def __init__(self, m, v, k, **options):
-        if 'transform' in options.keys():
-            tr = options.pop('transform')
-            m, v, k = tr.apply2gq(m, v, k)
-        else:
-            m = np.array(m)
-            v = np.array(v)
-            k = k
-        L = np.linalg.eigvalsh(m)
-        factor = 1 / np.max(np.abs(L))
-        self._m_digits = significant_array(m, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
 
+    def __init__(self, m, v, k, factor=None, **options):
+        # if 'transform' in options.keys():
+        #     tr = options.pop('transform')
+        #     m, v, k = tr.apply2gq(m, v, k)
+        # else:
+        m = np.asarray(m, dtype=np.float)
+        v = np.asarray(v, dtype=np.float)
+        # k = k
+        if factor is None:
+            eigenvalues = np.linalg.eigvalsh(m)
+            factor = 1.0 / np.max(np.abs(eigenvalues))
+        # self._m_digits = significant_array(m, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        # self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+        # self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k, factor)
+        self._hash = make_hash(self._k, self._v, self._m)
+
+    def apply_transformation(self) -> Surface:
+        if 'transform' in self.options:
+            tr = self.options.pop('transform')
+            m, v, k = tr.apply2gq(self._m, self._v, self._k)
+            options = self.clean_options()
+            return GQuadratic(m, v, k, **options)
+        else:
+            return self
+
+    def round(self) -> Surface:
+        temp: Surface = self.apply_transformation()
+        m, v = map(round_array, [temp._m, temp._v])
+        k = round_scalar(temp._k)
+        # TODO dvp: handle cases when the surface can be represented with specialized quadratic surface: Cone etc.
+        return GQuadratic(m, v, k, **self.clean_options())
 
     def __getstate__(self):
         return self._m, self._v, self._k, self._factor, Surface.__getstate__(self)
@@ -759,66 +972,84 @@ class GQuadratic(Surface, _GQuadratic):
         m, v, k, factor, options = state
         _GQuadratic.__init__(self, m, v, k, factor)
         Surface.__setstate__(self, options)
+        self._hash = make_hash(self._k, self._v, self._m)
 
-    def copy(self):
-        instance = GQuadratic.__new__(GQuadratic, self._m, self._v, self._k, self._factor)
-        instance._m_digits = self._m_digits
-        instance._v_digits = self._v_digits
-        instance._k_digits = self._k_digits
-        Surface.__init__(instance, **self.options)
-        _GQuadratic.__init__(instance, self._m, self._v, self._k, self._factor)
-        return instance
+    def copy(self) -> 'GQuadratic':
+        options = deepcopy(self.options)
+        return GQuadratic(self._m, self._v, self._k, self._factor, **options)
 
-    def __hash__(self):
-        result = hash(self._get_k())
-        for v in self._get_v():
-            result ^= hash(v)
-        for x in self._get_m().ravel():
-            result ^= hash(x)
-        return result
+    def __repr__(self):
+        options = str(self.options) if self.options else ''
+        return f"GQuadratic({self._m}, {self._v}, {self._k}, {self._factor}, {options})"
 
-    def __eq__(self, other):
+    def __hash__(self) -> int:
+        return self._hash
+
+    def __eq__(self, other: Surface) -> bool:
+        if self is other:
+            return True
+
         if not isinstance(other, GQuadratic):
             return False
-        else:
-            for x, y in zip(self._get_v(), other._get_v()):
-                if x != y:
-                    return False
-            for x, y in zip(self._get_m().ravel(), other._get_m().ravel()):
-                if x != y:
-                    return False
-            return self._get_k() == other._get_k()
+        # for x, y in zip(self._get_v(), other._get_v()):
+        #     if x != y:
+        #         return False
+        # for x, y in zip(self._get_m().ravel(), other._get_m().ravel()):
+        #     if x != y:
+        #         return False
+        # return self._get_k() == other._get_k()
+        # TODO dvp: check if `self.factor` is to be accounted to as well.
+        return (
+                are_equal((self._k, self._v, self._m), (other._k, other._v, other._m))
+                and
+                self.compare_transformations(other.transformation)
+        )
 
-    def _get_m(self):
-        return round_array(self._m, self._m_digits)
-
-    def _get_v(self):
-        return round_array(self._v, self._v_digits)
-
-    def _get_k(self):
-        return round_scalar(self._k, self._k_digits)
+    def is_close_to(
+            self,
+            other: Surface,
+            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
+    ) -> bool:
+        if self is other:
+            return True
+        if not isinstance(other, GQuadratic):
+            return False  # TODO dvp: handle cases when other is specialized quadratic surface Sphere, Cone etc.
+        # for x, y in zip(self._get_v(), other._get_v()):
+        #     if x != y:
+        #         return False
+        # for x, y in zip(self._get_m().ravel(), other._get_m().ravel()):
+        #     if x != y:
+        #         return False
+        # return self._get_k() == other._get_k()
+        return (
+                estimator((self._k, self._v, self._m), (other._k, other._v, other._m))
+                and
+                self.has_close_transformations(other.transformation, estimator)
+        )
 
     def transform(self, tr):
-        return GQuadratic(self._m, self._v, self._k, transform=tr,
-                          **self.options)
+        if tr is None:
+            return self
+        tr = self.combine_transformations(tr)
+        options = self.clean_options()
+        return GQuadratic(self._m, self._v, self._k, transform=tr, **options)
 
-    def mcnp_words(self):
+    def mcnp_words(self, pretty: bool = False) -> List[str]:
         words = Surface.mcnp_words(self)
         words.append('GQ')
-        m = self._get_m()
+        m = self._m
         a, b, c = np.diag(m)
         d = m[0, 1] + m[1, 0]
         e = m[1, 2] + m[2, 1]
         f = m[0, 2] + m[2, 0]
-        g, h, j = self._get_v()
-        k = self._get_k()
+        g, h, j = self._v
+        k = self._k
         for v in [a, b, c, d, e, f, g, h, j, k]:
-            words.append(' ')
-            p = significant_digits(v, constants.FLOAT_TOLERANCE, constants.FLOAT_TOLERANCE)
-            words.append(pretty_float(v, p))
-        return print_card(words)
+            add_float(words, v, pretty)
+        return words
 
 
+# noinspection PyProtectedMember,PyUnresolvedReferences,PyTypeChecker
 class Torus(Surface, _Torus):
     """Tori surface class.
 
@@ -828,7 +1059,7 @@ class Torus(Surface, _Torus):
         The center of torus.
     axis : array_like[float]
         The axis of torus.
-    R : float
+    r : float
         Major radius.
     a : float
         Radius parallel to torus axis.
@@ -839,97 +1070,131 @@ class Torus(Surface, _Torus):
             transform = tr - transformation to be applied to the torus being
                              created. Transformation instance.
     """
-    def __init__(self, center, axis, R, a, b, **options):
-        if 'transform' in options.keys():
-            tr = options.pop('transform')
-            center = tr.apply2point(center)
-            axis = tr.apply2vector(axis)
-        else:
-            center = np.array(center)
-            axis = np.array(axis)
-        axis = axis / np.linalg.norm(axis)
+
+    def __init__(self, center, axis, r, a, b, assume_normalized=False, **options):
+        center = np.asarray(center, dtype=float)
+        axis = np.asarray(axis, dtype=float)
+        if not assume_normalized:
+            axis, is_ort = internalize_ort(axis)
+            if not is_ort:
+                axis /= np.linalg.norm(axis)
         maxdir = np.argmax(np.abs(axis))
         if axis[maxdir] < 0:
             axis *= -1
-        self._axis_digits = significant_array(axis, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._center_digits = significant_array(center, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        self._R_digits = significant_digits(R, constants.FLOAT_TOLERANCE)
-        self._a_digits = significant_digits(a, constants.FLOAT_TOLERANCE)
-        self._b_digits = significant_digits(b, constants.FLOAT_TOLERANCE)
-
         Surface.__init__(self, **options)
-        _Torus.__init__(self, center, axis, R, a, b)
+        _Torus.__init__(self, center, axis, r, a, b)
+        self._hash = make_hash(self._center, self._axis, self._R, self._a, self._b)
+
+    def round(self) -> 'Surface':
+        temp = self.apply_transformation()
+        center, axis = map(round_array, [temp._center, temp._axis])
+
+        def r(x):
+            return round_scalar(x, significant_digits(x, FLOAT_TOLERANCE))
+
+        r, a, b = map(r, [temp._R, temp._a, temp._b])
+        options = temp.clean_options()
+        return Torus(center, axis, r, a, b, assume_normalized=True, **options)
+
+    def apply_transformation(self) -> 'Surface':
+        tr = self.transformation
+        if tr is None:
+            return self
+        center = tr.apply2point(self._center)
+        axis = tr.apply2vector(self._axis)
+        # TODO dvp: should we check the transformation and result? The axis is to be along EX, EY, EZ.
+        return Torus(center, axis, self._R, self._a, self._b, assume_normalized=True, **self.clean_options())
 
     def __getstate__(self):
         return self._center, self._axis, self._R, self._a, self._b, Surface.__getstate__(self)
 
     def __setstate__(self, state):
-        center, axis, R, a, b, options = state
-        _Torus.__init__(self, center, axis, R, a, b)
+        center, axis, r, a, b, options = state
+        _Torus.__init__(self, center, axis, r, a, b)
         Surface.__setstate__(self, options)
+        self._hash = make_hash(self._center, self._axis, self._R, self._a, self._b)
 
     def copy(self):
-        instance = Torus.__new__(Torus, self._center, self._axis, self._R, self._a, self._b)
-        instance._axis_digits = self._axis_digits
-        instance._center_digits = self._center_digits
-        instance._R_digits = self._R_digits
-        instance._a_digits = self._a_digits
-        instance._b_digits = self._b_digits
-        Surface.__init__(instance, **self.options)
-        _Torus.__init__(instance, self._center, self._axis, self._R, self._a, self._b)
-        return instance
+        return Torus(
+            self._center,
+            self._axis,
+            self._R,
+            self._a,
+            self._b,
+            assume_normalized=True,
+            **deepcopy(self.options)
+        )
 
     def __hash__(self):
-        result = hash(self._get_R()) ^ hash(self._get_a()) ^ hash(self._get_b())
-        for c in self._get_center():
-            result ^= hash(c)
-        for a in self._get_axis():
-            result ^= hash(a)
-        return result
+        return self._hash
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Torus'):
+        if self is other:
+            return True
         if not isinstance(other, Torus):
             return False
-        else:
-            for x, y in zip(self._get_center(), other._get_center()):
-                if x != y:
-                    return False
-            for x, y in zip(self._get_axis(), other._get_axis()):
-                if x != y:
-                    return False
-            return self._get_R() == other._get_R() and self._get_a() == other._get_a() and self._get_b() == other._get_b()
+        if are_equal(
+                (self._center, self._axis, self._R, self._a, self._b),
+                (other._center, other._axis, other._R, other._a, other._b)
+        ):
+            return self.compare_transformations(other.transformation)
+        return False
 
-    def _get_axis(self):
-        return round_array(self._axis, self._axis_digits)
+    def is_close_to(
+            self,
+            other: 'Torus',
+            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
+    ) -> bool:
+        if self is other:
+            return True
+        if not isinstance(other, Torus):
+            return False
+        if estimator(
+                (self._center, self._axis, self._R, self._a, self._b),
+                (other._center, other._axis, other._R, other._a, other._b),
+        ):
+            return self.has_close_transformations(other.transformation, estimator)
+        return False
 
-    def _get_center(self):
-        return round_array(self._center, self._center_digits)
-
-    def _get_R(self):
-        return round_scalar(self._R, self._R_digits)
-
-    def _get_a(self):
-        return round_scalar(self._a, self._a_digits)
-
-    def _get_b(self):
-        return round_scalar(self._b, self._b_digits)
+    # def _get_axis(self):
+    #     return round_array(self._axis, self._axis_digits)
+    #
+    # def _get_center(self):
+    #     return round_array(self._center, self._center_digits)
+    #
+    # def _get_R(self):
+    #     return round_scalar(self._R, self._R_digits)
+    #
+    # def _get_a(self):
+    #     return round_scalar(self._a, self._a_digits)
+    #
+    # def _get_b(self):
+    #     return round_scalar(self._b, self._b_digits)
 
     def transform(self, tr):
+        if tr is None:
+            return self
+        tr = self.combine_transformations(tr)
+        options = self.clean_options()
         return Torus(self._center, self._axis, self._R, self._a, self._b,
-                     transform=tr, **self.options)
+                     transform=tr, **options)
 
-    def mcnp_words(self):
+    def mcnp_words(self, pretty: bool = False) -> List[str]:
         words = Surface.mcnp_words(self)
-        if np.all(self._get_axis() == np.array([1.0, 0.0, 0.0])):
+        estimator = tolerance_estimator()
+        if estimator(self._axis, EX):
             words.append('TX')
-        elif np.all(self._get_axis() == np.array([0.0, 1.0, 0.0])):
+        elif estimator(self._axis, EY):
             words.append('TY')
-        elif np.all(self._get_axis() == np.array([0.0, 0.0, 1.0])):
+        elif estimator(self._axis, EZ):
             words.append('TZ')
-        x, y, z = self._get_center()
-        values = [x, y, z, self._get_R(), self._get_a(), self._get_b()]
-        digits = [*self._center_digits, self._R_digits, self._a_digits, self._b_digits]
-        for v, p in zip(values, digits):
-            words.append(' ')
-            words.append(pretty_float(v, p))
-        return print_card(words)
+        else:
+            raise NotImplementedError("The axis of a torus should be along EX, EY or EZ")
+        x, y, z = self._center
+        for v in [x, y, z, self._R, self._a, self._b]:
+            add_float(words, v, pretty)
+        return words
+
+    def __repr__(self):
+        return f"Torus({self._center}, {self._axis}, {self._R}, \
+            {self._a}, {self._b}, {self.options if self.options else ''}"

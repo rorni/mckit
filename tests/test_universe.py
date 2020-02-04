@@ -26,6 +26,15 @@ def universe():
         1012: 'universe_test_data/universe1012.i',
         1022: 'universe_test_data/universe1022.i'
     }
+    # universes = {}
+    #
+    # def _universe(case):
+    #     if case not in universes:
+    #         u = read_mcnp(data_filename_resolver(cases[case]))
+    #         universes[case] = u
+    #     else:
+    #         u = universes[case]
+    #     return u
 
     def _universe(case):
         return read_mcnp(data_filename_resolver(cases[case]))

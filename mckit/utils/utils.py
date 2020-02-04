@@ -1,37 +1,44 @@
+from typing import Any, Dict
+from copy import deepcopy
 import os
-import typing as tp
+import functools
+import itertools
+import collections
 from pathlib import Path
-from typing import Any, Optional, Set, Dict
 import numpy as np
-
+from numpy import ndarray
+from ..constants import FLOAT_TOLERANCE
 
 MAX_DIGITS = np.finfo(float).precision
 
+# def digits_in_fraction_for_str(
+#         value: float,
+#         reltol: float = FLOAT_TOLERANCE,
+#         resolution: float = None
+# ) -> int:
+#     if value == 0.0:
+#         return 0
+#     if value < 0.0:
+#         value = -value
+#     if resolution and value < resolution:
+#         return 0
+#     max_remainder = value * reltol
+#     s_value = str(value)
+#     _, s_rem = s_value.split('.')
+#
+#     def _iter():
+#         ord0 = ord('0')
+#         m = 0.1
+#         for c in s_rem:
+#             yield m * (ord(c) - ord0)
+#             m *= 0.1
+#
+#     rem = np.flip(np.fromiter(_iter(), np.float))
+#     n = np.searchsorted(rem, max_remainder)
+#     return rem.size - n
 
-def digits_in_fraction_for_str(value: float, reltol: float = 1e-12, resolution: float = None) -> int:
-    if value == 0.0:
-        return 0
-    if value < 0.0:
-        value = -value
-    if resolution and value < resolution:
-        return 0
-    max_remainder = value * reltol
-    s_value = str(value)
-    _, s_rem = s_value.split('.')
 
-    def _iter():
-        ord0 = ord('0')
-        m = 0.1
-        for c in s_rem:
-            yield m * (ord(c) - ord0)
-            m *= 0.1
-
-    rem = np.flip(np.fromiter(_iter(), np.float))
-    n = np.searchsorted(rem, max_remainder)
-    return rem.size - n
-
-
-def significant_digits(value, reltol=1.e-12, resolution=None):
+def significant_digits(value, reltol=FLOAT_TOLERANCE, resolution=None):
     """The minimum number of significant digits to provide relative tolerance.
 
     Parameters
@@ -84,7 +91,7 @@ def get_decades(value):
     # return decades
 
     if value != 0:
-        decpow = np.log10(abs(value))   # TODO dvp: log10 will be called billion times on C-model
+        decpow = np.log10(abs(value))  # TODO dvp: log10 will be called billion times on C-model
     else:
         decpow = 0
     decades = np.trunc(decpow)
@@ -93,8 +100,12 @@ def get_decades(value):
     return int(decades)
 
 
-def significant_array(array, reltol=1.e-12, resolution=None):
-    """The minimum number of significant digits to provide relative tolerance.
+def significant_array(
+        array: ndarray,
+        reltol: float = FLOAT_TOLERANCE,
+        resolution: float = None,
+) -> ndarray:
+    """The minimum number of significant digits to provide the desired relative and absolute tolerances.
     """
     result = np.empty_like(array, dtype=int)
     for index in zip(*map(np.ravel, np.indices(array.shape))):
@@ -102,7 +113,7 @@ def significant_array(array, reltol=1.e-12, resolution=None):
     return result
 
 
-def round_scalar(value, digits):
+def round_scalar(value, digits=None):
     """Rounds scalar value to represent the value in minimal form.
 
     Parameters
@@ -117,10 +128,12 @@ def round_scalar(value, digits):
     result : float
         Rounded value.
     """
+    if digits is None:
+        digits = significant_digits(value, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
     return round(value, digits)
 
 
-def round_array(array, digarr):
+def round_array(array: ndarray, digarr: ndarray = None):
     """Rounds array to desired precision.
 
     Parameters
@@ -135,36 +148,158 @@ def round_array(array, digarr):
     result : numpy.ndarray
         Rounded array.
     """
+    if digarr is None:
+        digarr = significant_array(array, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
     result = np.empty_like(array)
     for index in zip(*map(np.ravel, np.indices(array.shape))):
         result[index] = round_scalar(array[index], digarr[index])
     return result
 
 
-def deep_copy_dict(
-    a: Dict[Any, Any],
-    drop_item: Optional[Any] = None,
-    drop_set: Optional[Set[Any]] = None
+@functools.singledispatch
+def are_equal(a, b) -> bool:
+    return a is b or a == b
+
+
+@are_equal.register
+def _(a: str, b) -> bool:
+    return a is b or a == b
+
+
+@are_equal.register
+def _(a: ndarray, b) -> bool:
+    return np.array_equal(a, b)
+
+
+@are_equal.register
+def _(a: collections.abc.Iterable, b) -> bool:
+    if not issubclass(type(b), collections.abc.Iterable):
+        return False
+    for ai, bi in itertools.zip_longest(a, b):
+        if not are_equal(ai, bi):
+            return False
+    return True
+
+
+@functools.singledispatch
+def is_in(where, x) -> bool:
+    if where is None:
+        return False
+    return x is where or x == where
+
+
+@is_in.register
+def _(where: str, x) -> bool:
+    return x is where or x == where
+
+
+@is_in.register
+def _(where: tuple, x) -> bool:
+    for i in where:
+        if is_in(i, x):
+            return True
+    return False
+
+
+@is_in.register
+def _(where: collections.abc.Callable, x) -> bool:
+    return where(x)
+
+
+@is_in.register
+def _(where: collections.abc.Container, x) -> bool:
+    return x in where
+
+
+def filter_dict(
+        a: Dict[Any, Any],
+        *drop_items,
 ) -> Dict[Any, Any]:
     res = {}
     for k, v in a.items():
-        if drop_item is None or k != drop_item:
-            if drop_set is None or k not in drop_set:
-                if isinstance(v, dict):
-                    v = deep_copy_dict(v)
+        # if drop_items is None or not check_if_is_in(k, *drop_items):
+        if drop_items and is_in(drop_items, k):
+            pass
+        else:
+            if isinstance(v, dict):
+                res[k] = filter_dict(v, *drop_items)
+            elif issubclass(type(v), collections.abc.Collection):
+                res[k] = deepcopy(v)
+            else:
                 res[k] = v
     return res
+
+
+@functools.singledispatch
+def make_hashable(x):
+    raise TypeError(f"Don't know how to make {type(x).__name__} objects hashable")
+
+
+@make_hashable.register
+def _(x: collections.abc.Hashable):
+    return x
+
+
+@make_hashable.register
+def _(x: str):
+    return x
+
+
+@make_hashable.register
+def _(x: collections.abc.Mapping):
+    return tuple(map(lambda i: (i[0], make_hashable(i[1])), x.items()))
+
+
+@make_hashable.register
+def _(x: collections.abc.Iterable) -> int:
+    return tuple(map(make_hashable, x))
+
+
+def make_hash(*items) -> int:
+    if 1 < len(items):
+        return make_hash(tuple(map(make_hash, items)))
+    return hash(make_hashable(items[0]))
+
+
+
+# def make_hash(*items) -> int:
+#     """
+#     Makes a hash from a dictionary, list, tuple or set to any level, that contains
+#     only other hashable types (including any iterables, and
+#     dictionaries).
+#
+#     Modification from: https://stackoverflow.com/questions/5884066/hashing-a-dictionary/22003440#22003440
+#     """
+#
+#     if 1 < len(items):
+#         return hash(tuple(map(make_hash, items)))
+#     else:
+#         item = items[0]
+#         cls = type(item)
+#         if issubclass(cls, Hashable):
+#             return hash(item)
+#         if issubclass(cls, Iterable):
+#             if issubclass(cls, Dict):
+#                 new_o = copy.deepcopy(item)
+#                 for k, v in new_o.items():
+#                     new_o[k] = make_hash(v)
+#                 return hash(tuple(frozenset(sorted(new_o.items()))))
+#             else:
+#                 return hash(tuple(map(make_hash, item)))
+#         raise NotImplementedError(f"Correct the logic of make_hash() method for the type {cls}")
 
 
 def assert_all_paths_exist(*paths):
     def apply(p: Path):
         assert p.exists(), "Path \"{}\" doesn't exist".format(p)
+
     map(apply, paths)
 
 
 def make_dirs(*dirs):
     def apply(d: Path):
         d.mkdir(parents=True, exist_ok=True)
+
     map(apply, dirs)
 
 
@@ -174,3 +309,10 @@ def get_root_dir(environment_variable_name, default):
 
 def is_sorted(a: np.ndarray) -> bool:
     return np.all(np.diff(a) > 0)
+
+
+def prettify_float(x: float, fmt="{:.13g}") -> str:
+    if x.is_integer():
+        return str(int(x))
+    else:
+        return fmt.format(x)

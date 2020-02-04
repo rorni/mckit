@@ -15,7 +15,7 @@ from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .card import Card
-from mckit.utils import deep_copy_dict
+from mckit.utils import filter_dict
 
 
 __all__ = ['Shape', 'Body', 'simplify', 'GLOBAL_BOX', 'Card', 'TGeometry', 'TGeometry']
@@ -99,6 +99,9 @@ class Shape(_Shape):
     def __str__(self):
         words = print_card(self._get_words('U'))
         return words
+
+    def __repr__(self):
+        return f"Shape({self.opc}, {self.args})"
 
     def _get_words(self, parent_opc=None):
         """Gets list of words that describe the shape.
@@ -223,9 +226,9 @@ class Shape(_Shape):
         Hash is 'xor' for hash values of all arguments together with opc hash.
         """
         if opc == 'C':  # C and S can be present only with Surface instance.
-            self._hash = ~hash(args[0]) # ^ self._opc_hash[opc]
+            self._hash = ~hash(args[0])
         elif opc == 'S':
-            self._hash = hash(args[0]) # ^ self._opc_hash[opc]
+            self._hash = hash(args[0])
         else:
             self._hash = self._opc_hash[opc]
             for a in args:
@@ -324,7 +327,10 @@ class Shape(_Shape):
         opc = self.opc
         args = []
         for a in self.args:
-            args.append(a.transform(tr))
+            a = a.transform(tr)
+            if isinstance(a, Surface):
+                a = a.apply_transformation()
+            args.append(a)
         return Shape(opc, *args)
 
     def complexity(self):
@@ -539,7 +545,7 @@ class Body(Card):
     def __init__(
         self,
         geometry: TGeometry,
-        **options: Dict[str, Any]
+        **options
     ) -> None:
         if isinstance(geometry, list):
             geometry = Shape.from_polish_notation(geometry)
@@ -549,6 +555,10 @@ class Body(Card):
             raise TypeError("Geometry list or Shape is expected.")
         Card.__init__(self, **options)
         self._shape = geometry
+
+    def __repr__(self):
+        options = str(self.options) if self.options else ''
+        return f"Body({self._shape}, {options})"
 
     def __hash__(self):
         return Card.__hash__(self) ^ hash(self._shape)
@@ -569,7 +579,7 @@ class Body(Card):
 
     # TODO dvp: the method is used for printing, we'd better introduce virtual method print(self, out: TextIO)?
     # TODO dvp: in that case we could just return original text if available
-    def mcnp_words(self):
+    def mcnp_words(self, pretty=False):
         words = [str(self.name()), ' ']
         if 'MAT' in self.options.keys():
             words.append(str(self.options['MAT'].composition.name()))
@@ -625,7 +635,7 @@ class Body(Card):
             The result.
         """
         geometry = self._shape.intersection(other)
-        options = deep_copy_dict(self.options, 'original')
+        options = filter_dict(self.options, 'original')
         return Body(geometry, **options)
 
     def union(self, other):
@@ -644,7 +654,7 @@ class Body(Card):
             The result.
         """
         geometry = self._shape.union(other)
-        options = deep_copy_dict(self.options, 'original')
+        options = filter_dict(self.options, 'original')
         return Body(geometry, **options)
 
     def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
@@ -677,7 +687,7 @@ class Body(Card):
         # print('finding optimal solution...')
         variants = self._shape.get_simplest(trim_size)
         # print(len(variants))
-        options = deep_copy_dict(self.options, 'original')
+        options = filter_dict(self.options, 'original')
         return Body(variants[0], **options)
 
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
@@ -745,7 +755,7 @@ class Body(Card):
             The result of this cell transformation.
         """
         geometry = self._shape.transform(tr)
-        options = deep_copy_dict(self.options, 'original')
+        options = filter_dict(self.options, 'original')
         cell = Body(geometry, **options)
         fill = cell.options.get('FILL', None)
         if fill:

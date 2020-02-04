@@ -1,11 +1,9 @@
-from collections import namedtuple
 import logging
 import click_log
 import pytest
 from click.testing import CliRunner
 from mckit.utils.resource import filename_resolver
-from mckit.cli.runner import mckit,  __version__
-from mckit.cli.commands.common import get_default_output_directory
+from mckit.cli.runner import mckit
 
 # skip the pylint warning on fixture names
 # pylint: disable=redefined-outer-name

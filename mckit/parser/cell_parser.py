@@ -12,7 +12,7 @@ from mckit.parser.common import (
     Lexer as LexerBase,
     Index, CellStrictIndex, SurfaceStrictIndex, TransformationStrictIndex, CompositionStrictIndex,
 )
-from mckit.utils import deep_copy_dict
+from mckit.utils import filter_dict
 
 CELL_WORDS = {
     'U', 'MAT', 'LAT', 'TMP', 'RHO', 'VOL',
@@ -119,7 +119,7 @@ class Parser(sly.Parser):
     @_('INTEGER LIKE INTEGER BUT attributes')
     def cell(self, p):
         reference_body = self.cells[p[2]]
-        options = deep_copy_dict(reference_body.options)
+        options = filter_dict(reference_body.options, "original", "comment", "comment_above")
         options.update(p.attributes)
         options['name'] = p[0]
         new_body = Body(reference_body, **options)

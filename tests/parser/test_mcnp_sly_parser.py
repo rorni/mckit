@@ -1,4 +1,4 @@
-from collections import namedtuple
+from typing import List, NamedTuple
 import pytest
 
 
@@ -7,7 +7,11 @@ from mckit.utils import filename_resolver
 
 file_resolver = filename_resolver()
 
-TExpected = namedtuple('TExpected', ['title', 'cells', 'surfaces'])
+
+class TExpected(NamedTuple):
+    title: str
+    cells: List[int]
+    surfaces: List[int]
 
 
 @pytest.mark.parametrize('text, expected', [
