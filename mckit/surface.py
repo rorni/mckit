@@ -2,7 +2,7 @@
 from typing import Text, Optional, Callable, List, Tuple
 from abc import abstractmethod
 from . import constants
-from .utils.tolerance import tolerance_estimator
+from .utils.tolerance import MaybeClose, tolerance_estimator
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import (
@@ -183,7 +183,7 @@ def create_replace_dictionary(surfaces, unique=None, box=GLOBAL_BOX, tol=1.e-10)
     return replace
 
 
-class Surface(Card):
+class Surface(Card, MaybeClose):
     """Base class for all surface classes.
 
     Methods
@@ -201,13 +201,9 @@ class Surface(Card):
     """
 
     def __init__(self, **options):
+        if 'transform' in options and not options['transform']:  # empty transformation option
+            del options['transform']
         Card.__init__(self, **options)
-
-    # def __hash__(self):
-    #     return id(self)
-    #
-    # def __eq__(self, other):
-    #     return id(self) == id(other)
 
     def __getstate__(self):
         return self.options
@@ -364,14 +360,13 @@ class Plane(Surface, _Plane):
         instance = Plane(self._v, self._k, assume_normalized=True, **options)
         return instance
 
-    # __deepcopy__ = copy
+    __deepcopy__ = copy
 
     def apply_transformation(self) -> 'Plane':
-        if 'transform' in self.options.keys():
-            tr = self.options.pop('transform')
-            v, k = tr.apply2plane(self._v, self._k)
-        else:
+        tr = self.transformation
+        if tr is None:
             return self
+        v, k = tr.apply2plane(self._v, self._k)
         options = self.clean_options()
         return Plane(v, k, transform=None, assume_normalized=True, **options)
 
@@ -381,12 +376,6 @@ class Plane(Surface, _Plane):
         tr = self.combine_transformations(tr)
         options = self.clean_options()
         return Plane(self._v, self._k, transform=tr, assume_normalized=True, **options)
-
-    # def _get_k(self):
-    #     return self._k
-    #
-    # def _get_v(self):
-    #     return self._v
 
     def reverse(self):
         """Gets the surface with reversed normal."""
@@ -415,39 +404,32 @@ class Plane(Surface, _Plane):
     ) -> bool:
         if self is other:
             return True
-        assert isinstance(other, Plane)
-        if estimator((self._k, self._v), (other._k, other._v)):
-            return self.has_close_transformations(other.transformation, estimator)
-        return False
+        if not isinstance(other, Plane):
+            return False
+        return estimator(
+            (self._k, self._v, self.transformation),
+            (other._k, other._v, other.transformation)
+        )
 
     def __hash__(self):
         return self._hash
 
     def __eq__(self, other):
-        # if not isinstance(other, Plane):
-        #     return False
-        # else:
-        #     for x, y in zip(self._get_v(), other._get_v()):
-        #         if x != y:
-        #             return False
-        #     return self._get_k() == other._get_k()
         if self is other:
             return True
         if not isinstance(other, Plane):
             return False
-        if are_equal((self._k, self._v), (other._k, other._v)):
-            return self.compare_transformations(other.transformation)
-        return False
+        return are_equal(
+            (self._k, self._v, self.transformation),
+            (other._k, other._v, other.transformation),
+        )
 
     def __getstate__(self):
-        # return self._v, self._k, self._k_digits, self._v_digits, Surface.__getstate__(self)
         return self._v, self._k, Surface.__getstate__(self)
 
     def __setstate__(self, state):
         v, k, options = state
-        _Plane.__init__(self, v, k)
-        Surface.__setstate__(self, options)
-        self._hash = make_hash(self._k, self._v, self.transformation)
+        self.__init__(v, k, assume_normalized=True, **options)
 
     def __repr__(self):
         return f"Plane({self._v}, {self._k}, {self.options if self.options else ''})"
@@ -470,9 +452,6 @@ class Sphere(Surface, _Sphere):
     """
 
     def __init__(self, center, radius, **options):
-        # if 'transform' in options.keys():
-        #     tr = options.pop('transform')
-        #     center = tr.apply2point(center)
         center = np.asarray(center, dtype=np.float)
         radius = float(radius)
         Surface.__init__(self, **options)
@@ -484,14 +463,12 @@ class Sphere(Surface, _Sphere):
 
     def __setstate__(self, state):
         c, r, options = state
-        _Sphere.__init__(self, c, r)
-        Surface.__setstate__(self, options)
-        self._hash = make_hash(self._radius, self._center, self.transformation)
+        self.__init__(c, r, **options)
 
     def copy(self):
         return Sphere(self._center, self._radius, **deepcopy(self.options))
 
-    # __deepcopy__ = copy
+    __deepcopy__ = copy
 
     def __repr__(self):
         return f"Sphere({self._center}, {self._radius}, {self.options if self.options else ''})"
@@ -503,10 +480,11 @@ class Sphere(Surface, _Sphere):
         if self is other:
             return True
         if not isinstance(other, Sphere):
-            return False
-        if are_equal((self._radius, self._center), (other._radius, other._center)):
-            return self.compare_transformations(other.transformation)
-        return False
+            return False  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
+        return are_equal(
+            (self._radius, self._center, self.transformation),
+            (other._radius, other._center, other.transformation)
+        )
 
     def is_close_to(
             self,
@@ -517,15 +495,10 @@ class Sphere(Surface, _Sphere):
             return True
         if not isinstance(other, Sphere):
             return False
-        if estimator((self._radius, self._center), (other._radius, other._center)):
-            return self.has_close_transformations(other.transformation, estimator)
-        return False
-
-    def _get_center(self):
-        return self._center
-
-    def _get_radius(self):
-        return self._radius
+        return estimator(
+            (self._radius, self._center, self.transformation),
+            (other._radius, other._center, other.transformation)
+        )
 
     def round(self) -> 'Surface':
         temp = self.apply_transformation()
@@ -600,10 +573,6 @@ class Cylinder(Surface, _Cylinder):
     """
 
     def __init__(self, pt, axis, radius, assume_normalized=False, **options):
-        # if 'transform' in options.keys():
-        #     tr = options.pop('transform')
-        #     pt = tr.apply2point(pt)
-        #     axis = tr.apply2vector(axis)
         axis = np.asarray(axis, dtype=np.float)
         if not assume_normalized:
             axis, is_ort = internalize_ort(axis)
@@ -623,9 +592,7 @@ class Cylinder(Surface, _Cylinder):
 
     def __setstate__(self, state):
         pt, axis, radius, options = state
-        _Cylinder.__init__(self, pt, axis, radius)
-        Surface.__setstate__(self, options)
-        self._hash = make_hash(self._radius, self._pt, self._axis, self.transformation)
+        self.__init__(pt, axis, radius, assume_normalized=True, **options)
 
     def copy(self):
         return Cylinder(self._pt, self._axis, self._radius, assume_normalized=True, **deepcopy(self.options))
@@ -641,11 +608,10 @@ class Cylinder(Surface, _Cylinder):
             return True
         if not isinstance(other, Cylinder):
             return False
-        if self._radius == other._radius:
-            if np.array_equal(self._pt, other._pt):
-                if np.array_equal(self._axis, other._axis):
-                    return self.compare_transformations(other.transformation)
-        return False
+        return are_equal(
+            (self._radius, self._pt, self._axis, self.transformation),
+            (other._radius, other._pt, other._axis, other.transformation)
+        )
 
     def is_close_to(
             self,
@@ -656,46 +622,28 @@ class Cylinder(Surface, _Cylinder):
             return True
         if not isinstance(other, Cone):
             return False
-        if estimator((self._radius, self._pt, self._axis), (other._radius, other._pt, other._axis)):
-            return self.has_close_transformations(other.transformation, estimator)
-        return False
+        return estimator(
+            (self._radius, self._pt, self._axis, self.transformation),
+            (other._radius, other._pt, other._axis, other.transformation)
+        )
 
     def round(self):
         temp = self.apply_transformation()
-        pt = temp._pt
-        pt_digits = significant_array(
-            pt,
-            constants.FLOAT_TOLERANCE,
-            resolution=constants.FLOAT_TOLERANCE
-        )
-        pt = round_array(pt, pt_digits)
-        axis = temp._axis
-        axis_digits = significant_array(
-            axis,
-            constants.FLOAT_TOLERANCE,
-            resolution=constants.FLOAT_TOLERANCE,
-        )
-        axis = round_array(axis, axis_digits)
-        radius = temp._radius
-        radius_digits = significant_digits(
-            radius,
-            constants.FLOAT_TOLERANCE,
-            resolution=constants.FLOAT_TOLERANCE,
-        )
-        radius = round_scalar(radius, radius_digits)
+        pt = round_array(temp._pt)
+        axis = round_array(temp._axis)
+        radius = round_scalar(temp._radius)
         options = self.clean_options()
         return Cylinder(pt, axis, radius, transform=None, **options)
 
     def apply_transformation(self) -> Surface:
-        if 'transform' in self.options.keys():
-            tr = self.options.pop('transform')
-            pt = tr.apply2point(self._pt)
-            axis = tr.apply2vector(self._axis)
-            options = self.clean_options()
-            # TODO dvp: actually may create Generic Quadratic. Should we use __new__() for this?
-            return Cylinder(pt, axis, self._radius, assume_normalized=True, **options)
-        else:
+        tr = self.transformation
+        if tr is None:
             return self
+        pt = tr.apply2point(self._pt)
+        axis = tr.apply2vector(self._axis)
+        options = self.clean_options()
+        # TODO dvp: actually may create Generic Quadratic. Should we use __new__() for this?
+        return Cylinder(pt, axis, self._radius, assume_normalized=True, **options)
 
     def transform(self, tr: Transformation) -> 'Cylinder':
         if tr is None:
@@ -786,15 +734,14 @@ class Cone(Surface, _Cone):
         self._hash = make_hash(self._t2, self._sheet, self._apex, self._axis)
 
     def apply_transformation(self) -> Surface:
-        if 'transform' in self.options.keys():
-            tr = self.options.pop('transform')
-            apex = tr.apply2point(self._apex)
-            axis = tr.apply2vector(self._axis)
-            sheet = self._sheet
-            options = self.clean_options()
-            return Cone(apex, axis, self._t2, sheet, assume_normalized=True, **options)
-        else:
+        tr = self.transformation
+        if tr is None:
             return self
+        apex = tr.apply2point(self._apex)
+        axis = tr.apply2vector(self._axis)
+        sheet = self._sheet
+        options = self.clean_options()
+        return Cone(apex, axis, self._t2, sheet, assume_normalized=True, **options)
 
     def round(self) -> Surface:
         res = self.apply_transformation()
@@ -817,9 +764,7 @@ class Cone(Surface, _Cone):
 
     def __setstate__(self, state):
         apex, axis, t2, sheet, options = state
-        _Cone.__init__(self, apex, axis, t2, sheet)
-        Surface.__setstate__(self, options)
-        self._hash = make_hash(self._t2, self._sheet, self._apex, self._axis)
+        self.__init__(apex, axis, t2, sheet, **options)
 
     def __hash__(self):
         return self._hash
@@ -834,8 +779,8 @@ class Cone(Surface, _Cone):
             return False
 
         return are_equal(
-            (self._t2, self._sheet, self._apex, self._axis),
-            (other._t2, other._sheet, other._apex, other._axis),
+            (self._t2, self._sheet, self._apex, self._axis, self.transformation),
+            (other._t2, other._sheet, other._apex, other._axis, self.transformation),
         )
 
     def is_close_to(
@@ -847,11 +792,12 @@ class Cone(Surface, _Cone):
             return True
         if not isinstance(other, Cone):
             return False
-        if estimator((self._apex, self._axis, self._t2), (other._apex, other._axis, other._t2)):
-            return self.has_close_transformations(other.transformation, estimator)
-        return False
+        return estimator(
+            (self._apex, self._axis, self._t2, self.transformation),
+            (other._apex, other._axis, other._t2, other.transformation)
+        )
 
-    def transform(self, tr: Transformation) -> 'Cone':
+    def transform(self, tr: Transformation) -> 'Surface':
         if tr is None:
             return self
         tr = self.combine_transformations(tr)
@@ -932,31 +878,22 @@ class GQuadratic(Surface, _GQuadratic):
     """
 
     def __init__(self, m, v, k, factor=None, **options):
-        # if 'transform' in options.keys():
-        #     tr = options.pop('transform')
-        #     m, v, k = tr.apply2gq(m, v, k)
-        # else:
         m = np.asarray(m, dtype=np.float)
         v = np.asarray(v, dtype=np.float)
-        # k = k
         if factor is None:
             eigenvalues = np.linalg.eigvalsh(m)
             factor = 1.0 / np.max(np.abs(eigenvalues))
-        # self._m_digits = significant_array(m, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        # self._v_digits = significant_array(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
-        # self._k_digits = significant_digits(k, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k, factor)
         self._hash = make_hash(self._k, self._v, self._m)
 
     def apply_transformation(self) -> Surface:
-        if 'transform' in self.options:
-            tr = self.options.pop('transform')
-            m, v, k = tr.apply2gq(self._m, self._v, self._k)
-            options = self.clean_options()
-            return GQuadratic(m, v, k, **options)
-        else:
+        tr = self.transformation
+        if tr is None:
             return self
+        m, v, k = tr.apply2gq(self._m, self._v, self._k)
+        options = self.clean_options()
+        return GQuadratic(m, v, k, **options)
 
     def round(self) -> Surface:
         temp: Surface = self.apply_transformation()
@@ -970,9 +907,7 @@ class GQuadratic(Surface, _GQuadratic):
 
     def __setstate__(self, state):
         m, v, k, factor, options = state
-        _GQuadratic.__init__(self, m, v, k, factor)
-        Surface.__setstate__(self, options)
-        self._hash = make_hash(self._k, self._v, self._m)
+        self.__init__(m, v, k, factor, **options)
 
     def copy(self) -> 'GQuadratic':
         options = deepcopy(self.options)
@@ -991,18 +926,10 @@ class GQuadratic(Surface, _GQuadratic):
 
         if not isinstance(other, GQuadratic):
             return False
-        # for x, y in zip(self._get_v(), other._get_v()):
-        #     if x != y:
-        #         return False
-        # for x, y in zip(self._get_m().ravel(), other._get_m().ravel()):
-        #     if x != y:
-        #         return False
-        # return self._get_k() == other._get_k()
         # TODO dvp: check if `self.factor` is to be accounted to as well.
-        return (
-                are_equal((self._k, self._v, self._m), (other._k, other._v, other._m))
-                and
-                self.compare_transformations(other.transformation)
+        return are_equal(
+            (self._k, self._v, self._m, self.transformation),
+            (other._k, other._v, other._m, other.transformation),
         )
 
     def is_close_to(
@@ -1014,17 +941,9 @@ class GQuadratic(Surface, _GQuadratic):
             return True
         if not isinstance(other, GQuadratic):
             return False  # TODO dvp: handle cases when other is specialized quadratic surface Sphere, Cone etc.
-        # for x, y in zip(self._get_v(), other._get_v()):
-        #     if x != y:
-        #         return False
-        # for x, y in zip(self._get_m().ravel(), other._get_m().ravel()):
-        #     if x != y:
-        #         return False
-        # return self._get_k() == other._get_k()
-        return (
-                estimator((self._k, self._v, self._m), (other._k, other._v, other._m))
-                and
-                self.has_close_transformations(other.transformation, estimator)
+        return estimator(
+            (self._k, self._v, self._m, self.transformation),
+            (other._k, other._v, other._m, other.transformation)
         )
 
     def transform(self, tr):
@@ -1110,9 +1029,7 @@ class Torus(Surface, _Torus):
 
     def __setstate__(self, state):
         center, axis, r, a, b, options = state
-        _Torus.__init__(self, center, axis, r, a, b)
-        Surface.__setstate__(self, options)
-        self._hash = make_hash(self._center, self._axis, self._R, self._a, self._b)
+        self.__init__(center, axis, r, a, b, **options)
 
     def copy(self):
         return Torus(
@@ -1133,12 +1050,10 @@ class Torus(Surface, _Torus):
             return True
         if not isinstance(other, Torus):
             return False
-        if are_equal(
-                (self._center, self._axis, self._R, self._a, self._b),
-                (other._center, other._axis, other._R, other._a, other._b)
-        ):
-            return self.compare_transformations(other.transformation)
-        return False
+        return are_equal(
+                (self._center, self._axis, self._R, self._a, self._b, self.transformation),
+                (other._center, other._axis, other._R, other._a, other._b, other.transformation)
+        )
 
     def is_close_to(
             self,
@@ -1149,27 +1064,10 @@ class Torus(Surface, _Torus):
             return True
         if not isinstance(other, Torus):
             return False
-        if estimator(
-                (self._center, self._axis, self._R, self._a, self._b),
-                (other._center, other._axis, other._R, other._a, other._b),
-        ):
-            return self.has_close_transformations(other.transformation, estimator)
-        return False
-
-    # def _get_axis(self):
-    #     return round_array(self._axis, self._axis_digits)
-    #
-    # def _get_center(self):
-    #     return round_array(self._center, self._center_digits)
-    #
-    # def _get_R(self):
-    #     return round_scalar(self._R, self._R_digits)
-    #
-    # def _get_a(self):
-    #     return round_scalar(self._a, self._a_digits)
-    #
-    # def _get_b(self):
-    #     return round_scalar(self._b, self._b_digits)
+        return estimator(
+                (self._center, self._axis, self._R, self._a, self._b, self.transformation),
+                (other._center, other._axis, other._R, other._a, other._b, other.transformation),
+        )
 
     def transform(self, tr):
         if tr is None:

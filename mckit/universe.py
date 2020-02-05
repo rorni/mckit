@@ -484,9 +484,15 @@ class Universe:
             comps.difference_update(self._common_materials)
         return comps
 
-    def get_transformations(self):
-        """Gets all transformations of the universe."""
-        pass   # TODO dvp: add transformations
+    def get_transformations(self, recursive: bool = True):
+        """Gets all the transformations of the universe.
+        """
+        transformations = set()
+        for c in self:  # type: Body
+            transformations.update(c.shape.get_transformations())
+            if recursive and 'FILL' in c.options:
+                transformations.update(c.options['FILL']['universe'].get_transformations(recursive))
+        return transformations
 
     def get_universes(self):
         """Gets all inner universes.
@@ -614,6 +620,7 @@ class Universe:
             cells.extend(sorted(u, key=Card.name))
             surfaces.extend(sorted(u.get_surfaces(), key=Card.name))
             materials.extend(sorted(u.get_compositions(True), key=Card.name))
+            # ... TODO transformations
         cards = [str(self.verbose_name())]
         cards.extend(map(Card.mcnp_repr, cells))
         cards.append('')

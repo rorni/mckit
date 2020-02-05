@@ -8,7 +8,7 @@ from .geometry import ORIGIN
 from .card import Card
 from .utils import make_hash
 from .constants import FLOAT_TOLERANCE
-from .utils.tolerance import tolerance_estimator
+from .utils.tolerance import EstimatorType, MaybeClose, tolerance_estimator
 from .printer import add_float
 
 __all__ = ['Transformation', 'IDENTITY_ROTATION']
@@ -16,9 +16,10 @@ __all__ = ['Transformation', 'IDENTITY_ROTATION']
 IDENTITY_ROTATION = np.eye(3)
 
 ANGLE_TOLERANCE = 0.001
+COS_TH = np.sin(ANGLE_TOLERANCE)
 
 
-class Transformation(Card):
+class Transformation(Card,  MaybeClose):
     """Geometry transformation object.
 
     Parameters
@@ -96,39 +97,32 @@ class Transformation(Card):
 
             # cos(pi/2 - ANGLE_TOLERANCE) = sin(ANGLE_TOLERANCE) - maximum
             # value of cosine of angle between two basis vectors.
-            cos_th = np.sin(ANGLE_TOLERANCE)
-            if abs(r[0, 1]) > cos_th or abs(r[0, 2]) > cos_th or \
-                    abs(r[1, 2]) > cos_th:
+            if abs(r[0, 1]) > COS_TH or abs(r[0, 2]) > COS_TH or \
+                    abs(r[1, 2]) > COS_TH:
                 raise ValueError(f'Transaction #{self.name()}: non-orthogonality is greater than 0.001 rad.')
             # To preserve directions of corrected basis vectors.
             for i in range(3):
                 u[:, i] = u[:, i] * np.sign(r[i, i])
         self._u = u
         self._t = -np.dot(u, translation) if inverted else translation.copy()
+        self._hash = make_hash(self._t, self._u)
 
-    @staticmethod
-    def _get_precision(u, t, box, tol):
-        u1 = u.transpose()
-        u = 180.0 / np.pi * np.arccos(u)
-        t1 = t
-        prec = np.finfo(float).precision
-        while True:
-            u2 = np.cos(np.pi * np.round(u, prec) / 180.0).transpose()
-            t2 = np.round(t, prec)
-            if np.linalg.norm(t2 - t1) >= tol:
-                break
-            diffs = [np.dot(u1 - u2, c) + np.dot(u2, t2) - np.dot(u1, t1)
-                     for c in box.corners]
-            if max(diffs) >= tol:
-                break
-        return prec + 1
-
-    # def _calculate_hash(self, u, t):
-    #     self._hash = 0
-    #     for v in t:
-    #         self._hash ^= hash(v)
-    #     for v in u.ravel():
-    #         self._hash ^= hash(v)
+    # @staticmethod
+    # def _get_precision(u, t, box, tol):
+    #     u1 = u.transpose()
+    #     u = 180.0 / np.pi * np.arccos(u)
+    #     t1 = t
+    #     prec = np.finfo(float).precision
+    #     while True:
+    #         u2 = np.cos(np.pi * np.round(u, prec) / 180.0).transpose()
+    #         t2 = np.round(t, prec)
+    #         if np.linalg.norm(t2 - t1) >= tol:
+    #             break
+    #         diffs = [np.dot(u1 - u2, c) + np.dot(u2, t2) - np.dot(u1, t1)
+    #                  for c in box.corners]
+    #         if max(diffs) >= tol:
+    #             break
+    #     return prec + 1
 
     def mcnp_words(self, pretty=False):
         name = self.name()
@@ -151,7 +145,7 @@ class Transformation(Card):
         return words
 
     def __hash__(self):
-        return make_hash(self._t, self._u)
+        return self._hash
 
     def __eq__(self, other):
         if self is other:
@@ -296,12 +290,20 @@ class Transformation(Card):
         t1 = -np.dot(u1, self._t)
         return Transformation(translation=t1, rotation=u1)
 
-    def is_close(
+    def is_close_to(
             self,
-            other: 'Transformation',
-            estimator: Callable[[Any, Any], bool] = tolerance_estimator()
+            other: Any,
+            estimator: EstimatorType = tolerance_estimator()
     ) -> bool:
+        if self is other:
+            return True
+        if not isinstance(other, Transformation):
+            return False
         return estimator(
             (self._t, self._u),
             (other._t, other._u),
         )
+
+    def __repr__(self):
+        return f"Transformation(translation={self._t}, rotation={self._u})"
+

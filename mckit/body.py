@@ -330,6 +330,8 @@ class Shape(_Shape):
             a = a.transform(tr)
             if isinstance(a, Surface):
                 a = a.apply_transformation()
+                # TODO dvp: check if call of apply_transformation() should be moved to caller site
+                #           it would be better to change only transformations instead of the surfaces
             args.append(a)
         return Shape(opc, *args)
 
@@ -372,6 +374,29 @@ class Shape(_Shape):
             return result
         else:
             return set()
+
+    def get_transformations(self):
+        """Gets all transformations that are included to the shape specification.
+
+        Returns
+        -------
+        surfaces : set[Surface]
+            A set of surfaces.
+        """
+        # TODO dvp: what to do with TRCL?
+        result = set()
+        if 'TRCL' in self.options:
+            result.add(self.options['TRCL'])
+        args = self.args
+        if len(args) == 1:
+            surface: Surface = args[0]
+            result.add(surface.transformation)
+        elif len(args) > 1:
+            for a in args:
+                result = result.union(a.get_transformations())
+            return result
+        else:
+            return result
 
     def is_empty(self):
         """Checks if the shape represents an empty set."""
