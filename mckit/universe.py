@@ -488,10 +488,11 @@ class Universe:
         """Gets all the transformations of the universe.
         """
         transformations = set()
-        for c in self:  # type: Body
-            transformations.update(c.shape.get_transformations())
-            if recursive and 'FILL' in c.options:
-                transformations.update(c.options['FILL']['universe'].get_transformations(recursive))
+        # TODO dvp: implement this with Vistor pattern
+        # for c in self:  # type: Body
+        #     transformations.update(c.shape.get_transformations())
+        #     if recursive and 'FILL' in c.options:
+        #         transformations.update(c.options['FILL']['universe'].get_transformations(recursive))
         return transformations
 
     def get_universes(self):

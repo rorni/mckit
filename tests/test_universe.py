@@ -483,6 +483,7 @@ def test_set_common_materials(universe, case, common_mat):
                     assert comp is cm[comp]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('case, condition, answer_case, box', [
     (2, {}, 1002, Box([0, 0, 0], 20, 20, 20)),
     (2, {'cell': 1}, 1012, Box([0, 0, 0], 20, 20, 20)),

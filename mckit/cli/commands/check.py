@@ -5,8 +5,9 @@
 from typing import Any, Callable, Iterable, Optional
 import logging
 from pathlib import Path
-from mckit import Universe, read_mcnp
+from mckit import Universe
 from mckit.card import Card
+from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 
 
 def check_duplicates(
@@ -36,7 +37,8 @@ def check(source):
     logger = logging.getLogger(__name__)
     logger.debug("Check model %s", source)
     source = Path(source)
-    model: Universe = read_mcnp(source)
+    parse_result: ParseResult = from_file(source)
+    model= parse_result.universe
     logger.debug("Read the model okay")
     universes = model.get_universes()
     check_duplicates(universes, "universe", Universe.name)

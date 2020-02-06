@@ -383,20 +383,22 @@ class Shape(_Shape):
         surfaces : set[Surface]
             A set of surfaces.
         """
-        # TODO dvp: what to do with TRCL?
-        result = set()
-        if 'TRCL' in self.options:
-            result.add(self.options['TRCL'])
-        args = self.args
-        if len(args) == 1:
-            surface: Surface = args[0]
-            result.add(surface.transformation)
-        elif len(args) > 1:
-            for a in args:
-                result = result.union(a.get_transformations())
-            return result
-        else:
-            return result
+        # TODO dvp: implement using Visitor pattern
+        #           and move the following to Body
+        # # TODO dvp: what to do with TRCL?
+        # result = set()
+        # if 'TRCL' in self.options:
+        #     result.add(self.options['TRCL'])
+        # args = self.args
+        # if len(args) == 1:
+        #     surface: Surface = args[0]
+        #     result.add(surface.transformation)
+        # elif len(args) > 1:
+        #     for a in args:
+        #         result = result.union(a.get_transformations())
+        #     return result
+        # else:
+        #     return result
 
     def is_empty(self):
         """Checks if the shape represents an empty set."""
