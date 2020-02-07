@@ -6,7 +6,7 @@ import tomlkit as tk
 from click.testing import CliRunner
 import mckit as mk
 from mckit.utils.resource import filename_resolver
-from mckit.cli.runner import mckit,  __version__
+from mckit.cli.runner import mckit, __version__
 from mckit.cli.commands.decompose import get_default_output_directory
 
 # skip the pylint warning on fixture names
@@ -29,9 +29,9 @@ def runner():
 data_filename_resolver = filename_resolver('tests')
 
 
-@pytest.mark.parametrize( "path, expected_cells", [
+@pytest.mark.parametrize("path, expected_cells", [
     ("cli/data/simple_cubes.mcnp", 3),
-    ("cli/data/simple_cubes.universes/envelopes.i",3),
+    ("cli/data/simple_cubes.universes/envelopes.i", 3),
     ("cli/data/simple_cubes.universes/u1.i", 2),
     ("cli/data/simple_cubes.universes/u2.i", 2),
 ])
@@ -152,7 +152,6 @@ def test_when_output_file_exists_and_override_is_specified(runner):
             "Should success when output file exists and --override is specified"
 
 
-
 def test_fill_descriptor(runner):
     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
     with runner.isolated_filesystem() as prefix:
@@ -173,7 +172,6 @@ def test_fill_descriptor(runner):
             assert 'universe' in fill_descriptor['2']
             assert 1 == fill_descriptor['2']['universe']
             assert 'u1.i' == fill_descriptor['2']['file']
-
 
 
 def test_fill_descriptor_when_fill_descriptor_file_is_specified(runner):

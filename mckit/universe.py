@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Dict, Any, List
+from typing import Iterable, Dict, Any, List, Set, Union
+from contextlib import contextmanager
 from collections import defaultdict
 from attr import attrs, attrib
 import numpy as np
@@ -9,13 +10,16 @@ from .body import Body, Shape
 from .card import Card
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
 from mckit.box import GLOBAL_BOX, Box
+from .surface import Surface
 from .transformation import Transformation
 from .material import Material
 from .surface import Plane
+from .utils import accept, on_unknown_acceptor
 
 __all__ = [
     'Universe', 'produce_universes', 'NameClashError', 'cell_selector',
-    'surface_selector'
+    'surface_selector',
+    'collect_transformations',
 ]
 
 
@@ -484,17 +488,6 @@ class Universe:
             comps.difference_update(self._common_materials)
         return comps
 
-    def get_transformations(self, recursive: bool = True):
-        """Gets all the transformations of the universe.
-        """
-        transformations = set()
-        # TODO dvp: implement this with Vistor pattern
-        # for c in self:  # type: Body
-        #     transformations.update(c.shape.get_transformations())
-        #     if recursive and 'FILL' in c.options:
-        #         transformations.update(c.options['FILL']['universe'].get_transformations(recursive))
-        return transformations
-
     def get_universes(self):
         """Gets all inner universes.
 
@@ -543,6 +536,7 @@ class Universe:
         ustat = Universe._produce_stat(univs)
         if ustat:
             stat['universe'] = ustat
+        # TODO dvp: handle transformations here
         return stat
 
     @staticmethod
@@ -613,6 +607,9 @@ class Universe:
         result = self.name_clashes()
         if result:
             raise NameClashError('Impossible to save model.')
+        transformations = collect_transformations(self)
+        if transformations:
+            transformations = sorted(transformations, key=Card.name)
         universes = self.get_universes()
         cells = []
         surfaces = []
@@ -621,13 +618,15 @@ class Universe:
             cells.extend(sorted(u, key=Card.name))
             surfaces.extend(sorted(u.get_surfaces(), key=Card.name))
             materials.extend(sorted(u.get_compositions(True), key=Card.name))
-            # ... TODO transformations
         cards = [str(self.verbose_name())]
         cards.extend(map(Card.mcnp_repr, cells))
         cards.append('')
         cards.extend(map(Card.mcnp_repr, surfaces))
         cards.append('')
-        cards.extend(map(Card.mcnp_repr, materials))
+        if transformations:
+            cards.extend(map(Card.mcnp_repr, transformations))
+        if materials:
+            cards.extend(map(Card.mcnp_repr, materials))
         cards.append('')
         with open(filename, mode='w', encoding=encoding) as f:
             f.write('\n'.join(cards))
@@ -788,3 +787,69 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
     return top_universe
 
 
+def collect_transformations(universe: Universe, recursive=True) -> Set[Transformation]:
+    def add_surface_transformation(aggregator: Set[Transformation], surface: Surface) -> None:
+        transformation = surface.transformation
+        if transformation and transformation.name():
+            aggregator.add(transformation)
+
+    def at_surface(aggregator: Set[Transformation], s: Union[Surface, Shape, Body]):
+        if isinstance(s, Surface):
+            add_surface_transformation(aggregator, s)
+        elif isinstance(s, Shape):
+            aggregator.update(accept(s, visit_shape))
+        else:
+            assert isinstance(s, Body)
+            aggregator.update(accept(s, visit_body))
+        return aggregator
+
+    @contextmanager
+    def visit_shape(s: Union[Surface, Body, Shape]):
+        if isinstance(s, (Surface, Body, Shape)):
+            yield at_surface, set()
+        else:
+            on_unknown_acceptor(s)
+
+    def at_shape(aggregator: Set[Transformation], s: Union[Surface, Body, Shape]):
+        if isinstance(s, Surface):
+            add_surface_transformation(aggregator, s)
+            return aggregator
+        aggregator.update(accept(s, visit_shape))
+        return aggregator
+
+    @contextmanager
+    def visit_body(b: Body):
+        if isinstance(b, Body):
+            yield at_shape, set()
+        else:
+            on_unknown_acceptor(b)
+
+    def at_body(aggregator: Set[Transformation], b: Body) -> Set[Transformation]:
+        body_transformation = b.transformation
+        if body_transformation and body_transformation.name():
+            aggregator.add(body_transformation)
+        if recursive:
+            fill = b.options.get('FILL', None)
+            if fill:
+                fill_universe = fill['universe']
+                fill_transformation = fill.get('transform', None)
+                if fill_transformation and fill_transformation.name():
+                    aggregator.add(fill_transformation)
+                aggregator.update(collect_transformations(fill_universe))
+        aggregator.update(accept(b, visit_body))
+        return aggregator
+
+    @contextmanager
+    def visit_universe(u: Universe) -> Set[Transformation]:
+        if isinstance(u, Universe):
+            yield at_body, set()
+            # TODO dvp:  set() is not a valid choice as aggregator considering
+            #        cases when names differ but transformations are equal by values
+        else:
+            on_unknown_acceptor(u)
+
+    return accept(universe, visit_universe)
+
+# TODO dvp: it's possible to generalize visiting introducing class Visitor
+#           See: all visit_... functions will be probably not changed on deriving
+#           Use funtools partial to hide self parameter when passing the method as a function to accept()
