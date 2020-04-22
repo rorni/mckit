@@ -902,7 +902,7 @@ class Cone(Surface, _Cone):
                 op = 'C'
             else:
                 op = 'S'
-            return mckit.body.Shape('U', cone, mckit.body.Shape(op, plane))
+            return body.Shape('U', cone, body.Shape(op, plane))
         return cone
 
     def mcnp_words(self):
