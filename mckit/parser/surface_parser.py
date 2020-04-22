@@ -13,6 +13,7 @@ SURFACE_TYPES = {
     'TX', 'TY', 'TZ',
     'SQ', 'GQ',
     'X', 'Y', 'Z',
+    'RPP', 'RCC', 'BOX'
 }
 
 
