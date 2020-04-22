@@ -4,7 +4,7 @@ import pickle
 
 from mckit.transformation import Transformation
 from mckit.surface import Plane, GQuadratic, Torus, Sphere, Cylinder, Cone, \
-    create_surface
+    create_surface, BOX, RCC
 from mckit.box import Box
 
 
@@ -1151,3 +1151,134 @@ class TestGQuadratic:
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
         assert desc == answer
+
+
+class TestBOX:
+    @pytest.mark.parametrize('center, dirx, diry, dirz', [
+        ([0, 0, 1], [2, 0, 0], [0, 3, 0], [0, 0, 4]),
+        ([1, 0, 0], [-2, 0, 0], [0, 3, 0], [0, 0, -4]),
+        ([0, 1, 0], [10, 0, 0], [0, -5, 0], [0, 0, -6]),
+    ])
+    def test_init(self, transform, center, dirx, diry, dirz):
+        surf = BOX(center, dirx, diry, dirz, transform=transform)
+        c = transform.apply2point(center)
+        dx = transform.apply2vector(dirx)
+        dy = transform.apply2vector(diry)
+        dz = transform.apply2vector(dirz)
+        ac, adx, ady, adz = surf.get_params()
+        np.testing.assert_array_almost_equal(c, ac)
+        np.testing.assert_array_almost_equal(dx, adx)
+        np.testing.assert_array_almost_equal(dy, ady)
+        np.testing.assert_array_almost_equal(dz, adz)
+
+    @pytest.mark.parametrize('point, expected', [
+        ([1, 0.1, 0.1], [-1]), ([-1, 0.1, 0.1], [+1]), ([0.1, 0.5, 0.1], [-1]),
+        ([0.1, -0.5, 0.2], [+1]), ([0.1, 0.2, 0.2], [-1]), ([-0.1, 0.2, 0.2], [+1]),
+        ([1.e-6, 100, -300], [+1]), ([-1.e-6, 200, -500], [+1]),
+        ([2.1, 0.1, 0.1], [+1]), ([1.9, 0.2, 0.2], [-1]), ([0.1, 1.1, 0.2], [+1]), 
+        ([0.2, 0.1, 0.6], [+1]), ([0.1, 0.1, 0.4], [-1])
+    ])
+    def test_point_test(self, point, expected):
+        surf = BOX([0, 0, 0], [2, 0, 0], [0, 1, 0], [0, 0, 0.5])
+        result = surf.test_points(point)
+        np.testing.assert_array_equal(result, expected)
+
+    @pytest.mark.parametrize('center, dirx, diry, dirz, ans', [
+        ([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2], 0),
+        ([-2, -2, -2], [4, 0, 0], [0, 4, 0], [0, 0, 4], -1),
+        ([-3, -3, -3], [1, 0, 0], [0, 1, 0], [0, 0, 1], +1)
+    ])
+    def test_box_test(self, box, center, dirx, diry, dirz, ans):
+        surf = BOX(center, dirx, diry, dirz)
+        assert surf.test_box(box) == ans
+
+    @pytest.mark.parametrize('center, dirx, diry, dirz', [
+        ([0, 0, 1], [2, 0, 0], [0, 3, 0], [0, 0, 4]),
+        ([1, 0, 0], [-2, 0, 0], [0, 3, 0], [0, 0, -4]),
+        ([0, 1, 0], [10, 0, 0], [0, -5, 0], [0, 0, -6]),
+    ])
+    def test_transform(self, transform, center, dirx, diry, dirz):
+        surf = BOX(center, dirx, diry, dirz)
+        c = transform.apply2point(center)
+        dx = transform.apply2vector(dirx)
+        dy = transform.apply2vector(diry)
+        dz = transform.apply2vector(dirz)
+
+        surf_tr = surf.transform(transform)
+        ac, adx, ady, adz = surf_tr.get_params()
+        np.testing.assert_array_almost_equal(c, ac)
+        np.testing.assert_array_almost_equal(dx, adx)
+        np.testing.assert_array_almost_equal(dy, ady)
+        np.testing.assert_array_almost_equal(dz, adz)
+
+    @pytest.mark.parametrize('center, dirx, diry, dirz, options', [
+        ([0, 0, 1], [2, 0, 0], [0, 3, 0], [0, 0, 4], {}),
+        ([1, 0, 0], [-2, 0, 0], [0, 3, 0], [0, 0, -4], {'name': 3}),
+        ([0, 1, 0], [10, 0, 0], [0, -5, 0], [0, 0, -6], {'name': 4, 'comments': ['abc', 'def']}),
+    ])
+    def test_pickle(self, center, dirx, diry, dirz, options):
+        surf = BOX(center, dirx, diry, dirz, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        ac, adx, ady, adz = surf_un.get_params()
+        np.testing.assert_array_almost_equal(center, ac)
+        np.testing.assert_array_almost_equal(dirx, adx)
+        np.testing.assert_array_almost_equal(diry, ady)
+        np.testing.assert_array_almost_equal(dirz, adz)
+        assert surf.options == surf_un.options
+
+    surfs = [
+        create_surface('RPP', -1, 1, -2, 2, -3, 3, name=1),                                 # 0
+        create_surface('BOX', -1, -2, -3, 2, 0, 0, 0, 4, 0, 0, 0, 6, name=1),               # 1
+        create_surface('BOX', 1, 2, 3, -2, 0, 0, 0, -4, 0, 0, 0, -6, name=2),               # 2
+        create_surface('RPP', -2, 1, -2, 2, -3, 3, name=1),                                 # 3
+        create_surface('BOX', -2, -2, -3, 3, 0, 0, 0, 4, 0, 0, 0, 6, name=1),               # 4
+        create_surface('BOX', 1, 2, 3, -3, 0, 0, 0, -4, 0, 0, 0, -6, name=2),               # 5
+    ]
+
+    eq_matrix = [
+        [1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 1, 1, 1],
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_eq(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        print(s1.get_params())
+        print(s2.get_params())
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 BOX -1 -2 -3 2 0 0 0 4 0 0 0 6 ', 
+        '1 BOX -1 -2 -3 2 0 0 0 4 0 0 0 6 ',
+        '2 BOX 1 2 3 -2 0 0 0 -4 0 0 0 -6 ',
+        '1 BOX -2 -2 -3 3 0 0 0 4 0 0 0 6 ',
+        '1 BOX -2 -2 -3 3 0 0 0 4 0 0 0 6 ',
+        '2 BOX 1 2 3 -3 0 0 0 -4 0 0 0 -6 '
+    ]))
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        assert desc == answer
+
+    @pytest.mark.parametrize('surface, number, norm, k', [
+        (surfs[0], 1, [1, 0, 0], -1.), (surfs[0], 2, [-1, 0, 0], -1.),
+        (surfs[0], 3, [0, 1, 0], -2.), (surfs[0], 4, [0, -1, 0], -2.), 
+        (surfs[0], 5, [0, 0, 1], -3.), (surfs[0], 6, [0, 0, -1], -3.)
+    ])
+    def test_surface(self, surface, number, norm, k):
+        s = surface.surface(number)
+        np.testing.assert_almost_equal(k, s._k)
+        np.testing.assert_array_almost_equal(norm, s._v)

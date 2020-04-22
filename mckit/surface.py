@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractmethod
+from itertools import product, groupby, permutations
 
 import numpy as np
 
@@ -18,7 +19,7 @@ from .printer import print_card, pretty_float
 from .transformation import Transformation
 from .utils import *
 from .card import Card
-import mckit.body
+from mckit import body
 
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -118,6 +119,25 @@ def create_surface(kind, *params, **options):
     elif kind[0] == 'T':
         x0, y0, z0, R, a, b = params
         return Torus([x0, y0, z0], axis, R, a, b, **options)
+    # ---------- Macrobodies ---------------
+    elif kind == 'RPP':
+        xmin, xmax, ymin, ymax, zmin, zmax = params
+        center = [xmin, ymin, zmin]
+        dirx = [xmax - xmin, 0, 0]
+        diry = [0, ymax - ymin, 0]
+        dirz = [0, 0, zmax - zmin]
+        return BOX(center, dirx, diry, dirz, **options)
+    elif kind == 'BOX':
+        center = params[:3]
+        dirx = params[3:6]
+        diry = params[6:9]
+        dirz = params[9:]
+        return BOX(center, dirx, diry, dirz, **options)
+    elif kind == 'RCC':
+        center = params[:3]
+        axis = params[3:6]
+        radius = params[6]
+        return RCC(center, axis, radius, **options)
     # ---------- Axisymmetric surface defined by points ------
     else:
         if len(params) == 2:
@@ -230,6 +250,230 @@ class Surface(Card):
         words.append(str(self.name()))
         words.append(' ')
         return words
+
+
+class Macrobody(Surface, body._Shape):
+    def surface(self, number):
+        args = self.args
+        if 1 <= number <= len(args):
+            return args[number - 1].args[0]
+        else:
+            raise ValueError("There is no such surface in macrobody: {0}".format(number))
+
+    def __getstate__(self):
+        surf_state = Surface.__getstate__(self)
+        args = [a.args[0] for a in self.args]
+        return args, self._hash, surf_state
+
+    def __setstate__(self, state):
+        args, hash_value, surf_state = state
+        Surface.__setstate__(self, surf_state)
+        new_args = [body._Shape('S', a) for a in args]
+        body._Shape.__init__(self, 'U', *new_args)
+        self._hash = hash_value
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if not isinstance(other, Macrobody):
+            return False
+        if len(self.args) != len(other.args):
+            return False
+        args_this = [a.args[0] for a in self.args]
+        for a in args_this:
+            print('{0:3} |'.format(hash(a)), a.mcnp_repr())
+        args_other = [a.args[0] for a in other.args]
+        print(len(args_this), len(args_other))
+        self_groups = {k: list(v) for k, v in groupby(sorted(args_this, key=hash), key=hash)}
+        other_groups = {k: list(v) for k, v in groupby(sorted(args_other, key=hash), key=hash)}
+        for hval, entities in self_groups.items():
+            flag = False
+            print('hval=', hval)
+            for e in entities:
+                print('    ', e.mcnp_repr())
+            if hval not in other_groups.keys():
+                return False
+            if len(entities) != len(other_groups[hval]):
+                return False
+            for other_entities in permutations(other_groups[hval]):
+                for se, oe in zip(entities, other_entities):
+                    print(se == oe, ' | ', se.mcnp_repr(), ' | ', oe.mcnp_repr())
+                    if not (se == oe):
+                        break
+                else:
+                    flag = True
+                    break
+            if not flag:
+                return False
+
+        if flag:
+            return True
+        return False
+
+    def __hash__(self):
+        return self._hash
+
+    def _calculate_hash(self, opc, *args):
+        """Calculates hash value for the object.
+
+        Hash is 'xor' for hash values of all arguments together with opc hash.
+        """
+        self._hash = hash('U')
+        for a in args:
+            self._hash ^= hash(a)
+
+
+class RCC(Macrobody):
+    def __init__(self, center, direction, radius, **options):
+        center = np.array(center)
+        direction = np.array(direction)
+        opt_surf = options.copy()
+        opt_surf['name'] = 1
+        cyl = body._Shape('S', Cylinder(center, direction, radius, **opt_surf))
+        norm = np.array(direction) / np.linalg.norm(direction)
+        center2 = center + direction
+        offset2 = np.dot(norm, center2)
+        offset3 = -np.dot(norm, center)
+        opt_surf['name'] = 2
+        plane2 = body._Shape('S', Plane(norm, offset2, **opt_surf))
+        opt_surf['name'] = 3
+        plane3 = body._Shape('S', Plane(-norm, offset3, **opt_surf))
+        body._Shape.__init__(self, 'U', cyl, plane2, plane3)
+        options.pop('transform', None)
+        Surface.__init__(self, **options)
+        self._calculate_hash("U", cyl, plane2, plane3)
+
+    def get_params(self):
+        args = [a.args[0] for a in self.args]
+        center = args[0]._center + args[2]._k * args[0]._axis
+        direction = (args[1]._k - args[2]._k) * args[0]._axis
+        radius = args[0]._radius
+        return center, direction, radius
+
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
+        words.append('RCC')
+        words.append(' ')
+        center, direction, radius = self.get_params()
+        values = list(center)
+        values.extend(direction)
+        values.append(radius)
+        for v in values:
+            fd = significant_digits(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+            words.append(pretty_float(v, fd))
+            words.append(' ')
+        return words
+
+    def transform(self, tr):
+        """Transforms the shape.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+
+        Returns
+        -------
+        result : Shape
+            New shape.
+        """
+        center, direction, radius = self.get_params()
+        return RCC(center, direction, radius, transform=tr)
+
+class BOX(Macrobody):
+    """Macrobody RPP surface.
+
+    Parameters
+    ----------
+    """
+    def __init__(self, center, dirx, diry, dirz, **options):
+        dirx = np.array(dirx)
+        diry = np.array(diry)
+        dirz = np.array(dirz)
+        center = np.array(center)
+        center2 = center + dirx + diry + dirz
+        lenx = np.linalg.norm(dirx)
+        leny = np.linalg.norm(diry)
+        lenz = np.linalg.norm(dirz)
+        normx = dirx / lenx
+        normy = diry / leny
+        normz = dirz / lenz
+        offsetx = np.dot(normx, center)
+        offsety = np.dot(normy, center)
+        offsetz = np.dot(normz, center)
+        offset2x = -np.dot(normx, center2)
+        offset2y = -np.dot(normy, center2)
+        offset2z = -np.dot(normz, center2)
+        opt_surf = options.copy()
+        opt_surf['name'] = 1
+        surf1 = body._Shape('S', Plane(normx, offset2x, **opt_surf))
+        opt_surf['name'] = 2
+        surf2 = body._Shape('S', Plane(-normx, offsetx, **opt_surf))
+        opt_surf['name'] = 3
+        surf3 = body._Shape('S', Plane(normy, offset2y, **opt_surf))
+        opt_surf['name'] = 4
+        surf4 = body._Shape('S', Plane(-normy, offsety, **opt_surf))
+        opt_surf['name'] = 5
+        surf5 = body._Shape('S', Plane(normz, offset2z, **opt_surf))
+        opt_surf['name'] = 6
+        surf6 = body._Shape('S', Plane(-normz, offsetz, **opt_surf))
+        body._Shape.__init__(self, 'U', surf1, surf2, surf3, surf4, surf5, surf6)
+        options.pop('transform', None)
+        Surface.__init__(self, **options)
+        self._calculate_hash("U", surf1, surf2, surf3, surf4, surf5, surf6)
+
+    @staticmethod
+    def _get_plane_intersection(s1, s2, s3):
+        matrix = np.zeros((3, 3))
+        matrix[0, :] = -s1._v
+        matrix[1, :] = -s2._v
+        matrix[2, :] = -s3._v
+        vector = np.array([s1._k, s2._k, s3._k])
+        return np.linalg.solve(matrix, vector)
+
+    def get_params(self):
+        args = [a.args[0] for a in self.args]
+        center = self._get_plane_intersection(args[1], args[3], args[5])
+        point2 = self._get_plane_intersection(args[0], args[2], args[4])
+        normx = args[0]._v
+        normy = args[2]._v
+        normz = args[4]._v
+        diag = point2 - center
+        dirx = np.dot(normx, diag) * normx
+        diry = np.dot(normy, diag) * normy
+        dirz = np.dot(normz, diag) * normz
+        return center, dirx, diry, dirz
+
+    def mcnp_words(self):
+        words = Surface.mcnp_words(self)
+        words.append('BOX')
+        words.append(' ')
+        center, dirx, diry, dirz = self.get_params()
+        values = list(center)
+        values.extend(dirx)
+        values.extend(diry)
+        values.extend(dirz)
+        for v in values:
+            fd = significant_digits(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+            words.append(pretty_float(v, fd))
+            words.append(' ')
+        return words
+
+    def transform(self, tr):
+        """Transforms the shape.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+
+        Returns
+        -------
+        result : Shape
+            New shape.
+        """
+        center, dirx, diry, dirz = self.get_params()
+        return BOX(center, dirx, diry, dirz, transform=tr)
 
 
 class Plane(Surface, _Plane):
