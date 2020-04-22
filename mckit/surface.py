@@ -320,7 +320,7 @@ class Macrobody(Surface, body._Shape):
         """
         self._hash = hash('U')
         for a in args:
-            self._hash ^= hash(a)
+            self._hash ^= hash(a.args[0])
 
 
 class RCC(Macrobody):
@@ -329,11 +329,11 @@ class RCC(Macrobody):
         direction = np.array(direction)
         opt_surf = options.copy()
         opt_surf['name'] = 1
-        cyl = body._Shape('S', Cylinder(center, direction, radius, **opt_surf))
         norm = np.array(direction) / np.linalg.norm(direction)
+        cyl = body._Shape('S', Cylinder(center, norm, radius, **opt_surf))
         center2 = center + direction
-        offset2 = np.dot(norm, center2)
-        offset3 = -np.dot(norm, center)
+        offset2 = -np.dot(norm, center2)
+        offset3 = np.dot(norm, center)
         opt_surf['name'] = 2
         plane2 = body._Shape('S', Plane(norm, offset2, **opt_surf))
         opt_surf['name'] = 3
@@ -345,8 +345,8 @@ class RCC(Macrobody):
 
     def get_params(self):
         args = [a.args[0] for a in self.args]
-        center = args[0]._center + args[2]._k * args[0]._axis
-        direction = (args[1]._k - args[2]._k) * args[0]._axis
+        center = args[0]._pt - args[2]._k * args[0]._axis * np.dot(args[0]._axis, args[2]._v)
+        direction = -(args[1]._k + args[2]._k) * args[1]._v 
         radius = args[0]._radius
         return center, direction, radius
 

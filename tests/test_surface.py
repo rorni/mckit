@@ -1282,3 +1282,127 @@ class TestBOX:
         s = surface.surface(number)
         np.testing.assert_almost_equal(k, s._k)
         np.testing.assert_array_almost_equal(norm, s._v)
+
+
+class TestRCC:
+    @pytest.mark.parametrize('center, axis, radius', [
+        ([0, 0, 1], [0, 0, 2], 3),
+        ([1, 0, 0], [-2, 0, 0], 1),
+        ([0, -1, 0], [10, 0, 0], 1),
+    ])
+    def test_init(self, transform, center, axis, radius):
+        surf = RCC(center, axis, radius, transform=transform)
+        c = transform.apply2point(center)
+        a = transform.apply2vector(axis)
+        ac, axc, rc = surf.get_params()
+        print(c, ac)
+        print(a, axc)
+        np.testing.assert_array_almost_equal(c, ac)
+        np.testing.assert_array_almost_equal(a, axc)
+        np.testing.assert_almost_equal(radius, rc)
+
+    @pytest.mark.parametrize('point, expected', [
+        ([0, 0, 0], -1), ([1, 0, -0.99], -1), ([1, 0, -1.01], +1),
+        ([1, 0, 0.99], -1), ([1, 0, 1.01], +1), ([2.99, 0, 0], -1),
+        ([4.01, 0, 0], +1), ([3.99, 0, 0], -1), ([-2.01, 0, 0], +1),
+        ([-1.99, 0, 0], -1)
+    ])
+    def test_point_test(self, point, expected):
+        surf = RCC([1, 0, -1], [0, 0, 2], 3)
+        result = surf.test_points(point)
+        np.testing.assert_array_equal(result, expected)
+
+    @pytest.mark.parametrize('center, axis, rad, ans', [
+        ([-2, 0, 0], [4, 0, 0], 0.5, 0),
+        ([-2, 0, 0], [4, 0, 0], 3, -1),
+        ([-0.75, 0, 0], [1.5, 0, 0], 0.75, 0),
+        ([-2, 6, 0], [4, 0, 0], 3, +1),
+    ])
+    def test_box_test(self, box, center, axis, rad, ans):
+        surf = RCC(center, axis, rad)
+        assert surf.test_box(box) == ans
+
+    @pytest.mark.parametrize('center, axis, radius', [
+        ([0, 0, 1], [0, 0, 2], 3),
+        ([1, 0, 0], [-2, 0, 0], 1),
+        ([0, -1, 0], [10, 0, 0], 1)
+    ])
+    def test_transform(self, transform, center, axis, radius):
+        surf = RCC(center, axis, radius)
+        c = transform.apply2point(center)
+        a = transform.apply2vector(axis)
+
+        surf_tr = surf.transform(transform)
+        ac, ax, r = surf_tr.get_params()
+        np.testing.assert_array_almost_equal(c, ac)
+        np.testing.assert_array_almost_equal(a, ax)
+        np.testing.assert_almost_equal(radius, r)
+
+    @pytest.mark.parametrize('center, axis, radius, options', [
+        ([0, 0, 1], [0, 0, 2], 3, {}),
+        ([1, 0, 0], [-2, 0, 0], 1, {'name': 3}),
+        ([0, -1, 0], [10, 0, 0], 1, {'name': 4, 'comments': ['abc', 'def']}),
+    ])
+    def test_pickle(self, center, axis, radius, options):
+        surf = RCC(center, axis, radius, **options)
+        with open('test.pic', 'bw') as f:
+            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
+        with open('test.pic', 'br') as f:
+            surf_un = pickle.load(f)
+        ac, ax, r = surf_un.get_params()
+        np.testing.assert_array_almost_equal(center, ac)
+        np.testing.assert_array_almost_equal(axis, ax)
+        np.testing.assert_almost_equal(radius, r)
+        assert surf.options == surf_un.options
+
+    surfs = [
+        create_surface('RCC', -1, 1, -2, 2, 0, 0, 4, name=1),                                 # 0
+        create_surface('RCC', 1, 1, -2, -2, 0, 0, 4, name=1),               # 1
+        create_surface('RCC', -1, 2, -2, 2, 0, 0, 4, name=2),               # 2
+        create_surface('RCC', 1, 2, -2, -2, 0, 0, 4, name=1),                                 # 3
+        create_surface('RCC', -1, 1, -2, 2, 0, 0, 3, name=1),               # 4
+        create_surface('RCC', 1, 1, -2, -2, 0, 0, 3, name=2),               # 5
+    ]
+
+    eq_matrix = [
+        [1, 1, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0],
+        [0, 0, 1, 1, 0, 0],
+        [0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 1, 1],
+    ]
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_eq(self, i1, s1, i2, s2):
+        result = (s1 == s2)
+        print(s1.get_params())
+        print(s2.get_params())
+        assert result == bool(self.eq_matrix[i1][i2])
+
+    @pytest.mark.parametrize('i1, s1', enumerate(surfs))
+    @pytest.mark.parametrize('i2, s2', enumerate(surfs))
+    def test_hash(self, i1, s1, i2, s2):
+        if self.eq_matrix[i1][i2]:
+            assert hash(s1) == hash(s2)
+
+    @pytest.mark.parametrize('surface, answer', zip(surfs, [
+        '1 RCC -1 1 -2 2 0 0 4 ', 
+        '1 RCC 1 1 -2 -2 0 0 4 ',
+        '2 RCC -1 2 -2 2 0 0 4 ',
+        '1 RCC 1 2 -2 -2 0 0 4 ',
+        '1 RCC -1 1 -2 2 0 0 3 ',
+        '2 RCC 1 1 -2 -2 0 0 3 '
+    ]))
+    def test_mcnp_repr(self, surface, answer):
+        desc = surface.mcnp_repr()
+        assert desc == answer
+
+    @pytest.mark.parametrize('surface, number, norm, k', [
+        (surfs[0], 2, [1, 0, 0], -1.), (surfs[0], 3, [-1, 0, 0], -1.)
+    ])
+    def test_surface(self, surface, number, norm, k):
+        s = surface.surface(number)
+        np.testing.assert_almost_equal(k, s._k)
+        np.testing.assert_array_almost_equal(norm, s._v)
