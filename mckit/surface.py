@@ -343,6 +343,11 @@ class RCC(Surface, _RCC):
         _RCC.__init__(self, *args)
         self._hash = hash_value
 
+    def copy(self):
+        center, direction, radius = self.get_params()
+        return RCC(center, direction, radius, **self.options)
+
+
 class BOX(Surface, _BOX):
     """Macrobody BOX surface.
 
@@ -465,6 +470,10 @@ class BOX(Surface, _BOX):
         Surface.__setstate__(self, surf_state)
         _BOX.__init__(self, *args)
         self._hash = hash_value
+
+    def copy(self):
+        center, dirx, diry, dirz = self.get_params()
+        return BOX(center, dirx, diry, dirz, **self.options)
 
 
 class Plane(Surface, _Plane):
