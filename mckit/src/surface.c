@@ -94,6 +94,7 @@ double RCC_func(
     if (grad != NULL) {
         cblas_daxpy(NDIM, top_wgt, gtop, 1, grad, 1);
         cblas_daxpy(NDIM, bot_wgt, gbot, 1, grad, 1);
+        cblas_daxpy(NDIM, 1, gcyl, 1, grad, 1);
     }
     return max(cyl_obj, max(top_obj, bot_obj));
 }

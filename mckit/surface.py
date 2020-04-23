@@ -330,6 +330,16 @@ class RCC(Surface, _RCC):
         options.pop('transform', None)
         Surface.__init__(self, **options)
         self._hash = hash(cyl) ^ hash(plane2) ^ hash(plane3)
+    
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        if not isinstance(other, RCC):
+            return False
+        args_this = self.surfaces
+        args_other = other.surfaces
+        return args_this == args_other
 
     def surface(self, number):
         args = self.surfaces
