@@ -84,3 +84,4 @@ target/
 
 # Local environemnt files for dotenv
 .env
+test.pic
