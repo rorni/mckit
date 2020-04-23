@@ -405,6 +405,11 @@ typedef struct {
     GQuadratic surf;
 } GQuadraticObject;
 
+typedef struct {
+    PyObject ob_base;
+    RCC surf;
+} RCCObject;
+
 static PyObject *
 surfobj_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
@@ -657,6 +662,91 @@ static PyTypeObject CylinderType = {
         .tp_new = PyType_GenericNew,
         .tp_init = (initproc) cylinderobj_init,
         .tp_getset = cylinderobj_getset,
+};
+
+static PyObject *
+rccobj_surfaces(RCCObject * self, void * closure)
+{
+    PyObject * args = PyTuple_New(3);
+    if (args == NULL) return NULL;
+    PyObject * cyl = parent_pyobject(CylinderObject, surf, self->surf.cyl);
+    PyTuple_SET_ITEM(args, 0, cyl);
+    Py_INCREF(cyl);
+    PyObject * top = parent_pyobject(PlaneObject, surf, self->surf.top);
+    PyTuple_SET_ITEM(args, 1, top);
+    Py_INCREF(top);
+    PyObject * bot = parent_pyobject(PlaneObject, surf, self->surf.bot);
+    PyTuple_SET_ITEM(args, 2, bot);
+    Py_INCREF(bot);
+    return args;
+}
+
+static int
+rccobj_init(RCCObject * self, PyObject * args, PyObject * kwds)
+{
+    size_t arglen = PyTuple_Size(args);
+    if (arglen != 3) {
+        PyErr_SetString(PyExc_TypeError, "3 Surfaces expected.");
+        return -1;
+    }
+
+    int status;
+    PyObject * cyl, *top, *bot;
+    cyl = PyTuple_GetItem(args, 0);
+    if (!PyObject_TypeCheck(cyl, &CylinderType)) {
+        PyErr_SetString(PyExc_TypeError, "Cylinder instance is expected");
+        return -1;
+    }
+    top = PyTuple_GetItem(args, 1);
+    if (!PyObject_TypeCheck(top, &PlaneType)) {
+        PyErr_SetString(PyExc_TypeError, "Plane Instance is expected");
+        return -1;
+    }
+    bot = PyTuple_GetItem(args, 2);
+    if (!PyObject_TypeCheck(bot, &PlaneType)) {
+        PyErr_SetString(PyExc_TypeError, "Plane Instance is expected");
+        return -1;
+    }
+    Py_INCREF(cyl);
+    Py_INCREF(top);
+    Py_INCREF(bot);
+    status = RCC_init(
+        &self->surf, 
+        &((CylinderObject *) cyl)->surf,
+        &((PlaneObject *) top)->surf,
+        &((PlaneObject *) bot)->surf
+    );
+    if (status != SURFACE_SUCCESS) return -1;
+    return 0;
+}
+
+static void rccobj_dealloc(RCCObject * self)
+{
+    PyObject * cyl = parent_pyobject(CylinderObject, surf, self->surf.cyl);
+    Py_DECREF(cyl);
+    PyObject * top = parent_pyobject(PlaneObject, surf, self->surf.top);
+    Py_DECREF(top);
+    PyObject * bot = parent_pyobject(PlaneObject, surf, self->surf.bot);
+    Py_DECREF(bot);
+    Py_TYPE(self)->tp_free((PyObject*) self);
+}
+
+static PyGetSetDef rccobj_getset[] = {
+        {"surfaces", (getter) rccobj_surfaces, NULL, "Surfaces of RCC", NULL},
+        {NULL}
+};
+
+static PyTypeObject RCCType = {
+        PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_base = &SurfaceType,
+        .tp_name = "geometry.RCC",
+        .tp_basicsize = sizeof(RCCObject),
+        .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+        .tp_doc = "RCC class",
+        .tp_new = PyType_GenericNew,
+        .tp_init = (initproc) rccobj_init,
+        .tp_dealloc = (destructor) rccobj_dealloc,
+        .tp_getset = rccobj_getset,
 };
 
 static PyObject *
@@ -1195,6 +1285,7 @@ PyInit_geometry(void)
     if (PyType_Ready(&ConeType) < 0) return NULL;
     if (PyType_Ready(&TorusType) < 0) return NULL;
     if (PyType_Ready(&GQuadraticType) < 0) return NULL;
+    if (PyType_Ready(&RCCType) < 0) return NULL;
 
     if (PyType_Ready(&ShapeType) < 0) return NULL;
 
@@ -1212,6 +1303,7 @@ PyInit_geometry(void)
     Py_INCREF(&ConeType);
     Py_INCREF(&TorusType);
     Py_INCREF(&GQuadraticType);
+    Py_INCREF(&RCCType);
 
     Py_INCREF(&ShapeType);
 
@@ -1225,6 +1317,7 @@ PyInit_geometry(void)
     PyModule_AddObject(m, "Cone",       (PyObject *) &ConeType);
     PyModule_AddObject(m, "Torus",      (PyObject *) &TorusType);
     PyModule_AddObject(m, "GQuadratic", (PyObject *) &GQuadraticType);
+    PyModule_AddObject(m, "RCC",        (PyObject *) &RCCType);
 
     PyModule_AddObject(m, "Shape", (PyObject *) &ShapeType);
 

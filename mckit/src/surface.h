@@ -16,8 +16,9 @@ typedef struct Cylinder     Cylinder;
 typedef struct Cone         Cone;
 typedef struct Torus        Torus;
 typedef struct GQuadratic   GQuadratic;
+typedef struct RCC          RCC;
 
-enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC};
+enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC, MRCC};
 
 // surface common data
 struct Surface {
@@ -72,6 +73,13 @@ struct GQuadratic {
     double factor;
 };
 
+struct RCC {
+    Surface base;
+    Cylinder * cyl;
+    Plane * top;
+    Plane * bot;
+};
+
 // Methods //
 
 int plane_init(
@@ -116,6 +124,13 @@ int gq_init(
     const double * v,
     double k,
     double factor
+);
+
+int RCC_init(
+    RCC * surf,
+    Cylinder * cyl,
+    Plane * top, 
+    Plane * bot
 );
 
 // Tests senses of points with respect to the surface.

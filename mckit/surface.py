@@ -13,6 +13,7 @@ from .geometry import Plane      as _Plane,    \
                       Cylinder   as _Cylinder, \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
+                      RCC        as _RCC, \
                       ORIGIN, EX, EY, EZ
 from mckit.box import GLOBAL_BOX
 from .printer import print_card, pretty_float
@@ -32,6 +33,7 @@ __all__ = [
     'GQuadratic',
     'Cylinder',
     'Surface',
+    'RCC',
     'ORIGIN',
     'EX',
     'EY',
@@ -253,12 +255,7 @@ class Surface(Card):
 
 
 class Macrobody(Surface, body._Shape):
-    def surface(self, number):
-        args = self.args
-        if 1 <= number <= len(args):
-            return args[number - 1].args[0]
-        else:
-            raise ValueError("There is no such surface in macrobody: {0}".format(number))
+    
 
     def __getstate__(self):
         surf_state = Surface.__getstate__(self)
@@ -313,38 +310,38 @@ class Macrobody(Surface, body._Shape):
     def __hash__(self):
         return self._hash
 
-    def _calculate_hash(self, opc, *args):
-        """Calculates hash value for the object.
 
-        Hash is 'xor' for hash values of all arguments together with opc hash.
-        """
-        self._hash = hash('U')
-        for a in args:
-            self._hash ^= hash(a.args[0])
-
-
-class RCC(Macrobody):
+class RCC(Surface, _RCC):
     def __init__(self, center, direction, radius, **options):
         center = np.array(center)
         direction = np.array(direction)
         opt_surf = options.copy()
         opt_surf['name'] = 1
         norm = np.array(direction) / np.linalg.norm(direction)
-        cyl = body._Shape('S', Cylinder(center, norm, radius, **opt_surf))
+        cyl = Cylinder(center, norm, radius, **opt_surf)
         center2 = center + direction
         offset2 = -np.dot(norm, center2)
         offset3 = np.dot(norm, center)
         opt_surf['name'] = 2
-        plane2 = body._Shape('S', Plane(norm, offset2, **opt_surf))
+        plane2 = Plane(norm, offset2, **opt_surf)
         opt_surf['name'] = 3
-        plane3 = body._Shape('S', Plane(-norm, offset3, **opt_surf))
-        body._Shape.__init__(self, 'U', cyl, plane2, plane3)
+        plane3 = Plane(-norm, offset3, **opt_surf)
+        _RCC.__init__(self, cyl, plane2, plane3)
         options.pop('transform', None)
         Surface.__init__(self, **options)
-        self._calculate_hash("U", cyl, plane2, plane3)
+        self._hash = hash(cyl) ^ hash(plane2) ^ hash(plane3)
+
+    def surface(self, number):
+        args = self.surfaces
+        if 1 <= number <= len(args):
+            return args[number - 1]
+        else:
+            raise ValueError("There is no such surface in macrobody: {0}".format(number))
 
     def get_params(self):
-        args = [a.args[0] for a in self.args]
+        args = self.surfaces
+        for a in args:
+            print(a.mcnp_repr())
         center = args[0]._pt - args[2]._k * args[0]._axis * np.dot(args[0]._axis, args[2]._v)
         direction = -(args[1]._k + args[2]._k) * args[1]._v 
         radius = args[0]._radius
@@ -380,7 +377,18 @@ class RCC(Macrobody):
         center, direction, radius = self.get_params()
         return RCC(center, direction, radius, transform=tr)
 
-class BOX(Macrobody):
+    def __getstate__(self):
+        surf_state = Surface.__getstate__(self)
+        args = self.surfaces
+        return args, self._hash, surf_state
+
+    def __setstate__(self, state):
+        args, hash_value, surf_state = state
+        Surface.__setstate__(self, surf_state)
+        _RCC.__init__(self, *args)
+        self._hash = hash_value
+
+class BOX:
     """Macrobody RPP surface.
 
     Parameters
@@ -703,10 +711,10 @@ class Cylinder(Surface, _Cylinder):
         _Cylinder.__init__(self, pt, axis, radius)
 
     def __getstate__(self):
-        return self._pt, self._axis, self._radius, Surface.__getstate__(self)
+        return self._pt, self._axis, self._radius, self._pt_digits, self._axis_digits, self._radius_digits, Surface.__getstate__(self)
 
     def __setstate__(self, state):
-        pt, axis, radius, options = state
+        pt, axis, radius, self._pt_digits, self._axis_digits, self._radius_digits, options = state
         _Cylinder.__init__(self, pt, axis, radius)
         Surface.__setstate__(self, options)
 
