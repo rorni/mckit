@@ -1153,7 +1153,7 @@ class TestGQuadratic:
         assert desc == answer
 
 
-""" class TestBOX:
+class TestBOX:
     @pytest.mark.parametrize('center, dirx, diry, dirz', [
         ([0, 0, 1], [2, 0, 0], [0, 3, 0], [0, 0, 4]),
         ([1, 0, 0], [-2, 0, 0], [0, 3, 0], [0, 0, -4]),
@@ -1239,12 +1239,12 @@ class TestGQuadratic:
     ]
 
     eq_matrix = [
-        [1, 1, 1, 0, 0, 0],
-        [1, 1, 1, 0, 0, 0],
-        [1, 1, 1, 0, 0, 0],
-        [0, 0, 0, 1, 1, 1],
-        [0, 0, 0, 1, 1, 1],
-        [0, 0, 0, 1, 1, 1],
+        [1, 1, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 0],
+        [0, 0, 0, 1, 1, 0],
+        [0, 0, 0, 0, 0, 1],
     ]
 
     @pytest.mark.parametrize('i1, s1', enumerate(surfs))
@@ -1281,7 +1281,7 @@ class TestGQuadratic:
     def test_surface(self, surface, number, norm, k):
         s = surface.surface(number)
         np.testing.assert_almost_equal(k, s._k)
-        np.testing.assert_array_almost_equal(norm, s._v) """
+        np.testing.assert_array_almost_equal(norm, s._v)
 
 
 class TestRCC:

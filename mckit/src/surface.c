@@ -99,6 +99,31 @@ double RCC_func(
     return max(cyl_obj, max(top_obj, bot_obj));
 }
 
+double BOX_func(
+    unsigned int n,
+    const double * x,
+    double * grad, 
+    void * f_data
+)
+{
+    BOX * data = (BOX *) f_data;
+    double gp[NDIM * BOX_PLANE_NUM];
+    double result[BOX_PLANE_NUM];
+    for (int i = 0; i < NDIM * BOX_PLANE_NUM; ++i) gp[i] = 0;
+    
+    int index = 0;
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        result[i] = plane_func(n, x, gp + i * NDIM, data->planes[i]);
+        if (result[i] > result[index]) index = i;
+    }
+
+    if (grad != NULL) {
+        cblas_dcopy(NDIM, gp + index * NDIM, 1, grad, 1);
+    }
+
+    return result[index];
+}
+
 double cone_func(
     unsigned int n,
     const double * x,
@@ -202,6 +227,9 @@ double surface_func(
         case MRCC:
             fval = RCC_func(n, x, grad, f_data);
             break;
+        case MBOX:
+            fval = BOX_func(n, x, grad, f_data);
+            break;
         default:
             fval = 0;
             break;
@@ -273,6 +301,19 @@ int RCC_init(
     surf->cyl = cyl;
     surf->top = top;
     surf->bot = bot;
+    return SURFACE_SUCCESS;
+}
+
+int BOX_init(
+    BOX * surf, 
+    Plane ** planes
+)
+{
+    surface_INIT((Surface *) surf);
+    surf->base.type = MBOX;
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        surf->planes[i] = planes[i];
+    }
     return SURFACE_SUCCESS;
 }
 

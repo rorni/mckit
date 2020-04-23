@@ -410,6 +410,11 @@ typedef struct {
     RCC surf;
 } RCCObject;
 
+typedef struct {
+    PyObject ob_base;
+    BOX surf;
+} BOXObject;
+
 static PyObject *
 surfobj_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
@@ -747,6 +752,75 @@ static PyTypeObject RCCType = {
         .tp_init = (initproc) rccobj_init,
         .tp_dealloc = (destructor) rccobj_dealloc,
         .tp_getset = rccobj_getset,
+};
+
+static PyObject *
+mboxobj_surfaces(BOXObject * self, void * closure)
+{
+    PyObject * args = PyTuple_New(BOX_PLANE_NUM);
+    if (args == NULL) return NULL;
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        PyObject * p = parent_pyobject(PlaneObject, surf, self->surf.planes[i]);
+        PyTuple_SET_ITEM(args, i, p);
+        Py_INCREF(p);
+    }
+    return args;
+}
+
+static int
+mboxobj_init(BOXObject * self, PyObject * args, PyObject * kwds)
+{
+    size_t arglen = PyTuple_Size(args);
+    if (arglen != BOX_PLANE_NUM) {
+        PyErr_SetString(PyExc_TypeError, "6 Planes expected.");
+        return -1;
+    }
+
+    int status;
+    PyObject* planes[BOX_PLANE_NUM];
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        planes[i] = PyTuple_GetItem(args, i);
+        if (!PyObject_TypeCheck(planes[i], &PlaneType)) {
+            PyErr_SetString(PyExc_TypeError, "Plane instance is expected");
+            return -1;
+        }
+    }
+    Plane* planes_ref[BOX_PLANE_NUM];
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        planes_ref[i] = &((PlaneObject *) planes[i])->surf;
+        Py_INCREF(planes[i]);
+    }
+
+    status = BOX_init(&self->surf, planes_ref);
+    if (status != SURFACE_SUCCESS) return -1;
+    return 0;
+}
+
+static void mboxobj_dealloc(BOXObject * self)
+{
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        PyObject * p = parent_pyobject(PlaneObject, surf, self->surf.planes[i]);
+        Py_DECREF(p);
+    }
+    Py_TYPE(self)->tp_free((PyObject*) self);
+}
+
+static PyGetSetDef mboxobj_getset[] = {
+        {"surfaces", (getter) mboxobj_surfaces, NULL, "Surfaces of BOX", NULL},
+        {NULL}
+};
+
+static PyTypeObject BOXType = {
+        PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_base = &SurfaceType,
+        .tp_name = "geometry.BOX",
+        .tp_basicsize = sizeof(BOXObject),
+        .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+        .tp_doc = "BOX class",
+        .tp_new = PyType_GenericNew,
+        .tp_init = (initproc) mboxobj_init,
+        .tp_dealloc = (destructor) mboxobj_dealloc,
+        .tp_getset = mboxobj_getset,
 };
 
 static PyObject *
@@ -1286,6 +1360,7 @@ PyInit_geometry(void)
     if (PyType_Ready(&TorusType) < 0) return NULL;
     if (PyType_Ready(&GQuadraticType) < 0) return NULL;
     if (PyType_Ready(&RCCType) < 0) return NULL;
+    if (PyType_Ready(&BOXType) < 0) return NULL;
 
     if (PyType_Ready(&ShapeType) < 0) return NULL;
 
@@ -1304,6 +1379,7 @@ PyInit_geometry(void)
     Py_INCREF(&TorusType);
     Py_INCREF(&GQuadraticType);
     Py_INCREF(&RCCType);
+    Py_INCREF(&BOXType);
 
     Py_INCREF(&ShapeType);
 
@@ -1318,6 +1394,7 @@ PyInit_geometry(void)
     PyModule_AddObject(m, "Torus",      (PyObject *) &TorusType);
     PyModule_AddObject(m, "GQuadratic", (PyObject *) &GQuadraticType);
     PyModule_AddObject(m, "RCC",        (PyObject *) &RCCType);
+    PyModule_AddObject(m, "BOX",        (PyObject *) &BOXType);
 
     PyModule_AddObject(m, "Shape", (PyObject *) &ShapeType);
 

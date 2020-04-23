@@ -14,6 +14,7 @@ from .geometry import Plane      as _Plane,    \
                       Torus      as _Torus,    \
                       GQuadratic as _GQuadratic, \
                       RCC        as _RCC, \
+                      BOX        as _BOX, \
                       ORIGIN, EX, EY, EZ
 from mckit.box import GLOBAL_BOX
 from .printer import print_card, pretty_float
@@ -34,6 +35,7 @@ __all__ = [
     'Cylinder',
     'Surface',
     'RCC',
+    'BOX',
     'ORIGIN',
     'EX',
     'EY',
@@ -254,63 +256,6 @@ class Surface(Card):
         return words
 
 
-class Macrobody(Surface, body._Shape):
-    
-
-    def __getstate__(self):
-        surf_state = Surface.__getstate__(self)
-        args = [a.args[0] for a in self.args]
-        return args, self._hash, surf_state
-
-    def __setstate__(self, state):
-        args, hash_value, surf_state = state
-        Surface.__setstate__(self, surf_state)
-        new_args = [body._Shape('S', a) for a in args]
-        body._Shape.__init__(self, 'U', *new_args)
-        self._hash = hash_value
-
-    def __eq__(self, other):
-        if self is other:
-            return True
-        if not isinstance(other, Macrobody):
-            return False
-        if len(self.args) != len(other.args):
-            return False
-        args_this = [a.args[0] for a in self.args]
-        for a in args_this:
-            print('{0:3} |'.format(hash(a)), a.mcnp_repr())
-        args_other = [a.args[0] for a in other.args]
-        print(len(args_this), len(args_other))
-        self_groups = {k: list(v) for k, v in groupby(sorted(args_this, key=hash), key=hash)}
-        other_groups = {k: list(v) for k, v in groupby(sorted(args_other, key=hash), key=hash)}
-        for hval, entities in self_groups.items():
-            flag = False
-            print('hval=', hval)
-            for e in entities:
-                print('    ', e.mcnp_repr())
-            if hval not in other_groups.keys():
-                return False
-            if len(entities) != len(other_groups[hval]):
-                return False
-            for other_entities in permutations(other_groups[hval]):
-                for se, oe in zip(entities, other_entities):
-                    print(se == oe, ' | ', se.mcnp_repr(), ' | ', oe.mcnp_repr())
-                    if not (se == oe):
-                        break
-                else:
-                    flag = True
-                    break
-            if not flag:
-                return False
-
-        if flag:
-            return True
-        return False
-
-    def __hash__(self):
-        return self._hash
-
-
 class RCC(Surface, _RCC):
     def __init__(self, center, direction, radius, **options):
         center = np.array(center)
@@ -398,8 +343,8 @@ class RCC(Surface, _RCC):
         _RCC.__init__(self, *args)
         self._hash = hash_value
 
-class BOX:
-    """Macrobody RPP surface.
+class BOX(Surface, _BOX):
+    """Macrobody BOX surface.
 
     Parameters
     ----------
@@ -424,21 +369,38 @@ class BOX:
         offset2z = -np.dot(normz, center2)
         opt_surf = options.copy()
         opt_surf['name'] = 1
-        surf1 = body._Shape('S', Plane(normx, offset2x, **opt_surf))
+        surf1 = Plane(normx, offset2x, **opt_surf)
         opt_surf['name'] = 2
-        surf2 = body._Shape('S', Plane(-normx, offsetx, **opt_surf))
+        surf2 = Plane(-normx, offsetx, **opt_surf)
         opt_surf['name'] = 3
-        surf3 = body._Shape('S', Plane(normy, offset2y, **opt_surf))
+        surf3 = Plane(normy, offset2y, **opt_surf)
         opt_surf['name'] = 4
-        surf4 = body._Shape('S', Plane(-normy, offsety, **opt_surf))
+        surf4 = Plane(-normy, offsety, **opt_surf)
         opt_surf['name'] = 5
-        surf5 = body._Shape('S', Plane(normz, offset2z, **opt_surf))
+        surf5 = Plane(normz, offset2z, **opt_surf)
         opt_surf['name'] = 6
-        surf6 = body._Shape('S', Plane(-normz, offsetz, **opt_surf))
-        body._Shape.__init__(self, 'U', surf1, surf2, surf3, surf4, surf5, surf6)
+        surf6 = Plane(-normz, offsetz, **opt_surf)
+        _BOX.__init__(self, surf1, surf2, surf3, surf4, surf5, surf6)
         options.pop('transform', None)
         Surface.__init__(self, **options)
-        self._calculate_hash("U", surf1, surf2, surf3, surf4, surf5, surf6)
+        self._hash = hash(surf1) ^ hash(surf2) ^ hash(surf3) ^ hash(surf4) ^ hash(surf5) ^ hash(surf6)
+
+    def surface(self, number):
+        args = self.surfaces
+        if 1 <= number <= len(args):
+            return args[number - 1]
+        else:
+            raise ValueError("There is no such surface in macrobody: {0}".format(number))
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        if not isinstance(other, BOX):
+            return False
+        args_this = self.surfaces
+        args_other = other.surfaces
+        return args_this == args_other
 
     @staticmethod
     def _get_plane_intersection(s1, s2, s3):
@@ -450,7 +412,7 @@ class BOX:
         return np.linalg.solve(matrix, vector)
 
     def get_params(self):
-        args = [a.args[0] for a in self.args]
+        args = self.surfaces
         center = self._get_plane_intersection(args[1], args[3], args[5])
         point2 = self._get_plane_intersection(args[0], args[2], args[4])
         normx = args[0]._v
@@ -492,6 +454,17 @@ class BOX:
         """
         center, dirx, diry, dirz = self.get_params()
         return BOX(center, dirx, diry, dirz, transform=tr)
+
+    def __getstate__(self):
+        surf_state = Surface.__getstate__(self)
+        args = self.surfaces
+        return args, self._hash, surf_state
+
+    def __setstate__(self, state):
+        args, hash_value, surf_state = state
+        Surface.__setstate__(self, surf_state)
+        _BOX.__init__(self, *args)
+        self._hash = hash_value
 
 
 class Plane(Surface, _Plane):
