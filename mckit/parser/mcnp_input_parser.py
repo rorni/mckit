@@ -41,7 +41,7 @@ CELL_KEYWORDS = {
 SURFACE_TYPES = {
     'P', 'PX', 'PY', 'PZ', 'S', 'SO', 'SX', 'SY', 'SZ', 'CX', 'CY', 'CZ', 'KX',
     'KY', 'KZ', 'TX', 'TY', 'TZ', 'C/X', 'C/Y', 'C/Z', 'K/X', 'K/Y', 'K/Z',
-    'SQ', 'GQ', 'X', 'Y', 'Z'
+    'SQ', 'GQ', 'X', 'Y', 'Z', 'RPP', 'BOX', 'RCC'
 }
 
 DATA_KEYWORDS = {
