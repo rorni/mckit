@@ -852,4 +852,4 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
 
 # TODO dvp: it's possible to generalize visiting introducing class Visitor
 #           See: all visit_... functions will be probably not changed on deriving
-#           Use funtools partial to hide self parameter when passing the method as a function to accept()
+#           Use functools partial to hide self parameter when passing the method as a function to accept()
