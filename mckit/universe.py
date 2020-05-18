@@ -15,6 +15,8 @@ from .transformation import Transformation
 from .material import Material
 from .surface import Plane
 from .utils import accept, on_unknown_acceptor
+from mckit.constants import MCNP_ENCODING
+from mckit.utils import filter_dict
 
 __all__ = [
     'Universe', 'produce_universes', 'NameClashError', 'cell_selector',
@@ -146,9 +148,9 @@ class Universe:
 
     def __init__(self, cells, name=0, verbose_name=None, comment=None,
                  name_rule='keep', common_materials=None):
-        self._name = name
+        self._name: int = name
         self._comment = comment
-        self._verbose_name = name if verbose_name is None else verbose_name
+        self._verbose_name: str = verbose_name
         self._cells = []
         if common_materials is None:
             common_materials = set()
@@ -578,6 +580,8 @@ class Universe:
         """
         if name:
             self._name = name
+            for c in self:
+                c.options = filter_dict(c.options, "original")
         if start_cell:
             for c in self:
                 c.rename(start_cell)
@@ -594,7 +598,7 @@ class Universe:
                     m.rename(start_mat)
                     start_mat += 1
 
-    def save(self, filename, encoding="cp1251"):
+    def save(self, filename, encoding=MCNP_ENCODING):
         """Saves the universe into file.
 
         Parameters
@@ -618,7 +622,7 @@ class Universe:
             cells.extend(sorted(u, key=Card.name))
             surfaces.extend(sorted(u.get_surfaces(), key=Card.name))
             materials.extend(sorted(u.get_compositions(True), key=Card.name))
-        cards = [str(self.verbose_name())]
+        cards = [self.verbose_name]
         cards.extend(map(Card.mcnp_repr, cells))
         cards.append('')
         cards.extend(map(Card.mcnp_repr, surfaces))
@@ -736,9 +740,10 @@ class Universe:
         return Universe(new_cells, name=self._name, name_rule='clash',
                         verbose_name=self._verbose_name, comment=self._comment)
 
-    def verbose_name(self):
+    @property
+    def verbose_name(self) -> str:
         """Gets verbose name of the universe."""
-        return self._verbose_name
+        return str(self.name()) if self._verbose_name is None else self._verbose_name
 
     @property
     def comment(self):
@@ -754,7 +759,7 @@ class _UniverseCellsGroup:
 def produce_universes(cells: Iterable[Body]) -> Universe:
     """Creates groups from cells.
 
-    The function groups all the by 'universe' option value,
+    The function groups all the cells by 'universe' option value,
     and creates corresponding groups.
 
     Parameters

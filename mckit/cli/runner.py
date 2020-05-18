@@ -38,7 +38,7 @@ def mckit(ctx, debug, override):
 
 @mckit.command()
 @click.pass_context
-@click.option("--output", "-o", default=None, help="Output directory")
+@click.option("--output", "-o", default=None, help="Output directory, default: <source>.universes")
 @click.option("--fill-descriptor", "-f", default="fill-descriptor.toml", help="TOML file for FILL descriptors")
 @click.argument(
     "source",
@@ -163,6 +163,8 @@ def concat(
     with resolve_output(output, exist_ok=override, encoding=output_encoding) as out_fid:
         for f in parts:
             f = Path(f)
+            # TODO dvp: Add filtering of a part's text here. Implement as external scripts call.
+            #           Should be configurable
             print(f.read_text(encoding=parts_encoding), file=out_fid, end="")
 
 

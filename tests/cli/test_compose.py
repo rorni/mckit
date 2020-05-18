@@ -59,11 +59,12 @@ def test_when_output_is_not_specified(runner):
 ])
 def test_when_fill_descriptor_is_not_specified(runner, source, output, expected):
     source = data_filename_resolver(source)
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem() as test_folder:
         result = runner.invoke(mckit, args=['compose', "--output", output, source], catch_exceptions=False)
         assert result.exit_code == 0, "Should success using fill_descriptor in the same directory as source file"
-        assert Path(output).exists(), \
-            f"Should create file {output} file"
+        assert Path(output).exists(), f"Should create file {output} file in {test_folder}"
+        # text = Path(output).read_text()
+        # assert "simple" in text
         actual = mk.read_mcnp(output)
         expected = mk.read_mcnp(data_filename_resolver(expected))
         assert actual.has_equivalent_cells(expected), "Cells differ"

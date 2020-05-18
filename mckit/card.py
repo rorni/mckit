@@ -30,12 +30,23 @@ class Card(ABC):
     def has_original(self) -> bool:
         return 'original' in self.options.keys()
 
+    @property
+    def has_comment_above(self) -> bool:
+        return "comment_above" in self.options.keys()
+
     def mcnp_repr(self, pretty: bool = False) -> List[Text]:
         """Gets str representation of the card."""
         # if self.has_original:
-        #     return self.original  # TODO dvp: print leading comment as well
+        #     if self.has_comment_above:
+        #         return self.comment_above + '\n' + self.original
+        #     else:
+        #         return self.original
         # else:
         return print_card(self.mcnp_words(pretty))
+
+    @property
+    def comment_above(self) -> Optional[Text]:
+        return self.options.get('comment_above', None)
 
     @property
     def original(self) -> Optional[Text]:

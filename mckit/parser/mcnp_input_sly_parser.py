@@ -62,11 +62,11 @@ def from_stream(stream: TextIO) -> ParseResult:
 def from_text(text: str) -> ParseResult:
     sections: InputSections = parse_sections_text(text)
     if sections.data_cards:
-        text_compositios, text_transformations, _, _, _ = distribute_cards(sections.data_cards)
+        text_compositions, text_transformations, _, _, _ = distribute_cards(sections.data_cards)
         # type: List[TextCard], List[TextCard]
         transformations = parse_transformations(text_transformations)
         transformations_index = TransformationStrictIndex.from_iterable(transformations)
-        compositions = parse_compositions(text_compositios)
+        compositions = parse_compositions(text_compositions)
         compositions_index = CompositionStrictIndex.from_iterable(compositions)
     else:
         transformations = None
@@ -77,7 +77,7 @@ def from_text(text: str) -> ParseResult:
     surfaces = parse_surfaces(sections.surface_cards, transformations_index)
     surfaces_index = SurfaceStrictIndex.from_iterable(surfaces)
     cells, cells_index = parse_cells(sections.cell_cards, surfaces_index, compositions_index, transformations_index)
-    universe = produce_universes(cells)
+    universe = produce_universes(cells)  # TODO dvp: apply title from sections to the topmost universe
     return ParseResult(
         universe=universe,
         cells=cells,
@@ -101,7 +101,7 @@ def join_comments(
         text_cards: Iterable[TextCard]
 ):
     def _iter():
-        comment: Optional[TextCard] = None
+        comment: Optional[str] = None
         for card in text_cards:
             if card.is_comment:
                 assert comment is None, f"Comment is already set {comment[:70]}"
@@ -127,7 +127,7 @@ def parse_section(
             assert card, "Failed to create card"
             if comment:
                 card.options['comment_above'] = comment
-            card.options['original'] = text_card.text
+            # card.options['original'] = text_card.text
             yield card
 
     return iterator()

@@ -73,7 +73,7 @@ def test_init(cells, kwargs):
         assert c1.name() == c2.name()
         assert c1.shape == c2.shape
     assert u.name() == kwargs.get('name', 0)
-    assert u.verbose_name() == kwargs.get('verbose_name', kwargs.get('name', 0))
+    assert u.verbose_name == kwargs.get('verbose_name', str(kwargs.get('name', 0)))
     assert u._comment == kwargs.get('comment', None)
 
 
@@ -330,7 +330,7 @@ def test_copy(universe, case):
     uc = u.copy()
     assert uc is not u
     assert u.name() == uc.name()
-    assert u.verbose_name() == uc.verbose_name()
+    assert u.verbose_name == uc.verbose_name
     assert u._comment == uc._comment
     assert len(u._cells) == len(uc._cells)
     for c, cc in zip(u, uc):
@@ -532,7 +532,7 @@ def test_alone(universe, case):
     uc = u.alone()
     assert uc is not u
     assert 0 == uc.name()
-    assert u.verbose_name() == uc.verbose_name()
+    assert u.verbose_name == uc.verbose_name
     assert len(u._cells) == len(uc._cells)
     for c, cc in zip(u, uc):
         assert cc is not c
