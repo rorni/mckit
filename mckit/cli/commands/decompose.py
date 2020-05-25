@@ -54,8 +54,8 @@ def decompose(output, fill_descriptor_path, source, override):
         fill = c.options.pop('FILL', None)
         if fill:
             universe = fill['universe']
-            transform = fill.get('transform', None)
             words = [f'FILL={universe.name()}']
+            transform = fill.get('transform', None)
             if transform:
                 words[0] = '*' + words[0]
                 words.append('(')

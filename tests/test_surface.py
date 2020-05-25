@@ -241,23 +241,32 @@ class TestPlane:
         ([0, 1, 0], -2),
     ])
     def test_transform(self, transform, norm, offset):
-        ans_surf = Plane(norm, offset, transform=transform).apply_transformation()
-        surf = Plane(norm, offset)
-        surf_tr = surf.transform(transform).apply_transformation()
-        np.testing.assert_array_almost_equal(ans_surf._v, surf_tr._v)
-        np.testing.assert_almost_equal(ans_surf._k, surf_tr._k)
+        ans_surf = Plane(norm, offset, transform=transform)
+        surf = Plane(norm, offset).transform(transform)
+        assert surf == ans_surf, "Passing transformation through __init__ or method transform should be equivalent"
+        ans_surf_tr = ans_surf.apply_transformation()
+        surf_tr = surf.apply_transformation()
+        assert surf_tr == ans_surf_tr, "Surfaces with applied transformation also should be equivalent (invariant)"
 
     @pytest.mark.parametrize('norm, offset, options', [
         ([0, 0, 1], -2, {}),
         ([1, 0, 0], -2, {'name': 3}),
         ([0, 1, 0], -2, {'name': 4, 'comments': ['abc', 'def']}),
     ])
-    def test_pickle(self, norm, offset, options):
-        surf = Plane(norm, offset, **options)
+    def test_pickle(self, transform, norm, offset, options):
+        surf = Plane(norm, offset, transform=transform, **options)
         surf_un = pass_through_pickle(surf)
+        assert surf.is_close_to(surf_un)
         np.testing.assert_array_almost_equal(surf._v, surf_un._v)
         np.testing.assert_almost_equal(surf._k, surf_un._k)
+        if transform:
+            surf = surf.apply_transformation()
+            surf_un = pass_through_pickle(surf)
+            surf_un.is_close_to(surf)
+            np.testing.assert_array_almost_equal(surf._v, surf_un._v)
+            np.testing.assert_almost_equal(surf._k, surf_un._k)
         assert surf.options == surf_un.options
+
 
     surfs = [
         create_surface('PX', 5.0, name=1),                                 # 0
@@ -1315,3 +1324,26 @@ class TestGQuadratic:
         assert desc == answer
         desc = surface.round().mcnp_repr(pretty=False)
         assert desc == answer
+
+
+@pytest.mark.parametrize("a, b, expected", [
+    (create_surface('PX', 0), create_surface('PX', 1e-12), True),
+    (
+        create_surface('PX', 0).transform(Transformation(translation=[0, 0, 0])),
+        create_surface('PX', 0).transform(Transformation(translation=[0, 0, 1e-12])),
+        True
+    ),
+    (create_surface('PX', 0), create_surface('PX', 1e-11), False),
+    (
+        create_surface('PX', 0).transform(Transformation(translation=[0, 0, 0])),
+        create_surface('PX', 0).transform(Transformation(translation=[0, 0, 1e-11])),
+        False
+    ),
+])
+def test_plane_is_close(a: Plane, b: Plane, expected: bool) -> None:
+    if expected:
+        assert a.is_close_to(b)
+        assert b.is_close_to(a)
+    else:
+        assert not a.is_close_to(b)
+        assert not b.is_close_to(a)

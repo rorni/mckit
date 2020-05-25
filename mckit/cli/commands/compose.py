@@ -11,11 +11,12 @@ import tomlkit as tk
 import mckit as mk
 from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 from .common import save_mcnp
-from ...constants import MCNP_ENCODING
+from mckit.utils import filter_dict
 
 
 def compose(output, fill_descriptor_path, source, override):
-    envelopes = mk.read_mcnp(source, encoding=MCNP_ENCODING)
+    parse_result: ParseResult = from_file(source)
+    envelopes = parse_result.universe
     source = Path(source)
     universes_dir = source.absolute().parent
     assert universes_dir.is_dir()
@@ -28,6 +29,7 @@ def compose(output, fill_descriptor_path, source, override):
     for k, v in fill_descriptor.items():
         if isinstance(v, dict) and 'universe' in v:
             cell_name = int(k)
+            universe_name = int(v['universe'])
             transformation = v.get('transform', None)
             universe_path = Path(v['file'])
             if not universe_path.exists():
@@ -36,6 +38,7 @@ def compose(output, fill_descriptor_path, source, override):
                     raise FileNotFoundError(universe_path)
             parse_result: ParseResult = from_file(universe_path)
             universe: mk.Universe = parse_result.universe
+            universe.rename(name=universe_name)
             universes[cell_name] = (universe, transformation)
 
     comps = {}
@@ -51,27 +54,25 @@ def compose(output, fill_descriptor_path, source, override):
 
     for i, spec in universes.items():
         universe, transformation = spec
-        cell = cells_index[i]
-        assert cell.name() == i, "Check indexes"
-        universe.rename(name=i)
         universe.set_common_materials(common)
+        cell = cells_index[i]
+        cell.options = filter_dict(cell.options, "original")
         cell.options["FILL"] = {"universe": universe}
         if transformation is not None:
             if isinstance(transformation, tk.array):
                 transformation = np.fromiter(map(float, iter(transformation)), dtype=np.double)
                 transformation = mk.Transformation(
                     translation=transformation[:3],
-                    rotaion=transformation[3:],
+                    rotation=transformation[3:],
                     indegrees=True,
                 )
                 cell.options["FILL"]["transform"] = transformation
             else:
-                # TODO dvp: collect and use parse results to implement this: there's an index of transformations
+                # TODO dvp: use parse results to implement this: there's an index of transformations
                 raise NotImplementedError(
                     """\
                     Specification of fill with a universe with a named transformation "fill=<...> ( number )" occurs. \
                     Only anonymous transformations are implemented.\
                     """
                 )
-
     save_mcnp(envelopes, output, override)

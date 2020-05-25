@@ -60,6 +60,7 @@ class Parser(sly.Parser):
             compositions,
             comments=None,
             trailing_comments=None,
+            original=None,
     ):
         sly.Parser.__init__(self)
         self._cells = cells
@@ -68,6 +69,7 @@ class Parser(sly.Parser):
         self._compositions = compositions
         self._comments = comments
         self._trailing_comments = trailing_comments
+        self._original = original
 
     @property
     def cells(self):
@@ -93,9 +95,15 @@ class Parser(sly.Parser):
     def trailing_comments(self):
         return self._trailing_comments
 
+    @property
+    def original(self):
+        return self._original
+
     def build_cell(self, geometry, options):
         if self.trailing_comments:
             options['comment'] = self.trailing_comments
+        if self._original:
+            options['original'] = self.original
         return Body(geometry, **options)
 
     @_('INTEGER cell_material cell_spec')
@@ -373,9 +381,10 @@ def parse(
             [CellStrictIndex, SurfaceStrictIndex, TransformationStrictIndex, CompositionStrictIndex]
         )
     )
+    original = text
     text = pu.drop_c_comments(text)
     text, comments, trailing_comments = pu.extract_comments(text)
     lexer = Lexer()
-    parser = Parser(cells, surfaces, transformations, compositions, comments, trailing_comments)
+    parser = Parser(cells, surfaces, transformations, compositions, comments, trailing_comments, original)
     result = parser.parse(lexer.tokenize(text))
     return result

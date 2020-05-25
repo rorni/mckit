@@ -88,6 +88,9 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
+    def __iter__(self):
+        return iter(self.args)
+
     def __getstate__(self):
         return self.opc, self.args, self._hash
 
@@ -330,6 +333,8 @@ class Shape(_Shape):
             a = a.transform(tr)
             if isinstance(a, Surface):
                 a = a.apply_transformation()
+                # TODO dvp: check if call of apply_transformation() should be moved to caller site
+                #           it would be better to change only transformations instead of the surfaces
             args.append(a)
         return Shape(opc, *args)
 
@@ -560,11 +565,18 @@ class Body(Card):
         options = str(self.options) if self.options else ''
         return f"Body({self._shape}, {options})"
 
+    def __iter__(self):
+        return iter(self._shape)
+
     def __hash__(self):
         return Card.__hash__(self) ^ hash(self._shape)
 
     def __eq__(self, other):
         return Card.__eq__(self, other) and self._shape == other._shape
+
+    @property
+    def transformation(self):
+        return self.options.get('TRCL', None)
 
     def is_equivalent_to(self, other):
         result = self._shape == other._shape

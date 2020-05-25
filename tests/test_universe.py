@@ -7,10 +7,11 @@ from mckit.parser.mcnp_input_parser import read_mcnp
 from mckit.transformation import Transformation
 from mckit.box import Box
 from mckit.universe import *
-from mckit.body import Body, Shape
+from mckit.body import Card, Body, Shape
 from mckit.surface import Sphere, Surface, create_surface
 from mckit.material import Composition
 from mckit.utils.resource import filename_resolver
+from mckit.parser.mcnp_input_sly_parser import from_text
 
 data_filename_resolver = filename_resolver('tests')
 
@@ -72,7 +73,7 @@ def test_init(cells, kwargs):
         assert c1.name() == c2.name()
         assert c1.shape == c2.shape
     assert u.name() == kwargs.get('name', 0)
-    assert u.verbose_name() == kwargs.get('verbose_name', kwargs.get('name', 0))
+    assert u.verbose_name == kwargs.get('verbose_name', str(kwargs.get('name', 0)))
     assert u._comment == kwargs.get('comment', None)
 
 
@@ -329,7 +330,7 @@ def test_copy(universe, case):
     uc = u.copy()
     assert uc is not u
     assert u.name() == uc.name()
-    assert u.verbose_name() == uc.verbose_name()
+    assert u.verbose_name == uc.verbose_name
     assert u._comment == uc._comment
     assert len(u._cells) == len(uc._cells)
     for c, cc in zip(u, uc):
@@ -483,6 +484,7 @@ def test_set_common_materials(universe, case, common_mat):
                     assert comp is cm[comp]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('case, condition, answer_case, box', [
     (2, {}, 1002, Box([0, 0, 0], 20, 20, 20)),
     (2, {'cell': 1}, 1012, Box([0, 0, 0], 20, 20, 20)),
@@ -530,7 +532,7 @@ def test_alone(universe, case):
     uc = u.alone()
     assert uc is not u
     assert 0 == uc.name()
-    assert u.verbose_name() == uc.verbose_name()
+    assert u.verbose_name == uc.verbose_name
     assert len(u._cells) == len(uc._cells)
     for c, cc in zip(u, uc):
         assert cc is not c
@@ -609,3 +611,50 @@ def test_save_exception(universe, case, rename):
         unvs[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
         u.save('test.i')
+
+
+@pytest.mark.parametrize('case, expected', [
+    ("""0
+1 0 -1
+2 0  1
+
+1 1 so 1
+
+TR1 1 1 1
+    """, [1]),
+    ("""0
+1 0 -1
+2 0  1
+
+1 1 so 1
+
+TR1 1 1 1
+    """, [1]),
+    ("""0
+1 0 -1 -2
+2 0  1
+
+1 1 so 2
+2 2 so 3
+
+TR1 1 1 1
+TR2 -1 -1 -1
+    """, [1, 2]),
+#     ("""0       TODO dvp: doesn't work, check what's wrong with that on parsing
+# 1 0 -1 -2
+# 2 0  1 fill=1 3
+# 3 0  3 u=1
+#
+# 1 1 so 2
+# 2 2 so 3
+# 3 so 4
+#
+# TR1 1 1 1
+# TR2 -1 -1 -1
+# TR3  0 1 0
+#     """, [1, 2, 3]),
+])
+def test_collect_transformations(case, expected):
+    u = from_text(case).universe
+    actual = sorted(map(int, map(Card.name, collect_transformations(u))))
+    assert actual == expected
