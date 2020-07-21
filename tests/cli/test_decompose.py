@@ -72,7 +72,7 @@ def test_when_there_is_no_args(runner):
 def test_not_existing_mcnp_file(runner):
     result = runner.invoke(mckit, args=["decompose", "not-existing.imcnp"], catch_exceptions=False)
     assert result.exit_code > 0
-    assert "Path \"not-existing.imcnp\" does not exist" in result.output
+    assert "Path \'not-existing.imcnp\' does not exist" in result.output
 
 
 @pytest.mark.parametrize("source, expected", [
