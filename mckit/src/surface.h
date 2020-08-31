@@ -9,6 +9,8 @@
 #define SURFACE_SUCCESS  0
 #define SURFACE_FAILURE -1
 
+#define BOX_PLANE_NUM 6
+
 typedef struct Surface      Surface;
 typedef struct Plane        Plane;
 typedef struct Sphere       Sphere;
@@ -16,8 +18,10 @@ typedef struct Cylinder     Cylinder;
 typedef struct Cone         Cone;
 typedef struct Torus        Torus;
 typedef struct GQuadratic   GQuadratic;
+typedef struct RCC          RCC;
+typedef struct BOX          BOX;
 
-enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC};
+enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC, MRCC, MBOX};
 
 // surface common data
 struct Surface {
@@ -72,6 +76,18 @@ struct GQuadratic {
     double factor;
 };
 
+struct RCC {
+    Surface base;
+    Cylinder * cyl;
+    Plane * top;
+    Plane * bot;
+};
+
+struct BOX {
+    Surface base;
+    Plane* planes[BOX_PLANE_NUM];
+};
+
 // Methods //
 
 int plane_init(
@@ -116,6 +132,18 @@ int gq_init(
     const double * v,
     double k,
     double factor
+);
+
+int RCC_init(
+    RCC * surf,
+    Cylinder * cyl,
+    Plane * top, 
+    Plane * bot
+);
+
+int BOX_init(
+    BOX * surf, 
+    Plane ** planes
 );
 
 // Tests senses of points with respect to the surface.

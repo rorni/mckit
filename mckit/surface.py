@@ -5,17 +5,17 @@ from . import constants
 from .utils.tolerance import MaybeClose, tolerance_estimator
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import (
-    Plane as _Plane,
-    Sphere as _Sphere,
-    Cone as _Cone,
-    Cylinder as _Cylinder,
-    Torus as _Torus,
-    GQuadratic as _GQuadratic,
-    ORIGIN, EX, EY, EZ
-)
+from .geometry import Plane      as _Plane,    \
+                      Sphere     as _Sphere,   \
+                      Cone       as _Cone,     \
+                      Cylinder   as _Cylinder, \
+                      Torus      as _Torus,    \
+                      GQuadratic as _GQuadratic, \
+                      RCC        as _RCC, \
+                      BOX        as _BOX, \
+                      ORIGIN, EX, EY, EZ
 from mckit.box import GLOBAL_BOX
-from .printer import add_float
+from .printer import add_float, pretty_float
 from .transformation import Transformation
 from .utils import *
 from .card import Card
@@ -31,6 +31,8 @@ __all__ = [
     'GQuadratic',
     'Cylinder',
     'Surface',
+    'RCC',
+    'BOX',
     'ORIGIN',
     'EX',
     'EY',
@@ -125,6 +127,25 @@ def create_surface(kind, *params, **options):
     elif kind[0] == 'T':
         x0, y0, z0, R, a, b = params
         return Torus([x0, y0, z0], axis, R, a, b, **options)
+    # ---------- Macrobodies ---------------
+    elif kind == 'RPP':
+        xmin, xmax, ymin, ymax, zmin, zmax = params
+        center = [xmin, ymin, zmin]
+        dirx = [xmax - xmin, 0, 0]
+        diry = [0, ymax - ymin, 0]
+        dirz = [0, 0, zmax - zmin]
+        return BOX(center, dirx, diry, dirz, **options)
+    elif kind == 'BOX':
+        center = params[:3]
+        dirx = params[3:6]
+        diry = params[6:9]
+        dirz = params[9:]
+        return BOX(center, dirx, diry, dirz, **options)
+    elif kind == 'RCC':
+        center = params[:3]
+        axis = params[3:6]
+        radius = params[6]
+        return RCC(center, axis, radius, **options)
     # ---------- Axisymmetric surface defined by points ------
     else:
         if len(params) == 2:
@@ -199,7 +220,6 @@ class Surface(Card, MaybeClose):
     projection(p)
         Gets projection of point p on the surface.
     """
-
     def __init__(self, **options):
         if 'transform' in options and not options['transform']:  # empty transformation option
             del options['transform']
@@ -317,7 +337,226 @@ def internalize_ort(v: np.ndarray) -> Tuple[np.ndarray, bool]:
     return v, False
 
 
-# noinspection PyProtectedMember,PyTypeChecker
+class RCC(Surface, _RCC):
+    def __init__(self, center, direction, radius, **options):
+        center = np.array(center)
+        direction = np.array(direction)
+        opt_surf = options.copy()
+        opt_surf['name'] = 1
+        norm = np.array(direction) / np.linalg.norm(direction)
+        cyl = Cylinder(center, norm, radius, **opt_surf).apply_transformation()
+        center2 = center + direction
+        offset2 = -np.dot(norm, center2)
+        offset3 = np.dot(norm, center)
+        opt_surf['name'] = 2
+        plane2 = Plane(norm, offset2, **opt_surf).apply_transformation()
+        opt_surf['name'] = 3
+        plane3 = Plane(-norm, offset3, **opt_surf).apply_transformation()
+        _RCC.__init__(self, cyl, plane2, plane3)
+        options.pop('transform', None)
+        Surface.__init__(self, **options)
+        self._hash = hash(cyl) ^ hash(plane2) ^ hash(plane3)
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        if not isinstance(other, RCC):
+            return False
+        args_this = self.surfaces
+        args_other = other.surfaces
+        return args_this == args_other
+
+    def surface(self, number):
+        args = self.surfaces
+        if 1 <= number <= len(args):
+            return args[number - 1]
+        else:
+            raise ValueError("There is no such surface in macrobody: {0}".format(number))
+
+    def get_params(self):
+        args = self.surfaces
+        for a in args:
+            print(a.mcnp_repr())
+        center = args[0]._pt - args[2]._k * args[0]._axis * np.dot(args[0]._axis, args[2]._v)
+        direction = -(args[1]._k + args[2]._k) * args[1]._v
+        radius = args[0]._radius
+        return center, direction, radius
+
+    def mcnp_words(self, pretty=False):
+        words = Surface.mcnp_words(self, pretty)
+        words.append('RCC')
+        words.append(' ')
+        center, direction, radius = self.get_params()
+        values = list(center)
+        values.extend(direction)
+        values.append(radius)
+        for v in values:
+            fd = significant_digits(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+            words.append(pretty_float(v, fd))
+            words.append(' ')
+        return words
+
+    def transform(self, tr):
+        """Transforms the shape.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+
+        Returns
+        -------
+        result : Shape
+            New shape.
+        """
+        center, direction, radius = self.get_params()
+        return RCC(center, direction, radius, transform=tr)
+
+    def __getstate__(self):
+        surf_state = Surface.__getstate__(self)
+        args = self.surfaces
+        return args, self._hash, surf_state
+
+    def __setstate__(self, state):
+        args, hash_value, surf_state = state
+        Surface.__setstate__(self, surf_state)
+        _RCC.__init__(self, *args)
+        self._hash = hash_value
+
+    def copy(self):
+        center, direction, radius = self.get_params()
+        return RCC(center, direction, radius, **self.options)
+
+
+class BOX(Surface, _BOX):
+    """Macrobody BOX surface.
+
+    Parameters
+    ----------
+    """
+    def __init__(self, center, dirx, diry, dirz, **options):
+        dirx = np.array(dirx)
+        diry = np.array(diry)
+        dirz = np.array(dirz)
+        center = np.array(center)
+        center2 = center + dirx + diry + dirz
+        lenx = np.linalg.norm(dirx)
+        leny = np.linalg.norm(diry)
+        lenz = np.linalg.norm(dirz)
+        normx = dirx / lenx
+        normy = diry / leny
+        normz = dirz / lenz
+        offsetx = np.dot(normx, center)
+        offsety = np.dot(normy, center)
+        offsetz = np.dot(normz, center)
+        offset2x = -np.dot(normx, center2)
+        offset2y = -np.dot(normy, center2)
+        offset2z = -np.dot(normz, center2)
+        opt_surf = options.copy()
+        opt_surf['name'] = 1
+        surf1 = Plane(normx, offset2x, **opt_surf).apply_transformation()
+        opt_surf['name'] = 2
+        surf2 = Plane(-normx, offsetx, **opt_surf).apply_transformation()
+        opt_surf['name'] = 3
+        surf3 = Plane(normy, offset2y, **opt_surf).apply_transformation()
+        opt_surf['name'] = 4
+        surf4 = Plane(-normy, offsety, **opt_surf).apply_transformation()
+        opt_surf['name'] = 5
+        surf5 = Plane(normz, offset2z, **opt_surf).apply_transformation()
+        opt_surf['name'] = 6
+        surf6 = Plane(-normz, offsetz, **opt_surf).apply_transformation()
+        _BOX.__init__(self, surf1, surf2, surf3, surf4, surf5, surf6)
+        options.pop('transform', None)
+        Surface.__init__(self, **options)
+        self._hash = hash(surf1) ^ hash(surf2) ^ hash(surf3) ^ hash(surf4) ^ hash(surf5) ^ hash(surf6)
+
+    def surface(self, number):
+        args = self.surfaces
+        if 1 <= number <= len(args):
+            return args[number - 1]
+        else:
+            raise ValueError("There is no such surface in macrobody: {0}".format(number))
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        if not isinstance(other, BOX):
+            return False
+        args_this = self.surfaces
+        args_other = other.surfaces
+        return args_this == args_other
+
+    @staticmethod
+    def _get_plane_intersection(s1, s2, s3):
+        matrix = np.zeros((3, 3))
+        matrix[0, :] = -s1._v
+        matrix[1, :] = -s2._v
+        matrix[2, :] = -s3._v
+        vector = np.array([s1._k, s2._k, s3._k])
+        return np.linalg.solve(matrix, vector)
+
+    def get_params(self):
+        args = self.surfaces
+        center = self._get_plane_intersection(args[1], args[3], args[5])
+        point2 = self._get_plane_intersection(args[0], args[2], args[4])
+        normx = args[0]._v
+        normy = args[2]._v
+        normz = args[4]._v
+        diag = point2 - center
+        dirx = np.dot(normx, diag) * normx
+        diry = np.dot(normy, diag) * normy
+        dirz = np.dot(normz, diag) * normz
+        return center, dirx, diry, dirz
+
+    def mcnp_words(self, pretty=False):
+        words = Surface.mcnp_words(self, pretty)
+        words.append('BOX')
+        words.append(' ')
+        center, dirx, diry, dirz = self.get_params()
+        values = list(center)
+        values.extend(dirx)
+        values.extend(diry)
+        values.extend(dirz)
+        for v in values:
+            fd = significant_digits(v, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
+            words.append(pretty_float(v, fd))
+            words.append(' ')
+        return words
+
+    def transform(self, tr):
+        """Transforms the shape.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+
+        Returns
+        -------
+        result : Shape
+            New shape.
+        """
+        center, dirx, diry, dirz = self.get_params()
+        return BOX(center, dirx, diry, dirz, transform=tr)
+
+    def __getstate__(self):
+        surf_state = Surface.__getstate__(self)
+        args = self.surfaces
+        return args, self._hash, surf_state
+
+    def __setstate__(self, state):
+        args, hash_value, surf_state = state
+        Surface.__setstate__(self, surf_state)
+        _BOX.__init__(self, *args)
+        self._hash = hash_value
+
+    def copy(self):
+        center, dirx, diry, dirz = self.get_params()
+        return BOX(center, dirx, diry, dirz, **self.options)
+
+
 class Plane(Surface, _Plane):
     """Plane surface class.
 
@@ -450,7 +689,6 @@ class Sphere(Surface, _Sphere):
             transform = tr - transformation to be applied to the sphere being
                              created. Transformation instance.
     """
-
     def __init__(self, center, radius, **options):
         center = np.asarray(center, dtype=np.float)
         radius = float(radius)
@@ -571,7 +809,6 @@ class Cylinder(Surface, _Cylinder):
             transform = tr - transformation to be applied to the cylinder being
                              created. Transformation instance.
     """
-
     def __init__(self, pt, axis, radius, assume_normalized=False, **options):
         axis = np.asarray(axis, dtype=np.float)
         if not assume_normalized:
@@ -709,7 +946,6 @@ class Cone(Surface, _Cone):
             transform = tr - transformation to be applied to the cone being
                              created. Transformation instance.
     """
-
     def __init__(
             self,
             apex: ndarray,

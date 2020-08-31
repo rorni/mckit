@@ -122,6 +122,8 @@ def pretty_float(value, frac_digits: Optional[int] = None) -> str:
             constants.FLOAT_TOLERANCE,
             resolution=constants.FLOAT_TOLERANCE,
         )
+    if value == abs(value):
+        value = abs(value)
     decades = get_decades(value)
     format_f = '{{0:.{0}f}}'.format(max(frac_digits, 0))
     format_e = '{{0:.{0}e}}'.format(max(frac_digits + decades, 0))

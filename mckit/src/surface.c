@@ -66,6 +66,64 @@ double cylinder_func(
     return cblas_ddot(NDIM, a, 1, a, 1) - pow(an, 2) - pow(data->radius, 2);
 }
 
+double RCC_func(
+    unsigned int n,
+    const double * x,
+    double * grad, 
+    void * f_data
+)
+{
+    RCC * data = (RCC *) f_data;
+    double gcyl[NDIM];
+    double gtop[NDIM];
+    double gbot[NDIM];
+    for (int i = 0; i < NDIM; ++i) {
+        gcyl[i] = 0;
+        gtop[i] = 0;
+        gbot[i] = 0;
+    }
+    double cyl_obj = cylinder_func(n, x, gcyl, data->cyl);
+    double top_obj = plane_func(n, x, gtop, data->top);
+    double bot_obj = plane_func(n, x, gbot, data->bot);
+
+    double tot_wgt = abs(top_obj + bot_obj);
+    double top_wgt = abs(top_obj) / tot_wgt;
+    double bot_wgt = abs(bot_obj) / tot_wgt;
+
+    double h = abs(data->top->offset + data->bot->offset);
+    if (grad != NULL) {
+        cblas_daxpy(NDIM, top_wgt, gtop, 1, grad, 1);
+        cblas_daxpy(NDIM, bot_wgt, gbot, 1, grad, 1);
+        cblas_daxpy(NDIM, 1, gcyl, 1, grad, 1);
+    }
+    return max(cyl_obj, max(top_obj, bot_obj));
+}
+
+double BOX_func(
+    unsigned int n,
+    const double * x,
+    double * grad, 
+    void * f_data
+)
+{
+    BOX * data = (BOX *) f_data;
+    double gp[NDIM * BOX_PLANE_NUM];
+    double result[BOX_PLANE_NUM];
+    for (int i = 0; i < NDIM * BOX_PLANE_NUM; ++i) gp[i] = 0;
+    
+    int index = 0;
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        result[i] = plane_func(n, x, gp + i * NDIM, data->planes[i]);
+        if (result[i] > result[index]) index = i;
+    }
+
+    if (grad != NULL) {
+        cblas_dcopy(NDIM, gp + index * NDIM, 1, grad, 1);
+    }
+
+    return result[index];
+}
+
 double cone_func(
     unsigned int n,
     const double * x,
@@ -166,6 +224,12 @@ double surface_func(
         case GQUADRATIC:
             fval = gq_func(n, x, grad, f_data);
             break;
+        case MRCC:
+            fval = RCC_func(n, x, grad, f_data);
+            break;
+        case MBOX:
+            fval = BOX_func(n, x, grad, f_data);
+            break;
         default:
             fval = 0;
             break;
@@ -221,6 +285,34 @@ int cylinder_init(
     for (i = 0; i < NDIM; ++i) {
         surf->point[i] = point[i];
         surf->axis[i] = axis[i];
+    }
+    return SURFACE_SUCCESS;
+}
+
+int RCC_init(
+    RCC * surf,
+    Cylinder * cyl,
+    Plane * top, 
+    Plane * bot
+) 
+{
+    surface_INIT((Surface *) surf);
+    surf->base.type = MRCC;
+    surf->cyl = cyl;
+    surf->top = top;
+    surf->bot = bot;
+    return SURFACE_SUCCESS;
+}
+
+int BOX_init(
+    BOX * surf, 
+    Plane ** planes
+)
+{
+    surface_INIT((Surface *) surf);
+    surf->base.type = MBOX;
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        surf->planes[i] = planes[i];
     }
     return SURFACE_SUCCESS;
 }

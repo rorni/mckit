@@ -205,9 +205,10 @@ class Shape(_Shape):
             return True
         if len(self.args) != len(other.args):
             return False
-        self_groups = {k: list(v) for k, v in groupby(self.args, key=hash)}
-        other_groups = {k: list(v) for k, v in groupby(other.args, key=hash)}
+        self_groups = {k: list(v) for k, v in groupby(sorted(self.args, key=hash), key=hash)}
+        other_groups = {k: list(v) for k, v in groupby(sorted(other.args, key=hash), key=hash)}
         for hval, entities in self_groups.items():
+            flag = False
             if hval not in other_groups.keys():
                 return False
             if len(entities) != len(other_groups[hval]):
@@ -217,7 +218,13 @@ class Shape(_Shape):
                     if not (se == oe):
                         break
                 else:
-                    return True
+                    flag = True
+                    break
+            if not flag:
+                return False
+
+        if flag:
+            return True
         return False
 
     def __hash__(self):

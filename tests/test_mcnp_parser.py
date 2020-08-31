@@ -179,13 +179,19 @@ def test_mcnp_lexer(lex_file, expected):
             },
             4: {
                 'reference': 1, 'RHO': -3.0, 'name': 4
+            },
+            5: {
+                'geometry': [5, 'C', 6, 'C', 'I'],
+                'IMPN': 1, 'name': 5
             }
         },
         'surfaces': {
             1: {'kind': 'SX', 'params': [4, 5], 'transform': 1, 'name': 1},
             2: {'kind': 'PX', 'params': [1], 'modifier': '*', 'name': 2},
             3: {'kind': 'S', 'params': [1, 2, -3, 4], 'name':3},
-            4: {'kind': 'PY', 'params': [-5], 'name': 4}
+            4: {'kind': 'PY', 'params': [-5], 'name': 4},
+            5: {'name': 5, 'kind': 'RCC', 'params': [0, 0, 0, 1, 0, 0, 5]},
+            6: {'name': 6, 'kind': 'BOX', 'params': [-1, -1, -1, 2, 0, 0, 0, 2, 0, 0, 0, 2]}
         },
         'data': {
             'MODE': ['N', 'P'],
