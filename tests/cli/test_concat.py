@@ -59,7 +59,7 @@ def test_when_there_is_no_args(runner):
 def test_not_existing_file(runner):
     result = runner.invoke(mckit, args=["concat", "not-existing.txt"], catch_exceptions=False)
     assert result.exit_code > 0
-    assert "Path \"not-existing.txt\" does not exist" in result.output
+    assert "Path \'not-existing.txt\' does not exist" in result.output
 
 
 def test_when_only_part_is_specified(runner):

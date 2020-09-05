@@ -44,14 +44,14 @@ def test_when_there_is_no_args(runner):
 def test_not_existing_envelopes_file(runner):
     result = runner.invoke(mckit, args=["compose", "not-existing.imcnp"], catch_exceptions=False)
     assert result.exit_code > 0
-    assert "Path \"not-existing.imcnp\" does not exist" in result.output
+    assert "Path \'not-existing.imcnp\' does not exist" in result.output
 
 
 def test_when_output_is_not_specified(runner):
     source = data_filename_resolver("data/simple_cubes.mcnp")
     result = runner.invoke(mckit, args=["compose", str(source)], catch_exceptions=False)
     assert result.exit_code > 0
-    assert "Missing option \"--output\"" in result.output
+    assert "Missing option \'--output\'" in result.output
 
 
 @pytest.mark.parametrize("source, output, expected", [
