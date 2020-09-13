@@ -4,7 +4,20 @@
 #include "mkl.h"
 #include "surface.h"
 
+// dvp:
+// Don't use "standard" macro "max": it can cause not obvious effects.
+// To avoid this, libraries usually undefine it, we'd better follow this
+// practice.
+#ifdef max
+# undef max
+#endif
+
 #define surface_INIT(surf) (surf)->last_box = 0; (surf)->last_box_result = 0;
+
+static double _max(double a, double b)
+{
+    return (a < b)? b : a;
+}
 
 /*
  *  In all sufr_func functions the first argument is space dimension. This argument introduced
@@ -96,7 +109,7 @@ double RCC_func(
         cblas_daxpy(NDIM, bot_wgt, gbot, 1, grad, 1);
         cblas_daxpy(NDIM, 1, gcyl, 1, grad, 1);
     }
-    return max(cyl_obj, max(top_obj, bot_obj));
+    return _max(cyl_obj, _max(top_obj, bot_obj));
 }
 
 double BOX_func(
