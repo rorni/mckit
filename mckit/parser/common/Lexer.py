@@ -7,7 +7,7 @@ from sly.lex import LexError
 class Lexer(sly.Lexer):
     tokens = set()                                          # Should be defined in all subclasses of sly.Lexer
     literals = {':', '(', ')'}                              # ---
-    ignore = ' \t'                                          # most common for MCNP text parsers
+    ignore = ' \t&'                                          # most common for MCNP text parsers
     reflags = re.IGNORECASE | re.MULTILINE                  # ---
 
     @staticmethod
