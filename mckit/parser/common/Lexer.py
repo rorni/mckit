@@ -1,18 +1,21 @@
 import re
 import sly
+# noinspection PyProtectedMember
 from sly.lex import LexError
 
+IS_INTEGER_REGEX = re.compile(r"[-+]?\d+$")
 
-# noinspection PyUnresolvedReferences,SpellCheckingInspection
+
+# noinspection PyUnresolvedReferences,SpellCheckingInspection,PyTypeChecker
 class Lexer(sly.Lexer):
-    tokens = set()                                          # Should be defined in all subclasses of sly.Lexer
-    literals = {':', '(', ')'}                              # ---
-    ignore = ' \t&'                                          # most common for MCNP text parsers
-    reflags = re.IGNORECASE | re.MULTILINE                  # ---
+    tokens = set()  # Should be defined in all subclasses of sly.Lexer
+    literals = {':', '(', ')'}  # ---
+    ignore = ' \t&'  # most common for MCNP text parsers
+    reflags = re.IGNORECASE | re.MULTILINE  # ---
 
     @staticmethod
     def on_float(token, use_zero=True, use_integer=True):
-        if use_integer and '.' not in token.value:
+        if use_integer and IS_INTEGER_REGEX.match(token.value) is not None:
             token = Lexer.on_integer(token, use_zero)
         else:
             token.value = float(token.value)
@@ -33,8 +36,6 @@ class Lexer(sly.Lexer):
 
     def get_start_of_line(self, token):
         prev_cr = self.text.rfind('\n', 0, token.index)
-        # if prev_cr < 0:
-        #     prev_cr = 0
         return prev_cr
 
     def get_end_of_line(self, token):
@@ -58,6 +59,6 @@ class Lexer(sly.Lexer):
         column = Lexer.column(token, prev_cr)
         msg = \
             f"Illegal character '{token.value[0]}', at line {self.lineno}, column {self.find_column(token)}\n" + \
-            f"{self.text[prev_cr + 1 : next_cr]}\n" + \
+            f"{self.text[prev_cr + 1: next_cr]}\n" + \
             " " * (column - 1) + "^"
         raise LexError(msg, token.value, token.index)

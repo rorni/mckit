@@ -112,6 +112,11 @@ def test_parser_with_materials(text, expected, surfaces, compositions):
             create_cell(1, [1], **{"VOL": 1.0}),
             [1],
     ),
+    (
+            "1 0 1 U=200 PMT=0",
+            create_cell(1, [1], **{"U": 200, "PMT": 0}),
+            [1],
+    ),
 ])
 def test_parser_with_attributes(text, expected, surfaces):
     surfaces_index = create_dummy_surface_index(surfaces)
