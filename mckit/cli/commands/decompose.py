@@ -13,6 +13,7 @@ import logging
 from pathlib import Path
 import tomlkit as tk
 from mckit import Universe
+from mckit.universe import collect_transformations
 from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 from .common import save_mcnp
 
@@ -47,6 +48,7 @@ def decompose(output, fill_descriptor_path, source, override):
     model: Universe = parse_result.universe
     if model.comment:
         fill_descriptor.append("comment", model.comment)
+    named_transformations = list(collect_transformations(model))
     fill_descriptor.append("created", datetime.now())
     fill_descriptor.add(tk.nl())
     already_processed_universes = set()
@@ -84,6 +86,13 @@ def decompose(output, fill_descriptor_path, source, override):
                 save_mcnp(universe, output / fn, override)
                 logger.debug("The universe %s has been saved to %s", universe_name, fn)
                 already_processed_universes.add(universe_name)
+
+    named_transformations_descriptor = tk.table()
+    named_transformations = sorted(named_transformations, key=lambda x: x.name())
+    for t in named_transformations:
+        named_transformations_descriptor[f"tr{t.name()}"] = tk.array(t.mcnp_words()[2:][1::2])
+    fill_descriptor.append("named_transformations", named_transformations_descriptor)
+    fill_descriptor.add(tk.nl())
 
     with open(output / fill_descriptor_path, "w") as fid:
         res = tk.dumps(fill_descriptor)

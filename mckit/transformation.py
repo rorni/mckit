@@ -17,6 +17,7 @@ IDENTITY_ROTATION = np.eye(3)
 
 ANGLE_TOLERANCE = 0.001
 COS_TH = np.sin(ANGLE_TOLERANCE)
+ZERO_COS_TOLERANCE = 2.0e-16
 
 
 class Transformation(Card,  MaybeClose):
@@ -81,30 +82,35 @@ class Transformation(Card,  MaybeClose):
             u = np.asarray(rotation, dtype=float)
             if indegrees:
                 u = np.cos(np.multiply(u, np.pi / 180.0))
+            zero_cosines_idx = np.abs(u) < ZERO_COS_TOLERANCE
+            u[zero_cosines_idx] = 0.0
             # TODO: Implement creation from reduced rotation parameter set.
             if u.shape == (9,):
                 u = u.reshape((3, 3), order='F')
             if u.shape != (3, 3):
                 raise ValueError(f'Transaction #{self.name()}: wrong number of rotation parameters.')
-            # normalize auxiliary CS basis and orthogonalize it.
-            u, r = np.linalg.qr(u)
-            # QR decomposition returns orthogonal matrix u - which is corrected
-            # rotation matrix, and upper triangular matrix r. On the main
-            # diagonal r contains lengths of corresponding (negative if the
-            # corrected vector is directed opposite to the initial one) input
-            # basis vectors. Other elements are cosines of angles between
-            # different basis vectors.
+            if np.array_equal(u, IDENTITY_ROTATION):
+                u = IDENTITY_ROTATION
+            else:
+                # normalize auxiliary CS basis and orthogonalize it.
+                u, r = np.linalg.qr(u)
+                # QR decomposition returns orthogonal matrix u - which is corrected
+                # rotation matrix, and upper triangular matrix r. On the main
+                # diagonal r contains lengths of corresponding (negative if the
+                # corrected vector is directed opposite to the initial one) input
+                # basis vectors. Other elements are cosines of angles between
+                # different basis vectors.
 
-            # cos(pi/2 - ANGLE_TOLERANCE) = sin(ANGLE_TOLERANCE) - maximum
-            # value of cosine of angle between two basis vectors.
-            if abs(r[0, 1]) > COS_TH or abs(r[0, 2]) > COS_TH or \
-                    abs(r[1, 2]) > COS_TH:
-                raise ValueError(f'Transaction #{self.name()}: non-orthogonality is greater than 0.001 rad.')
-            # To preserve directions of corrected basis vectors.
-            for i in range(3):
-                u[:, i] = u[:, i] * np.sign(r[i, i])
+                # cos(pi/2 - ANGLE_TOLERANCE) = sin(ANGLE_TOLERANCE) - maximum
+                # value of cosine of angle between two basis vectors.
+                if abs(r[0, 1]) > COS_TH or abs(r[0, 2]) > COS_TH or \
+                        abs(r[1, 2]) > COS_TH:
+                    raise ValueError(f'Transaction #{self.name()}: non-orthogonality is greater than 0.001 rad.')
+                # To preserve directions of corrected basis vectors.
+                for i in range(3):
+                    u[:, i] = u[:, i] * np.sign(r[i, i])
         self._u = u
-        self._t = -np.dot(u, translation) if inverted else translation.copy()
+        self._t = -np.dot(u, translation) if inverted and u is not IDENTITY_ROTATION else translation.copy()
         self._hash = make_hash(self._t, self._u)
 
     # @staticmethod
@@ -138,10 +144,10 @@ class Transformation(Card,  MaybeClose):
             words.append(' ')
             words.append("{:.10g}".format(v))  # TODO dvp: check if precision 13 is necessary
             # add_float(words, v, pretty)
-        for v in self._u.transpose().ravel():
-            words.append(' ')
-            words.append("{:.10g}".format(np.arccos(v) * 180 / np.pi))
-            # add_float(words, v, pretty)
+        if self._u is not IDENTITY_ROTATION:
+            for v in self._u.transpose().ravel():
+                words.append(' ')
+                words.append("{:.10g}".format(np.arccos(v) * 180 / np.pi))
         return words
 
     def __hash__(self):

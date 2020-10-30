@@ -1,6 +1,8 @@
 import logging
 import click_log
 import pytest
+import numpy as np
+from numpy.testing import assert_array_equal
 from pathlib import Path
 import tomlkit as tk
 from click.testing import CliRunner
@@ -200,4 +202,29 @@ def test_anonymous_transformation(runner):
         with open(output / "fill-descriptor.toml") as fid:
             descriptor = tk.parse(fid.read())
             spec = descriptor['2']['transform']
-            assert float(spec[1]) == -1.0, "Fill descriptor is wrong"
+            assert len(spec) == 3
+            spec1 = np.fromiter(map(float, spec), dtype=np.float)
+            assert_array_equal(spec1, [0.0, -1.0, 0.0], f"Fill descriptor {spec} is wrong")
+
+
+def test_named_transformation(runner):
+    source = data_filename_resolver("cli/data/cubes_with_fill_named_transforms.mcnp")
+    with runner.isolated_filesystem() as prefix:
+        output = Path(prefix) / "cubes_with_fill_named_transforms.universes"
+        result = runner.invoke(
+            mckit,
+            args=["decompose", source],
+            catch_exceptions=False
+        )
+        assert result.exit_code == 0, "Should success"
+        with open(output / "fill-descriptor.toml") as fid:
+            descriptor = tk.parse(fid.read())
+            spec = descriptor['2']['transform']
+            assert spec == 1, f"Fill descriptor {spec} is wrong"
+            transforms = descriptor['named_transformations']
+            assert 'tr1' in transforms, "Should store transformation tr1"
+            transform = transforms['tr1']
+            transform_params = np.fromiter(map(float, transform), dtype=np.float)
+            assert transform_params.size == 3, "Only translation is specified for tr1"
+            assert_array_equal(transform_params, [0, -1.0, 0]), f"Invalid transform {transform}"
+            assert transforms is not None

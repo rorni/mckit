@@ -6,6 +6,8 @@ from pathlib import Path
 import tomlkit as tk
 from click.testing import CliRunner
 import mckit as mk
+from mckit.parser import from_file, ParseResult
+from mckit.universe import collect_transformations
 from mckit.utils.resource import filename_resolver
 
 # skip the pylint warning on fixture names
@@ -63,11 +65,46 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
         result = runner.invoke(mckit, args=['compose', "--output", output, source], catch_exceptions=False)
         assert result.exit_code == 0, "Should success using fill_descriptor in the same directory as source file"
         assert Path(output).exists(), f"Should create file {output} file in {test_folder}"
-        # text = Path(output).read_text()
-        # assert "simple" in text
-        actual = mk.read_mcnp(output)
-        expected = mk.read_mcnp(data_filename_resolver(expected))
-        assert actual.has_equivalent_cells(expected), "Cells differ"
+        actual = from_file(output)
+        expected = from_file(data_filename_resolver(expected))
+        assert actual.universe.has_equivalent_cells(expected.universe), "Cells differ"
+
+
+@pytest.mark.parametrize("source, output, expected", [
+    ("data/cubes_with_fill_transforms.universes/envelopes.i", "cubes_with_fill_transforms.i", "data/cubes_with_fill_transforms.mcnp"),
+])
+def test_anonymous_transforms(runner, source, output, expected):
+    source = data_filename_resolver(source)
+    with runner.isolated_filesystem() as test_folder:
+        result = runner.invoke(mckit, args=['compose', "--output", output, source], catch_exceptions=False)
+        assert result.exit_code == 0, "Should success using fill_descriptor in the same directory as source file"
+        assert Path(output).exists(), f"Should create file {output} file in {test_folder}"
+        actual = from_file(output)
+        expected = from_file(data_filename_resolver(expected))
+        assert actual.universe.has_equivalent_cells(expected.universe), "Cells differ"
+
+
+@pytest.mark.parametrize("source, output, expected", [
+    (
+        "data/cubes_with_fill_named_transforms.universes/envelopes.i",
+        "cubes_with_fill_named_transforms.i",
+        "data/cubes_with_fill_named_transforms.mcnp"
+    ),
+])
+def test_named_transforms(runner, source, output, expected):
+    source = data_filename_resolver(source)
+    with runner.isolated_filesystem() as test_folder:
+        result = runner.invoke(mckit, args=['compose', "--output", output, source], catch_exceptions=False)
+        assert result.exit_code == 0, "Should success using fill_descriptor in the same directory as source file"
+        assert Path(output).exists(), f"Should create file {output} file in {test_folder}"
+        actual = from_file(output)
+        expected = from_file(data_filename_resolver(expected))
+        assert actual.universe.has_equivalent_cells(expected.universe), "Cells differ"
+        actual_transformations = collect_transformations(actual.universe)
+        expected_transformations = collect_transformations(expected.universe)
+        assert actual_transformations == expected_transformations, "The transformations should be the same"
+
+
 
 
 # TODO dvp: add tests for both anonimous and numbered form of universe transformation spectification
