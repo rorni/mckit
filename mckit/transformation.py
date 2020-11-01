@@ -110,7 +110,14 @@ class Transformation(Card,  MaybeClose):
                 for i in range(3):
                     u[:, i] = u[:, i] * np.sign(r[i, i])
         self._u = u
-        self._t = -np.dot(u, translation) if inverted and u is not IDENTITY_ROTATION else translation.copy()
+        if inverted:
+            if u is IDENTITY_ROTATION:
+                self._t = -translation
+            else:
+                self._t = -np.dot(u, translation)
+        else:
+            self._t = translation.copy()
+        # self._t = -np.dot(u, translation) if inverted  else translation.copy()
         self._hash = make_hash(self._t, self._u)
 
     def mcnp_words(self, pretty=False):
