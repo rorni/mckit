@@ -113,23 +113,6 @@ class Transformation(Card,  MaybeClose):
         self._t = -np.dot(u, translation) if inverted and u is not IDENTITY_ROTATION else translation.copy()
         self._hash = make_hash(self._t, self._u)
 
-    # @staticmethod
-    # def _get_precision(u, t, box, tol):
-    #     u1 = u.transpose()
-    #     u = 180.0 / np.pi * np.arccos(u)
-    #     t1 = t
-    #     prec = np.finfo(float).precision
-    #     while True:
-    #         u2 = np.cos(np.pi * np.round(u, prec) / 180.0).transpose()
-    #         t2 = np.round(t, prec)
-    #         if np.linalg.norm(t2 - t1) >= tol:
-    #             break
-    #         diffs = [np.dot(u1 - u2, c) + np.dot(u2, t2) - np.dot(u1, t1)
-    #                  for c in box.corners]
-    #         if max(diffs) >= tol:
-    #             break
-    #     return prec + 1
-
     def mcnp_words(self, pretty=False):
         name = self.name()
         if name is None:

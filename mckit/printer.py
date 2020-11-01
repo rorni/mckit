@@ -97,10 +97,16 @@ def print_option(
         tr = value.get('transform', None)
         words = ['FILL={0}'.format(universe.name())]
         if tr:
-            words[0] = '*' + words[0]
-            words.append('(')
-            words.extend(tr.get_words())
-            words.append(')')
+            tr_name = tr.name()
+            if not tr_name:
+                words[0] = '*' + words[0]
+                words.append('(')
+                words.extend(tr.get_words())
+                words.append(')')
+            else:
+                words.append('(')
+                words.append(str(tr_name))
+                words.append(')')
         return words
     else:
         raise ValueError("Incorrect option name: {0}".format(option))

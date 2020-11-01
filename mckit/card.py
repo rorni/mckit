@@ -22,6 +22,10 @@ class Card(ABC):
         self.options['name'] = new_name
         return self
 
+    @property
+    def is_anonymous(self):
+        return not self.name()
+
     @abstractmethod
     def mcnp_words(self, pretty=False):
         """Gets a list of card words."""
