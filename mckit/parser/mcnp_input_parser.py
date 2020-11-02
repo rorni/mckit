@@ -5,12 +5,18 @@ from collections import deque
 from pathlib import Path
 import ply.lex as lex
 import ply.yacc as yacc
+from warnings import warn
 
 from ..material import Element, Composition, Material
 from ..transformation import Transformation
 from ..surface import create_surface
 from ..body import Body
 from ..universe import produce_universes, Universe
+
+warn(
+    "The module 'mcnp_input_parser' is deprecated. Use mckit.parser.mcnp_input_sly_parser instead.",
+    DeprecationWarning
+)
 
 __DEBUG__ = False
 if __DEBUG__:
@@ -706,6 +712,10 @@ def read_mcnp(
         filename: Union[str, Path],
         encoding: str = 'cp1251',
 ) -> Universe:
+    warn(
+        "The function 'read_mcnp' is deprecated. Use mckit.parser.from_file() instead.",
+        DeprecationWarning,
+    )
     with open(filename, encoding=encoding) as f:
         text = f.read()
     return read_mcnp_text(text)
@@ -714,6 +724,10 @@ def read_mcnp(
 def read_mcnp_text(
         text: str,
 ) -> Universe:
+    warn(
+        "The function 'read_mcnp_text' is deprecated. Use mckit.parser.from_text() instead.",
+        DeprecationWarning,
+    )
     text = text.rstrip() + '\n'  # float number spec requires end of line or space after float
     mcnp_input_lexer.begin('INITIAL')
     title, cells, surfaces, data = mcnp_input_parser.parse(

@@ -259,10 +259,14 @@ A - атомный номер (например 1001 водород-1, 8016 - к
 ------------------
 
 Любая модель MCNP пердставляется в виде экземпляра класса :code:`Universe`.
-Для чтения MCNP-модели из файла есть функция read_mcnp(filename)::
+Для чтения MCNP-модели из файла есть функция :code:`from_file(filename)`::
 
-    model = mc.read_mcnp('model.i')
+    from mckit.parser import from_file, ParseResult
 
+    result: ParseResult = from_file('model.i')
+    model: Universe = result.universe
+
+Имеются также вспомогательные методы чтения из текста и потока :code:`from_text`, :code:`from_stream`.
 После этого будет создан экземпляр класса :code:`Universe`, который позволяет
 проводить дальнейшие манипуляции с моделью. Можно получить список всех вложенных
 юниверсов с помощью метода :code:`get_universes()`. Он вернет список имен всех

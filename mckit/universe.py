@@ -598,7 +598,7 @@ class Universe:
                     m.rename(start_mat)
                     start_mat += 1
 
-    def save(self, filename, encoding=MCNP_ENCODING):
+    def save(self, filename, encoding=MCNP_ENCODING, resolve_clashes=False):
         """Saves the universe into file.
 
         Parameters
@@ -610,7 +610,11 @@ class Universe:
         """
         result = self.name_clashes()
         if result:
-            raise NameClashError('Impossible to save model.')
+            if resolve_clashes:
+                pass
+                # TODO rename found clashed objects
+            else:
+                raise NameClashError('Impossible to save model.')
         transformations = collect_transformations(self)
         if transformations:
             transformations = sorted(transformations, key=Card.name)
