@@ -8,6 +8,7 @@ import tomlkit as tk
 from click.testing import CliRunner
 import mckit as mk
 from mckit.utils.resource import filename_resolver
+from mckit.parser import from_file, ParseResult
 from mckit.cli.runner import mckit, __version__
 from mckit.cli.commands.decompose import get_default_output_directory
 
@@ -38,7 +39,7 @@ data_filename_resolver = filename_resolver('tests')
     ("cli/data/simple_cubes.universes/u2.i", 2),
 ])
 def test_input_files_reading(path, expected_cells):
-    universe = mk.read_mcnp(data_filename_resolver(path))
+    universe = from_file(data_filename_resolver(path)).universe
     assert len(universe) == expected_cells, f"Failed to read from file {path}"
 
 
@@ -103,7 +104,7 @@ def test_when_only_source_is_specified(runner, source, expected):
             p = output / f
             assert p.exists(), \
                 f"Should store the file {p} in the default directory '{output}'"
-            model = mk.read_mcnp(p)
+            model = from_file(p).universe
             for cell in model:
                 assert 'U' not in cell.options or cell.options['U'].name() == 0
 
