@@ -5,6 +5,7 @@
 
 """
 from typing import Dict, Optional
+import logging
 import numpy as np
 from pathlib import Path
 from functools import reduce
@@ -18,16 +19,18 @@ from mckit.utils import filter_dict
 
 
 def compose(output, fill_descriptor_path, source, override):
+    logger = logging.getLogger(__name__ + ".compose")
+    logger.debug("Loading model from %s", source)
     parse_result: ParseResult = from_file(source)
     envelopes = parse_result.universe
     source = Path(source)
     universes_dir = source.absolute().parent
     assert universes_dir.is_dir()
-
+    logger.debug("Loading fill-descriptor from %s", fill_descriptor_path)
     with fill_descriptor_path.open() as fid:
         fill_descriptor = tk.parse(fid.read())
 
-    universes = load_universes(fill_descriptor, parse_result, universes_dir)
+    universes = load_universes(fill_descriptor, universes_dir)
     named_transformations = load_named_transformations(fill_descriptor)
 
     comps = {}
@@ -50,11 +53,21 @@ def compose(output, fill_descriptor_path, source, override):
         if transformation is not None:
             if isinstance(transformation, tk_items.Array):
                 transformation1 = np.fromiter(map(float, iter(transformation)), dtype=np.double)
-                transformation2 = mk.Transformation(
-                    translation=transformation1[:3],
-                    rotation=transformation1[3:],
-                    indegrees=True,   # Assuming that on decompose we store a transformation in degrees as well
-                )
+                try:
+                    translation = transformation1[:3]
+                    if len(transformation1) > 3:
+                        rotation = transformation1[3:]
+                    else:
+                        rotation = None
+                    transformation2 = mk.Transformation(
+                        translation=translation,
+                        rotation=rotation,
+                        indegrees=True,   # Assuming that on decompose we store a transformation in degrees as well
+                    )
+                except ValueError as ex:
+                    raise ValueError(
+                        f"Failed to process FILL transformation in cell #{cell.name()} of universe #{universe.name()}"
+                    ) from ex
                 cell.options["FILL"]["transform"] = transformation2
             elif isinstance(transformation, tk_items.Integer):
                 assert named_transformations is not None, \
@@ -66,7 +79,8 @@ def compose(output, fill_descriptor_path, source, override):
     save_mcnp(envelopes, output, override)
 
 
-def load_universes(fill_descriptor, parse_result, universes_dir):
+def load_universes(fill_descriptor, universes_dir):
+    logger = logging.getLogger(__name__ + ".load_universes")
     universes = {}
     for k, v in fill_descriptor.items():
         if isinstance(v, dict) and 'universe' in v:
@@ -78,6 +92,7 @@ def load_universes(fill_descriptor, parse_result, universes_dir):
                 universe_path = universes_dir / universe_path
                 if not universe_path.exists():
                     raise FileNotFoundError(universe_path)
+            logger.debug("Loading universe from file '%s'", universe_path)
             parse_result: ParseResult = from_file(universe_path)
             universe: mk.Universe = parse_result.universe
             universe.rename(name=universe_name)
@@ -97,6 +112,7 @@ def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transforma
                 rotation = transform_params[3:]
             else:
                 rotation = None
+            # noinspection PyTypeChecker
             transform = Transformation(
                 translation=translation,
                 rotation=rotation,

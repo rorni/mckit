@@ -1,6 +1,10 @@
+# Set output for paser debugging before importing Parser classes.
+# from sly import Parser as SlyParser
+# SlyParser.debugfile = "sly-debug.out"
 from typing import Optional, List
 import pytest
 import mckit.parser.cell_parser as clp
+
 from mckit.body import (
     Body, TGeometry
 )
@@ -12,6 +16,8 @@ from mckit.parser.common import (
 )
 from mckit.material import Material
 from mckit.transformation import Transformation
+
+
 
 
 def create_cell(

@@ -17,6 +17,7 @@ from mckit.parser.common import (
     Index, CellStrictIndex, SurfaceStrictIndex, CompositionStrictIndex, TransformationStrictIndex,
     CellNotFoundError,
 )
+from mckit.parser.common import ParseError
 from mckit.parser.transformation_parser import parse as parse_transformation, Transformation
 from mckit.parser.material_parser import parse as parse_composition, Composition
 from mckit.parser.surface_parser import parse as parse_surface, Surface
@@ -123,8 +124,10 @@ def parse_section(
     def iterator() -> TSectionGenerator:
         for text_card, comment in text_cards_with_comments:
             assert text_card.kind is expected_kind
-            card = parser(text_card.text)
-            assert card, "Failed to create card"
+            try:
+                card = parser(text_card.text)
+            except (ValueError, ParseError) as ex:
+                raise ValueError(f"Failed to parse card '{text_card}'") from ex
             if comment:
                 card.options['comment_above'] = comment
             # card.options['original'] = text_card.text

@@ -286,13 +286,10 @@ class Parser(sly.Parser):
         transformation = self.transformations[transform_id]
         return {'TRCL': transformation}
 
-    @_('translation rotation INTEGER')
-    def transform_params(self, p):
-        return p.translation, p.rotation, True
-
     @_('translation rotation')
     def transform_params(self, p):
-        return p.translation, p.rotation, False
+        rotation, inverted = p.rotation
+        return p.translation, rotation, inverted
 
     @_('translation')
     def transform_params(self, p):
@@ -303,13 +300,21 @@ class Parser(sly.Parser):
         return [f for f in p]
 
     @_(
+        'float float float float float float float float float INTEGER',
+    )
+    def rotation(self, p):
+        m = p[9]
+        assert m == -1 or m == 1, f"Invalid value for transformation M paraameter {m}"
+        return [f for f in p][:-1], m == -1
+
+    @_(
         'float float float float float float float float float',
         'float float float float float float',
         'float float float float float',
         'float float float',
     )
     def rotation(self, p):
-        return [f for f in p]
+        return [f for f in p], False
 
     #
     #  See MCNP, vol.I, p.3-7
@@ -358,7 +363,7 @@ class Parser(sly.Parser):
     def float(self, p):
         return p.FLOAT
 
-    @_('INTEGER', 'integer')
+    @_('integer')
     def float(self, p):
         return float(p[0])
 

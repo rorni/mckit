@@ -10,8 +10,6 @@ class Lexer(LexerBase):
     tokens = {NAME, FLOAT, INTEGER}
 
     NAME = r'\s{0,5}\*?tr\d+'
-    FLOAT = cmn.FLOAT
-    INTEGER = cmn.INTEGER
 
     @_(r'\s{0,5}\*?tr\d+')
     def NAME(self, t):
@@ -51,13 +49,10 @@ class Parser(sly.Parser):
             name=name,
         )
 
-    @_('translation rotation INTEGER')
-    def transform_params(self, p):
-        return p.translation, p.rotation, True
-
     @_('translation rotation')
     def transform_params(self, p):
-        return p.translation, p.rotation, False
+        rotation, inverted = p.rotation
+        return p.translation, rotation, inverted
 
     @_('translation')
     def transform_params(self, p):
@@ -67,6 +62,16 @@ class Parser(sly.Parser):
     def translation(self, p):
         return [f for f in p]
 
+    # TODO dvp: check what to do, if transformation is specified with default values using the MCNP J shortcuts?
+
+    @_(
+        'float float float float float float float float float INTEGER',
+    )
+    def rotation(self, p):
+        m = p[9]
+        assert m == -1 or m == 1, f"Invalid M option value {m}"
+        return [f for f in p][:-1], m == -1
+
     @_(
         'float float float float float float float float float',
         'float float float float float float',
@@ -74,7 +79,7 @@ class Parser(sly.Parser):
         'float float float',
     )
     def rotation(self, p):
-        return [f for f in p]
+        return [f for f in p], False
 
     @_('FLOAT')
     def float(self, p):

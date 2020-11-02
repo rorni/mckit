@@ -94,12 +94,14 @@ def decompose(output, fill_descriptor_path, source, override):
     fill_descriptor.append("named_transformations", named_transformations_descriptor)
     fill_descriptor.add(tk.nl())
 
-    with open(output / fill_descriptor_path, "w") as fid:
+    fdp = output / fill_descriptor_path
+    with open(fdp, "w") as fid:
         res = tk.dumps(fill_descriptor)
         fid.write(res)
+    logger.debug("Fill descriptor is saved in '%s'", fdp)
     envelopes_path = output / "envelopes.i"
     save_mcnp(model, envelopes_path, override)
-    logger.debug("The envelopes are saved to %s", envelopes_path)
+    logger.debug("The envelopes are saved to '%s'", envelopes_path)
 
 
 

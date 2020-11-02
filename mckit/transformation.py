@@ -88,7 +88,10 @@ class Transformation(Card,  MaybeClose):
             if u.shape == (9,):
                 u = u.reshape((3, 3), order='F')
             if u.shape != (3, 3):
-                raise ValueError(f'Transaction #{self.name()}: wrong number of rotation parameters.')
+                raise ValueError(
+                    f'Transaction{"" if self.is_anonymous else " #" + str(self.name())}: \
+                      wrong number of rotation parameters: {u}.'
+                )
             if np.array_equal(u, IDENTITY_ROTATION):
                 u = IDENTITY_ROTATION
             else:

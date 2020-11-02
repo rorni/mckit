@@ -26,5 +26,3 @@ def save_mcnp(model: Universe, path: tp.Union[str, Path], override: bool):
 
 def get_default_output_directory(source, suffix):
     return Path(Path(source).with_suffix(suffix).name)
-
-
