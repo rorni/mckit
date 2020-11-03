@@ -84,3 +84,6 @@ target/
 # Local environemnt files for dotenv
 .env
 test.pic
+
+# pyenv and poetry
+.python-version
