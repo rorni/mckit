@@ -23,7 +23,7 @@ Install
 -------
 .. TODO add pyenv/poetry stuff.
 
-.. code-block:: sh
+With setup.py::
     git clone git@github.com:rorni/mckit.git
     cd mckit
     python setup.py build
