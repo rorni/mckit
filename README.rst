@@ -21,9 +21,9 @@ The library can be used for more complicated and specific tasks.
 
 Install
 -------
-.. TODO add pyenv/poetry stuff.
 
-With setup.py::
+With setup.py: ::
+
     git clone git@github.com:rorni/mckit.git
     cd mckit
     python setup.py build
