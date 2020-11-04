@@ -42,6 +42,7 @@ References
 * `Стандартный синтаксис разметки  reStructuredText <https://sphinx-ru.readthedocs.io/ru/latest/rst-markup.html>`_
 * `Pytest <https://docs.pytest.org/en/stable/index.html>`_
 * `Python development best practices 2019 <https://flynn.gg/blog/software-best-practices-python-2019/>`_
+* `Poetry  <https://python-poetry.org/>`_
 
 Bugs
 ----

@@ -21,19 +21,31 @@ sly = "^0.4"
 scipy = "^1.5.3"
 tomlkit = "^0.7.0"
 DateTime = "^4.3"
-nlopt = "^2.6.2"
 colorama = "^0.4.4"
 atomicwrites = "^1.4.0"
+nlopt = "^2.6.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
 pytest-cov = "^2.10.1"
 nox = "^2020.8.22"
 pytest-benchmark = "^3.2.3"
+Sphinx = "^3.3.0"
+coverage = "^5.3"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry>=1.0.0", "setuptools", "wheel", "setuptools-cpp"]
 
 [tool.poetry.scripts]
 mckit = "mckit.cli.runner:mckit"
+
+[tool.coverage.paths]
+source = ["mckit", "*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["mckit"]
+
+[tool.coverage.report]
+show_missing = true
