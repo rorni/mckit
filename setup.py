@@ -91,8 +91,8 @@ if sys.platform.startswith('linux'):
         'mkl_sequential',
         'nlopt',
     ]
-    conda_include_dir = path.join(sys.prefix, "include")
-    append_if_not_present(include_dirs, conda_include_dir)
+    env_include_dir = path.join(sys.prefix, "include")
+    append_if_not_present(include_dirs, env_include_dir)
     append_if_not_present(library_dirs, path.join(sys.prefix, "lib"))
 else:
     geometry_dependencies = [

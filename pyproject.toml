@@ -21,11 +21,15 @@ sly = "^0.4"
 scipy = "^1.5.3"
 tomlkit = "^0.7.0"
 DateTime = "^4.3"
+nlopt = "^2.6.2"
+colorama = "^0.4.4"
+atomicwrites = "^1.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
 pytest-cov = "^2.10.1"
 nox = "^2020.8.22"
+pytest-benchmark = "^3.2.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

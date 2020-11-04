@@ -2,6 +2,7 @@
 
 # https://stackoverflow.com/questions/60073711/how-to-build-c-extensions-via-poetry
 import os
+import os.path as path
 import sys
 import numpy as np
 

@@ -1,4 +1,4 @@
-.. include preamble.rst
+.. include:: preamble.rst
 
 MCKIT
 =====
@@ -37,14 +37,16 @@ See the notebook in ``tutorial`` folder.
 References
 ----------
 * `Build and dependencies management <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
+* `Managing Multiple Python Versions With pyenv <https://realpython.com/intro-to-pyenv/>`_
 * `Linting <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 * `Стандартный синтаксис разметки  reStructuredText <https://sphinx-ru.readthedocs.io/ru/latest/rst-markup.html>`_
-
+* `Pytest <https://docs.pytest.org/en/stable/index.html>`_
+* `Python development best practices 2019 <https://flynn.gg/blog/software-best-practices-python-2019/>`_
 
 Bugs
 ----
 
-Please report new bugs via the `Github issue tracker <git@github.com:rorni/mckit.git >`_.
+Please report new bugs via the `Github issue tracker <https://github.com/rorni/mckit/issues>`_.
 
 
 TODO
