@@ -4,4 +4,5 @@
 .. |date| date:: %d.%m.%Y
 .. |time| date:: %H:%M
 .. |mckit| replace:: ``mckit``
+.. |br| raw:: html <br />
 
