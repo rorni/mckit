@@ -1,3 +1,5 @@
+.. include preamble.rst
+
 MCKIT
 =====
 
@@ -19,5 +21,5 @@ See the notebook in ``tutorial`` folder.
 References
 ----------
 
-* `Build and dependencies management <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`
-* `Linting <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`
+* `Build and dependencies management <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
+* `Linting <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
