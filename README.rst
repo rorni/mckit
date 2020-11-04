@@ -30,4 +30,3 @@ References
 * `Build and dependencies management <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
 * `Linting <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 * `Стандартный синтаксис разметки  reStructuredText <https://sphinx-ru.readthedocs.io/ru/latest/rst-markup.html>`_
-
