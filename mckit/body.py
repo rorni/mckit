@@ -175,6 +175,7 @@ class Shape(_Shape):
                         else:
                             return 'R', []
                 i += 1
+            args = list(set(args))
             args.sort(key=hash)
             if len(args) == 0:
                 opc = 'E' if opc == 'U' else 'R'
