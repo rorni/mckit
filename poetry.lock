@@ -303,17 +303,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "nlopt"
-version = "2.6.2"
-description = "Library for nonlinear optimization, wrapping many algorithms for global and local, constrained or unconstrained, optimization"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-numpy = ">=1.14"
-
-[[package]]
 name = "nox"
 version = "2020.8.22"
 description = "Flexible test automation."
@@ -364,6 +353,14 @@ importlib-metadata = {version = ">=0.12", markers = "python_version < \"3.8\""}
 
 [package.extras]
 dev = ["pre-commit", "tox"]
+
+[[package]]
+name = "ply"
+version = "3.11"
+description = "Python Lex & Yacc"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "psutil"
@@ -646,6 +643,14 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "toolz"
+version = "0.11.1"
+description = "List processing tools and functional utilities"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[[package]]
 name = "urllib3"
 version = "1.25.11"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -716,7 +721,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "25877068d18b004770840bd63bb73c87081ad5dd4ba58272b91f697e30bf9ff6"
+content-hash = "d41a88f5fe722352ad3303a1e7b6cf6896fbb8d7643e617a1f910599dfe8c8df"
 
 [metadata.files]
 alabaster = [
@@ -903,29 +908,6 @@ mkl-include = [
     {file = "mkl_include-2018.0.3-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:125888c9d8f78eb486ca2880c89d817fddf96217af668a5664f8bca01a2c9489"},
     {file = "mkl_include-2018.0.3-py2.py3-none-win_amd64.whl", hash = "sha256:cfd689c14b33f6eedff519f3aafeb11accc0d2e8c7c8ffc3a3d6aff88d1f45d7"},
 ]
-nlopt = [
-    {file = "nlopt-2.6.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:47c00465f38dd9cfdf87812b68de4c8fafa9d54e88f49b023a8d34b724277730"},
-    {file = "nlopt-2.6.2-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:b50534d30587edabfe3916c77bf510aede3f5882e49aa1444ffd2cd738e933d2"},
-    {file = "nlopt-2.6.2-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:6c76d6cdb2d523b56927ddc6bd43e4f04a52812d2b28c2f0a04e9689f4c52139"},
-    {file = "nlopt-2.6.2-cp36-cp36m-win32.whl", hash = "sha256:e9a26ef5af8e5f9eef9af5a1f9568003a47bce3068e65f90204adad742738d71"},
-    {file = "nlopt-2.6.2-cp36-cp36m-win_amd64.whl", hash = "sha256:52749528c3ec5643ec2d2a705ab97baf6bc235bd05ebc634060363ea8150ccae"},
-    {file = "nlopt-2.6.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:1bacc8aeb1448abcca9985eb1a24e4762346b031000d390aa344032d5d1623b2"},
-    {file = "nlopt-2.6.2-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:33d1727c73444c84b7540bcfb0878bd8027578bb19195740f240ee6b7601ef89"},
-    {file = "nlopt-2.6.2-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:1f34e8b007b94bbc452b89faea6272f58ab77f75d0aee9f1b01db68fc7729e74"},
-    {file = "nlopt-2.6.2-cp37-cp37m-win32.whl", hash = "sha256:85eda29e9bc5956366e6df7061d2c92c00fde9b52151aa996c8f92aae518241f"},
-    {file = "nlopt-2.6.2-cp37-cp37m-win_amd64.whl", hash = "sha256:f3590b028acb0c5fca877047fe908e782de91f3b2524db1e4bfa48c43472b8f2"},
-    {file = "nlopt-2.6.2-cp37-none-manylinux1_x86_64.whl", hash = "sha256:d4c7eecaad2b14d1aab1a04ed4ad9ed33d37edfbbc3244ef453c4700d5e23c0f"},
-    {file = "nlopt-2.6.2-cp37-none-win_amd64.whl", hash = "sha256:3ed8fdd2a9b6439451a3742e3e87a610e06660be1a67427ae4a8a69af7b6b13b"},
-    {file = "nlopt-2.6.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:5d9c40250e35b239c5fc2777eedc0552e0e6c6c594c37056ea698069381539ae"},
-    {file = "nlopt-2.6.2-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:a00bbd9080ff13d674d4ba3e6b6353b9bb6c75128d0118ab4673196cfed43745"},
-    {file = "nlopt-2.6.2-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:5ebdd6870d842b83333704459fa3490fc1fd1c167a9854978f3e96e14af77940"},
-    {file = "nlopt-2.6.2-cp38-cp38-win32.whl", hash = "sha256:3f5cc08e8c210df1483d7138a979433784443625ca19702f40714823b8e87837"},
-    {file = "nlopt-2.6.2-cp38-cp38-win_amd64.whl", hash = "sha256:30e8383d3c6ec2cca312eb3d7d0379e495b615d5756aeb3e8b58ff82dfce66a4"},
-    {file = "nlopt-2.6.2-cp38-none-manylinux1_x86_64.whl", hash = "sha256:9442d14c83394605c593d8deafce900559e2e214f09005b41bb463583aa8909d"},
-    {file = "nlopt-2.6.2-cp38-none-win_amd64.whl", hash = "sha256:89e700af8b12559dab872bf00a6111bc31f5a30ca6789ce1cee3b4d4b7d283bd"},
-    {file = "nlopt-2.6.2-py38-none-win_amd64.whl", hash = "sha256:b52e04f339549c59a30f73b782b41ea07247f3055a3bfebfdd2d95c868fb1383"},
-    {file = "nlopt-2.6.2.tar.gz", hash = "sha256:21f10b0bbcf32b4d370c371e967c01df50ce96c258f483a32b9140b57e9e410d"},
-]
 nox = [
     {file = "nox-2020.8.22-py3-none-any.whl", hash = "sha256:55f8cab16bcfaaea08b141c83bf2b7c779e943518d0de6cd9c38cd8da95d11ea"},
     {file = "nox-2020.8.22.tar.gz", hash = "sha256:efa5adcf1134012f96bcd0a496ccebd4c9e9da53a831888a2a779462440eebcf"},
@@ -973,6 +955,10 @@ packaging = [
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
+]
+ply = [
+    {file = "ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"},
+    {file = "ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3"},
 ]
 psutil = [
     {file = "psutil-5.7.3-cp27-none-win32.whl", hash = "sha256:1cd6a0c9fb35ece2ccf2d1dd733c1e165b342604c67454fd56a4c12e0a106787"},
@@ -1089,6 +1075,10 @@ toml = [
 tomlkit = [
     {file = "tomlkit-0.7.0-py2.py3-none-any.whl", hash = "sha256:6babbd33b17d5c9691896b0e68159215a9387ebfa938aa3ac42f4a4beeb2b831"},
     {file = "tomlkit-0.7.0.tar.gz", hash = "sha256:ac57f29693fab3e309ea789252fcce3061e19110085aa31af5446ca749325618"},
+]
+toolz = [
+    {file = "toolz-0.11.1-py3-none-any.whl", hash = "sha256:1bc473acbf1a1db4e72a1ce587be347450e8f08324908b8a266b486f408f04d5"},
+    {file = "toolz-0.11.1.tar.gz", hash = "sha256:c7a47921f07822fe534fb1c01c9931ab335a4390c782bd28c6bcc7c2f71f3fbf"},
 ]
 urllib3 = [
     {file = "urllib3-1.25.11-py2.py3-none-any.whl", hash = "sha256:f5321fbe4bf3fefa0efd0bfe7fb14e90909eb62a48ccda331726b4319897dd5e"},
