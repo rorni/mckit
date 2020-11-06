@@ -15,7 +15,7 @@ from mckit.parser.common import (
 from mckit.utils import filter_dict
 
 CELL_WORDS = {
-    'U', 'MAT', 'LAT', 'TMP', 'RHO', 'VOL',
+    'U', 'MAT', 'LAT', 'TMP', 'RHO', 'VOL', 'PMT',
 }
 
 
@@ -32,7 +32,7 @@ class Lexer(LexerBase):
     literals = {':', '(', ')', '*', '#'}
     ignore = '[ \t,=]'
     tokens = {INT_ATTR, IMP, FLOAT_ATTR, TRCL, FILL, INTEGER, FLOAT, ZERO, LIKE, BUT, N, P, E}
-    INT_ATTR = 'U|MAT|LAT'
+    INT_ATTR = 'U|MAT|LAT|PMT'
     IMP = 'IMP'
     FLOAT_ATTR = 'TMP|RHO|VOL'
     TRCL = 'TRCL'

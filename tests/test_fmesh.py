@@ -9,7 +9,7 @@ from mckit.surface import create_surface
 from mckit.body import Body
 from mckit.material import Material
 from mckit import read_meshtal
-
+from mckit.utils.resource import filename_resolver
 
 transforms = [
     None,
@@ -231,11 +231,15 @@ class TestRectMesh:
             np.testing.assert_array_almost_equal(y, expected['y'])
 
 
+parser_test_data = filename_resolver("tests")
+# dvp: On Linux access to package should be organized with resource name resolver.
+
+
 class TestFMesh:
     @pytest.fixture
     def tallies(self):
-        tals = read_meshtal('tests/parser_test_data/fmesh.m')
-        return tals
+        file_name = parser_test_data("parser_test_data/fmesh.m")
+        return read_meshtal(file_name)
 
     @pytest.mark.parametrize('name, particle, histories, meshclass', [
         (14, 'NEUTRON', 10000000, RectMesh),

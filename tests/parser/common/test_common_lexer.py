@@ -27,6 +27,7 @@ class DerivedLexer(LexerBase):
 @pytest.mark.parametrize("text, expected_types, expected_values", [
     ("1 0 3.14", ['INTEGER', 'ZERO', 'FLOAT'], [1, 0, 3.14]),
     ("3.14 3.14c", ['FLOAT', 'FRACTION'], [3.14, '3.14c']),
+    ("1 0 1e-4", ['INTEGER', 'ZERO', 'FLOAT'], [1, 0, 1e-4]),
 ])
 def test_derived_lexer(text, expected_types, expected_values):
     lexer = DerivedLexer()
