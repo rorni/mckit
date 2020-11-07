@@ -23,8 +23,8 @@ if sys.version_info.major < 3:  # pragma: no cover
 
 
 @click.group()
-@click.option('--debug/--no-debug', default=False)
-@click.option('--override/--no-override', default=False)
+@click.option("--debug/--no-debug", default=False)
+@click.option("--override/--no-override", default=False)
 @click.pass_context
 @click_log.simple_verbosity_option(__LOG, default="INFO")
 @click.version_option(__version__)
@@ -32,14 +32,21 @@ def mckit(ctx, debug, override):
     # ensure that ctx.obj exists and is a dict (in case `cli()` is called
     # by means other than the `if` block below
     obj = ctx.ensure_object(dict)
-    obj['DEBUG'] = debug
-    obj['OVERRIDE'] = override
+    obj["DEBUG"] = debug
+    obj["OVERRIDE"] = override
 
 
 @mckit.command()
 @click.pass_context
-@click.option("--output", "-o", default=None, help="Output directory, default: <source>.universes")
-@click.option("--fill-descriptor", "-f", default="fill-descriptor.toml", help="TOML file for FILL descriptors")
+@click.option(
+    "--output", "-o", default=None, help="Output directory, default: <source>.universes"
+)
+@click.option(
+    "--fill-descriptor",
+    "-f",
+    default="fill-descriptor.toml",
+    help="TOML file for FILL descriptors",
+)
 @click.argument(
     "source",
     metavar="<source>",
@@ -49,7 +56,7 @@ def mckit(ctx, debug, override):
 )
 def decompose(ctx, output, fill_descriptor, source):
     __LOG.info(f"Processing {source}")
-    return do_decompose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
+    return do_decompose(output, fill_descriptor, source, ctx.obj["OVERRIDE"])
 
 
 @mckit.command()
@@ -73,17 +80,21 @@ def compose(ctx, output, fill_descriptor, source):
     else:
         fill_descriptor = Path(fill_descriptor)
     if not fill_descriptor.exists():
-        raise click.UsageError(f"Cannot find fill descriptor file \"{fill_descriptor}\"")
-    __LOG.info(f"Composing \"{output}\", from envelopes \"{source}\" with fill descriptor \"{fill_descriptor}\"")
-    return do_compose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
+        raise click.UsageError(f'Cannot find fill descriptor file "{fill_descriptor}"')
+    __LOG.info(
+        f'Composing "{output}", from envelopes "{source}" with fill descriptor "{fill_descriptor}"'
+    )
+    return do_compose(output, fill_descriptor, source, ctx.obj["OVERRIDE"])
 
 
 @mckit.command()
 @click.pass_context
 @click.option("--output", "-o", default=None, help="Output directory")
-@click.option("--separators/--no-separators", default=False,
-              help="Write comment files to prepend and append this model cells, surfaces etc. on concatenation"
-              )
+@click.option(
+    "--separators/--no-separators",
+    default=False,
+    help="Write comment files to prepend and append this model cells, surfaces etc. on concatenation",
+)
 @click.argument(
     "source",
     metavar="<source>",
@@ -97,8 +108,8 @@ def split(ctx, output, source, separators):
     else:
         output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    __LOG.info(f"Splitting \"{source}\" to directory \"{output}\"")
-    return do_split(output, source, ctx.obj['OVERRIDE'], separators)
+    __LOG.info(f'Splitting "{source}" to directory "{output}"')
+    return do_split(output, source, ctx.obj["OVERRIDE"], separators)
 
 
 # noinspection PyCompatibility
@@ -109,7 +120,9 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
         if exist_ok or not output.exists():
             fid = output.open("w", encoding=encoding)
         else:
-            raise click.UsageError(f"Specify --override option to override existing file '{output}'")
+            raise click.UsageError(
+                f"Specify --override option to override existing file '{output}'"
+            )
     else:
         fid = sys.stdout
     try:
@@ -123,7 +136,8 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
 @mckit.command()
 @click.pass_context
 @click.option(
-    "--output", "-o",
+    "--output",
+    "-o",
     metavar="<output>",
     type=click.Path(exists=False),
     required=False,
@@ -152,14 +166,8 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
     nargs=-1,
     required=True,
 )
-def concat(
-        ctx,
-        output,
-        parts_encoding,
-        output_encoding,
-        parts
-):
-    override = ctx.obj['OVERRIDE']
+def concat(ctx, output, parts_encoding, output_encoding, parts):
+    override = ctx.obj["OVERRIDE"]
     with resolve_output(output, exist_ok=override, encoding=output_encoding) as out_fid:
         for f in parts:
             f = Path(f)
@@ -182,5 +190,5 @@ def check(sources: List[click.Path]) -> None:
         do_check(source)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     mckit(obj={})

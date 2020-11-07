@@ -25,10 +25,10 @@ def get_default_output_directory(source):
 def move_universe_attribute_to_comments(universe):
     no = universe.name()
     for cell in universe:
-        cell.options.pop('U', None)
-        comm = cell.options.get('comment', [])
-        comm.append(f'U={no}')
-        cell.options['comment'] = comm
+        cell.options.pop("U", None)
+        comm = cell.options.get("comment", [])
+        comm.append(f"U={no}")
+        cell.options["comment"] = comm
 
 
 def decompose(output, fill_descriptor_path, source, override):
@@ -41,7 +41,7 @@ def decompose(output, fill_descriptor_path, source, override):
         output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     fill_descriptor = tk.document()
-    fill_descriptor.add(tk.comment(f"This is a decomposition of \"{source.name}\" model"))
+    fill_descriptor.add(tk.comment(f'This is a decomposition of "{source.name}" model'))
     parse_result: ParseResult = from_file(source)
     if parse_result.title:
         fill_descriptor.append("title", parse_result.title)
@@ -53,32 +53,32 @@ def decompose(output, fill_descriptor_path, source, override):
     fill_descriptor.add(tk.nl())
     already_processed_universes = set()
     for c in model:
-        fill = c.options.pop('FILL', None)
+        fill = c.options.pop("FILL", None)
         if fill:
-            universe = fill['universe']
-            words = [f'FILL={universe.name()}']
-            transform = fill.get('transform', None)
+            universe = fill["universe"]
+            words = [f"FILL={universe.name()}"]
+            transform = fill.get("transform", None)
             if transform:
-                words[0] = '*' + words[0]
-                words.append('(')
+                words[0] = "*" + words[0]
+                words.append("(")
                 words.extend(transform.get_words())
-                words.append(')')
-            comm = c.options.get('comment', [])
-            comm.append(''.join(words))
-            c.options['comment'] = comm
+                words.append(")")
+            comm = c.options.get("comment", [])
+            comm.append("".join(words))
+            c.options["comment"] = comm
             descriptor = tk.table()
             universe_name = universe.name()
-            fn = f'u{universe_name}.i'
-            descriptor['universe'] = universe_name
+            fn = f"u{universe_name}.i"
+            descriptor["universe"] = universe_name
             if transform:
                 name = transform.name()
                 if name is None:
                     # The transformation is anonymous, so, store it's specification
                     # omitting redundant '*', TR0 words, and interleaving space tokens
-                    descriptor['transform'] = tk.array(transform.mcnp_words()[2:][1::2])
+                    descriptor["transform"] = tk.array(transform.mcnp_words()[2:][1::2])
                 else:
-                    descriptor['transform'] = name
-            descriptor['file'] = fn
+                    descriptor["transform"] = name
+            descriptor["file"] = fn
             fill_descriptor.append(str(c.name()), descriptor)
             fill_descriptor.add(tk.nl())
             if universe_name not in already_processed_universes:
@@ -90,7 +90,9 @@ def decompose(output, fill_descriptor_path, source, override):
     named_transformations_descriptor = tk.table()
     named_transformations = sorted(named_transformations, key=lambda x: x.name())
     for t in named_transformations:
-        named_transformations_descriptor[f"tr{t.name()}"] = tk.array(t.mcnp_words()[2:][1::2])
+        named_transformations_descriptor[f"tr{t.name()}"] = tk.array(
+            t.mcnp_words()[2:][1::2]
+        )
     fill_descriptor.append("named_transformations", named_transformations_descriptor)
     fill_descriptor.add(tk.nl())
 
@@ -102,8 +104,3 @@ def decompose(output, fill_descriptor_path, source, override):
     envelopes_path = output / "envelopes.i"
     save_mcnp(model, envelopes_path, override)
     logger.debug("The envelopes are saved to '%s'", envelopes_path)
-
-
-
-
-

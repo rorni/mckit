@@ -50,3 +50,4 @@ source = ["mckit"]
 
 [tool.coverage.report]
 show_missing = true
+# fail_under = 100  # So far, this is just a dream.

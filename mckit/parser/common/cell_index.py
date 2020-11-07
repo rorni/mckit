@@ -7,9 +7,10 @@ from mckit.parser.common import Index, NumberedItemNotFoundError
 
 class DummyCell(Body):
     """To substitute cell when it's not found"""
+
     def __init__(self, name: int):
         self._name = name
-        options = {'name': name, 'comment': 'dummy'}
+        options = {"name": name, "comment": "dummy"}
         Card.__init__(self, options)
 
     def __hash__(self):
@@ -31,8 +32,13 @@ class DummyCell(Body):
     def union(self, other):
         raise NotImplementedError("The method is not available in dummy object")
 
-    def simplify(self, box=GLOBAL_BOX, split_disjoint=False,
-                 min_volume=MIN_BOX_VOLUME, trim_size=1):
+    def simplify(
+        self,
+        box=GLOBAL_BOX,
+        split_disjoint=False,
+        min_volume=MIN_BOX_VOLUME,
+        trim_size=1,
+    ):
         raise NotImplementedError("The method is not available in dummy object")
 
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
@@ -55,7 +61,7 @@ class CellStrictIndex(Index):
         super().__init__(raise_on_absent_cell_strategy, kwargs)
 
     @classmethod
-    def from_iterable(cls, items: Iterable[Body]) -> 'CellStrictIndex':
+    def from_iterable(cls, items: Iterable[Body]) -> "CellStrictIndex":
         index = cls()
         index.update((c.name(), c) for c in items)
         return index
@@ -67,4 +73,4 @@ class CellDummyIndex(Index):
 
 
 class CellNotFoundError(NumberedItemNotFoundError):
-    kind = 'Cell'
+    kind = "Cell"

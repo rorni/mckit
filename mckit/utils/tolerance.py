@@ -11,7 +11,7 @@ from mckit.constants import FLOAT_TOLERANCE
 
 class MaybeClose(ABC):
     @abstractmethod
-    def is_close_to(self, other: Any, estimator: 'EstimatorType') -> bool:
+    def is_close_to(self, other: Any, estimator: "EstimatorType") -> bool:
         """Objects can be estimated as close with some estimator"""
 
 
@@ -27,6 +27,7 @@ def tolerance_estimator(
     """
     Estimates "closeness of numpy arrays and float scalars using math.isclose and numpy.allclose methods
     """
+
     def _call(a: ComparableType, b: ComparableType) -> bool:
         if a is b:
             return True
@@ -48,6 +49,8 @@ def tolerance_estimator(
         elif isinstance(a, MaybeClose) and isinstance(b, MaybeClose):
             return a.is_close_to(b, _call)
         else:
-            raise TypeError(f"Not implemented for {type(a).__name__} and {type(b).__name__}")
-    return _call
+            raise TypeError(
+                f"Not implemented for {type(a).__name__} and {type(b).__name__}"
+            )
 
+    return _call

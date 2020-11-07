@@ -30,9 +30,47 @@ With setup.py: ::
     python setup.py install
 
 
+Copyright
+---------
+|mckit| is free software.
+TODO add dependecies licenses here
+
+
+Authors
+-------
+* `Roman Rodionov <mailto:r.rodionov@iterrf.ru>`_
+
+Maintainers
+-----------
+* `Dmitry Portnov <mailto:dmitri_portnov@yahoo.com>`_
+
+Copyright
+---------
+|mckit| is free software.
+TODO add dependecies licenses here
+
+
+Authors
+-------
+* `Roman Rodionov <mailto:r.rodionov@iterrf.ru>`_
+
+Maintainers
+-----------
+* `Dmitry Portnov <mailto:dmitri_portnov@yahoo.com>`_
+
 Tutorial
 --------
 See the notebook in ``tutorial`` folder.
+
+Documentation
+--------------
+
+TODO
+~~~~
+
+* implement generation of the documentation for readthedocs
+* create and link to the readocs account
+* add the readthedocs status icon at the document start.
 
 References
 ----------
@@ -54,16 +92,11 @@ TODO
 ----
 .. TODO add nearest future plans.
 
-Copyright
----------
-|mckit| is free software.
-TODO add dependecies licenses here
 
-
-Authors
--------
-* `Roman Rodionov <mailto:r.rodionov@iterrf.ru>`_
-
-Maintainers
+Development
 -----------
-* `Dmitry Portnov <mailto:dmitri_portnov@yahoo.com>`_
+
+For Linux we assume usage of pyenv/poetry toolchain.
+
+* TODO explain details for activation of development environment
+* TODO add MKL handling stuff.

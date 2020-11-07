@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from itertools import product
-
 import numpy as np
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import EX, EY, EZ, Box
 from .transformation import Transformation
+from .utils import mids
 
 
 class AbstractMesh:
@@ -28,7 +28,8 @@ class RectMesh:
     shape() - gets the shape of mesh.
     get_voxel(i, j, k) - gets the voxel of RectMesh with indices i, j, k.
     """
-    def __init__(self, xbins, ybins, zbins, transform=None):
+
+    def __init__(self, xbins, ybins, zbins, transform: Transformation = None):
         self._xbins = np.array(xbins)
         self._ybins = np.array(ybins)
         self._zbins = np.array(zbins)
@@ -36,9 +37,11 @@ class RectMesh:
         self._ey = EY
         self._ez = EZ
         self._origin = np.array([self._xbins[0], self._ybins[0], self._zbins[0]])
-        self._tr = None
+        self._tr = None  # TODO dvp: and what this _tr is for?
         if transform is not None:
-            self.transform(transform)
+            self.transform(
+                transform
+            )  # TODO dvp: it's  wrong to apply transormaiton immidieately
 
     def __eq__(self, other):
         return self is other
@@ -54,7 +57,7 @@ class RectMesh:
         origin = [
             0.5 * (self._xbins[0] + self._xbins[-1]),
             0.5 * (self._ybins[0] + self._ybins[-1]),
-            0.5 * (self._zbins[0] + self._zbins[-1])
+            0.5 * (self._zbins[0] + self._zbins[-1]),
         ]
         if self._tr:
             origin = self._tr.apply2point(origin)
@@ -68,14 +71,8 @@ class RectMesh:
         """Gets the shape of the mesh."""
         return self._xbins.size - 1, self._ybins.size - 1, self._zbins.size - 1
 
-    def transform(self, tr):
-        """Transforms this mesh.
-
-        Parameters
-        ----------
-        tr : Transformation
-            Transformation to be applied.
-        """
+    def transform(self, tr: Transformation):
+        """Transforms this mesh."""
         self._origin = tr.apply2point(self._origin)
         self._ex = tr.apply2vector(self._ex)
         self._ey = tr.apply2vector(self._ey)
@@ -83,7 +80,7 @@ class RectMesh:
         if self._tr is not None:
             self._tr = tr.apply2transform(self._tr)
         else:
-            self._tr = tr
+            self._tr = tr  # TODO dvp: this inconsistent with __init__, see TODO there
 
     def get_voxel(self, i, j, k):
         """Gets voxel.
@@ -98,15 +95,15 @@ class RectMesh:
         voxel : Box
             The box that describes the voxel.
         """
-        cx = 0.5 * (self._xbins[i] + self._xbins[i+1])
-        cy = 0.5 * (self._ybins[j] + self._ybins[j+1])
-        cz = 0.5 * (self._zbins[k] + self._zbins[k+1])
+        cx = 0.5 * (self._xbins[i] + self._xbins[i + 1])
+        cy = 0.5 * (self._ybins[j] + self._ybins[j + 1])
+        cz = 0.5 * (self._zbins[k] + self._zbins[k + 1])
         center = np.array([cx, cy, cz])
         if self._tr:
             center = self._tr.apply2point(center)
-        xdim = self._xbins[i+1] - self._xbins[i]
-        ydim = self._ybins[j+1] - self._ybins[j]
-        zdim = self._zbins[k+1] - self._zbins[k]
+        xdim = self._xbins[i + 1] - self._xbins[i]
+        ydim = self._ybins[j + 1] - self._ybins[j]
+        zdim = self._zbins[k + 1] - self._zbins[k]
         return Box(center, xdim, ydim, zdim, ex=self._ex, ey=self._ey, ez=self._ez)
 
     def voxel_index(self, point, local=False):
@@ -137,7 +134,7 @@ class RectMesh:
         if len(point.shape) == 1:
             return self.check_indices(i, j, k)
         else:
-            print('i=', i, 'j=', j, 'k=', k)
+            print("i=", i, "j=", j, "k=", k)
             indices = []
             for x, y, z in zip(i, j, k):
                 indices.append(self.check_indices(x, y, z))
@@ -202,7 +199,7 @@ class RectMesh:
                 none += 1
                 axis = i
         if none != 1:
-            raise ValueError('Wrong number of fixed spatial variables.')
+            raise ValueError("Wrong number of fixed spatial variables.")
 
         if X is not None:
             index = self._check_x(np.searchsorted(self._xbins, X) - 1)
@@ -214,16 +211,16 @@ class RectMesh:
             index = None
 
         if index is None:
-            raise ValueError('Specified point lies outside of the mesh.')
+            raise ValueError("Specified point lies outside of the mesh.")
 
         if axis > 0:
-            x = 0.5 * (self._xbins[1:] + self._xbins[:-1])
+            x = mids(self._xbins)
         else:
-            x = 0.5 * (self._ybins[1:] + self._ybins[:-1])
+            x = mids(self._ybins)
         if axis < 2:
-            y = 0.5 * (self._zbins[1:] + self._zbins[:-1])
+            y = mids(self._zbins)
         else:
-            y = 0.5 * (self._ybins[1:] + self._ybins[:-1])
+            y = mids(self._ybins)
 
         return axis, index, x, y
 
@@ -243,6 +240,7 @@ class CylMesh:
         Bins of mesh in radial, extend and angle directions respectively.
         Angles are specified in revolutions.
     """
+
     def __init__(self, origin, axis, vec, rbins, zbins, tbins):
         self._origin = np.array(origin)
         self._axis = np.array(axis)
@@ -258,17 +256,13 @@ class CylMesh:
         """Gets the shape of the mesh."""
         return self._rbins.size - 1, self._zbins.size - 1, self._tbins.size - 1
 
-    def transform(self, tr):
-        """Transforms this mesh.
-
-        Parameters
-        ----------
-        tr : Transformation
-            Transformation to be applied.
-        """
+    def transform(self, tr: Transformation):
+        """Transforms this mesh."""
         raise NotImplementedError
 
-    def calculate_volumes(self, cells, with_mat_only=True, verbose=False, min_volume=1.e-3):
+    def calculate_volumes(
+        self, cells, with_mat_only=True, verbose=False, min_volume=1.0e-3
+    ):
         """Calculates volumes of cells.
 
         Parameters
@@ -378,7 +372,7 @@ class CylMesh:
 
 class FMesh:
     """Fmesh tally object.
-    
+
     Parameters
     ----------
     name : int
@@ -409,7 +403,7 @@ class FMesh:
         The number of histories run to obtain meshtal data.
     modifier : None
         Data transformation.
-        
+
     Methods
     -------
     get_slice()
@@ -421,8 +415,27 @@ class FMesh:
     mean_flux()
         Gets average flux for every energy bin.
     """
-    def __init__(self, name, particle, data, error, ebins=None, xbins=None, ybins=None, zbins=None, rbins=None,
-                 tbins=None, dtbins=None, transform=None, modifier=None, origin=None, axis=None, vec=None, histories=None):
+
+    def __init__(
+        self,
+        name,
+        particle,
+        data,
+        error,
+        ebins=None,
+        xbins=None,
+        ybins=None,
+        zbins=None,
+        rbins=None,
+        tbins=None,
+        dtbins=None,
+        transform: Transformation = None,
+        modifier=None,
+        origin=None,
+        axis=None,
+        vec=None,
+        histories=None,
+    ):
         self._data = np.array(data)
         self._error = np.array(error)
         self._name = name
@@ -431,7 +444,7 @@ class FMesh:
         if ebins is not None:
             self._ebins = np.array(ebins)
         else:
-            self._ebins = np.array([0, 1.e+36])
+            self._ebins = np.array([0, 1.0e36])
         if dtbins is not None:
             self._dtbins = np.array(dtbins)
         self._modifier = modifier
@@ -471,12 +484,12 @@ class FMesh:
 
     def get_spectrum(self, point):
         """Gets energy spectrum at the specified point.
-        
+
         Parameters
         ----------
         point : arraylike[float]
             Point energy spectrum must be get at.
-            
+
         Returns
         -------
         energies: ndarray[float]
@@ -513,7 +526,7 @@ class FMesh:
         err = self._error[:, i, j, k]
         return self._ebins, flux, err
 
-    def get_slice(self, E='total', X=None, Y=None, Z=None, R=None, T=None):
+    def get_slice(self, E="total", X=None, Y=None, Z=None, R=None, T=None):
         """Gets data in the specified slice. Only one spatial letter is allowed.
 
         Parameters
@@ -538,10 +551,12 @@ class FMesh:
         else:
             axis, index, x, y = self._mesh.slice_axis_index(R=R, Z=Z, T=T)
 
-        data = self._data.take(index, axis=axis + 1)   # +1 because the first axis is for energy.
+        data = self._data.take(
+            index, axis=axis + 1
+        )  # +1 because the first axis is for energy.
         err = self._error.take(index, axis=axis + 1)
 
-        if E == 'total':
+        if E == "total":
             abs_err = (data * err) ** 2
             abs_tot_err = np.sqrt(np.sum(abs_err, axis=0))
             data = np.sum(data, axis=0)
@@ -553,4 +568,3 @@ class FMesh:
             data = data.take(i, axis=0)
             err = err.take(i, axis=0)
         return x, y, data, err
-

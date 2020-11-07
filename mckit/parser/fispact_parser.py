@@ -8,36 +8,41 @@ from mckit.material import Element
 
 
 TIME_ALIAS = {
-    's': TIME_UNITS['SECS'],
-    'm': TIME_UNITS['MINS'],
-    'h': TIME_UNITS['HOURS'],
-    'd': TIME_UNITS['DAYS'],
-    'y': TIME_UNITS['YEARS'],
-    'ky': TIME_UNITS['YEARS'] * 1000
+    "s": TIME_UNITS["SECS"],
+    "m": TIME_UNITS["MINS"],
+    "h": TIME_UNITS["HOURS"],
+    "d": TIME_UNITS["DAYS"],
+    "y": TIME_UNITS["YEARS"],
+    "ky": TIME_UNITS["YEARS"] * 1000,
 }
 
-literals = ['+', '-', '(', ')']
+literals = ["+", "-", "(", ")"]
 
 
 # List of token names
-tokens = [
-    'newline',
-    'int_number',
-    'flt_number',
-    'keyword',
-    'TIME',
-    'INTERVAL'
-]
+tokens = ["newline", "int_number", "flt_number", "keyword", "TIME", "INTERVAL"]
 
 
-NEWLINE = r'\n'
-EXPONENT = r'(E[-+]?\d+)'
-INT_NUMBER = r'(\d+)'
-FLT_NUMBER = INT_NUMBER + r'?' + r'\.' + INT_NUMBER + EXPONENT + r'?|' +\
-             INT_NUMBER + r'\.' + r'?' + EXPONENT + r'|' + \
-             INT_NUMBER + r'\.'
-KEYWORD = r'[A-Z]+(/[A-Z]+)?'
-SKIP = r'[. ]'
+NEWLINE = r"\n"
+EXPONENT = r"(E[-+]?\d+)"
+INT_NUMBER = r"(\d+)"
+FLT_NUMBER = (
+    INT_NUMBER
+    + r"?"
+    + r"\."
+    + INT_NUMBER
+    + EXPONENT
+    + r"?|"
+    + INT_NUMBER
+    + r"\."
+    + r"?"
+    + EXPONENT
+    + r"|"
+    + INT_NUMBER
+    + r"\."
+)
+KEYWORD = r"[A-Z]+(/[A-Z]+)?"
+SKIP = r"[. ]"
 
 t_ignore = SKIP
 
@@ -64,7 +69,7 @@ def t_int_number(t):
 @lex.TOKEN(KEYWORD)
 def t_keyword(t):
     value = t.value.upper()
-    if value == 'TIME' or value == 'INTERVAL':
+    if value == "TIME" or value == "INTERVAL":
         t.type = value
         t.value = value
     return t
@@ -73,7 +78,8 @@ def t_keyword(t):
 def t_error(t):
     column = t.lexer.lexpos - t.lexer.last_pos + 1
     msg = r"Illegal character '{0}' at line {1} column {2}".format(
-        t.value[0], t.lexer.lineno, column)
+        t.value[0], t.lexer.lineno, column
+    )
     raise ValueError(msg, t.value[0], t.lexer.lineno, column)
 
 
@@ -82,7 +88,7 @@ fispact_lexer = lex.lex(reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE)
 
 def p_data(p):
     """data : data timeframe
-            | timeframe
+    | timeframe
     """
     if len(p) == 2:
         p[0] = [p[1]]
@@ -93,19 +99,18 @@ def p_data(p):
 
 def p_timeframe(p):
     """timeframe : timeheader isotope_data
-                 | timeheader gamma_data
-                 | timeheader
+    | timeheader gamma_data
+    | timeheader
     """
     index, interval, time = p[1]
-    frame = {'index': index, 'duration': interval, 'time': time}
+    frame = {"index": index, "duration": interval, "time": time}
     if len(p) == 3:
         frame.update(p[2])
     p[0] = frame
 
 
 def p_timeheader(p):
-    """timeheader : TIME flt_number keyword INTERVAL int_number INTERVAL TIME flt_number keyword newline
-    """
+    """timeheader : TIME flt_number keyword INTERVAL int_number INTERVAL TIME flt_number keyword newline"""
     index = p[5]
     time = p[2] * TIME_ALIAS[p[3]]
     interval = p[8] * TIME_UNITS[p[9]]
@@ -114,33 +119,33 @@ def p_timeheader(p):
 
 def p_isotope_data(p):
     """isotope_data : isotope_data isotope_row newline
-                    | isotope_row newline
+    | isotope_row newline
     """
     n = len(p)
-    elem, data1, data2 = p[n-2]
+    elem, data1, data2 = p[n - 2]
     if n == 3:
-        p[0] = {'data1': {elem: data1}, 'data2': {elem: data2}}
+        p[0] = {"data1": {elem: data1}, "data2": {elem: data2}}
     else:
-        p[1]['data1'][elem] = data1
-        p[1]['data2'][elem] = data2
+        p[1]["data1"][elem] = data1
+        p[1]["data2"][elem] = data2
         p[0] = p[1]
 
 
 def p_isotope_row(p):
     """isotope_row : isotope flt_number flt_number
-                   | isotope int_number flt_number flt_number
+    | isotope int_number flt_number flt_number
     """
     n = len(p)
-    p[0] = p[1], p[n-2], p[n-1]
+    p[0] = p[1], p[n - 2], p[n - 1]
 
 
 def p_isotope(p):
     """isotope : keyword int_number
-               | keyword int_number keyword
+    | keyword int_number keyword
     """
     name = p[1] + str(p[2])
     if len(p) == 4:
-        isomer = ord(p[3]) - ord('m') + 1
+        isomer = ord(p[3]) - ord("m") + 1
     else:
         isomer = 0
     p[0] = Element(name, isomer=isomer)
@@ -148,10 +153,10 @@ def p_isotope(p):
 
 def p_gamma_data(p):
     """gamma_data : fiss ab ab tot_gamma spectrum"""
-    p[5]['fissions'] = p[1]
-    p[5]['a-energy'] = p[2]
-    p[5]['b-energy'] = p[3]
-    p[5]['g-energy'] = p[4]
+    p[5]["fissions"] = p[1]
+    p[5]["a-energy"] = p[2]
+    p[5]["b-energy"] = p[3]
+    p[5]["g-energy"] = p[4]
     p[0] = p[5]
 
 
@@ -172,16 +177,16 @@ def p_tot_gamma(p):
 
 def p_spectrum(p):
     """spectrum : spectrum bin newline
-                | bin newline
+    | bin newline
     """
     n = len(p)
-    low, high, data1, data2 = p[n-2]
+    low, high, data1, data2 = p[n - 2]
     if n == 3:
-        p[0] = {'ebins': [low, high], 'data1': [data1], 'data2': [data2]}
+        p[0] = {"ebins": [low, high], "data1": [data1], "data2": [data2]}
     else:
-        p[1]['ebins'].append(high)
-        p[1]['data1'].append(data1)
-        p[1]['data2'].append(data2)
+        p[1]["ebins"].append(high)
+        p[1]["data1"].append(data1)
+        p[1]["data2"].append(data2)
         p[0] = p[1]
 
 
@@ -193,7 +198,11 @@ def p_bin(p):
 def p_error(p):
     if p:
         column = p.lexer.lexpos - p.lexer.last_pos + 1
-        print("Syntax error at token {0} {3}, line {1}, column {2}".format(p.type, p.lexer.lineno, column, p.value))
+        print(
+            "Syntax error at token {0} {3}, line {1}, column {2}".format(
+                p.type, p.lexer.lineno, column, p.value
+            )
+        )
     else:
         print("Syntax error at EOF")
 
@@ -241,7 +250,7 @@ def read_fispact_tab(filename):
     time_frames : list
         List of time frames.
     """
-    ext = filename.rpartition('.')[2].lower()
+    ext = filename.rpartition(".")[2].lower()
     with open(filename) as f:
         text = f.read()
     fispact_lexer.lineno = 1
@@ -250,19 +259,19 @@ def read_fispact_tab(filename):
     time_frames = fispact_parser.parse(text, lexer=fispact_lexer)
     time = 0
     for tf in time_frames:
-        time += tf['duration']
-        tf['time'] = time
-        data1 = tf.pop('data1', None)
-        data2 = tf.pop('data2', None)
+        time += tf["duration"]
+        tf["time"] = time
+        data1 = tf.pop("data1", None)
+        data2 = tf.pop("data2", None)
         if data1 is None and data2 is None:
             continue
-        if ext == 'tab1':
-            tf['atoms'] = data1
-        elif ext == 'tab2':
-            tf['activity'] = data1
-        elif ext == 'tab3':
-            tf['ingestion'] = data1
-            tf['inhalation'] = data2
-        elif ext == 'tab4':
-            tf['flux'] = data2
+        if ext == "tab1":
+            tf["atoms"] = data1
+        elif ext == "tab2":
+            tf["activity"] = data1
+        elif ext == "tab3":
+            tf["ingestion"] = data1
+            tf["inhalation"] = data2
+        elif ext == "tab4":
+            tf["flux"] = data2
     return time_frames

@@ -41,6 +41,7 @@ class Distribution:
     variable : str
         Name of source variable.
     """
+
     def __init__(self, name, values, probs, variable=None):
         self._name = name
         self._var = variable
@@ -68,27 +69,27 @@ class Distribution:
         tokens = []
         discrete = Distribution.is_discrete(self._values, len(self._probs))
         if isinstance(self._values[0], Distribution):
-            tokens.append('S')
+            tokens.append("S")
             for v in self._values:
                 tokens.append(str(v.name))
         else:
-            tokens.append('L' if discrete else 'H')
+            tokens.append("L" if discrete else "H")
             for v in self._values:
                 tokens.append(str(v))
 
         if isinstance(self._probs, Distribution):
-            tokens.insert(0, 'DS{0}'.format(self._name))
+            tokens.insert(0, "DS{0}".format(self._name))
             prob_tokens = None
         else:
-            tokens.insert(0, 'SI{0}'.format(self._name))
-            prob_tokens = ['SP{0}'.format(self._name), 'D']
+            tokens.insert(0, "SI{0}".format(self._name))
+            prob_tokens = ["SP{0}".format(self._name), "D"]
             if not discrete:
-                prob_tokens.append('0')
+                prob_tokens.append("0")
             for p in self._probs:
                 prob_tokens.append(str(p))
         card = print_card(separate(tokens))
         if prob_tokens:
-            card += '\n' + print_card(separate(prob_tokens))
+            card += "\n" + print_card(separate(prob_tokens))
         return card
 
     def get_inner(self):
@@ -231,31 +232,32 @@ class Source:
     mcnp_repr()
         Gets a string representation of corresponding MCNP card.
     """
+
     def __init__(self, **variables):
         self._variables = variables
 
     def mcnp_repr(self):
         """Gets a string representation of corresponding MCNP card."""
-        tokens = ['SDEF']
+        tokens = ["SDEF"]
         cards = []
         extra_cards = []
         for k, v in self._variables.items():
-            tokens.append('{0}={1}'.format(k, Source._var_repr(k, v)))
+            tokens.append("{0}={1}".format(k, Source._var_repr(k, v)))
             if isinstance(v, Distribution):
                 cards.append(v.mcnp_repr())
                 for ec in sorted(v.get_inner(), key=lambda x: x.name):
                     extra_cards.append(ec.mcnp_repr())
         cards.insert(0, print_card(separate(tokens)))
         cards.extend(extra_cards)
-        return '\n'.join(cards)
+        return "\n".join(cards)
 
     @staticmethod
     def _var_repr(key, value):
         if isinstance(value, Distribution):
             dep = value.depends_on()
-            result = 'D{0}'.format(value.name)
+            result = "D{0}".format(value.name)
             if dep:
-                result = 'F{0} '.format(dep.variable) + result
+                result = "F{0} ".format(dep.variable) + result
         else:
             result = str(value)
         return result

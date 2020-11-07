@@ -5,13 +5,12 @@ import warnings
 from mckit.utils import get_decades, significant_digits, prettify_float
 import mckit.constants as constants
 
-MCNP_FORMATS = {
-    'importance': '{0:.3f}',
-    'material_fraction': '{0:.6e}'
-}
+MCNP_FORMATS = {"importance": "{0:.3f}", "material_fraction": "{0:.6e}"}
 
 
-def print_card(tokens: List[str], offset: int = 8, maxcol: int = 80, sep: str = '\n') -> str:
+def print_card(
+    tokens: List[str], offset: int = 8, maxcol: int = 80, sep: str = "\n"
+) -> str:
     """Produce string in MCNP card format.
 
     Parameters
@@ -40,7 +39,7 @@ def print_card(tokens: List[str], offset: int = 8, maxcol: int = 80, sep: str = 
 
     length = 0  # current length.
     words = []  # a list of individual words.
-    line_sep = '\n' + ' ' * offset   # separator between lines.
+    line_sep = "\n" + " " * offset  # separator between lines.
     i = 0
     while i < len(tokens):
         if length + len(tokens[i]) > maxcol or tokens[i] == sep:
@@ -50,14 +49,14 @@ def print_card(tokens: List[str], offset: int = 8, maxcol: int = 80, sep: str = 
                 i += 1
                 if i == len(tokens):
                     words.pop()
-                    return ''.join(words)
+                    return "".join(words)
         words.append(tokens[i])
         length += len(tokens[i])
         i += 1
-    return ''.join(words)
+    return "".join(words)
 
 
-def separate(tokens, sep=' '):
+def separate(tokens, sep=" "):
     """Adds separation symbols between tokens.
 
     Parameters
@@ -86,27 +85,27 @@ def print_option(
 ) -> List[str]:
     name = option[:3]
     par = option[3:]
-    if name == 'IMP' and (par == 'N' or par == 'P' or par == 'E'):
-        return ['IMP:{0}={1}'.format(par, MCNP_FORMATS['importance'].format(value))]
-    elif option == 'VOL':
-        return ['VOL={0}'.format(value)]
-    elif option == 'U':
-        return ['U={0}'.format(value.name())]
-    elif option == 'FILL':
-        universe = value['universe']
-        tr = value.get('transform', None)
-        words = ['FILL={0}'.format(universe.name())]
+    if name == "IMP" and (par == "N" or par == "P" or par == "E"):
+        return ["IMP:{0}={1}".format(par, MCNP_FORMATS["importance"].format(value))]
+    elif option == "VOL":
+        return ["VOL={0}".format(value)]
+    elif option == "U":
+        return ["U={0}".format(value.name())]
+    elif option == "FILL":
+        universe = value["universe"]
+        tr = value.get("transform", None)
+        words = ["FILL={0}".format(universe.name())]
         if tr:
             tr_name = tr.name()
             if not tr_name:
-                words[0] = '*' + words[0]
-                words.append('(')
+                words[0] = "*" + words[0]
+                words.append("(")
                 words.extend(tr.get_words())
-                words.append(')')
+                words.append(")")
             else:
-                words.append('(')
+                words.append("(")
                 words.append(str(tr_name))
-                words.append(')')
+                words.append(")")
         return words
     else:
         raise ValueError("Incorrect option name: {0}".format(option))
@@ -131,8 +130,8 @@ def pretty_float(value, frac_digits: Optional[int] = None) -> str:
     if value == abs(value):
         value = abs(value)
     decades = get_decades(value)
-    format_f = '{{0:.{0}f}}'.format(max(frac_digits, 0))
-    format_e = '{{0:.{0}e}}'.format(max(frac_digits + decades, 0))
+    format_f = "{{0:.{0}f}}".format(max(frac_digits, 0))
+    format_e = "{{0:.{0}e}}".format(max(frac_digits + decades, 0))
     text_f = format_f.format(round(value, frac_digits))
     text_e = format_e.format(value)
     if len(text_f) <= len(text_e):
@@ -142,14 +141,14 @@ def pretty_float(value, frac_digits: Optional[int] = None) -> str:
 
 
 CELL_OPTION_GROUPS = (
-    ('IMPN', 'IMPP', 'IMPE', 'VOL'),   # Importance options
-    ('TRCL',),  # Transformation options
-    ('U', 'FILL')  # Universe and fill options
+    ("IMPN", "IMPP", "IMPE", "VOL"),  # Importance options
+    ("TRCL",),  # Transformation options
+    ("U", "FILL"),  # Universe and fill options
 )
 
 
 def add_float(words: List[str], v: float, pretty: bool) -> None:
-    words.append(' ')
+    words.append(" ")
     if pretty:
         words.append(pretty_float(v))
     else:

@@ -9,19 +9,19 @@ from mckit.parser.common.Lexer import Lexer as LexerBase
 class Lexer(LexerBase):
     tokens = {NAME, FRACTION, OPTION}
     ignore = " \t="
-    OPTION = r'(?:(?:gas|estep|cond)\s*[ =]\s*\d+)|(?:(?:n|p|pn|e)lib\s*[ =]\s*\S+)'
+    OPTION = r"(?:(?:gas|estep|cond)\s*[ =]\s*\d+)|(?:(?:n|p|pn|e)lib\s*[ =]\s*\S+)"
 
-    @_(r'm\d+')
+    @_(r"m\d+")
     def NAME(self, t):
         t.value = int(t.value[1:])
         return t
 
-    @_(r'\d+(?:\.\d+[cdepuy])?\s+[-+]?((\d+(\.\d*)?)|(\.\d+))([eE][-+]?\d+)?')
+    @_(r"\d+(?:\.\d+[cdepuy])?\s+[-+]?((\d+(\.\d*)?)|(\.\d+))([eE][-+]?\d+)?")
     def FRACTION(self, t):
         isotop_spec, frac = t.value.split()
         frac = float(frac)
-        if '.' in isotop_spec:
-            isotope, lib = isotop_spec.split('.')
+        if "." in isotop_spec:
+            isotope, lib = isotop_spec.split(".")
             isotope = int(isotope)
             lib = cmn.ensure_lower(lib)
             t.value = isotope, lib, frac
@@ -52,32 +52,32 @@ class Parser(sly.Parser):
         if options is None:
             options = {}
 
-        options['name'] = name
+        options["name"] = name
 
         if self.trailing_comments:
-            options['comment'] = self.trailing_comments
+            options["comment"] = self.trailing_comments
 
         return Composition(atomic=atomic, weight=weight, **options)
 
-    @_('composition_a')
+    @_("composition_a")
     def composition(self, p):
         name, fractions, options = p.composition_a
         return self.build_composition(name, fractions, options)
 
-    @_('NAME fractions options')
+    @_("NAME fractions options")
     def composition_a(self, p):
         return p.NAME, p.fractions, p.options
 
-    @_('NAME fractions')
+    @_("NAME fractions")
     def composition_a(self, p):
         return p.NAME, p.fractions, None
 
-    @_('fractions fraction')
+    @_("fractions fraction")
     def fractions(self, p):
         p.fractions.append(p.fraction)
         return p.fractions
 
-    @_('fraction')
+    @_("fraction")
     def fractions(self, p):
         return [p.fraction]
 
@@ -86,27 +86,27 @@ class Parser(sly.Parser):
     #     name, lib, frac = p.fraction_a
     #     return Element(name, lib=lib, comment=p.EOL_COMMENT), frac
     #
-    @_('FRACTION')
+    @_("FRACTION")
     def fraction(self, p):
         name, lib, frac = p.FRACTION
         return Element(name, lib=lib), frac
 
-    @_('options option')
+    @_("options option")
     def options(self, p):
         option, value = p.option
         p.options[option] = value
         return p.options
 
-    @_('option')
+    @_("option")
     def options(self, p):
         option, value = p.option
         return {option: value}
 
-    @_('OPTION')
+    @_("OPTION")
     def option(self, p):
         text: str = p.OPTION
-        if '=' in text:
-            text = text.replace('=', ' ', 1)
+        if "=" in text:
+            text = text.replace("=", " ", 1)
         option, value = text.split()
         option = cmn.ensure_upper(option)
         if option in ("GAS", "ESTEP", "COND"):

@@ -12,25 +12,23 @@ from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 
 
 def check_duplicates(
-    iterable: Optional[Iterable[Any]],
-    label: str,
-    key: Callable[[Any], Any]
+    iterable: Optional[Iterable[Any]], label: str, key: Callable[[Any], Any]
 ) -> None:
     # logger = logging.getLogger(__name__)
     if iterable is None:
         # logger.info("No %ss are found", label)
-        print("No %ss are found"%label)
+        print("No %ss are found" % label)
     else:
         visited = set()
         for c in iterable:
             k = key(c)
             if k in visited:
                 # logger.error("Duplicate of %s %d is found", label, k)
-                print("Duplicate of %s %d is found"%(label, k))
+                print("Duplicate of %s %d is found" % (label, k))
             else:
                 visited.add(k)
         # logger.info("Total of %ss: %d", label, len(visited))
-        print("Total of %ss: %d"%(label, len(visited)))
+        print("Total of %ss: %d" % (label, len(visited)))
 
 
 def check(source):
@@ -39,7 +37,7 @@ def check(source):
     logger.debug("Check model %s", source)
     source = Path(source)
     parse_result: ParseResult = from_file(source)
-    model= parse_result.universe
+    model = parse_result.universe
     logger.debug("Read the model okay")
     universes = model.get_universes()
     check_duplicates(universes, "universe", Universe.name)
@@ -63,9 +61,3 @@ def check(source):
     check_duplicates(transformations, "transformation", Card.name)
     check_duplicates(compositions, "composition", Card.name)
     return result
-
-
-
-
-
-

@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 import click
 from mckit import Universe
+
 # This is the encoding swallowing non ascii (neither unicode) symbols happening in MCNP models code
 from mckit.constants import MCNP_ENCODING
 

@@ -7,6 +7,7 @@ from mckit.parser.common import Index, NumberedItemNotFoundError
 
 class DummySurface(Plane):
     """To substitute surface when it's not found"""
+
     def __init__(self, name: int):
         super().__init__(EX, 0.0, name=name, comment="dummy")
 
@@ -30,7 +31,7 @@ class SurfaceStrictIndex(Index):
         super().__init__(raise_on_absent_surface_strategy, kwargs)
 
     @classmethod
-    def from_iterable(cls, items: Iterable[Surface]) -> 'SurfaceStrictIndex':
+    def from_iterable(cls, items: Iterable[Surface]) -> "SurfaceStrictIndex":
         index = cls()
         index.update((c.name(), c) for c in items)
         return index
@@ -42,4 +43,4 @@ class SurfaceDummyIndex(Index):
 
 
 class SurfaceNotFoundError(NumberedItemNotFoundError):
-    kind = 'Surface'
+    kind = "Surface"

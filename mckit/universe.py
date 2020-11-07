@@ -8,6 +8,7 @@ from click import progressbar
 
 from .body import Body, Shape
 from .card import Card
+
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
 from mckit.box import GLOBAL_BOX, Box
 from .surface import Surface
@@ -19,9 +20,12 @@ from mckit.constants import MCNP_ENCODING
 from mckit.utils import filter_dict
 
 __all__ = [
-    'Universe', 'produce_universes', 'NameClashError', 'cell_selector',
-    'surface_selector',
-    'collect_transformations',
+    "Universe",
+    "produce_universes",
+    "NameClashError",
+    "cell_selector",
+    "surface_selector",
+    "collect_transformations",
 ]
 
 
@@ -83,11 +87,11 @@ def surface_selector(surface_names):
 
 class Universe:
     """Describes universe - a set of cells.
-    
+
     Universe is a set of cells from which it consist of. Each cell can be filled
     with other universe. In this case, cells of other universe are bounded by
     cell being filled.
-    
+
     Parameters
     ----------
     cells : iterable
@@ -146,8 +150,15 @@ class Universe:
         Gets verbose name of the universe.
     """
 
-    def __init__(self, cells, name=0, verbose_name=None, comment=None,
-                 name_rule='keep', common_materials=None):
+    def __init__(
+        self,
+        cells,
+        name=0,
+        verbose_name=None,
+        comment=None,
+        name_rule="keep",
+        common_materials=None,
+    ):
         self._name: int = name
         self._comment = comment
         self._verbose_name: str = verbose_name
@@ -188,7 +199,7 @@ class Universe:
                 return False
         return True
 
-    def add_cells(self, cells, name_rule='new'):
+    def add_cells(self, cells, name_rule="new"):
         """Adds new cell to the universe.
 
         Modifies current universe.
@@ -224,20 +235,21 @@ class Universe:
             mat = new_cell.material()
             if mat:
                 new_comp = Universe._update_replace_dict(
-                    mat._composition, comp_replace, comp_names, name_rule,
-                    'Material'
+                    mat._composition, comp_replace, comp_names, name_rule, "Material"
                 )
-                new_cell.options['MAT'] = Material(
+                new_cell.options["MAT"] = Material(
                     composition=new_comp, density=mat.density
                 )
 
-            if name_rule == 'keep' and cell.name() in cell_names:
+            if name_rule == "keep" and cell.name() in cell_names:
                 raise NameClashError("Cell name clash: {0}".format(cell.name()))
-            elif name_rule == 'new' or name_rule == 'clash' and cell.name() in cell_names:
+            elif (
+                name_rule == "new" or name_rule == "clash" and cell.name() in cell_names
+            ):
                 new_name = max(cell_names, default=0) + 1
                 new_cell.rename(new_name)
             cell_names.add(new_cell.name())
-            new_cell.options['U'] = self
+            new_cell.options["U"] = self
             self._cells.append(new_cell)
 
     def set_common_materials(self, common_materials):
@@ -267,7 +279,7 @@ class Universe:
             if mat:
                 comp = mat.composition
                 if comp in common_materials:
-                    c.options['MAT'] = Material(
+                    c.options["MAT"] = Material(
                         composition=cmd[comp], density=mat.density
                     )
 
@@ -280,10 +292,10 @@ class Universe:
                 rev_s = Plane(-s._v, -s._k)
                 if rev_s in surf_replace.keys():
                     rev_s = surf_replace[rev_s]
-                    replace_dict[s] = Shape('C', rev_s)
+                    replace_dict[s] = Shape("C", rev_s)
                     continue
             replace_dict[s] = Universe._update_replace_dict(
-                s, surf_replace, surf_names, name_rule, 'Surface'
+                s, surf_replace, surf_names, name_rule, "Surface"
             )
         return cell.shape.replace_surfaces(replace_dict)
 
@@ -291,14 +303,14 @@ class Universe:
     def _update_replace_dict(entity, replace, names, rule, err_desc):
         if entity not in replace.keys():
             new_entity = entity.copy()
-            if rule == 'keep' and new_entity.name() in names:
+            if rule == "keep" and new_entity.name() in names:
                 print(entity.mcnp_repr())
                 for c in replace.keys():
                     print(c.mcnp_repr())
                 raise NameClashError(
                     "{0} name clash: {1}".format(err_desc, entity.name())
                 )
-            elif rule == 'new' or rule == 'clash' and new_entity.name() in names:
+            elif rule == "new" or rule == "clash" and new_entity.name() in names:
                 new_name = max(names, default=0) + 1
                 new_entity.rename(new_name)
                 names.add(new_name)
@@ -311,7 +323,7 @@ class Universe:
     @staticmethod
     def _fill_check(predicate):
         def _predicate(cell):
-            fill = cell.options.get('FILL', None)
+            fill = cell.options.get("FILL", None)
             if fill:
                 return predicate(cell)
             else:
@@ -329,11 +341,11 @@ class Universe:
         """
         cells = []
         for c in self:
-            options = {k: v for k, v in c.options.items() if k != 'FILL'}
+            options = {k: v for k, v in c.options.items() if k != "FILL"}
             cells.append(Body(c.shape, **options))
         return Universe(cells)
 
-    def apply_fill(self, cell=None, universe=None, predicate=None, name_rule='new'):
+    def apply_fill(self, cell=None, universe=None, predicate=None, name_rule="new"):
         """Applies fill operations to all or selected cells or universes.
 
         Modifies current universe.
@@ -356,7 +368,7 @@ class Universe:
         elif cell:
             predicate = lambda c: c.name() == cell
         elif universe:
-            predicate = lambda c: c.options['FILL']['universe'].name() == universe
+            predicate = lambda c: c.options["FILL"]["universe"].name() == universe
         predicate = self._fill_check(predicate)
         extra_cells = []
         del_indices = []
@@ -402,7 +414,7 @@ class Universe:
             boxes.append(c.shape.bounding_box(tol=tol, box=box))
         all_corners = np.empty((8 * len(boxes), 3))
         for i, b in enumerate(boxes):
-            all_corners[i * 8: (i + 1) * 8, :] = b.corners
+            all_corners[i * 8 : (i + 1) * 8, :] = b.corners
         min_pt = np.min(all_corners, axis=0)
         max_pt = np.max(all_corners, axis=0)
         center = 0.5 * (min_pt + max_pt)
@@ -412,8 +424,11 @@ class Universe:
     def copy(self):
         """Makes a copy of the universe."""
         return Universe(
-            self._cells, name=self._name, verbose_name=self._verbose_name,
-            comment=self._comment, common_materials=self._common_materials
+            self._cells,
+            name=self._name,
+            verbose_name=self._verbose_name,
+            comment=self._comment,
+            common_materials=self._common_materials,
         )
 
     def find_common_materials(self):
@@ -448,8 +463,8 @@ class Universe:
         surfs = set()
         for c in self:
             surfs.update(c.shape.get_surfaces())
-            if inner and 'FILL' in c.options.keys():
-                surfs.update(c.options['FILL']['universe'].get_surfaces(inner))
+            if inner and "FILL" in c.options.keys():
+                surfs.update(c.options["FILL"]["universe"].get_surfaces(inner))
         return surfs
 
     def get_materials(self, recursive=False):
@@ -500,8 +515,8 @@ class Universe:
         """
         universes = {self}
         for c in self:
-            if 'FILL' in c.options:
-                u = c.options['FILL']['universe']  # TODO dvp: add transformations
+            if "FILL" in c.options:
+                u = c.options["FILL"]["universe"]  # TODO dvp: add transformations
                 universes.update(u.get_universes())
         return universes
 
@@ -524,20 +539,22 @@ class Universe:
         surfs = {u: list(map(Card.name, u.get_surfaces())) for u in univ}
         mats = {None: list(map(Card.name, self._common_materials))}
         for u in univ:
-            mats[u] = list(map(Card.name, u.get_compositions().difference(self._common_materials)))
+            mats[u] = list(
+                map(Card.name, u.get_compositions().difference(self._common_materials))
+            )
         univs = {u: [u.name()] for u in univ}
         cstat = Universe._produce_stat(cells)
         if cstat:
-            stat['cell'] = cstat
+            stat["cell"] = cstat
         sstat = Universe._produce_stat(surfs)
         if sstat:
-            stat['surf'] = sstat
+            stat["surf"] = sstat
         mstat = Universe._produce_stat(mats)
         if mstat:
-            stat['material'] = mstat
+            stat["material"] = mstat
         ustat = Universe._produce_stat(univs)
         if ustat:
-            stat['universe'] = ustat
+            stat["universe"] = ustat
         # TODO dvp: handle transformations here
         return stat
 
@@ -558,8 +575,9 @@ class Universe:
                 new_stat[k] = set(v)
         return new_stat
 
-    def rename(self, start_cell=None, start_surf=None, start_mat=None,
-               start_tr=None, name=None):
+    def rename(
+        self, start_cell=None, start_surf=None, start_mat=None, start_tr=None, name=None
+    ):
         """Renames all entities contained in the universe.
 
         All new names are sequential starting from the specified name. If name
@@ -614,7 +632,7 @@ class Universe:
                 pass
                 # TODO rename found clashed objects
             else:
-                raise NameClashError('Impossible to save model.')
+                raise NameClashError("Impossible to save model.")
         transformations = collect_transformations(self)
         if transformations:
             transformations = sorted(transformations, key=Card.name)
@@ -628,16 +646,16 @@ class Universe:
             materials.extend(sorted(u.get_compositions(True), key=Card.name))
         cards = [self.verbose_name]
         cards.extend(map(Card.mcnp_repr, cells))
-        cards.append('')
+        cards.append("")
         cards.extend(map(Card.mcnp_repr, surfaces))
-        cards.append('')
+        cards.append("")
         if transformations:
             cards.extend(map(Card.mcnp_repr, transformations))
         if materials:
             cards.extend(map(Card.mcnp_repr, materials))
-        cards.append('')
-        with open(filename, mode='w', encoding=encoding) as f:
-            f.write('\n'.join(cards))
+        cards.append("")
+        with open(filename, mode="w", encoding=encoding) as f:
+            f.write("\n".join(cards))
 
     def select(self, selector=None, inner=False):
         """Selects specified entities.
@@ -661,7 +679,7 @@ class Universe:
         for c in self:
             portion = selector(c)
             if inner:
-                u = c.options.get('FILL', {}).get('universe', None)
+                u = c.options.get("FILL", {}).get("universe", None)
                 if u:
                     portion.extend(u.select(selector, True))
             for item in portion:
@@ -670,8 +688,9 @@ class Universe:
                     items.append(item)
         return items
 
-    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False,
-                 verbose=True):
+    def simplify(
+        self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False, verbose=True
+    ):
         """Simplifies all cells of the universe.
 
         Modifies current universe.
@@ -700,8 +719,12 @@ class Universe:
                 new_cells.append(cs)
 
         if verbose:
-            print('Universe {0} simplification has been finished.'.format(self.name()))
-            print('{0} empty cells were deleted.'.format(len(self._cells) - len(new_cells)))
+            print("Universe {0} simplification has been finished.".format(self.name()))
+            print(
+                "{0} empty cells were deleted.".format(
+                    len(self._cells) - len(new_cells)
+                )
+            )
 
         self._cells = new_cells
 
@@ -741,8 +764,13 @@ class Universe:
             New transformed universe.
         """
         new_cells = [c.transform(tr) for c in self]
-        return Universe(new_cells, name=self._name, name_rule='clash',
-                        verbose_name=self._verbose_name, comment=self._comment)
+        return Universe(
+            new_cells,
+            name=self._name,
+            name_rule="clash",
+            verbose_name=self._verbose_name,
+            comment=self._comment,
+        )
 
     @property
     def verbose_name(self) -> str:
@@ -778,26 +806,30 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
     """
     groups: Dict[int, _UniverseCellsGroup] = {}
     for c in cells:
-        universe_no: int = c.options.get('U', 0)
+        universe_no: int = c.options.get("U", 0)
         if universe_no in groups:
             groups[universe_no].cells.append(c)
         else:
-            new_group = _UniverseCellsGroup(universe=Universe([], universe_no), cells=[c])
+            new_group = _UniverseCellsGroup(
+                universe=Universe([], universe_no), cells=[c]
+            )
             groups[universe_no] = new_group
     for c in cells:
-        fill: Dict[str, Any] = c.options.get('FILL', None)
+        fill: Dict[str, Any] = c.options.get("FILL", None)
         if fill is not None:
-            fill_universe_no = fill['universe']
-            fill['universe'] = groups[fill_universe_no].universe
+            fill_universe_no = fill["universe"]
+            fill["universe"] = groups[fill_universe_no].universe
     for group in groups.values():
-        group.universe.add_cells(group.cells, name_rule='keep')
+        group.universe.add_cells(group.cells, name_rule="keep")
     top_universe = groups[0].universe
     top_universe.set_common_materials(top_universe.find_common_materials())
     return top_universe
 
 
 def collect_transformations(universe: Universe, recursive=True) -> Set[Transformation]:
-    def add_surface_transformation(aggregator: Set[Transformation], surface: Surface) -> None:
+    def add_surface_transformation(
+        aggregator: Set[Transformation], surface: Surface
+    ) -> None:
         transformation = surface.transformation
         if transformation and transformation.name():
             aggregator.add(transformation)
@@ -838,10 +870,10 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
         if body_transformation and body_transformation.name():
             aggregator.add(body_transformation)
         if recursive:
-            fill = b.options.get('FILL', None)
+            fill = b.options.get("FILL", None)
             if fill:
-                fill_universe = fill['universe']
-                fill_transformation = fill.get('transform', None)
+                fill_universe = fill["universe"]
+                fill_transformation = fill.get("transform", None)
                 if fill_transformation and fill_transformation.name():
                     aggregator.add(fill_transformation)
                 aggregator.update(collect_transformations(fill_universe))
@@ -858,6 +890,7 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
             on_unknown_acceptor(u)
 
     return accept(universe, visit_universe)
+
 
 # TODO dvp: it's possible to generalize visiting introducing class Visitor
 #           See: all visit_... functions will be probably not changed on deriving
