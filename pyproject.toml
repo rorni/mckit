@@ -6,6 +6,7 @@ authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
 homepage = "https://github.com/rorni/mckit"
 repository = "https://github.com/rorni/mckit"
+license = "MIT"
 keywords = ["mckit", "MCNP"]
 build = "build.py"
 

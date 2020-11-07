@@ -13,10 +13,6 @@ from .version import (
     __copyright__,
     __license__,
     __title__,
-    __ver_major__,
-    __ver_minor__,
-    __ver_patch__,
-    __ver_sub__,
     __version__,
     __version_info__,
 )

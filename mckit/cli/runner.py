@@ -7,11 +7,12 @@ import click_log
 
 from contextlib import contextmanager
 from pathlib import Path
-
-from mckit import __version__
+import mckit.version as meta
 from mckit.utils import MCNP_ENCODING
 from mckit.cli.commands.common import get_default_output_directory
 from mckit.cli.commands import do_decompose, do_compose, do_split, do_check
+
+__version__ = meta.__version__
 
 __LOG = logging.getLogger(__name__)
 click_log.basic_config(__LOG)
@@ -22,7 +23,7 @@ if sys.version_info.major < 3:  # pragma: no cover
     sys.exit(1)
 
 
-@click.group()
+@click.group(help=meta.__summary__)
 @click.option("--debug/--no-debug", default=False)
 @click.option("--override/--no-override", default=False)
 @click.pass_context

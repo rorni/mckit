@@ -1,10 +1,17 @@
+try:
+    import importlib_metadata as meta
+except ImportError:
+    import importlib.metadata as meta
+
 __title__ = "mckit"
-__author__ = "Roman Rodionov"
-__license__ = "MIT"
-__copyright__ = "Copyright 2018-2020 Roman Rodinov"
-__ver_major__ = 0
-__ver_minor__ = 4
-__ver_patch__ = 4
-__version_info__ = (__ver_major__, __ver_minor__, __ver_patch__)
-__ver_sub__ = ""
-__version__ = "%d.%d.%d%s" % (__ver_major__, __ver_minor__, __ver_patch__, __ver_sub__)
+__distribution__ = meta.distribution(__title__)
+__meta_data__ = __distribution__.metadata
+__author__ = __meta_data__["Author"]
+__author_email__ = __meta_data__["Author-email"]
+__license__ = __meta_data__["License"]
+__summary__ = __meta_data__["Summary"]
+__copyright__ = (
+    "Copyright 2018-2020 Roman Rodionov"
+)  # TODO dvp: move to meta (project.toml)
+__version__ = __distribution__.version
+__version_info__ = tuple(map(int, __version__.split(".")[:3]))
