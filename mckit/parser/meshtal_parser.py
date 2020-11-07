@@ -120,6 +120,7 @@ def t_norm_tally_minus(t):
     return t
 
 
+# noinspection PyPep8Naming
 @lex.TOKEN(BLANK_LINE)
 def t_ANY_separator(t):
     t.lexer.lineno += 1
@@ -194,6 +195,7 @@ def t_norm_tally_keyword(t):
         return t
 
 
+# noinspection PyPep8Naming
 def t_ANY_error(t):
     column = t.lexer.lexpos - t.lexer.last_pos + 1
     msg = r"Illegal character '{0}' at line {1} column {2}".format(
