@@ -16,15 +16,7 @@ from mckit.parser.common import (
 )
 from mckit.utils import filter_dict
 
-CELL_WORDS = {
-    "U",
-    "MAT",
-    "LAT",
-    "TMP",
-    "RHO",
-    "VOL",
-    "PMT",
-}
+CELL_WORDS = {"U", "MAT", "LAT", "TMP", "RHO", "VOL", "PMT"}
 
 
 def intern_cell_word(word: str):
@@ -277,9 +269,7 @@ class Parser(sly.Parser):
 
     @_("FILL integer")
     def fill_attribute(self, p):
-        fill = {
-            "universe": p.integer,
-        }
+        fill = {"universe": p.integer}
         return {"FILL": fill}
 
     @staticmethod
@@ -324,9 +314,7 @@ class Parser(sly.Parser):
     def translation(self, p):
         return [f for f in p]
 
-    @_(
-        "float float float float float float float float float INTEGER",
-    )
+    @_("float float float float float float float float float INTEGER")
     def rotation(self, p):
         m = p[9]
         assert m == -1 or m == 1, f"Invalid value for transformation M paraameter {m}"

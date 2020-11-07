@@ -119,10 +119,7 @@ def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transforma
                 rotation = None
             # noinspection PyTypeChecker
             transform = Transformation(
-                translation=translation,
-                rotation=rotation,
-                indegrees=True,
-                name=name,
+                translation=translation, rotation=rotation, indegrees=True, name=name
             )
             named_transformations[name] = transform
         return named_transformations

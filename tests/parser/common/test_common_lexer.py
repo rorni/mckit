@@ -124,10 +124,7 @@ class MyParser(sly.Parser):
 
 @pytest.mark.parametrize(
     "text, expected",
-    [
-        ("AAA 1 1.2 3.4", ("AAA", 1, [1.2, 3.4])),
-        ("A-Z 0", ("A-Z", 0, None)),
-    ],
+    [("AAA 1 1.2 3.4", ("AAA", 1, [1.2, 3.4])), ("A-Z 0", ("A-Z", 0, None))],
 )
 def test_parser_with_derived_lexer(text, expected):
     lexer = MyLexer()

@@ -34,7 +34,9 @@ def tolerance_estimator(
         if a is None:
             return False  # b is not None here
         if b is None:
-            return True  # in our use cases absent optional objects (like Transformations) are equal
+            return (
+                True
+            )  # in our use cases absent optional objects (like Transformations) are equal
         if isinstance(a, float) and isinstance(b, float):
             return math.isclose(a, b, rel_tol=rtol, abs_tol=atol)
         elif isinstance(a, ndarray) and isinstance(b, ndarray):

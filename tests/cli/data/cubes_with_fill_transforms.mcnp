@@ -1,5 +1,5 @@
 testing CLI commands on cubic cells with anonymous transformation
-c 
+c
 c given two envelopes and fillers insert new envelop and filler intersecting
 c the original fillers
 c

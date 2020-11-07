@@ -10,8 +10,9 @@ from setuptools.command.test import test as TestCommand
 # See recomendations in https://docs.pytest.org/en/latest/goodpractices.html
 # noinspection PyAttributeOutsideInit
 
+
 class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+    user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
@@ -19,15 +20,17 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import shlex
+
         # import here, cause outside the eggs aren't loaded
         import pytest
+
         errno = pytest.main(shlex.split(self.pytest_args))
         sys.exit(errno)
 
 
 def load_version():
     fd = {}
-    with open('./mckit/version.py') as fid:
+    with open("./mckit/version.py") as fid:
         exec(fid.read(), fd)
         return (
             fd["__title__"],
@@ -41,6 +44,7 @@ def load_version():
             fd["__ver_sub__"],
             fd["__version__"],
         )
+
 
 (
     __title__,
@@ -84,39 +88,31 @@ append_if_not_present(include_dirs, np.get_include())
 
 library_dirs = get_dirs("LIBRARY_PATH")
 
-if sys.platform.startswith('linux'):
-    geometry_dependencies = [
-        'mkl_intel_lp64',
-        'mkl_core',
-        'mkl_sequential',
-        'nlopt',
-    ]
+if sys.platform.startswith("linux"):
+    geometry_dependencies = ["mkl_intel_lp64", "mkl_core", "mkl_sequential", "nlopt"]
     env_include_dir = path.join(sys.prefix, "include")
     append_if_not_present(include_dirs, env_include_dir)
     append_if_not_present(library_dirs, path.join(sys.prefix, "lib"))
 else:
     geometry_dependencies = [
-        'mkl_intel_lp64_dll',
-        'mkl_core_dll',
-        'mkl_sequential_dll',
-        'libnlopt-0',
+        "mkl_intel_lp64_dll",
+        "mkl_core_dll",
+        "mkl_sequential_dll",
+        "libnlopt-0",
     ]
     nlopt_inc = get_dirs("NLOPT")
     append_if_not_present(include_dirs, nlopt_inc)
     nlopt_lib = get_dirs("NLOPT")
     append_if_not_present(library_dirs, nlopt_lib)
-    mkl_inc = sys.prefix + '\\Library\\include'
+    mkl_inc = sys.prefix + "\\Library\\include"
     append_if_not_present(include_dirs, mkl_inc)
-    mkl_lib = sys.prefix + '\\Library\\lib'
+    mkl_lib = sys.prefix + "\\Library\\lib"
     append_if_not_present(library_dirs, mkl_lib)
 
-geometry_sources = [path.join("mckit", "src", src) for src in [
-    "geometrymodule.c",
-    "box.c",
-    "surface.c",
-    "shape.c",
-    "rbtree.c",
-]]
+geometry_sources = [
+    path.join("mckit", "src", src)
+    for src in ["geometrymodule.c", "box.c", "surface.c", "shape.c", "rbtree.c"]
+]
 
 extensions = [
     Extension(
@@ -125,12 +121,11 @@ extensions = [
         include_dirs=include_dirs,
         libraries=geometry_dependencies,
         library_dirs=library_dirs,
-
     )
 ]
 
 packages = find_packages(
-    include=("mckit", "mckit.*",),
+    include=("mckit", "mckit.*"),
     exclude=(
         "adhoc",
         "build*",
@@ -150,30 +145,26 @@ setup(
     name=__title__,
     version=__version__,
     packages=packages,
-    package_data={'mckit': ['data/isotopes.dat', 'libnlopt-0.dll']},
-    url='https://gitlab.iterrf.ru/Rodionov/mckit',
+    package_data={"mckit": ["data/isotopes.dat", "libnlopt-0.dll"]},
+    url="https://gitlab.iterrf.ru/Rodionov/mckit",
     license=__license__,
     author=__author__,
-    author_email='r.rodionov@iterrf.ru',
-    description='Tool for handling neutronic models and results',
+    author_email="r.rodionov@iterrf.ru",
+    description="Tool for handling neutronic models and results",
     install_requires=[
-        'attrs',
-        'click',
-        'click-log',
-        'mkl-devel',
-        'numpy',
-        'ply',
-        'scipy',
-        'tomlkit',
-        'datetime',
-        'sly',
+        "attrs",
+        "click",
+        "click-log",
+        "mkl-devel",
+        "numpy",
+        "ply",
+        "scipy",
+        "tomlkit",
+        "datetime",
+        "sly",
     ],
     ext_modules=extensions,
-    tests_require=['pytest', 'pytest-cov>=2.3.1', 'pytest-benchmark'],
-    cmdclass={'test': PyTest},
-    entry_points={
-        'console_scripts': [
-            'mckit = mckit.cli.runner:mckit',
-        ]
-    },
+    tests_require=["pytest", "pytest-cov>=2.3.1", "pytest-benchmark"],
+    cmdclass={"test": PyTest},
+    entry_points={"console_scripts": ["mckit = mckit.cli.runner:mckit"]},
 )

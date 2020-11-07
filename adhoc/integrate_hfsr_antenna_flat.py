@@ -12,6 +12,7 @@ import os
 import typing as tp
 from typing import NoReturn
 from multiprocessing import Pool
+
 # from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
 import toolz
@@ -30,13 +31,14 @@ from mckit.utils import assert_all_paths_exist, get_root_dir
 sys.path.append("..")
 
 import mckit as mk
+
 # from mckit import *
 from mckit.box import Box
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(
     # format='%(asctime)s - %(levelname)-7s - %(name)-20s - %(message)s',
-    format='%(asctime)s - %(levelname)-7s - %(message)s',
+    format="%(asctime)s - %(levelname)-7s - %(message)s",
     level=logging.DEBUG,
 )
 # LOG = click_log.basic_config(LOG)
@@ -61,9 +63,7 @@ NJOBS = os.cpu_count()
 # set_loky_pickler()
 
 
-
 class BoundingBoxAdder(object):
-
     def __init__(self, tolerance: float):
         self.tolerance = tolerance
 
@@ -81,14 +81,12 @@ class BoundingBoxAdder(object):
 
 
 def attach_bounding_boxes(
-    cells: tp.List[mk.Body],
-    tolerance: float = 10.0,
-    chunksize=1,
+    cells: tp.List[mk.Body], tolerance: float = 10.0, chunksize=1
 ) -> NoReturn:
     assert 0 < len(cells), "Needs explicit list of cells to run iteration over it twice"
     cpu_count = os.cpu_count()
     with Pool(cpu_count) as pool:
-        boxes = pool.map(BoundingBoxAdder(tolerance), cells, chunksize,)
+        boxes = pool.map(BoundingBoxAdder(tolerance), cells, chunksize)
     for _i, cell in enumerate(cells):
         cell.bounding_box = boxes[_i]
 
@@ -129,15 +127,14 @@ def subtract_model_from_model(
             return subtract_model_from_cell(a_cell, subtrahend, simplify=True)
         else:
             return a_cell
+
     new_cells = list(map(mapper, minuend))
-    new_universe = mk.Universe(new_cells, name=minuend.name(), name_rule='keep')
+    new_universe = mk.Universe(new_cells, name=minuend.name(), name_rule="keep")
     return new_universe
 
 
 def subtract_model_from_cell(
-    cell: mk.Body,
-    model: mk.Universe,
-    simplify: bool = True,
+    cell: mk.Body, model: mk.Universe, simplify: bool = True
 ) -> mk.Body:
     new_cell = cell
     cbb = cell.bounding_box
@@ -150,11 +147,17 @@ def subtract_model_from_cell(
             new_cell = new_cell.simplify(box=cbb, min_volume=0.1)
     return new_cell
 
+
 def set_common_materials(*universes) -> tp.NoReturn:
-    universes_collection = toolz.reduce(set.union, map(mk.Universe.get_universes, universes))
-    common_materials = toolz.reduce(set.union, map(mk.Universe.get_compositions, universes_collection))
+    universes_collection = toolz.reduce(
+        set.union, map(mk.Universe.get_universes, universes)
+    )
+    common_materials = toolz.reduce(
+        set.union, map(mk.Universe.get_compositions, universes_collection)
+    )
     for u in universes_collection:
         u.set_common_materials(common_materials)
+
 
 def main():
     # new_cells.extend(b_model)
@@ -164,7 +167,7 @@ def main():
     attach_bounding_boxes(
         antenna_envelop,
         tolerance=5.0,
-        chunksize=max(len(antenna_envelop)//os.cpu_count(), 1)
+        chunksize=max(len(antenna_envelop) // os.cpu_count(), 1),
     )
     LOG.info("Loading c-model envelopes")
     envelopes = load_model(str(CMODEL_ROOT / "simple_cubes.universes/envelopes.i"))
@@ -173,7 +176,9 @@ def main():
     cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
 
     LOG.info("Attaching bounding boxes to c-model envelopes %s", cells_to_fill)
-    attach_bounding_boxes([envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
+    attach_bounding_boxes(
+        [envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1
+    )
     # attach_bounding_boxes((envelopes), tolerance=10.0, chunksize=5)
     LOG.info("Backing up original envelopes")
     envelopes_original = envelopes.copy()
@@ -181,13 +186,14 @@ def main():
     antenna_envelop.rename(start_cell=200000, start_surf=200000)
 
     LOG.info("Subtracting antenna envelop from c-model envelopes %s", cells_to_fill)
-    envelopes = subtract_model_from_model(envelopes, antenna_envelop, cells_filter=lambda c: c in cells_to_fill)
+    envelopes = subtract_model_from_model(
+        envelopes, antenna_envelop, cells_filter=lambda c: c in cells_to_fill
+    )
     LOG.info("Adding antenna envelop to c-model envelopes")
-    envelopes.add_cells(antenna_envelop, name_rule='clash')
+    envelopes.add_cells(antenna_envelop, name_rule="clash")
     envelopes_path = "envelopes+antenna-envelop.i"
     envelopes.save(envelopes_path)
     LOG.info("The envelopes are saved to %s", envelopes_path)
-
 
     # def load_subtracted_universe(universe_name):
     #     new_universe_path = Path(f"u{universe_name}-ae.i")
@@ -226,11 +232,11 @@ def main():
     antenna.rename(210000, 210000, 210000, 210000, name=210)
 
     for i, filler in zip(cells_to_fill_indexes, universes):
-        envelopes[i].options['FILL'] = {"universe": filler}
+        envelopes[i].options["FILL"] = {"universe": filler}
 
     added_cells = len(antenna_envelop)
     for c in envelopes[-added_cells:]:
-        c.options['FILL'] = {"universe": antenna}
+        c.options["FILL"] = {"universe": antenna}
 
     set_common_materials(envelopes)
 
@@ -239,13 +245,13 @@ def main():
     #     new_universe_path.unlink()
     # foreach(delete_subtracted_universe, cells_to_fill)
 
-
     envelopes_surrounding_and_antenna_file = "ewfa_3.i"
     envelopes.save(envelopes_surrounding_and_antenna_file)
     LOG.info(
-        "c-model envelopes integrated with universes and antenna is saved to \"%s\"",
+        'c-model envelopes integrated with universes and antenna is saved to "%s"',
         envelopes_surrounding_and_antenna_file,
     )
+
 
 if __name__ == "__main__":
     main()

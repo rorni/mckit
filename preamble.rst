@@ -7,5 +7,3 @@
 .. |br| raw:: html
 
        <br />
-
-

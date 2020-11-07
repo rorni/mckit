@@ -2,7 +2,7 @@
 
 include = mckit/*
 
-omit = 
+omit =
     *_tab.py
 
 # branch = True
@@ -30,4 +30,3 @@ exclude_lines =
 
 ignore_errors = True
 sort = Cover
-

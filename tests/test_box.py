@@ -508,10 +508,7 @@ def test_check_intersection(case1, case2):
 
 
 @pytest.mark.parametrize(
-    "center, wx, wy, wz, ex, ey, ez",
-    [
-        ([0.0, 0.0, 0.0], 1.0, 2.0, 3.0, EX, EY, EZ),
-    ],
+    "center, wx, wy, wz, ex, ey, ez", [([0.0, 0.0, 0.0], 1.0, 2.0, 3.0, EX, EY, EZ)]
 )
 def test_pickle(center, wx, wy, wz, ex, ey, ez):
     box = Box(center, wx, wy, wz, ex, ey, ez)

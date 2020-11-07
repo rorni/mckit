@@ -48,11 +48,7 @@ def mckit(ctx, debug, override):
     help="TOML file for FILL descriptors",
 )
 @click.argument(
-    "source",
-    metavar="<source>",
-    type=click.Path(exists=True),
-    nargs=1,
-    required=True,
+    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
 def decompose(ctx, output, fill_descriptor, source):
     __LOG.info(f"Processing {source}")
@@ -62,17 +58,9 @@ def decompose(ctx, output, fill_descriptor, source):
 @mckit.command()
 @click.pass_context
 @click.option("--output", "-o", required=True, help="Output file")
-@click.option(
-    "--fill-descriptor",
-    default=None,
-    help="TOML file for FILL descriptors",
-)
+@click.option("--fill-descriptor", default=None, help="TOML file for FILL descriptors")
 @click.argument(
-    "source",
-    metavar="<source>",
-    type=click.Path(exists=True),
-    nargs=1,
-    required=True,
+    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
 def compose(ctx, output, fill_descriptor, source):
     if fill_descriptor is None:
@@ -96,11 +84,7 @@ def compose(ctx, output, fill_descriptor, source):
     help="Write comment files to prepend and append this model cells, surfaces etc. on concatenation",
 )
 @click.argument(
-    "source",
-    metavar="<source>",
-    type=click.Path(exists=True),
-    nargs=1,
-    required=True,
+    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
 def split(ctx, output, source, separators):
     if output is None:
@@ -160,11 +144,7 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
     help=f"Encoding to write output (default:{MCNP_ENCODING})",
 )
 @click.argument(
-    "parts",
-    metavar="<part...>",
-    type=click.Path(exists=True),
-    nargs=-1,
-    required=True,
+    "parts", metavar="<part...>", type=click.Path(exists=True), nargs=-1, required=True
 )
 def concat(ctx, output, parts_encoding, output_encoding, parts):
     override = ctx.obj["OVERRIDE"]
@@ -179,11 +159,7 @@ def concat(ctx, output, parts_encoding, output_encoding, parts):
 # noinspection PyCompatibility
 @mckit.command()
 @click.argument(
-    "sources",
-    metavar="<source>",
-    type=click.Path(exists=True),
-    nargs=-1,
-    required=True,
+    "sources", metavar="<source>", type=click.Path(exists=True), nargs=-1, required=True
 )
 def check(sources: List[click.Path]) -> None:
     for source in sources:

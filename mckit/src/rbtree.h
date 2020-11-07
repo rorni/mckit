@@ -38,14 +38,14 @@ RBTree * rbtree_create(int (*compare)(const void *, const void *));
  */
 void rbtree_free(RBTree * rbt);
 
-/* Gets stored key. 
+/* Gets stored key.
  */
 const void * rbtree_get(const RBTree * rbt, const void * key);
 
 /* Adds new key to the tree. value can be NULL */
 int rbtree_add(RBTree * rbt, const void * key);
 
-/* Pops key from the tree. If key is NULL the 
+/* Pops key from the tree. If key is NULL the
  * first available pair is popped.
  */
 void * rbtree_pop(RBTree * rbt, const void * key);

@@ -25,6 +25,7 @@ atomicwrites = "^1.4.0"
 mkl-devel = "^2018.0.3"
 toolz = "^0.11.1"
 ply = "^3.11"
+pytest-mock = "^3.3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
@@ -33,6 +34,15 @@ nox = "^2020.8.22"
 pytest-benchmark = "^3.2.3"
 Sphinx = "^3.3.0"
 coverage = "^5.3"
+reorder-python-imports = "^2.3.6"
+black = "^20.8b1"
+flake8 = "^3.8.4"
+flake8-bandit = "^2.1.2"
+flake8-black = "^0.2.1"
+flake8-bugbear = "^20.1.4"
+flake8-import-order = "^0.18.1"
+safety = "^1.9.0"
+pre-commit = "^2.8.2"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"

@@ -42,9 +42,7 @@ def test_not_existing_mcnp_file(runner):
 
 @pytest.mark.parametrize(
     "source, expected",
-    [
-        ("cli/data/simple_cubes.mcnp", "cells;surfaces;transformations;compositions"),
-    ],
+    [("cli/data/simple_cubes.mcnp", "cells;surfaces;transformations;compositions")],
 )
 def test_good_path(runner, source, expected):
     source = data_filename_resolver(source)

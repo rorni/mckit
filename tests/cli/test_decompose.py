@@ -81,10 +81,7 @@ def test_not_existing_mcnp_file(runner):
 
 
 @pytest.mark.parametrize(
-    "source, expected",
-    [
-        ("parser_test_data/parser1.txt", "envelopes.i"),
-    ],
+    "source, expected", [("parser_test_data/parser1.txt", "envelopes.i")]
 )
 def test_when_there_are_no_universes(runner, source, expected):
     source = data_filename_resolver(source)
@@ -99,10 +96,7 @@ def test_when_there_are_no_universes(runner, source, expected):
 
 
 @pytest.mark.parametrize(
-    "source,expected",
-    [
-        ("cli/data/simple_cubes.mcnp", "envelopes.i u1.i u2.i".split()),
-    ],
+    "source,expected", [("cli/data/simple_cubes.mcnp", "envelopes.i u1.i u2.i".split())]
 )
 def test_when_only_source_is_specified(runner, source, expected):
     source: Path = data_filename_resolver(source)
@@ -126,9 +120,7 @@ def test_when_only_source_is_specified(runner, source, expected):
 
 @pytest.mark.parametrize(
     "source,output,expected",
-    [
-        ("cli/data/simple_cubes.mcnp", "split-1", "envelopes.i u1.i u2.i".split()),
-    ],
+    [("cli/data/simple_cubes.mcnp", "split-1", "envelopes.i u1.i u2.i".split())],
 )
 def test_when_output_is_specified(runner, source, output, expected):
     source = data_filename_resolver(source)

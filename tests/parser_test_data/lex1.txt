@@ -10,6 +10,6 @@ Title card
 
 1 px -1.
 2 c/y 2.e-2 -.3 .4e+3
-    
+
 mode n
 vol 1 2

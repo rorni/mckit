@@ -771,7 +771,9 @@ class Sphere(Surface, _Sphere):
         if self is other:
             return True
         if not isinstance(other, Sphere):
-            return False  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
+            return (
+                False
+            )  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
         return are_equal(
             (self._radius, self._center, self.transformation),
             (other._radius, other._center, other.transformation),
@@ -1262,7 +1264,9 @@ class GQuadratic(Surface, _GQuadratic):
         if self is other:
             return True
         if not isinstance(other, GQuadratic):
-            return False  # TODO dvp: handle cases when other is specialized quadratic surface Sphere, Cone etc.
+            return (
+                False
+            )  # TODO dvp: handle cases when other is specialized quadratic surface Sphere, Cone etc.
         return estimator(
             (self._k, self._v, self._m, self.transformation),
             (other._k, other._v, other._m, other.transformation),

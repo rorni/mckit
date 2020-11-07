@@ -133,13 +133,7 @@ def test_tally_pattern(text: str, expected: str, tag: str, number: int) -> None:
     assert actual_number == number, "Numbers differ"
 
 
-@pytest.mark.parametrize(
-    "text",
-    [
-        "f",
-        "111",
-    ],
-)
+@pytest.mark.parametrize("text", ["f", "111"])
 def test_tally_pattern_bad_path(text: str) -> None:
     res = TALLY_PATTERN.fullmatch(text)
     assert res is None, f"Should not match pattern '{text}'"
@@ -256,7 +250,7 @@ wwp:n
 """[
                 1:-1
             ]
-        ),
+        )
     ],
 )
 def test_sdef_cards(text):
@@ -275,12 +269,7 @@ def test_input_sections_constructor():
     title = "Testing"
     cell_cards = [Card("1 0 1"), Card("2 0 -1")]
     surface_cards = [Card("1 so 100")]
-    t = InputSections(
-        title,
-        cell_cards,
-        surface_cards,
-        [Card("sdef")],
-    )
+    t = InputSections(title, cell_cards, surface_cards, [Card("sdef")])
     assert t.title == title
 
 

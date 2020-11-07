@@ -608,12 +608,7 @@ def test_copy(universe, case):
 
 @pytest.mark.slow
 @pytest.mark.parametrize("tol", [0.2, None])
-@pytest.mark.parametrize(
-    "case, expected",
-    [
-        (1, [[-10, 10], [-10, 10], [-6.5, 13.5]]),
-    ],
-)
+@pytest.mark.parametrize("case, expected", [(1, [[-10, 10], [-10, 10], [-6.5, 13.5]])])
 def test_bounding_box(universe, tol, case, expected):
     u = universe(case)
     base = [0, 0, 0]

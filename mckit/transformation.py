@@ -309,10 +309,7 @@ class Transformation(Card, MaybeClose):
             return True
         if not isinstance(other, Transformation):
             return False
-        return estimator(
-            (self._t, self._u),
-            (other._t, other._u),
-        )
+        return estimator((self._t, self._u), (other._t, other._u))
 
     def __repr__(self):
         return f"Transformation(translation={self._t}, rotation={self._u})"

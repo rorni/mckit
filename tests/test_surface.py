@@ -520,12 +520,7 @@ class TestPlane:
         assert surf.test_box(box) == ans
 
     @pytest.mark.parametrize(
-        "norm, offset",
-        [
-            ([0, 0, 1], -2),
-            ([1, 0, 0], -2),
-            ([0, 1, 0], -2),
-        ],
+        "norm, offset", [([0, 0, 1], -2), ([1, 0, 0], -2), ([0, 1, 0], -2)]
     )
     def test_transform(self, transform, norm, offset):
         ans_surf = Plane(norm, offset, transform=transform)
@@ -759,12 +754,7 @@ class TestSphere:
         surf = Sphere(center, radius)
         assert surf.test_box(box) == ans
 
-    @pytest.mark.parametrize(
-        "center, radius",
-        [
-            ([1, 2, 3], 5),
-        ],
-    )
+    @pytest.mark.parametrize("center, radius", [([1, 2, 3], 5)])
     def test_transform(self, transform, center, radius):
         ans_surf = Sphere(center, radius, transform=transform)
         surf = Sphere(center, radius)
@@ -985,10 +975,7 @@ class TestCylinder:
         assert surf.test_box(box) == ans
 
     @pytest.mark.parametrize(
-        "point, axis, radius",
-        [
-            ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5),
-        ],
+        "point, axis, radius", [([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 5)]
     )
     def test_transform(self, transform, point, axis, radius):
         ans_surf = Cylinder(point, axis, radius, transform=transform)
@@ -1377,10 +1364,7 @@ class TestCone:
         assert surf.test_box(box) == ans
 
     @pytest.mark.parametrize(
-        "apex, axis, t2",
-        [
-            ([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 0.25),
-        ],
+        "apex, axis, t2", [([1, 2, 3], np.array([1, 2, 3]) / np.sqrt(14), 0.25)]
     )
     def test_transform(self, transform, apex, axis, t2):
         ans_surf = Cone(apex, axis, t2, transform=transform)
@@ -2687,10 +2671,7 @@ class TestTorus:
         assert surf.test_box(box) == ans
 
     @pytest.mark.parametrize(
-        "point, axis, radius, a, b",
-        [
-            ([1, 2, 3], [0, 0, 1], 4, 2, 1),
-        ],
+        "point, axis, radius, a, b", [([1, 2, 3], [0, 0, 1], 4, 2, 1)]
     )
     def test_transform(self, transform, point, axis, radius, a, b):
         ans_surf = Torus(point, axis, radius, a, b, transform=transform)
@@ -2900,12 +2881,7 @@ class TestGQuadratic:
         surf = GQuadratic(m * mult, v * mult, k * mult)
         assert surf.test_box(box) == ans
 
-    @pytest.mark.parametrize(
-        "m, v, k",
-        [
-            (np.diag([1, 2, 3]), [1, 2, 3], -4),
-        ],
-    )
+    @pytest.mark.parametrize("m, v, k", [(np.diag([1, 2, 3]), [1, 2, 3], -4)])
     def test_transform(self, transform, m, v, k):
         ans_surf = GQuadratic(m, v, k, transform=transform)
         surf = GQuadratic(m, v, k)

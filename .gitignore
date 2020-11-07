@@ -87,3 +87,5 @@ test.pic
 
 # pyenv and poetry
 .python-version
+
+dist/

@@ -33,10 +33,7 @@ def test_transformation_lexer(text, expected_types, expected_values):
 @pytest.mark.parametrize(
     "text,expected",
     [
-        (
-            "tr2 0 0 1",
-            Transformation(translation=[0.0, 0.0, 1.0], name=2),
-        ),
+        ("tr2 0 0 1", Transformation(translation=[0.0, 0.0, 1.0], name=2)),
         (
             " *tr2 0 0 1 45 45 90 135 45 90 90 90 0",
             Transformation(

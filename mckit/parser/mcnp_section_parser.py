@@ -9,10 +9,7 @@ from attr import attrs, attrib
 LOG = logging.getLogger(__name__)
 
 
-BLANK_LINE_PATTERN = re.compile(
-    r"\n\s*\n",
-    flags=re.MULTILINE,
-)
+BLANK_LINE_PATTERN = re.compile(r"\n\s*\n", flags=re.MULTILINE)
 
 COMMENT_LINE_PATTERN = re.compile(r"^\s{,5}[cC]( .*)?\s*$")
 
@@ -31,15 +28,11 @@ CARD_PATTERN = re.compile(
 # pattern to replace subsequent spaces with a single one
 SPACE_PATTERN = re.compile(r"\s+", flags=re.MULTILINE)
 
-SDEF_PATTERN = re.compile(
-    r"(sdef)|(s[ibp]\d+)|(ds\d+)|(wwp.*)",
-    re.IGNORECASE,
-)
+SDEF_PATTERN = re.compile(r"(sdef)|(s[ibp]\d+)|(ds\d+)|(wwp.*)", re.IGNORECASE)
 
 # pattern to match labels of cards relevant for tallies section
 TALLY_PATTERN = re.compile(
-    r"(?P<tag>f(c|(m(esh)?)?)|(e)|(d[ef]))(?P<number>\d+)",
-    re.IGNORECASE,
+    r"(?P<tag>f(c|(m(esh)?)?)|(e)|(d[ef]))(?P<number>\d+)", re.IGNORECASE
 )
 
 

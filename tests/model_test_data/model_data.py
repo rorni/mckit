@@ -229,9 +229,7 @@ extract_submodel_ans = {
                         "inverted": True,
                     },
                 },
-                "M": {
-                    3: {"atomic": [(1000, 2), (6000, 1)], "GAS": 1, "name": 3},
-                },
+                "M": {3: {"atomic": [(1000, 2), (6000, 1)], "GAS": 1, "name": 3}},
                 "MODE": ["N"],
             },
         },

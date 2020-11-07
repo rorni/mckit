@@ -35,10 +35,7 @@ def strict_strategy(c: int) -> NoReturn:
 
 @pytest.mark.parametrize(
     "inp,keys,success",
-    [
-        ({1: 1, 2: 4}, [1, 2, 3], [True, True, False]),
-        ({}, [1], [False]),
-    ],
+    [({1: 1, 2: 4}, [1, 2, 3], [True, True, False]), ({}, [1], [False])],
 )
 def test_index_with_strict_strategy(
     inp: Dict[int, int], keys: List[int], success: List[bool]

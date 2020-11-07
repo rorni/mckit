@@ -79,10 +79,7 @@ def separate(tokens, sep=" "):
     return sep_tokens
 
 
-def print_option(
-    option: str,
-    value: Any,
-) -> List[str]:
+def print_option(option: str, value: Any) -> List[str]:
     name = option[:3]
     par = option[3:]
     if name == "IMP" and (par == "N" or par == "P" or par == "E"):
@@ -123,9 +120,7 @@ def pretty_float(value, frac_digits: Optional[int] = None) -> str:
     """
     if frac_digits is None:
         frac_digits = significant_digits(
-            value,
-            constants.FLOAT_TOLERANCE,
-            resolution=constants.FLOAT_TOLERANCE,
+            value, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE
         )
     if value == abs(value):
         value = abs(value)

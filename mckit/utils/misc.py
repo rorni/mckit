@@ -101,9 +101,7 @@ def get_decades(value):
 
 
 def significant_array(
-    array: ndarray,
-    reltol: float = FLOAT_TOLERANCE,
-    resolution: float = None,
+    array: ndarray, reltol: float = FLOAT_TOLERANCE, resolution: float = None
 ) -> ndarray:
     """The minimum number of significant digits to provide the desired relative and absolute tolerances."""
     result = np.empty_like(array, dtype=int)
@@ -210,10 +208,7 @@ def _(where: collections.abc.Container, x) -> bool:
     return x in where
 
 
-def filter_dict(
-    a: Dict[Any, Any],
-    *drop_items,
-) -> Dict[Any, Any]:
+def filter_dict(a: Dict[Any, Any], *drop_items) -> Dict[Any, Any]:
     res = {}
     for k, v in a.items():
         # if drop_items is None or not check_if_is_in(k, *drop_items):

@@ -30,15 +30,7 @@ class Box(_Box):
         )
 
     def __hash__(self):
-        return hash(
-            (
-                self.center,
-                self.dimensions,
-                self.ex,
-                self.ey,
-                self.ez,
-            )
-        )
+        return hash((self.center, self.dimensions, self.ex, self.ey, self.ez))
 
     def __getstate__(self):
         center = self.center

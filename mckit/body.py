@@ -801,9 +801,7 @@ class Body(Card):
 
 
 def simplify(
-    cells: Iterable,
-    box: Box = GLOBAL_BOX,
-    min_volume: float = 1.0,
+    cells: Iterable, box: Box = GLOBAL_BOX, min_volume: float = 1.0
 ) -> tp.Generator:
     """Simplifies the cells.
 
@@ -842,10 +840,7 @@ class Simplifier(object):
 
 
 def simplify_mp(
-    cells: Iterable[Body],
-    box: Box = GLOBAL_BOX,
-    min_volume: float = 1.0,
-    chunksize=1,
+    cells: Iterable[Body], box: Box = GLOBAL_BOX, min_volume: float = 1.0, chunksize=1
 ) -> tp.Generator:
     """Simplifies the cells in multiprocessing mode.
 
@@ -863,9 +858,7 @@ def simplify_mp(
     cpus = os.cpu_count()
     with Pool(processes=cpus) as pool:
         yield from pool.imap(
-            Simplifier(box=box, min_volume=min_volume),
-            cells,
-            chunksize=chunksize,
+            Simplifier(box=box, min_volume=min_volume), cells, chunksize=chunksize
         )
 
 
@@ -893,8 +886,7 @@ def simplify_mpp(
         return "Simplifying cell #{0}".format(x.name() if x else x)
 
     with progressbar(
-        simplify_mp(cells, box, min_volume, chunksize),
-        item_show_func=fmt_fun,
+        simplify_mp(cells, box, min_volume, chunksize), item_show_func=fmt_fun
     ) as pb:
         for c in pb:
             yield c

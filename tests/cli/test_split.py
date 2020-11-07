@@ -51,7 +51,7 @@ def test_not_existing_mcnp_file(runner):
             "cli/data/simple_cubes_with_tallies.mcnp",
             "somewhere.dir",
             "title.txt cells.txt surfaces.txt materials.txt tallies.txt cards.txt",
-        ),
+        )
     ],
 )
 def test_when_output_dir_is_specified(runner, source, out, expected):
@@ -74,7 +74,7 @@ def test_when_output_dir_is_specified(runner, source, out, expected):
         (
             "cli/data/simple_cubes.mcnp",
             "title.txt cells.txt surfaces.txt materials.txt cards.txt",
-        ),
+        )
     ],
 )
 def test_when_output_dir_is_not_specified(runner, source, expected):
@@ -101,7 +101,7 @@ def test_when_output_dir_is_not_specified(runner, source, expected):
         transformations_start.txt transformations_end.txt \
         cards.txt \
         new_line.txt",
-        ),
+        )
     ],
 )
 def test_when_separator_files_are_required(runner, source, expected):

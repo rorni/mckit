@@ -94,14 +94,7 @@ def test_deep_copy_dict(dictionary, drop_items, expected):
     assert actual == expected
 
 
-@pytest.mark.parametrize(
-    "values",
-    [
-        ("abc",),
-        ({1: {"a": 2}}, np.arange(10)),
-        (None,),
-    ],
-)
+@pytest.mark.parametrize("values", [("abc",), ({1: {"a": 2}}, np.arange(10)), (None,)])
 def test_make_hash(values):
     make_hash(*values)
 

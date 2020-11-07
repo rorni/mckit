@@ -82,7 +82,7 @@ double cylinder_func(
 double RCC_func(
     unsigned int n,
     const double * x,
-    double * grad, 
+    double * grad,
     void * f_data
 )
 {
@@ -115,7 +115,7 @@ double RCC_func(
 double BOX_func(
     unsigned int n,
     const double * x,
-    double * grad, 
+    double * grad,
     void * f_data
 )
 {
@@ -123,7 +123,7 @@ double BOX_func(
     double gp[NDIM * BOX_PLANE_NUM];
     double result[BOX_PLANE_NUM];
     for (int i = 0; i < NDIM * BOX_PLANE_NUM; ++i) gp[i] = 0;
-    
+
     int index = 0;
     for (int i = 0; i < BOX_PLANE_NUM; ++i) {
         result[i] = plane_func(n, x, gp + i * NDIM, data->planes[i]);
@@ -305,9 +305,9 @@ int cylinder_init(
 int RCC_init(
     RCC * surf,
     Cylinder * cyl,
-    Plane * top, 
+    Plane * top,
     Plane * bot
-) 
+)
 {
     surface_INIT((Surface *) surf);
     surf->base.type = MRCC;
@@ -318,7 +318,7 @@ int RCC_init(
 }
 
 int BOX_init(
-    BOX * surf, 
+    BOX * surf,
     Plane ** planes
 )
 {
@@ -459,12 +459,12 @@ int surface_test_box(Surface * surf, const Box * box)
         double x[NDIM], opt_val;
         double xtol[NDIM];
         nlopt_result opt_result;
-        
+
         nlopt_opt opt;
         opt = nlopt_create(NLOPT_LD_SLSQP, 3);
         nlopt_set_lower_bounds(opt, box->lb);
         nlopt_set_upper_bounds(opt, box->ub);
-        
+
         if (sign > 0) nlopt_set_min_objective(opt, surface_func, surf);
         else          nlopt_set_max_objective(opt, surface_func, surf);
 
@@ -492,7 +492,6 @@ int surface_test_box(Surface * surf, const Box * box)
         surf->last_box = box->subdiv;
         surf->last_box_result = sign;
     }
-    
+
     return sign;
 }
-

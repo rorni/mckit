@@ -8,26 +8,14 @@ from mckit.material import Composition, Element
 @pytest.mark.parametrize(
     "text, expected_types, expected_values",
     [
-        (
-            "1001.21c -1.0",
-            ["FRACTION"],
-            [(1001, "21c", -1.0)],
-        ),
-        (
-            "  M100 1000 1.0",
-            ["NAME", "FRACTION"],
-            [100, (1000, None, 1.0)],
-        ),
+        ("1001.21c -1.0", ["FRACTION"], [(1001, "21c", -1.0)]),
+        ("  M100 1000 1.0", ["NAME", "FRACTION"], [100, (1000, None, 1.0)]),
         (
             "  M100 1000 1.0 gas=1",
             ["NAME", "FRACTION", "OPTION"],
             [100, (1000, None, 1.0), "gas=1"],
         ),
-        (
-            "M17    18000.70c 1.",
-            ["NAME", "FRACTION"],
-            [17, (18000, "70c", 1.0)],
-        ),
+        ("M17    18000.70c 1.", ["NAME", "FRACTION"], [17, (18000, "70c", 1.0)]),
     ],
 )
 def test_composition_lexer(text, expected_types, expected_values):
@@ -101,18 +89,11 @@ c bzzzzzz
         ),
         (
             "m1 1001 0.1 1002 0.9",
-            Composition(
-                atomic=[(1001, 0.1), (1002, 0.9)],
-                name=1,
-            ),
+            Composition(atomic=[(1001, 0.1), (1002, 0.9)], name=1),
         ),
         (
             "m3 1001 0.1 1002 0.9 gas=1",
-            Composition(
-                atomic=[(1001, 0.1), (1002, 0.9)],
-                name=3,
-                GAS=1,
-            ),
+            Composition(atomic=[(1001, 0.1), (1002, 0.9)], name=3, GAS=1),
         ),
     ],
 )

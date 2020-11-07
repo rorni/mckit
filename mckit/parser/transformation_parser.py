@@ -64,9 +64,7 @@ class Parser(sly.Parser):
 
     # TODO dvp: check what to do, if transformation is specified with default values using the MCNP J shortcuts?
 
-    @_(
-        "float float float float float float float float float INTEGER",
-    )
+    @_("float float float float float float float float float INTEGER")
     def rotation(self, p):
         m = p[9]
         assert m == -1 or m == 1, f"Invalid M option value {m}"

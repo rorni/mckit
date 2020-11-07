@@ -116,21 +116,9 @@ def test_parser_with_materials(text, expected, surfaces, compositions):
 @pytest.mark.parametrize(
     "text,expected,surfaces",
     [
-        (
-            "1 0 1 IMP:n=1.0",
-            create_cell(1, [1], **{"IMPN": 1.0}),
-            [1],
-        ),
-        (
-            "1 0 1 vol 1.0",
-            create_cell(1, [1], **{"VOL": 1.0}),
-            [1],
-        ),
-        (
-            "1 0 1 U=200 PMT=0",
-            create_cell(1, [1], **{"U": 200, "PMT": 0}),
-            [1],
-        ),
+        ("1 0 1 IMP:n=1.0", create_cell(1, [1], **{"IMPN": 1.0}), [1]),
+        ("1 0 1 vol 1.0", create_cell(1, [1], **{"VOL": 1.0}), [1]),
+        ("1 0 1 U=200 PMT=0", create_cell(1, [1], **{"U": 200, "PMT": 0}), [1]),
     ],
 )
 def test_parser_with_attributes(text, expected, surfaces):
@@ -148,7 +136,7 @@ def test_parser_with_attributes(text, expected, surfaces):
             create_cell(2, [1], **{"IMPN": 1.0, "IMPP": 2.0}),
             [1],
             [create_cell(1, [1], **{"IMPN": 1.0})],
-        ),
+        )
     ],
 )
 def test_parser_with_like_spec(text, expected, surfaces, cells):
@@ -164,7 +152,7 @@ def test_parser_with_like_spec(text, expected, surfaces, cells):
     [
         (
             """93    0   (
-            16 24   
+            16 24
           )
 C
           (
@@ -172,7 +160,7 @@ C
           )
         """,
             93,
-        ),
+        )
     ],
 )
 def test_found_failures(text, expected):

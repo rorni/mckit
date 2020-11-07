@@ -41,10 +41,7 @@ def print_cards(
 
 
 def split(
-    output_dir: Path,
-    mcnp_file_name: Union[str, Path],
-    override: bool,
-    separators=False,
+    output_dir: Path, mcnp_file_name: Union[str, Path], override: bool, separators=False
 ) -> None:
     logger = logging.getLogger(__name__)
     logger.debug("Splitting model from %s", mcnp_file_name)

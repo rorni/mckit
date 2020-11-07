@@ -919,10 +919,7 @@ mcnp_input_parser = yacc.yacc(
 )
 
 
-def read_mcnp(
-    filename: Union[str, Path],
-    encoding: str = "cp1251",
-) -> Universe:
+def read_mcnp(filename: Union[str, Path], encoding: str = "cp1251") -> Universe:
     warn(
         "The function 'read_mcnp' is deprecated. Use mckit.parser.from_file() instead.",
         DeprecationWarning,
@@ -932,9 +929,7 @@ def read_mcnp(
     return read_mcnp_text(text)
 
 
-def read_mcnp_text(
-    text: str,
-) -> Universe:
+def read_mcnp_text(text: str,) -> Universe:
     warn(
         "The function 'read_mcnp_text' is deprecated. Use mckit.parser.from_text() instead.",
         DeprecationWarning,
@@ -944,10 +939,7 @@ def read_mcnp_text(
     )  # float number spec requires end of line or space after float
     mcnp_input_lexer.begin("INITIAL")
     title, cells, surfaces, data = mcnp_input_parser.parse(
-        text,
-        tracking=True,
-        lexer=mcnp_input_lexer,
-        debug=__DEBUG__,
+        text, tracking=True, lexer=mcnp_input_lexer, debug=__DEBUG__
     )
     bodies = []
     for name in list(cells.keys()):

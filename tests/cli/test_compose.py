@@ -63,7 +63,7 @@ def test_when_output_is_not_specified(runner):
             "data/simple_cubes.universes/envelopes.i",
             "simple_cubes_restored.i",
             "data/simple_cubes.mcnp",
-        ),
+        )
     ],
 )
 def test_when_fill_descriptor_is_not_specified(runner, source, output, expected):
@@ -90,7 +90,7 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
             "data/cubes_with_fill_transforms.universes/envelopes.i",
             "cubes_with_fill_transforms.i",
             "data/cubes_with_fill_transforms.mcnp",
-        ),
+        )
     ],
 )
 def test_anonymous_transforms(runner, source, output, expected):
@@ -117,7 +117,7 @@ def test_anonymous_transforms(runner, source, output, expected):
             "data/cubes_with_fill_named_transforms.universes/envelopes.i",
             "cubes_with_fill_named_transforms.i",
             "data/cubes_with_fill_named_transforms.mcnp",
-        ),
+        )
     ],
 )
 def test_named_transforms(runner, source, output, expected):

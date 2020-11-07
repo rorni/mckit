@@ -76,10 +76,7 @@ class Lexer(LexerBase):
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
-    def __init__(
-        self,
-        transformations: Index,
-    ):
+    def __init__(self, transformations: Index):
         sly.Parser.__init__(self)
         self._transformations = transformations
 
@@ -88,12 +85,7 @@ class Parser(sly.Parser):
         return self._transformations
 
     def build_surface(
-        self,
-        name: int,
-        kind: str,
-        params: List[float],
-        transform,
-        modifier,
+        self, name: int, kind: str, params: List[float], transform, modifier
     ) -> Surface:
         options = {"name": name}
         if transform is not None:
@@ -131,9 +123,7 @@ class Parser(sly.Parser):
     def surface_description(self, p) -> Tuple[str, List[float], Optional[int]]:
         return p.SURFACE_TYPE, p.surface_params, p.transform
 
-    @_(
-        "SURFACE_TYPE surface_params",
-    )
+    @_("SURFACE_TYPE surface_params")
     def surface_description(self, p) -> Tuple[str, List[float], Optional[int]]:
         return p.SURFACE_TYPE, p.surface_params, None
 
@@ -160,10 +150,7 @@ class Parser(sly.Parser):
         return float(p.INTEGER)
 
 
-def parse(
-    text: str,
-    transformations: Optional[Index] = None,
-) -> Surface:
+def parse(text: str, transformations: Optional[Index] = None) -> Surface:
     if transformations is None:
         transformations = TransformationStrictIndex()
     else:

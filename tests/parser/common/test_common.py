@@ -59,12 +59,7 @@ RE_FLOAT = re.compile(m.FLOAT)
 
 @pytest.mark.parametrize(
     "text,expected",
-    [
-        ("1", "1"),
-        (" 0.1", "0.1"),
-        (".2\n", ".2"),
-        ("\n -1e10a", "-1e10"),
-    ],
+    [("1", "1"), (" 0.1", "0.1"), (".2\n", ".2"), ("\n -1e10a", "-1e10")],
 )
 def test_float_pattern(text, expected):
     match = RE_FLOAT.search(text)
@@ -83,13 +78,13 @@ def test_float_pattern(text, expected):
         (
             """M1000
 1001.21c -1.0
-    gas 1 
+    gas 1
     $ trailing comment1
     $ trailing comment2
 """,
             """M1000
 1001.21c -1.0
-    gas 1 
+    gas 1
 """,
             None,
             ["trailing comment1", "trailing comment2"],
