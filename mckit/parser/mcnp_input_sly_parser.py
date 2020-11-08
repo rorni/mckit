@@ -85,10 +85,11 @@ def from_stream(stream: TextIO) -> ParseResult:
 def from_text(text: str) -> ParseResult:
     sections: InputSections = parse_sections_text(text)
     if sections.data_cards:
+        # fmt: off
         text_compositions, text_transformations, _, _, _ = distribute_cards(
             sections.data_cards
-        )
-        # type: List[TextCard], List[TextCard]
+        )  # type: List[TextCard], List[TextCard]
+        # fmt: on
         transformations = parse_transformations(text_transformations)
         transformations_index = TransformationStrictIndex.from_iterable(transformations)
         compositions = parse_compositions(text_compositions)

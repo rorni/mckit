@@ -1,4 +1,5 @@
 [flake8]
+#select = ANN,B,B9,BLK,C,D,DAR,E,F,I,S,W
 select = C,E,F,W
 max-complexity = 10
 max-line-length = 132
@@ -24,6 +25,10 @@ exclude =
     tests/parser
     # __init__ issues to much "imported but not used"
     mckit/cli/commands/__init__.py
-
+per-file-ignores =
+    noxfile.py:ANN
+    mckit/parser/*:S101,ANN
+    tests/*:S101,ANN
+    tests/parser/*:S101,ANN
 
 # vim: set ts=4 sw=0 tw=79 ss=0 ft=ini et ai :

@@ -1,3 +1,7 @@
+# tests/conftest.py
+from _pytest.config import Config
+
+
 # TODO dvp: the following doesn't work, but saved as an example of a session fixture
 
 # import os.path
@@ -32,7 +36,7 @@
 #         request.addfinalizer(finalizer)
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     config.addinivalue_line("markers", "e2e: mark as end-to-end test.")
     config.addinivalue_line(
         "markers", 'slow: marks tests as slow (deselect with -m "not slow"'

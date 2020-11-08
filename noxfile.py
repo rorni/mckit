@@ -1,18 +1,22 @@
+# noxfile.py
 """
+    Nox sessions.
+
     See `Ciolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_ for details.
 """
 
 import tempfile
+from typing import Any
 
 import nox
+from nox.sessions import Session
 
 nox.options.sessions = "tests"  # "lint", "black", "safety"
+locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
 
-def install_with_constraints(session, *args, **kwargs):
-    """
-    Install dependencies with versions fixed by poetry.
-    """
+def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
+    """Install packages constrained by Poetry's lock file."""
     with tempfile.NamedTemporaryFile() as requirements:
         session.run(
             "poetry",
@@ -26,7 +30,8 @@ def install_with_constraints(session, *args, **kwargs):
 
 
 @nox.session(python=["3.8", "3.7"])
-def tests(session):
+def tests(session: Session) -> None:
+    """Run the test suite."""
     args = session.posargs or ["--cov", "-m", "not e2e"]
     session.run("poetry", "install", "--no-dev", external=True)
     install_with_constraints(
@@ -35,32 +40,35 @@ def tests(session):
     session.run("pytest", *args)
 
 
-locations = "mckit", "tests", "noxfile.py"
-
-
 @nox.session(python=["3.8"])
-def lint(session):
+def lint(session: Session) -> None:
+    """Lint using flake8."""
     args = session.posargs or locations
     install_with_constraints(
         session,
         "flake8",
+        "flake8-annotations",
         "flake8-bandit",
         "flake8-black",
         "flake8-bugbear",
+        "flake8-docstrings",
         "flake8-import-order",
+        "darglint",
     )
     session.run("flake8", *args)
 
 
 @nox.session(python=["3.8"])
-def black(session):
+def black(session: Session) -> None:
+    """Run black code formatter."""
     args = session.posargs or locations
     install_with_constraints(session, "black")
     session.run("black", *args)
 
 
 @nox.session(python="3.8")
-def safety(session):
+def safety(session: Session) -> None:
+    """Scan dependencies for insecure packages."""
     with tempfile.NamedTemporaryFile() as requirements:
         session.run(
             "poetry",
@@ -81,7 +89,7 @@ def safety(session):
 #  Always test after reorganizing ill projects.
 #
 #  @nox.session(python="3.8")
-#  def organize_imports(session):
+#  def organize_imports(session: Session) -> None:
 #     from glob import glob
 #  install_with_constraints(session, "reorder-python-imports")
 #  search_patterns = [
@@ -109,3 +117,42 @@ def safety(session):
 #  *files_to_process,
 #  external=True,
 #  )
+
+
+@nox.session(python=["3.8", "3.7"])
+def mypy(session: Session) -> None:
+    """Type-check using mypy."""
+    args = session.posargs or locations
+    install_with_constraints(session, "mypy")
+    session.run(
+        "mypy",
+        # "--config",
+        # "mypy.ini",  # TODO dvp: compute path to ini-file from test environment: maybe search upward.
+        *args,
+    )
+
+
+@nox.session(python=["3.8", "3.7"])
+def xdoctest(session: Session) -> None:
+    """Run examples with xdoctest."""
+    args = session.posargs or ["mckit"]
+    session.run("poetry", "install", "--no-dev", external=True)
+    install_with_constraints(session, "xdoctest")
+    session.run("python", "-m", "xdoctest", *args)
+
+
+@nox.session(python="3.8")
+def docs(session: Session) -> None:
+    """Build the documentation."""
+    install_with_constraints(
+        session,
+        "sphinx",
+        "numpydoc",
+        "sphinxcontrib-htmlhelp",
+        "sphinxcontrib-jsmath",
+        "sphinxcontrib-napoleon",
+        "sphinxcontrib-qthelp",
+        "sphinx-autodoc-typehints",
+        "sphinx_autorun",
+    )
+    session.run("sphinx-build", "docs/source", "docs/_build")

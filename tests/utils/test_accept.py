@@ -1,10 +1,10 @@
 from contextlib import contextmanager
-from typing import Any, Container
+from typing import Any
 from mckit.utils.accept import accept, on_unknown_acceptor
 
 
 def test_accept_single_level():
-    class DemoContainer(list):  # type: Container['DemoItem']
+    class DemoContainer(list):
         pass
 
     class DemoItem:
@@ -32,10 +32,10 @@ def test_accept_single_level():
 
 
 def test_accept_two_levels():
-    class DemoContainer(list):  # type: Container['Intermediate']
+    class DemoContainer(list):
         pass
 
-    class Intermediate(list):  # type: Container['DemoItem']
+    class Intermediate(list):
         pass
 
     class DemoItem:

@@ -347,8 +347,10 @@ def distribute_cards(
             comment = None
         _cards.append(_card)
 
-    materials, transformations, sdef, tallies, others = [], [], [], [], []
-    # type: List[Card], List[Card], List[Card], List[Card], List[Card]
+    # fmt: off
+    materials, transformations, sdef, tallies, others = \
+        [], [], [], [], []  # type: List[Card], List[Card], List[Card], List[Card], List[Card]
+    # fmt: on
 
     for card in cards:
         if card.is_comment:
