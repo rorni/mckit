@@ -4,7 +4,14 @@
    :target: https://github.com/rorni/mckit/graphs/commit-activity
 
 .. |Tests| image:: https://github.com/rorni/mckit/workflows/Tests/badge.svg
-   :target https://github.com/rorni/mckit/actions?workflow=Tests
+   :target: https://github.com/rorni/mckit/actions?workflow=Tests
+
+.. |Codecov| image:: https://codecov.io/gh/rorni/mckit/branch/master/graph/badge.svg)
+    :target: https://codecov.io/gh/rorni/mckit
+
+.. |PyPI| image:: https://img.shields.io/pypi/v/mckit.svg
+   :target: https://pypi.org/project/mckit/
+
 
 MCKIT
 =====
@@ -12,7 +19,7 @@ MCKIT
 Introduction
 ------------
 
-The package defines Python package |mckit|, which provides library to work with
+The package |mckit| provides library to work with
 MCNP models and results. The package also provides command line interface, which 
 allows compose and decompose a MCNP model over universes hierarchy, split a model
 to text portions and combine back.
@@ -40,7 +47,7 @@ With setup.py: ::
 Copyright
 ---------
 |mckit| is free software.
-TODO add dependecies licenses here
+TODO add dependencies licenses here
 
 
 Contributors
@@ -51,16 +58,8 @@ Contributors
 Copyright
 ---------
 |mckit| is free software.
-TODO add dependecies licenses here
+.. TODO add dependencies licenses here
 
-
-Authors
--------
-* `Roman Rodionov <mailto:r.rodionov@iterrf.ru>`_
-
-Maintainers
------------
-* `Dmitry Portnov <mailto:dmitri_portnov@yahoo.com>`_
 
 Tutorial
 --------
@@ -75,7 +74,7 @@ TODO
 .. TODO add nearest future plans.
 
 * implement generation of the documentation for readthedocs
-* create and link to the readocs account
+* create and link to the readthedocs account
 * add the readthedocs status icon at the document start.
 
 Good reading
@@ -91,7 +90,8 @@ Good reading
 Resources
 ---------
 * `Budges for README.rst <https://github.com/Naereen/badges/blob/master/README.rst>`_
-
+* `Commit message format <https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit>`_
+* `Semantic Versioning <https://semver.org/>`_
 
 Bugs
 ----
@@ -106,3 +106,45 @@ For Linux we assume usage of pyenv/poetry toolchain.
 
 .. TODO explain details for activation of development environment
 .. TODO add MKL handling stuff.
+
+Commit Message Format
+~~~~~~~~~~~~~~~~~~~~~
+
+To provide proper change logs, apply this format for commit messages::
+
+    <type>: <short summary>
+      │       │
+      │       └─⫸ Summary in present tense. Not capitalized. No period at the end.
+      │
+      └─⫸ Commit Type: breaking|build|ci|documentation|enhancement|bug|performance|refactoring|removal|style|testing
+
+
+.. list-table:: Commit types description
+    :widths: 20 30
+    :header-rows: 1
+
+    * - Commit Type
+      - Description
+    * - breaking
+      - Breaking changes introducing API incompatibility
+    * - build
+      - Build System
+    * - ci
+      - Continuous Integration'
+    * - documentation
+      - Documentation
+    * - enhancement
+      - Features
+    * - bug
+      - Fixes bug, no other changes in the code
+    * - performance
+      - Performance, benchmarks or profiling changes.
+    * - refactoring
+      - Refactoring
+    * - removal
+      - Removing and deprecations in code or dependencies
+    * - style
+      - Code and documentation style improvements.
+    * - testing
+      - Changes in tests
+

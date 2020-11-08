@@ -15,4 +15,7 @@ from .version import (
     __title__,
     __version__,
     __version_info__,
+    __summary__,
 )
+
+__doc__ = __summary__
