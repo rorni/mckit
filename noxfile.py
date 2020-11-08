@@ -58,7 +58,7 @@ def lint(session: Session) -> None:
     session.run("flake8", *args)
 
 
-@nox.session(python=["3.8"])
+@nox.session(python=["3.7"])  # TODO dvp: this doesn't work with 3.8 so far
 def black(session: Session) -> None:
     """Run black code formatter."""
     args = session.posargs or locations
