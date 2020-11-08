@@ -2,13 +2,12 @@
 from contextlib import contextmanager
 from collections import defaultdict
 from typing import Iterable, Dict, Any, List, Set, Union
-
 from attr import attrs, attrib
 import numpy as np
 from click import progressbar
-from loguru import logger
 
 import mckit as mk
+
 from .body import Body, Shape
 from .card import Card
 
@@ -470,8 +469,10 @@ class Universe:
                 surfs.update(c.options["FILL"]["universe"].get_surfaces(inner))
         return surfs
 
-    def get_compositions(self, exclude_common: bool = False) -> Set[mk.Composition]:
-        """Gets all compositions of the unvierse.
+    def get_compositions(
+        self, exclude_common: bool = False
+    ) -> Set[mk.material.Composition]:
+        """Gets all compositions of the universe.
 
         Parameters
         ----------
@@ -548,8 +549,8 @@ class Universe:
 
     @staticmethod
     def _produce_stat(
-        names: Dict[mk.Universe, Iterable[int]]
-    ) -> Dict[int, Set[mk.Universe]]:
+        names: Dict["Universe", Iterable[int]]
+    ) -> Dict[int, Set["Universe"]]:
         stat = defaultdict(list)
         for u, u_names in names.items():
             for name in u_names:
@@ -557,7 +558,7 @@ class Universe:
         return Universe._clean_stat_dict(stat)
 
     @staticmethod
-    def _clean_stat_dict(stat) -> Dict[int, Set[mk.Universe]]:
+    def _clean_stat_dict(stat) -> Dict[int, Set["Universe"]]:
         new_stat = {}
         for k, v in stat.items():
             if len(v) > 1:

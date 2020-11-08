@@ -9,6 +9,7 @@ import numpy as np
 from click import progressbar
 
 import mckit as mk
+import mckit.material as mm
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import Shape as _Shape
@@ -643,10 +644,10 @@ class Body(Card):
         """Gets body's shape."""
         return self._shape
 
-    def material(self) -> Optional[mk.Material]:
-        """Gets body's material. None is returned if no material present."""
+    def material(self) -> Optional[mm.Material]:
+        """Gets body's Material. None is returned if no material present."""
         composition = self.options.get("MAT", None)
-        assert composition is None or isinstance(composition, mk.Material)
+        assert composition is None or isinstance(composition, mm.Material)
         return composition
 
     def intersection(self, other):
