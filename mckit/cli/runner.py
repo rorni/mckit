@@ -69,7 +69,7 @@ def mckit(
     "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
 def decompose(output, fill_descriptor, source):
-    """"Separates an MCNP model to envelopes and filling universes"""
+    """Separate an MCNP model to envelopes and filling universes"""
     logger.info(f"Processing {source}")
     return do_decompose(output, fill_descriptor, source, context["OVERRIDE"])
 
@@ -82,6 +82,7 @@ def decompose(output, fill_descriptor, source):
     "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
 def compose(output, fill_descriptor, source):
+    """Merge universes and envelopes into MCNP model using merge descriptor"""
     if fill_descriptor is None:
         fill_descriptor = Path(source).absolute().parent / "fill-descriptor.toml"
     else:
@@ -103,7 +104,7 @@ def compose(output, fill_descriptor, source):
 @click.option(
     "--separators/--no-separators",
     default=False,
-    help="Write comment files to prepend and append this model cells, surfaces etc. on concatenation",
+    help="Write files with decorative comments to separate this model sections (cells, surfaces etc.) on concatenation",
 )
 @click.argument(
     "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
@@ -171,6 +172,7 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
     "parts", metavar="<part...>", type=click.Path(exists=True), nargs=-1, required=True
 )
 def concat(output, parts_encoding, output_encoding, parts):
+    """Concat text files. (will filter texts according specification in future)"""
     override = context["OVERRIDE"]
     with resolve_output(output, exist_ok=override, encoding=output_encoding) as out_fid:
         for f in parts:
@@ -187,6 +189,7 @@ def concat(output, parts_encoding, output_encoding, parts):
     "sources", metavar="<source>", type=click.Path(exists=True), nargs=-1, required=True
 )
 def check(sources: List[click.Path]) -> None:
+    """Read MCNP model(s) and show statistics and clashes."""
     for source in sources:
         do_check(source)
 
