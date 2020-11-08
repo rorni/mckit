@@ -11,8 +11,8 @@ __author_email__ = __meta_data__["Author-email"]
 __license__ = __meta_data__["License"]
 __summary__ = __meta_data__["Summary"]
 __copyright__ = (
-    "Copyright 2018-2020 Roman Rodionov"
-)  # TODO dvp: move to meta (project.toml)
+    "Copyright 2018-2020 Roman Rodionov"  # TODO dvp: move to meta (project.toml)
+)
 
 __version__ = meta.version("mckit")
 
