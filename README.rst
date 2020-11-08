@@ -12,6 +12,8 @@
 .. |PyPI| image:: https://img.shields.io/pypi/v/mckit.svg
    :target: https://pypi.org/project/mckit/
 
+.. |Read the Docs| image:: https://readthedocs.org/projects/mckit/badge/
+   :target: https://mckit.readthedocs.io/
 
 MCKIT
 =====

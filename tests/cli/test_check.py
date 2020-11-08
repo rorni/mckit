@@ -1,20 +1,15 @@
-import logging
-import click_log
 import pytest
 from click.testing import CliRunner
+
 from mckit.utils.resource import filename_resolver
 from mckit.cli.runner import mckit
+
 
 # skip the pylint warning on fixture names
 # pylint: disable=redefined-outer-name
 
 # skip the pylint warning on long names: test names should be descriptive
 # pylint: disable=invalid-name
-
-
-test_logger = logging.getLogger(__name__)
-click_log.basic_config(test_logger)
-test_logger.level = logging.DEBUG
 
 
 @pytest.fixture

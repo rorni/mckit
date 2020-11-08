@@ -1,14 +1,14 @@
-import logging
-import click_log
-import pytest
+from pathlib import Path
+
 import numpy as np
 from numpy.testing import assert_array_equal
-from pathlib import Path
+import pytest
 import tomlkit as tk
 from click.testing import CliRunner
+
 from mckit.utils.resource import filename_resolver
 from mckit.parser import from_file
-from mckit.cli.runner import mckit, __version__
+from mckit.cli.runner import mckit
 from mckit.cli.commands.decompose import get_default_output_directory
 
 # skip the pylint warning on fixture names
@@ -16,11 +16,6 @@ from mckit.cli.commands.decompose import get_default_output_directory
 
 # skip the pylint warning on long names: test names should be descriptive
 # pylint: disable=invalid-name
-
-
-test_logger = logging.getLogger(__name__)
-click_log.basic_config(test_logger)
-test_logger.level = logging.INFO
 
 
 @pytest.fixture
@@ -43,20 +38,6 @@ data_filename_resolver = filename_resolver("tests")
 def test_input_files_reading(path, expected_cells):
     universe = from_file(data_filename_resolver(path)).universe
     assert len(universe) == expected_cells, f"Failed to read from file {path}"
-
-
-def test_version(runner):
-    result = runner.invoke(mckit, args=["--version"], catch_exceptions=False)
-    assert result.exit_code == 0, (
-        "Should success on '--version' option: " + result.output
-    )
-    assert __version__ in result.output
-
-
-def test_help(runner):
-    result = runner.invoke(mckit, args=["--help"], catch_exceptions=False)
-    assert result.exit_code == 0, result.output
-    assert "Usage: " in result.output
 
 
 def test_help_decompose(runner):

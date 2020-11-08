@@ -9,13 +9,13 @@ repository = "https://github.com/rorni/mckit"
 license = "MIT"
 keywords = ["mckit", "MCNP"]
 build = "build.py"
+documentation = "https://mckit.readthedocs.io"
 
 [tool.poetry.dependencies]
 python = "^3.7"
 click = "^7.1.2"
 attrs = "^20.2.0"
 click-loguru = "^1.3.4"
-click-log = "^0.3.2"
 numpy = "^1.19.4"
 sly = "^0.4"
 scipy = "^1.5.3"

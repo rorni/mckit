@@ -41,7 +41,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)-7s - %(message)s",
     level=logging.DEBUG,
 )
-# LOG = click_log.basic_config(LOG)
 
 
 def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:

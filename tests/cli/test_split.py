@@ -1,8 +1,8 @@
-import logging
-import click_log
-import pytest
 from pathlib import Path
+
+import pytest
 from click.testing import CliRunner
+
 from mckit.utils.resource import filename_resolver
 from mckit.cli.runner import mckit
 from mckit.cli.commands.common import get_default_output_directory
@@ -14,11 +14,6 @@ from mckit.utils.io import MCNP_ENCODING
 
 # skip the pylint warning on long names: test names should be descriptive
 # pylint: disable=invalid-name
-
-
-test_logger = logging.getLogger(__name__)
-click_log.basic_config(test_logger)
-test_logger.level = logging.INFO
 
 
 @pytest.fixture

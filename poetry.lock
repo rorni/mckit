@@ -150,17 +150,6 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
-name = "click-log"
-version = "0.3.2"
-description = "Logging integration for Click"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-click = "*"
-
-[[package]]
 name = "click-loguru"
 version = "1.3.4"
 description = "Logging to stderr and file for click applications."
@@ -1213,7 +1202,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "0de6fa11dfbda7e411da323d72762a68b632aa1b9791a12eef2e06f1822a330d"
+content-hash = "3a26cd1d1755834e80d078872a19f8d10556e8c7bbe5155d3da3329bb5c7c463"
 
 [metadata.files]
 alabaster = [
@@ -1270,10 +1259,6 @@ chardet = [
 click = [
     {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
     {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
-]
-click-log = [
-    {file = "click-log-0.3.2.tar.gz", hash = "sha256:16fd1ca3fc6b16c98cea63acf1ab474ea8e676849dc669d86afafb0ed7003124"},
-    {file = "click_log-0.3.2-py2.py3-none-any.whl", hash = "sha256:eee14dc37cdf3072158570f00406572f9e03e414accdccfccd4c538df9ae322c"},
 ]
 click-loguru = [
     {file = "click_loguru-1.3.4-py3-none-any.whl", hash = "sha256:c2a7ab12a40d7d46103c3d1df2752c3d38bf6ba1f0b3227a7329085984440973"},

@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
-
-import logging
-import click_log
-import pytest
-
-# from time import sleep
-from click.testing import CliRunner
-
 from pathlib import Path
 
-from mckit.cli.runner import mckit, __version__
+import pytest
 
+from click.testing import CliRunner
+
+from mckit.cli.runner import mckit, VERSION
 from mckit.utils.resource import filename_resolver
 
 # skip the pylint warning on fixture names
@@ -20,31 +15,12 @@ from mckit.utils.resource import filename_resolver
 # pylint: disable=invalid-name
 
 
-test_logger = logging.getLogger(__name__)
-click_log.basic_config(test_logger)
-test_logger.level = logging.INFO
-
-
 @pytest.fixture
 def runner():
     return CliRunner()
 
 
 data_filename_resolver = filename_resolver("tests.cli")
-
-
-def test_version(runner):
-    result = runner.invoke(mckit, args=["--version"], catch_exceptions=False)
-    assert result.exit_code == 0, (
-        "Should success on '--version' option: " + result.output
-    )
-    assert __version__ in result.output
-
-
-def test_help(runner):
-    result = runner.invoke(mckit, args=["concat", "--help"], catch_exceptions=False)
-    assert result.exit_code == 0, result.output
-    assert "Usage: " in result.output
 
 
 def test_when_there_is_no_args(runner):
