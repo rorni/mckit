@@ -1,11 +1,14 @@
+import typing as tp
 import os
 from functools import reduce
 from itertools import product, groupby, permutations
-import typing as tp
-from typing import Iterable, List, Union, NewType
 from multiprocessing import Pool
+from typing import Iterable, List, NewType, Optional, Set, Union
+
 import numpy as np
 from click import progressbar
+
+import mckit as mk
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import Shape as _Shape
@@ -382,14 +385,8 @@ class Shape(_Shape):
         else:
             return 0
 
-    def get_surfaces(self):
-        """Gets all surfaces that describe the shape.
-
-        Returns
-        -------
-        surfaces : set[Surface]
-            A set of surfaces.
-        """
+    def get_surfaces(self) -> Set[Surface]:
+        """Gets all the surfaces that describe the shape"""
         args = self.args
         if len(args) == 1:
             return {args[0]}
@@ -646,9 +643,11 @@ class Body(Card):
         """Gets body's shape."""
         return self._shape
 
-    def material(self):
+    def material(self) -> Optional[mk.Material]:
         """Gets body's material. None is returned if no material present."""
-        return self.options.get("MAT", None)
+        composition = self.options.get("MAT", None)
+        assert composition is None or isinstance(composition, mk.Material)
+        return composition
 
     def intersection(self, other):
         """Gets an intersection if this cell with the other.

@@ -7,7 +7,7 @@ from operator import xor
 import numpy as np
 from typing import Optional, NewType, Tuple, Iterable
 
-from .printer import print_card, MCNP_FORMATS
+from .printer import MCNP_FORMATS
 from .card import Card
 
 __all__ = ["AVOGADRO", "Element", "Composition", "Material"]

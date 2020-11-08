@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Dict, Any, List, Set, Union
 from contextlib import contextmanager
 from collections import defaultdict
+from typing import Iterable, Dict, Any, List, Set, Union
+
 from attr import attrs, attrib
 import numpy as np
 from click import progressbar
+from loguru import logger
 
+import mckit as mk
 from .body import Body, Shape
 from .card import Card
 
@@ -446,7 +449,7 @@ class Universe:
         common_mats = {c for c, cnt in comp_count.items() if cnt > 1}
         return common_mats
 
-    def get_surfaces(self, inner=False):
+    def get_surfaces(self, inner: bool = False) -> Set[Surface]:
         """Gets all surfaces of the universe.
 
         Parameters
@@ -467,23 +470,7 @@ class Universe:
                 surfs.update(c.options["FILL"]["universe"].get_surfaces(inner))
         return surfs
 
-    def get_materials(self, recursive=False):
-        """Gets all materials of the universe.
-
-        Parameters
-        ----------
-        recursive : bool
-            Whether to take materials of inner universes. Default: False -
-            returns materials of this universe only.
-
-        Returns
-        -------
-        mats : dict
-            A dictionary of name->Material.
-        """
-        pass
-
-    def get_compositions(self, exclude_common=False):
+    def get_compositions(self, exclude_common: bool = False) -> Set[mk.Composition]:
         """Gets all compositions of the unvierse.
 
         Parameters
@@ -496,16 +483,16 @@ class Universe:
         comps : set
             A set of Composition objects.
         """
-        comps = set()
+        compositions = set()
         for c in self:
-            mat = c.material()
-            if mat:
-                comps.add(mat.composition)
+            material = c.material()
+            if material:
+                compositions.add(material.composition)
         if exclude_common:
-            comps.difference_update(self._common_materials)
-        return comps
+            compositions.difference_update(self._common_materials)
+        return compositions
 
-    def get_universes(self):
+    def get_universes(self) -> Set["Universe"]:
         """Gets all inner universes.
 
         Returns
@@ -516,7 +503,7 @@ class Universe:
         universes = {self}
         for c in self:
             if "FILL" in c.options:
-                u = c.options["FILL"]["universe"]  # TODO dvp: add transformations
+                u = c.options["FILL"]["universe"]  # TODO dvp: add transformations?
                 universes.update(u.get_universes())
         return universes
 
@@ -524,29 +511,30 @@ class Universe:
         """Gets numeric name of the universe."""
         return self._name
 
-    def name_clashes(self):
+    def name_clashes(self) -> Dict[str, Dict[int, Set["Universe"]]]:
         """Checks, if there is name clashes.
 
         Returns
         -------
         stat : dict
-            Description of found clashes. If no clashes - the dictionary is
-            empty.
+            Description of found clashes. If no clashes - the dictionary is empty.
         """
-        univ = self.get_universes()
-        stat = {}
-        cells = {u: list(map(Card.name, u)) for u in univ}
-        surfs = {u: list(map(Card.name, u.get_surfaces())) for u in univ}
+        universes = self.get_universes()
+        universe_to_cell_name_map = {u: list(map(Card.name, u)) for u in universes}
+        universe_to_surface_name_map = {
+            u: list(map(Card.name, u.get_surfaces())) for u in universes
+        }
         mats = {None: list(map(Card.name, self._common_materials))}
-        for u in univ:
+        for u in universes:
             mats[u] = list(
                 map(Card.name, u.get_compositions().difference(self._common_materials))
             )
-        univs = {u: [u.name()] for u in univ}
-        cstat = Universe._produce_stat(cells)
+        univs = {u: [u.name()] for u in universes}
+        cstat = Universe._produce_stat(universe_to_cell_name_map)
+        stat = {}
         if cstat:
             stat["cell"] = cstat
-        sstat = Universe._produce_stat(surfs)
+        sstat = Universe._produce_stat(universe_to_surface_name_map)
         if sstat:
             stat["surf"] = sstat
         mstat = Universe._produce_stat(mats)
@@ -559,7 +547,9 @@ class Universe:
         return stat
 
     @staticmethod
-    def _produce_stat(names):
+    def _produce_stat(
+        names: Dict[mk.Universe, Iterable[int]]
+    ) -> Dict[int, Set[mk.Universe]]:
         stat = defaultdict(list)
         for u, u_names in names.items():
             for name in u_names:
@@ -567,11 +557,10 @@ class Universe:
         return Universe._clean_stat_dict(stat)
 
     @staticmethod
-    def _clean_stat_dict(stat):
+    def _clean_stat_dict(stat) -> Dict[int, Set[mk.Universe]]:
         new_stat = {}
         for k, v in stat.items():
             if len(v) > 1:
-                # v.sort(key=Universe.name)
                 new_stat[k] = set(v)
         return new_stat
 
@@ -616,6 +605,17 @@ class Universe:
                     m.rename(start_mat)
                     start_mat += 1
 
+    def check_clashes(self, resolve_clashes=False) -> None:
+        result = self.name_clashes()
+        if result:
+            if resolve_clashes:
+                pass
+                # TODO rename found clashed objects
+            else:
+                raise NameClashError(
+                    f"Impossible to save model with clashes:\n{result}."
+                )
+
     def save(self, filename, encoding=MCNP_ENCODING, resolve_clashes=False):
         """Saves the universe into file.
 
@@ -626,13 +626,7 @@ class Universe:
         encoding: str
             Encoding ot the output file
         """
-        result = self.name_clashes()
-        if result:
-            if resolve_clashes:
-                pass
-                # TODO rename found clashed objects
-            else:
-                raise NameClashError("Impossible to save model.")
+        self.check_clashes(resolve_clashes)
         transformations = collect_transformations(self)
         if transformations:
             transformations = sorted(transformations, key=Card.name)
