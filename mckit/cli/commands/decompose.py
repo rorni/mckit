@@ -3,15 +3,19 @@
 """
 Разложение модели на составляющие юниверсы.
 
-Читает модель, извлекает юниверсы первого уровня и сохраняет их в каталог universes под именем uN.i, где N - номер юниверса.
+Читает модель, извлекает юниверсы первого уровня и сохраняет их
+в каталог universes под именем uN.i, где N - номер юниверса.
 Также сохраняет общую модель (без юниверсов) под именем envelopes.i
 Создает спецификацию для последующей сборки модели в виде TOML файла.
 
 """
 from datetime import datetime
-import logging
 from pathlib import Path
+
 import tomlkit as tk
+from tomlkit.items import item
+from loguru import logger
+
 from mckit import Universe
 from mckit.universe import collect_transformations
 from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
@@ -32,7 +36,6 @@ def move_universe_attribute_to_comments(universe):
 
 
 def decompose(output, fill_descriptor_path, source, override):
-    logger = logging.getLogger(__name__)
     logger.debug("Loading model from %s", source)
     source = Path(source)
     if output is None:
@@ -49,7 +52,7 @@ def decompose(output, fill_descriptor_path, source, override):
     if model.comment:
         fill_descriptor.append("comment", model.comment)
     named_transformations = list(collect_transformations(model))
-    fill_descriptor.append("created", datetime.now())
+    fill_descriptor.append("created", item(datetime.now()))
     fill_descriptor.add(tk.nl())
     already_processed_universes = set()
     for c in model:

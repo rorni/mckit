@@ -4,13 +4,15 @@
 Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации.
 
 """
-from typing import Dict, Optional
-import logging
-import numpy as np
-from pathlib import Path
 from functools import reduce
+from typing import Dict, Optional
+from pathlib import Path
+
+import numpy as np
 import tomlkit as tk
+from loguru import logger
 from tomlkit import items as tk_items
+
 import mckit as mk
 from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 from .common import save_mcnp
@@ -19,7 +21,6 @@ from mckit.utils import filter_dict
 
 
 def compose(output, fill_descriptor_path, source, override):
-    logger = logging.getLogger(__name__ + ".compose")
     logger.debug("Loading model from %s", source)
     parse_result: ParseResult = from_file(source)
     envelopes = parse_result.universe
@@ -85,7 +86,6 @@ def compose(output, fill_descriptor_path, source, override):
 
 
 def load_universes(fill_descriptor, universes_dir):
-    logger = logging.getLogger(__name__ + ".load_universes")
     universes = {}
     for k, v in fill_descriptor.items():
         if isinstance(v, dict) and "universe" in v:

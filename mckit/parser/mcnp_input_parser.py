@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-from typing import Union
-import re
 from collections import deque
+from loguru import logger
 from pathlib import Path
+import re
+from typing import Union
+from warnings import warn
+
 import ply.lex as lex
 import ply.yacc as yacc
-from warnings import warn
 
 from ..material import Element, Composition, Material
 from ..transformation import Transformation
@@ -19,19 +21,6 @@ warn(
 )
 
 __DEBUG__ = False
-if __DEBUG__:
-    # Set up a logging object
-    import logging
-
-    logging.basicConfig(
-        level=logging.DEBUG,
-        filename="mckit_parselog.txt",
-        filemode="w",
-        format="%(filename)10s:%(lineno)4d:%(message)s",
-    )
-    log = logging.getLogger()
-else:
-    log = None
 
 # lex.lex(debug=True, debuglog=log)
 # yacc.yacc(debug=True, debuglog=log)
@@ -491,7 +480,9 @@ def t_continue_cells_ckw_surfs_data_newline_skip(t):
 
 
 mcnp_input_lexer = lex.lex(
-    reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE, debug=__DEBUG__, debuglog=log
+    reflags=re.MULTILINE + re.IGNORECASE + re.VERBOSE,
+    debug=__DEBUG__,
+    debuglog=logger if __DEBUG__ else None,
 )
 
 
@@ -914,8 +905,8 @@ def p_material_option(p):
 mcnp_input_parser = yacc.yacc(
     tabmodule="mcnp_input_tab",
     debug=__DEBUG__,
-    debuglog=log,
-    errorlog=log if __DEBUG__ else yacc.NullLogger(),
+    debuglog=logger,
+    errorlog=logger if __DEBUG__ else yacc.NullLogger(),
 )
 
 

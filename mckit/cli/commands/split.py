@@ -7,12 +7,11 @@
 материалов, трансформаций, sdef и прочие карты. Файлы соответственно: cells.txt, surfaces.txt,
 materials.txt, transformations.txt, sdef.txt, cards.txt
 """
-import logging
+from loguru import logger
 from pathlib import Path
 from typing import Iterable, Union
 
 import mckit.parser.mcnp_section_parser as sp
-from mckit.parser.mcnp_section_parser import Card
 from .common import check_if_path_exists
 from ...constants import MCNP_ENCODING
 
@@ -30,7 +29,7 @@ def print_text(
 
 
 def print_cards(
-    cards: Iterable[Card], output_dir: Path, section_file_name: str, override: bool
+    cards: Iterable[sp.Card], output_dir: Path, section_file_name: str, override: bool
 ) -> None:
     if cards:
         out = output_dir / section_file_name
@@ -43,7 +42,6 @@ def print_cards(
 def split(
     output_dir: Path, mcnp_file_name: Union[str, Path], override: bool, separators=False
 ) -> None:
-    logger = logging.getLogger(__name__)
     logger.debug("Splitting model from %s", mcnp_file_name)
     if isinstance(mcnp_file_name, str):
         mcnp_file_name = Path(mcnp_file_name)

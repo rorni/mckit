@@ -3,8 +3,10 @@
 Проверяет корректность модели и выдает статистику.
 """
 from typing import Any, Callable, Iterable, Optional
-import logging
 from pathlib import Path
+
+from loguru import logger
+
 from mckit import Universe
 from mckit.universe import collect_transformations
 from mckit.card import Card
@@ -33,7 +35,6 @@ def check_duplicates(
 
 def check(source):
     result = 0
-    logger = logging.getLogger(__name__)
     logger.debug("Check model %s", source)
     source = Path(source)
     parse_result: ParseResult = from_file(source)

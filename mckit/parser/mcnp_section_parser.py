@@ -1,24 +1,16 @@
-import logging
+from enum import IntEnum
 import re
 import sys
 from typing import Iterable, List, Optional, Generator, TextIO, Tuple
-from enum import IntEnum
+
 from attr import attrs, attrib
 
-
-LOG = logging.getLogger(__name__)
-
-
 BLANK_LINE_PATTERN = re.compile(r"\n\s*\n", flags=re.MULTILINE)
-
 COMMENT_LINE_PATTERN = re.compile(r"^\s{,5}[cC]( .*)?\s*$")
-
 # pattern to remove comments from a card text
 REMOVE_COMMENT_PATTERN = re.compile(
     r"(\s*\$.*$)|(^\s{0,5}c\s.*\n?)", flags=re.MULTILINE | re.IGNORECASE
 )
-
-
 # pattern to split section text to optional "comment" and subsequent MCNP card pairs
 CARD_PATTERN = re.compile(
     r"(?P<comment>((^\s{,5}c( .*)?\s*$)\n?)+)?(?P<card>^\s{,5}(\*|\+|\w).*(\n((^\s{,5}c.*\n?)*^\s{5,}\S.*\n?)*)?)?",
