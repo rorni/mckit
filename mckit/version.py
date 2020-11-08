@@ -13,14 +13,7 @@ __summary__ = __meta_data__["Summary"]
 __copyright__ = (
     "Copyright 2018-2020 Roman Rodionov"  # TODO dvp: move to meta (project.toml)
 )
-
-__version__ = meta.version("mckit")
-
-try:
-    __version__ = meta.version(__name__)
-except meta.PackageNotFoundError:
-    __version__ = "0.0.0"
-
+__version__ = __distribution__.version
 __version_info__ = tuple(
     map(int, __version__.split(".")[:3])
 )  # leaving only the 3 first digits from version
