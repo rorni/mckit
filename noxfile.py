@@ -154,6 +154,7 @@ def docs(session: Session) -> None:
         "sphinxcontrib-qthelp",
         "sphinx-autodoc-typehints",
         "sphinx_autorun",
+        "sphinx-rtd-theme",
     )
     session.run("sphinx-build", "docs/source", "docs/_build")
 
