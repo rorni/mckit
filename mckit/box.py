@@ -1,4 +1,5 @@
 import numpy as np
+
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import EX, EY, EZ, Box as _Box, GLOBAL_BOX as _GLOBAL_BOX
 
@@ -21,21 +22,15 @@ class Box(_Box):
 
     def __eq__(self, other):
         return (
-            np.array_equal(self.center, other.center) and
-            np.array_equal(self.dimensions, other.dimensions) and
-            np.array_equal(self.ex, other.ex) and
-            np.array_equal(self.ey, other.ey) and
-            np.array_equal(self.ez, other.ez)
+            np.array_equal(self.center, other.center)
+            and np.array_equal(self.dimensions, other.dimensions)
+            and np.array_equal(self.ex, other.ex)
+            and np.array_equal(self.ey, other.ey)
+            and np.array_equal(self.ez, other.ez)
         )
 
     def __hash__(self):
-        return hash((
-            self.center,
-            self.dimensions,
-            self.ex,
-            self.ey,
-            self.ez,
-        ))
+        return hash((self.center, self.dimensions, self.ex, self.ey, self.ez))
 
     def __getstate__(self):
         center = self.center

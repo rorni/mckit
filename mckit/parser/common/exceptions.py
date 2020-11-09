@@ -1,5 +1,5 @@
 class NumberedItemNotFoundError(KeyError):
-    kind: str = ''
+    kind: str = ""
 
     def __init__(self, item: int, *args, **kwargs):
         super().__init__(args, kwargs)
@@ -9,7 +9,5 @@ class NumberedItemNotFoundError(KeyError):
         return f"{self.kind} #{self._item} is not found"
 
 
-
 class CellNotFoundError(NumberedItemNotFoundError):
-    kind = 'Cell'
-
+    kind = "Cell"

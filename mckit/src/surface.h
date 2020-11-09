@@ -137,12 +137,12 @@ int gq_init(
 int RCC_init(
     RCC * surf,
     Cylinder * cyl,
-    Plane * top, 
+    Plane * top,
     Plane * bot
 );
 
 int BOX_init(
-    BOX * surf, 
+    BOX * surf,
     Plane ** planes
 );
 

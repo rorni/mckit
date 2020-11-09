@@ -16,4 +16,3 @@ file = "u2.i"
 
 [named_transformations]
 tr1 = ['0', '-1', '0']
-

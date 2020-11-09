@@ -1,104 +1,124 @@
-from typing import List
-import logging
 import sys
-
-import click
-import click_log
-
 from contextlib import contextmanager
 from pathlib import Path
+from typing import List
 
-from mckit import __version__
+import click
+from click_loguru import ClickLoguru
+from loguru import logger
+
+import mckit.version as meta
 from mckit.utils import MCNP_ENCODING
 from mckit.cli.commands.common import get_default_output_directory
 from mckit.cli.commands import do_decompose, do_compose, do_split, do_check
 
-__LOG = logging.getLogger(__name__)
-click_log.basic_config(__LOG)
-__LOG.level = logging.INFO
+NAME = meta.__title__
+VERSION = meta.__version__
+LOG_FILE_RETENTION = 3
 
-if sys.version_info.major < 3:  # pragma: no cover
-    click.echo("Only Python 3 is supported in concat_mcnp")
-    sys.exit(1)
+click_loguru = ClickLoguru(
+    NAME,
+    VERSION,
+    retention=LOG_FILE_RETENTION,
+    log_dir_parent=".logs",
+    timer_log_level="info",
+)
+
+context = {}
 
 
-@click.group()
-@click.option('--debug/--no-debug', default=False)
-@click.option('--override/--no-override', default=False)
-@click.pass_context
-@click_log.simple_verbosity_option(__LOG, default="INFO")
-@click.version_option(__version__)
-def mckit(ctx, debug, override):
+@click_loguru.logging_options
+@click.group(help=meta.__summary__)
+@click_loguru.stash_subcommand()
+@click.option("--override/--no-override", default=False)
+@click.version_option(VERSION, prog_name=NAME)
+def mckit(
+    verbose: bool, quiet: bool, logfile: bool, profile_mem: bool, override: bool
+) -> None:
+    logger.info("Running {}", NAME)
+    logger.debug(
+        "Options: \
+        verbose {verbose}, quiet: {quiet}, logfile: {logfile}, profile_mem: {profile_mem}, override: {override}",
+        verbose=verbose,
+        quiet=quiet,
+        logfile=logfile,
+        profile_mem=profile_mem,
+        override=override,
+    )
+    #
+    # TODO dvp: add customized logger configuring from a configuration toml-file.
     # ensure that ctx.obj exists and is a dict (in case `cli()` is called
     # by means other than the `if` block below
-    obj = ctx.ensure_object(dict)
-    obj['DEBUG'] = debug
-    obj['OVERRIDE'] = override
+    # obj = ctx.ensure_object(dict)
+    # obj["DEBUG"] = debug
+    context["OVERRIDE"] = override
 
 
 @mckit.command()
-@click.pass_context
-@click.option("--output", "-o", default=None, help="Output directory, default: <source>.universes")
-@click.option("--fill-descriptor", "-f", default="fill-descriptor.toml", help="TOML file for FILL descriptors")
-@click.argument(
-    "source",
-    metavar="<source>",
-    type=click.Path(exists=True),
-    nargs=1,
-    required=True,
+@click_loguru.init_logger()
+@click.option(
+    "--output", "-o", default=None, help="Output directory, default: <source>.universes"
 )
-def decompose(ctx, output, fill_descriptor, source):
-    __LOG.info(f"Processing {source}")
-    return do_decompose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
-
-
-@mckit.command()
-@click.pass_context
-@click.option("--output", "-o", required=True, help="Output file")
 @click.option(
     "--fill-descriptor",
-    default=None,
+    "-f",
+    default="fill-descriptor.toml",
     help="TOML file for FILL descriptors",
 )
 @click.argument(
-    "source",
-    metavar="<source>",
-    type=click.Path(exists=True),
-    nargs=1,
-    required=True,
+    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
-def compose(ctx, output, fill_descriptor, source):
+def decompose(output, fill_descriptor, source):
+    """Separate an MCNP model to envelopes and filling universes"""
+    logger.info(f"Processing {source}")
+    return do_decompose(output, fill_descriptor, source, context["OVERRIDE"])
+
+
+@mckit.command()
+@click_loguru.init_logger()
+@click.option("--output", "-o", required=True, help="Output file")
+@click.option("--fill-descriptor", default=None, help="TOML file for FILL descriptors")
+@click.argument(
+    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
+)
+def compose(output, fill_descriptor, source):
+    """Merge universes and envelopes into MCNP model using merge descriptor"""
     if fill_descriptor is None:
         fill_descriptor = Path(source).absolute().parent / "fill-descriptor.toml"
     else:
         fill_descriptor = Path(fill_descriptor)
     if not fill_descriptor.exists():
-        raise click.UsageError(f"Cannot find fill descriptor file \"{fill_descriptor}\"")
-    __LOG.info(f"Composing \"{output}\", from envelopes \"{source}\" with fill descriptor \"{fill_descriptor}\"")
-    return do_compose(output, fill_descriptor, source, ctx.obj['OVERRIDE'])
+        raise click.UsageError(f'Cannot find fill descriptor file "{fill_descriptor}"')
+    logger.info(
+        'Composing "{output}", from envelopes "{source}" with fill descriptor "{fill_descriptor}"',
+        output=output,
+        source=source,
+        fill_descriptor=fill_descriptor,
+    )
+    return do_compose(output, fill_descriptor, source, context["OVERRIDE"])
 
 
 @mckit.command()
-@click.pass_context
+@click_loguru.init_logger()
 @click.option("--output", "-o", default=None, help="Output directory")
-@click.option("--separators/--no-separators", default=False,
-              help="Write comment files to prepend and append this model cells, surfaces etc. on concatenation"
-              )
-@click.argument(
-    "source",
-    metavar="<source>",
-    type=click.Path(exists=True),
-    nargs=1,
-    required=True,
+@click.option(
+    "--separators/--no-separators",
+    default=False,
+    help="Write files with decorative comments to separate this model sections (cells, surfaces etc.) on concatenation",
 )
-def split(ctx, output, source, separators):
+@click.argument(
+    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
+)
+def split(output, source, separators):
     if output is None:
         output = get_default_output_directory(source, ".split")
     else:
         output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    __LOG.info(f"Splitting \"{source}\" to directory \"{output}\"")
-    return do_split(output, source, ctx.obj['OVERRIDE'], separators)
+    logger.info(
+        'Splitting "{source}" to directory "{output}"', source=source, output=output
+    )
+    return do_split(output, source, context["OVERRIDE"], separators)
 
 
 # noinspection PyCompatibility
@@ -109,7 +129,9 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
         if exist_ok or not output.exists():
             fid = output.open("w", encoding=encoding)
         else:
-            raise click.UsageError(f"Specify --override option to override existing file '{output}'")
+            raise click.UsageError(
+                f"Specify --override option to override existing file '{output}'"
+            )
     else:
         fid = sys.stdout
     try:
@@ -121,9 +143,10 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
 
 # noinspection PyCompatibility
 @mckit.command()
-@click.pass_context
+@click_loguru.init_logger()
 @click.option(
-    "--output", "-o",
+    "--output",
+    "-o",
     metavar="<output>",
     type=click.Path(exists=False),
     required=False,
@@ -146,20 +169,11 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
     help=f"Encoding to write output (default:{MCNP_ENCODING})",
 )
 @click.argument(
-    "parts",
-    metavar="<part...>",
-    type=click.Path(exists=True),
-    nargs=-1,
-    required=True,
+    "parts", metavar="<part...>", type=click.Path(exists=True), nargs=-1, required=True
 )
-def concat(
-        ctx,
-        output,
-        parts_encoding,
-        output_encoding,
-        parts
-):
-    override = ctx.obj['OVERRIDE']
+def concat(output, parts_encoding, output_encoding, parts):
+    """Concat text files. (will filter texts according specification in future)"""
+    override = context["OVERRIDE"]
     with resolve_output(output, exist_ok=override, encoding=output_encoding) as out_fid:
         for f in parts:
             f = Path(f)
@@ -170,17 +184,15 @@ def concat(
 
 # noinspection PyCompatibility
 @mckit.command()
+@click_loguru.init_logger()
 @click.argument(
-    "sources",
-    metavar="<source>",
-    type=click.Path(exists=True),
-    nargs=-1,
-    required=True,
+    "sources", metavar="<source>", type=click.Path(exists=True), nargs=-1, required=True
 )
 def check(sources: List[click.Path]) -> None:
+    """Read MCNP model(s) and show statistics and clashes."""
     for source in sources:
         do_check(source)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     mckit(obj={})

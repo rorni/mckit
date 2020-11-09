@@ -1,14 +1,16 @@
 import re
 from typing import Iterable
 
-C_COMMENT = r'(^|(?<=\n))\s{0,5}[cC]([ ][^\n]*)?\n?'
+C_COMMENT = r"(^|(?<=\n))\s{0,5}[cC]([ ][^\n]*)?\n?"
 RE_C_COMMENT = re.compile(C_COMMENT, re.MULTILINE)
-EOL_COMMENT = r'\$.*[^\n]*'
+EOL_COMMENT = r"\$.*[^\n]*"
 RE_EOL_COMMENT = re.compile(EOL_COMMENT, re.MULTILINE)
-LINE = r'(?P<text>\s*[^ $][^$]*)?(?:\s*\$\s*(?P<comment>.*))?'  # text should contain at list one non space character
+LINE = (
+    r"(?P<text>\s*[^ $][^$]*)?(?:\s*\$\s*(?P<comment>.*))?"
+)  # text should contain at list one non space character
 RE_LINE = re.compile(LINE)
-FLOAT = r'[-+]?\d*\.?\d+(?:e[-+]?\d+)?'
-INTEGER = r'\d+'
+FLOAT = r"[-+]?\d*\.?\d+(?:e[-+]?\d+)?"
+INTEGER = r"\d+"
 RE_EMPTY_LINE = re.compile(r"\s*")
 
 
@@ -27,13 +29,13 @@ def ensure_upper(text: str):
 def drop_c_comments(text):
     has_comments = RE_C_COMMENT.search(text)
     if has_comments:
-        text = RE_C_COMMENT.sub('', text)
+        text = RE_C_COMMENT.sub("", text)
     return text
 
 
 def drop_eol_comments(text):
     if RE_EOL_COMMENT.search(text) is not None:
-        text = RE_EOL_COMMENT.sub('', text)
+        text = RE_EOL_COMMENT.sub("", text)
     return text
 
 
@@ -42,7 +44,7 @@ def drop_comments(text):
 
 
 def extract_comments(text):
-    lines = text.split('\n')
+    lines = text.split("\n")
     cleaned_text = []
     comments = []
     trailing_comment = []
@@ -50,7 +52,9 @@ def extract_comments(text):
     def add_trailing_to_previous_item():
         nonlocal comments, trailing_comment
         if trailing_comment:
-            assert 0 < len(comments), "The comments should not be empty on this call: at least card name is read"
+            assert 0 < len(
+                comments
+            ), "The comments should not be empty on this call: at least card name is read"
             comments[-1][1].extend(trailing_comment)
             trailing_comment = []
 
@@ -69,7 +73,9 @@ def extract_comments(text):
                 if c is not None:
                     comments.append((i + 1, [c]))  # lexer counts lines from 1
             else:
-                assert c is not None, "If there's no text, then at least comment should present"
+                assert (
+                    c is not None
+                ), "If there's no text, then at least comment should present"
                 trailing_comment.append(c)
 
     assert cleaned_text, "There should be some  text in a card"
@@ -82,7 +88,7 @@ def extract_comments(text):
     if not trailing_comment:
         trailing_comment = None
 
-    return '\n'.join(cleaned_text), comments, trailing_comment
+    return "\n".join(cleaned_text), comments, trailing_comment
 
 
 class ParseError(ValueError):

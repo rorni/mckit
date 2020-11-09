@@ -6,14 +6,38 @@ import mckit.parser.common.utils as pu  # parse utils
 from mckit.parser.common.utils import drop_c_comments, extract_comments
 
 SURFACE_TYPES = {
-    'P', 'PX', 'PY', 'PZ',
-    'S', 'SO', 'SX', 'SY', 'SZ',
-    'CX', 'CY', 'CZ', 'C/X', 'C/Y', 'C/Z',
-    'KX', 'KY', 'KZ', 'K/X', 'K/Y', 'K/Z',
-    'TX', 'TY', 'TZ',
-    'SQ', 'GQ',
-    'X', 'Y', 'Z',
-    'RPP', 'RCC', 'BOX'
+    "P",
+    "PX",
+    "PY",
+    "PZ",
+    "S",
+    "SO",
+    "SX",
+    "SY",
+    "SZ",
+    "CX",
+    "CY",
+    "CZ",
+    "C/X",
+    "C/Y",
+    "C/Z",
+    "KX",
+    "KY",
+    "KZ",
+    "K/X",
+    "K/Y",
+    "K/Z",
+    "TX",
+    "TY",
+    "TZ",
+    "SQ",
+    "GQ",
+    "X",
+    "Y",
+    "Z",
+    "RPP",
+    "RCC",
+    "BOX",
 }
 
 
@@ -29,12 +53,12 @@ def intern_surface_type(word: str):
 class Lexer(LexerBase):
     tokens = {MODIFIER, SURFACE_TYPE, FLOAT, INTEGER}
 
-    MODIFIER = r'^\s{,5}(\*|\+)'
-    SURFACE_TYPE = r'[a-z]+(?:/[a-z]+)?'
+    MODIFIER = r"^\s{,5}(\*|\+)"
+    SURFACE_TYPE = r"[a-z]+(?:/[a-z]+)?"
     FLOAT = pu.FLOAT
     INTEGER = pu.INTEGER
 
-    @_(r'[a-z]+(?:/[a-z]+)?')
+    @_(r"[a-z]+(?:/[a-z]+)?")
     def SURFACE_TYPE(self, t):
         t.value = intern_surface_type(t.value)
         return t
@@ -52,10 +76,7 @@ class Lexer(LexerBase):
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
-    def __init__(
-            self,
-            transformations: Index,
-    ):
+    def __init__(self, transformations: Index):
         sly.Parser.__init__(self)
         self._transformations = transformations
 
@@ -64,74 +85,72 @@ class Parser(sly.Parser):
         return self._transformations
 
     def build_surface(
-            self,
-            name: int,
-            kind: str,
-            params: List[float],
-            transform,
-            modifier,
+        self, name: int, kind: str, params: List[float], transform, modifier
     ) -> Surface:
-        options = {'name': name}
+        options = {"name": name}
         if transform is not None:
             transformation = self.transformations[transform]
             if transformation:
-                options['transform'] = transformation
+                options["transform"] = transformation
         if modifier is not None:
-            options['modifier'] = modifier
+            options["modifier"] = modifier
         _surface = create_surface(kind, *params, **options)
         return _surface
 
-    @_('MODIFIER  name surface_description')
+    @_("MODIFIER  name surface_description")
     def surface(self, p):
-        kind, params, transform = p.surface_description  # type: str, List[float], Optional[int]
+        (
+            kind,
+            params,
+            transform,
+        ) = p.surface_description  # type: str, List[float], Optional[int]
         return self.build_surface(p.name, kind, params, transform, p.MODIFIER)
 
-    @_('name surface_description')
+    @_("name surface_description")
     def surface(self, p):
-        kind, params, transform = p.surface_description  # type: str, List[float], Optional[int]
+        (
+            kind,
+            params,
+            transform,
+        ) = p.surface_description  # type: str, List[float], Optional[int]
         return self.build_surface(p.name, kind, params, transform, None)
 
-    @_('INTEGER')
+    @_("INTEGER")
     def name(self, p):
         return p.INTEGER
 
-    @_('transform SURFACE_TYPE surface_params')
+    @_("transform SURFACE_TYPE surface_params")
     def surface_description(self, p) -> Tuple[str, List[float], Optional[int]]:
         return p.SURFACE_TYPE, p.surface_params, p.transform
 
-    @_(
-        'SURFACE_TYPE surface_params',
-    )
+    @_("SURFACE_TYPE surface_params")
     def surface_description(self, p) -> Tuple[str, List[float], Optional[int]]:
         return p.SURFACE_TYPE, p.surface_params, None
 
-    @_('INTEGER')
+    @_("INTEGER")
     def transform(self, p):
         return p.INTEGER
 
-    @_('surface_params float')
+    @_("surface_params float")
     def surface_params(self, p) -> List[float]:
         surface_params: List[float] = p.surface_params
         surface_params.append(p.float)
         return surface_params
 
-    @_('float')
+    @_("float")
     def surface_params(self, p) -> List[float]:
         return [p.float]
 
-    @_('FLOAT')
+    @_("FLOAT")
     def float(self, p):
         return p.FLOAT
 
-    @_('INTEGER')
+    @_("INTEGER")
     def float(self, p) -> float:
         return float(p.INTEGER)
 
 
-def parse(
-        text: str,
-        transformations: Optional[Index] = None,
-) -> Surface:
+def parse(text: str, transformations: Optional[Index] = None) -> Surface:
     if transformations is None:
         transformations = TransformationStrictIndex()
     else:
@@ -142,5 +161,5 @@ def parse(
     parser = Parser(transformations)
     result = parser.parse(lexer.tokenize(text))
     if trailing_comments:
-        result.options['comment'] = trailing_comments
+        result.options["comment"] = trailing_comments
     return result

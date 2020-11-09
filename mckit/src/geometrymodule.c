@@ -716,7 +716,7 @@ rccobj_init(RCCObject * self, PyObject * args, PyObject * kwds)
     Py_INCREF(top);
     Py_INCREF(bot);
     status = RCC_init(
-        &self->surf, 
+        &self->surf,
         &((CylinderObject *) cyl)->surf,
         &((PlaneObject *) top)->surf,
         &((PlaneObject *) bot)->surf
@@ -1429,4 +1429,3 @@ PyInit_geometry(void)
 
     return m;
 }
-

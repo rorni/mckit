@@ -22,7 +22,7 @@ typedef struct Box Box;
 
 struct Box {
     double center[NDIM];    // center of the box
-    double ex[NDIM];        // 
+    double ex[NDIM];        //
     double ey[NDIM];        // basis vectors. Shows directions of box's edges
     double ez[NDIM];        //
     double dims[NDIM];      // Dimensions of the box.

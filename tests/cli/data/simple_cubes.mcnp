@@ -1,5 +1,5 @@
 testing integration scripts on simple cubic cells
-c 
+c
 c given two envelopes and fillers insert new envelop and filler intersecting
 c the original fillers
 c

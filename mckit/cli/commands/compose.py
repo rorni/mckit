@@ -4,13 +4,15 @@
 Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации.
 
 """
-from typing import Dict, Optional
-import logging
-import numpy as np
-from pathlib import Path
 from functools import reduce
+from typing import Dict, Optional
+from pathlib import Path
+
+import numpy as np
 import tomlkit as tk
+from loguru import logger
 from tomlkit import items as tk_items
+
 import mckit as mk
 from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 from .common import save_mcnp
@@ -19,7 +21,6 @@ from mckit.utils import filter_dict
 
 
 def compose(output, fill_descriptor_path, source, override):
-    logger = logging.getLogger(__name__ + ".compose")
     logger.debug("Loading model from %s", source)
     parse_result: ParseResult = from_file(source)
     envelopes = parse_result.universe
@@ -52,7 +53,9 @@ def compose(output, fill_descriptor_path, source, override):
         cell.options["FILL"] = {"universe": universe}
         if transformation is not None:
             if isinstance(transformation, tk_items.Array):
-                transformation1 = np.fromiter(map(float, iter(transformation)), dtype=np.double)
+                transformation1 = np.fromiter(
+                    map(float, iter(transformation)), dtype=np.double
+                )
                 try:
                     translation = transformation1[:3]
                     if len(transformation1) > 3:
@@ -62,7 +65,7 @@ def compose(output, fill_descriptor_path, source, override):
                     transformation2 = mk.Transformation(
                         translation=translation,
                         rotation=rotation,
-                        indegrees=True,   # Assuming that on decompose we store a transformation in degrees as well
+                        indegrees=True,  # Assuming that on decompose we store a transformation in degrees as well
                     )
                 except ValueError as ex:
                     raise ValueError(
@@ -70,24 +73,26 @@ def compose(output, fill_descriptor_path, source, override):
                     ) from ex
                 cell.options["FILL"]["transform"] = transformation2
             elif isinstance(transformation, tk_items.Integer):
-                assert named_transformations is not None, \
-                    "There are no named transformations in the fill descriptor file"
+                assert (
+                    named_transformations is not None
+                ), "There are no named transformations in the fill descriptor file"
                 transformation1 = named_transformations[int(transformation)]
                 cell.options["FILL"]["transform"] = transformation1
             else:
-                raise NotImplementedError(f"Unexpected type of transformation parameter {type(transformation)}")
+                raise NotImplementedError(
+                    f"Unexpected type of transformation parameter {type(transformation)}"
+                )
     save_mcnp(envelopes, output, override)
 
 
 def load_universes(fill_descriptor, universes_dir):
-    logger = logging.getLogger(__name__ + ".load_universes")
     universes = {}
     for k, v in fill_descriptor.items():
-        if isinstance(v, dict) and 'universe' in v:
+        if isinstance(v, dict) and "universe" in v:
             cell_name = int(k)
-            universe_name = int(v['universe'])
-            transformation = v.get('transform', None)
-            universe_path = Path(v['file'])
+            universe_name = int(v["universe"])
+            transformation = v.get("transform", None)
+            universe_path = Path(v["file"])
             if not universe_path.exists():
                 universe_path = universes_dir / universe_path
                 if not universe_path.exists():
@@ -101,7 +106,7 @@ def load_universes(fill_descriptor, universes_dir):
 
 
 def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transformation]]:
-    transformations = fill_descriptor.get('named_transformations', None)
+    transformations = fill_descriptor.get("named_transformations", None)
     if transformations:
         named_transformations = {}
         for k, v in transformations.items():
@@ -114,10 +119,7 @@ def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transforma
                 rotation = None
             # noinspection PyTypeChecker
             transform = Transformation(
-                translation=translation,
-                rotation=rotation,
-                indegrees=True,
-                name=name,
+                translation=translation, rotation=rotation, indegrees=True, name=name
             )
             named_transformations[name] = transform
         return named_transformations

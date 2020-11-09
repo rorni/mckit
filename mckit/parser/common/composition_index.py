@@ -5,11 +5,21 @@ from mckit.parser.common import Index, NumberedItemNotFoundError
 
 
 class DummyMaterial(Material):
-    def __init__(self, name: int, *, density: Optional[float] = None, concentration: Optional[float] = None) -> None:
-        assert (density is None) ^ (concentration is None), "Specify only one of the parameters"
+    def __init__(
+        self,
+        name: int,
+        *,
+        density: Optional[float] = None,
+        concentration: Optional[float] = None
+    ) -> None:
+        assert (density is None) ^ (
+            concentration is None
+        ), "Specify only one of the parameters"
         if density is None:
             # noinspection PyTypeChecker
-            super().__init__(composition=DummyComposition(name), concentration=concentration * 1.0e24)
+            super().__init__(
+                composition=DummyComposition(name), concentration=concentration * 1.0e24
+            )
         else:
             super().__init__(composition=DummyComposition(name), density=density)
 
@@ -35,7 +45,7 @@ class CompositionStrictIndex(Index):
         super().__init__(raise_on_absent_composition_strategy, kwargs)
 
     @classmethod
-    def from_iterable(cls, items: Iterable[Composition]) -> 'CompositionStrictIndex':
+    def from_iterable(cls, items: Iterable[Composition]) -> "CompositionStrictIndex":
         index = cls()
         index.update((c.name(), c) for c in items)
         return index
@@ -47,4 +57,4 @@ class CompositionDummyIndex(Index):
 
 
 class CompositionNotFoundError(NumberedItemNotFoundError):
-    kind = 'Composition'
+    kind = "Composition"
