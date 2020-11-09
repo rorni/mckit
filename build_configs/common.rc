@@ -83,8 +83,8 @@ function filter_printenv() {
         oldpwd \
         original_path \
     )"
-    echo "include: $what"
-    echo "exclude: $exclude"
+    # echo "include: $what"
+    # echo "exclude: $exclude"
     (
         echo "INCLUDE_PATH=$INCLUDE_PATH"
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
