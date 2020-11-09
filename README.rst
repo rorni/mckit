@@ -81,7 +81,7 @@ TODO
 
 Good reading
 ------------
-* `Claudio Jolowicz "Hypermodern Python" <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
+* `Claudio Cjolowicz "Hypermodern Python" <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
 * `Python development best practices 2019 <https://flynn.gg/blog/software-best-practices-python-2019/>`_
 * `Managing Multiple Python Versions With pyenv <https://realpython.com/intro-to-pyenv/>`_
 * `Poetry  <https://python-poetry.org/>`_
