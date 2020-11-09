@@ -11,7 +11,7 @@ from typing import Any
 import nox
 from nox.sessions import Session
 
-nox.options.sessions = "tests"  # "lint", "black", "safety"
+nox.options.sessions = "tests", "lint"  # , "black", "safety"
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
 
