@@ -982,7 +982,7 @@ Sphinx = ">=0.6"
 name = "sphinx-rtd-theme"
 version = "0.5.0"
 description = "Read the Docs theme for Sphinx"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -1216,7 +1216,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "a0bfa6e9381b4cbb6327f41ec38559b7f6394e880377ef550861a76e9869064b"
+content-hash = "60a4153d12e5ab327fa3c81367e4cb720a67461f01d71d1dbce979c53fad647d"
 
 [metadata.files]
 alabaster = [
