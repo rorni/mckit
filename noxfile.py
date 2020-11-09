@@ -88,35 +88,31 @@ def safety(session: Session) -> None:
 #  Uncomment when proper imports or noorder directive is applied in sensitive files.
 #  Always test after reorganizing ill projects.
 #
-#  @nox.session(python="3.8")
-#  def organize_imports(session: Session) -> None:
-#     from glob import glob
-#  install_with_constraints(session, "reorder-python-imports")
-#  search_patterns = [
-#  "*.py",
-#  "mckit/*.py",
-#  "tests/*.py",
-#  "benchmarks/*.py",
-#  "profiles/*.py",
-#  "adhoc/*.py",
-#  ]
-#  files_to_process = sum(
-#  map(
-#  lambda p: glob(p, recursive=True),
-#  search_patterns
-#  ),
-#  []
-#  )
-#  session.run(
-#  "python",
-#  "-m",
-#  "reorder_python_imports",
-#  "--py36-plus",
-#  "--application-directories",
-#  "mckit:tests:benchmarks:profiles",
-#  *files_to_process,
-#  external=True,
-#  )
+@nox.session(python="3.8")
+def organize_imports(session: Session) -> None:
+    from glob import glob
+
+    install_with_constraints(session, "reorder-python-imports")
+    search_patterns = [
+        "*.py",
+        "mckit/*.py",
+        "tests/*.py",
+        "benchmarks/*.py",
+        "profiles/*.py",
+        "adhoc/*.py",
+    ]
+    files_to_process = sum(map(lambda p: glob(p, recursive=True), search_patterns), [])
+    session.run(
+        "python",
+        "-m",
+        "reorder_python_imports",
+        "--py36-plus",
+        "--diff-only",
+        "--application-directories",
+        "mckit:tests:benchmarks:profiles",
+        *files_to_process,
+        external=True,
+    )
 
 
 @nox.session(python=["3.8", "3.7"])
