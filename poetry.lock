@@ -979,6 +979,20 @@ python-versions = "*"
 Sphinx = ">=0.6"
 
 [[package]]
+name = "sphinx-rtd-theme"
+version = "0.5.0"
+description = "Read the Docs theme for Sphinx"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+sphinx = "*"
+
+[package.extras]
+dev = ["transifex-client", "sphinxcontrib-httpdomain", "bump2version"]
+
+[[package]]
 name = "sphinxcontrib-applehelp"
 version = "1.0.2"
 description = "sphinxcontrib-applehelp is a sphinx extension which outputs Apple help books"
@@ -1202,7 +1216,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "3a26cd1d1755834e80d078872a19f8d10556e8c7bbe5155d3da3329bb5c7c463"
+content-hash = "a0bfa6e9381b4cbb6327f41ec38559b7f6394e880377ef550861a76e9869064b"
 
 [metadata.files]
 alabaster = [
@@ -1731,6 +1745,10 @@ sphinx-autodoc-typehints = [
 sphinx-autorun = [
     {file = "sphinx-autorun-1.1.1.tar.gz", hash = "sha256:61a39b604487c6dbfd601b3814443bb554532617abd39563e8d603c01ccc711a"},
     {file = "sphinx_autorun-1.1.1-py3-none-any.whl", hash = "sha256:3a2869641e89f693a4cae1a461a8bf1b2492e34e0f1f86f372eb849842c6f258"},
+]
+sphinx-rtd-theme = [
+    {file = "sphinx_rtd_theme-0.5.0-py2.py3-none-any.whl", hash = "sha256:373413d0f82425aaa28fb288009bf0d0964711d347763af2f1b65cafcb028c82"},
+    {file = "sphinx_rtd_theme-0.5.0.tar.gz", hash = "sha256:22c795ba2832a169ca301cd0a083f7a434e09c538c70beb42782c073651b707d"},
 ]
 sphinxcontrib-applehelp = [
     {file = "sphinxcontrib-applehelp-1.0.2.tar.gz", hash = "sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58"},
