@@ -8,6 +8,7 @@
 export MCKIT_ROOT="$(pwd)"
 export PATH="$MCKIT_ROOT/bin:$PATH"
 
+. $MCKIT_ROOT/build_configs/common.rc
 
 mckit_load_environment() {
     if [[ -z "$MCKIT_BUILD_CFG" ]]; then
@@ -27,6 +28,7 @@ mckit_load_environment() {
         fi
     else
         echo "MCKIT build config is already loaded: $MCKIT_BUILD_CFG"
+        echo "Use 'reset' argument to reload it."
         return 0
     fi
 }
@@ -38,11 +40,7 @@ mckit_checkenv() {
 
 
 mckit_printenv() {
-    (
-        build_printenv
-        echo "MCKIT_ROOT=$MCKIT_ROOT"
-        echo "MCKIT_BUILD_CFG=$MCKIT_BUILD_CFG"
-    ) | sort
+    filter_printenv
 }
 
 

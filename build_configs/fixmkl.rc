@@ -1,0 +1,16 @@
+PYTHON_ROOT="${PYTHON_ROOT:-$(poetry env info --path)}"
+export MKL_ROOT="$PYTHON_ROOT"
+export LD_LIBRARY_PATH="$(make_path \
+    ${MKL_ROOT}/lib \
+    $HOME/.local/lib \
+    /usr/local/lib:usr/lib \
+    $LD_LIBRARY_PATH \
+)"
+export INCLUDE_PATH="$(make_path \
+    ${MKL_ROOT}/include\
+    /usr/local/include \
+    $INCLUDE_PATH \
+)"
+export LD_PRELOAD=${MKL_ROOT}/lib/libmkl_def.so:${MKL_ROOT}/lib/libmkl_avx.so:${MKL_ROOT}/lib/libmkl_core.so:${MKL_ROOT}/lib/libmkl_intel_lp64.so:${MKL_ROOT}/lib/libmkl_intel_thread.so:${MKL_ROOT}/lib/libiomp5.so
+
+# vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai :
