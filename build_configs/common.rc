@@ -3,7 +3,7 @@
 # Joins words separated with a given separator (first argument).
 #
 function make_list() {
-    first="yes"
+    local first="yes"
     t=""
     local separator=$1
     shift
@@ -70,24 +70,24 @@ function filter_printenv() {
     local what=$*
     if [[ -z "$what" ]]; then
         what="$(make_list '|^' \
-            python \
             pyenv \
             poetry \
             mkl \
             mckit \
         )"
     fi
-    local exclude="(make_list '|^' \
+    local exclude="$(make_list '|^' \
+        python \
         old_path \
         pwd \
         oldpwd \
         original_path \
     )"
+    echo "include: $what"
+    echo "exclude: $exclude"
     (
         echo "INCLUDE_PATH=$INCLUDE_PATH"
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-        echo "LIBRARY_PATH=$LIBRARY_PATH"
-        echo "PATH=$PATH"
         printenv | grep -i -E "$what" | grep -i -v -E "$exclude"
     ) | sort -u
 }
