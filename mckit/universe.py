@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 from contextlib import contextmanager
 from collections import defaultdict
+from io import StringIO
+from functools import reduce
 from typing import Iterable, Dict, Any, List, Set, Union
-from attr import attrs, attrib
+
 import numpy as np
+from attr import attrs, attrib
 from click import progressbar
 
 import mckit as mk
-
 from .body import Body, Shape
 from .card import Card
 
 # noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
-from mckit.box import GLOBAL_BOX, Box
+from .box import GLOBAL_BOX, Box
 from .surface import Surface
 from .transformation import Transformation
 from .material import Material
@@ -31,8 +33,21 @@ __all__ = [
 ]
 
 
-class NameClashError(Exception):
-    pass
+class NameClashError(ValueError):
+    def __init__(
+        self, result: Union[str, Dict[str, Dict[int, Set["Universe"]]]]
+    ) -> None:
+        if isinstance(result, str):
+            ValueError.__init__(self, result)
+        else:
+            msg = StringIO("Name clashes found:\n")
+            for kind, index in result.items():
+                for i, u in index.items():
+                    universes = reduce(
+                        lambda a, b: a.append(b) or a, map(Universe.name, u), []
+                    )
+                    msg.write(f"{kind} {i} is found in universes {universes}\n")
+            ValueError.__init__(self, msg.getvalue())
 
 
 def cell_selector(cell_names):
@@ -366,11 +381,20 @@ class Universe:
             must be filled.
         """
         if not cell and not universe and not predicate:
-            predicate = lambda c: True
+
+            def predicate(_c):
+                return True
+
         elif cell:
-            predicate = lambda c: c.name() == cell
+
+            def predicate(_c):
+                return _c.name() == cell
+
         elif universe:
-            predicate = lambda c: c.options["FILL"]["universe"].name() == universe
+
+            def predicate(_c):
+                return _c.options["FILL"]["universe"].name() == universe
+
         predicate = self._fill_check(predicate)
         extra_cells = []
         del_indices = []
@@ -508,7 +532,7 @@ class Universe:
                 universes.update(u.get_universes())
         return universes
 
-    def name(self):
+    def name(self) -> int:
         """Gets numeric name of the universe."""
         return self._name
 
@@ -613,9 +637,7 @@ class Universe:
                 pass
                 # TODO rename found clashed objects
             else:
-                raise NameClashError(
-                    f"Impossible to save model with clashes:\n{result}."
-                )
+                raise NameClashError(result)
 
     def save(self, filename, encoding=MCNP_ENCODING, resolve_clashes=False):
         """Saves the universe into file.
@@ -703,7 +725,10 @@ class Universe:
         """
         new_cells = []
         if verbose:
-            fmt_fun = lambda x: "Simplifying cell #{0}".format(x.name() if x else x)
+
+            def fmt_fun(x):
+                return "Simplifying cell #{0}".format(x.name() if x else x)
+
             uiter = progressbar(self, item_show_func=fmt_fun).__enter__()
         else:
             uiter = self

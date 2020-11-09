@@ -341,7 +341,7 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_co
     s_before = u.get_surfaces()
     c_before = u.get_compositions()
     if new_surfs is None or new_name is None or new_comps is None:
-        with pytest.raises(NameClashError):
+        with pytest.raises(NameClashError) as x:
             u.add_cells(cells, name_rule=name_rule)
     else:
         u.add_cells(cells, name_rule=name_rule)
@@ -1029,6 +1029,7 @@ def test_rename_when_common_mat(universe, case, common, start, answer):
     assert mnames == answer
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("verbose", [False, True])
 @pytest.mark.parametrize(
     "case, complexities", [(1, {1: 1, 2: 3, 3: 5, 4: 1}), (3, {1: 1, 2: 3, 4: 5, 5: 1})]

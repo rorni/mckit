@@ -374,8 +374,8 @@ class RCC(Surface, _RCC):
         norm = np.array(direction) / np.linalg.norm(direction)
         cyl = Cylinder(center, norm, radius, **opt_surf).apply_transformation()
         center2 = center + direction
-        offset2 = -np.dot(norm, center2)
-        offset3 = np.dot(norm, center)
+        offset2 = -np.dot(norm, center2).item()
+        offset3 = np.dot(norm, center).item()
         opt_surf["name"] = 2
         plane2 = Plane(norm, offset2, **opt_surf).apply_transformation()
         opt_surf["name"] = 3
@@ -482,12 +482,12 @@ class BOX(Surface, _BOX):
         norm_x = dir_x / len_x
         norm_y = dir_y / len_y
         norm_z = dir_z / len_z
-        offset_x = np.dot(norm_x, center)
-        offset_y = np.dot(norm_y, center)
-        offset_z = np.dot(norm_z, center)
-        offset_2x = -np.dot(norm_x, center2)
-        offset_2y = -np.dot(norm_y, center2)
-        offset_2z = -np.dot(norm_z, center2)
+        offset_x = np.dot(norm_x, center).item()
+        offset_y = np.dot(norm_y, center).item()
+        offset_z = np.dot(norm_z, center).item()
+        offset_2x = -np.dot(norm_x, center2).item()
+        offset_2y = -np.dot(norm_y, center2).item()
+        offset_2z = -np.dot(norm_z, center2).item()
         opt_surf = options.copy()
         opt_surf["name"] = 1
         surf1 = Plane(norm_x, offset_2x, **opt_surf).apply_transformation()
@@ -618,7 +618,9 @@ class Plane(Surface, _Plane):
                              Transformation instance.
     """
 
-    def __init__(self, normal, offset, assume_normalized=False, **options):
+    def __init__(
+        self, normal: np.ndarray, offset: float, assume_normalized=False, **options: Any
+    ):
         v = np.asarray(normal, dtype=np.float)
         k = float(offset)
         if not assume_normalized:
@@ -742,7 +744,7 @@ class Sphere(Surface, _Sphere):
                              created. Transformation instance.
     """
 
-    def __init__(self, center, radius, **options):
+    def __init__(self, center: np.ndarray, radius: float, **options: Any):
         center = np.asarray(center, dtype=np.float)
         radius = float(radius)
         Surface.__init__(self, **options)

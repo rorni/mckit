@@ -569,7 +569,7 @@ class Body(Card):
         Returns an union of this cell with the other.
     """
 
-    def __init__(self, geometry: TGeometry, **options) -> None:
+    def __init__(self, geometry: TGeometry, **options: tp.Any) -> None:
         if isinstance(geometry, list):
             geometry = Shape.from_polish_notation(geometry)
         elif isinstance(geometry, Body):
