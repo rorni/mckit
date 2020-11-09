@@ -5,9 +5,8 @@
 # with dotenv module.
 #
 
-. $MCKIT_ROOT/build_configs/common.rc
-
 export MCKIT_ROOT="$(pwd)"
+. $MCKIT_ROOT/build_configs/common.rc
 export PATH="$(make_path $MCKIT_ROOT/bin $PATH)"
 
 mckit_load_environment() {
