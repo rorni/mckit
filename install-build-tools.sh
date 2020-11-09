@@ -11,18 +11,6 @@ if [[ "$OS" == "Linux" ]]; then
     libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
     libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
 
-    if [[ ! -e pyenv ]]; then
-        #
-        # install pyenv
-        #
-        curl https://pyenv.run | bash
-        # Add the following lines to your ~/.bashrc or ~/.zshrc:
-        #   export PATH="~/.pyenv/bin:$PATH"
-        #   eval "$(pyenv init -)"
-        #   eval "$(pyenv virtualenv-init -)"
-        #
-    fi
-
     #
     # upgrade pip
     #
@@ -38,14 +26,31 @@ if [[ "$OS" == "Linux" ]]; then
         #
         #
         curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-        # After installation issue the command:
-        #    source ~/.poetry/env
-        # to use it.
+        #
+        #    ATTENTION!
+        #    =========
+        #
+        #    Make sure that pyenv is before poetry in PATH.
+        #
+        ln -s $HOME/.poetry/bin/poetry $HOME/bin/poetry
+    fi
+
+    if [[ ! -e pyenv ]]; then
+        #
+        # install pyenv
+        #
+        curl https://pyenv.run | bash
+        # Add the following lines to your ~/.bashrc or ~/.zshrc:
+        #   export PATH="~/.pyenv/bin:$PATH"
+        #   eval "$(pyenv init -)"
+        #   eval "$(pyenv virtualenv-init -)"
+        #
+        # In Zsh use pyenv-zsh plugin.
     fi
 
     #
     # pre-commit
-:w    # see https://cjolowicz.github.io/posts/hypermodern-python-03-linting/#managing-git-hooks-with-precommit
+    # see https://cjolowicz.github.io/posts/hypermodern-python-03-linting/#managing-git-hooks-with-precommit
     #
     pip install --upgrade pre-commit
     pre-commit install

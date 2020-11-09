@@ -5,10 +5,10 @@
 # with dotenv module.
 #
 
-export MCKIT_ROOT="$(pwd)"
-export PATH="$MCKIT_ROOT/bin:$PATH"
-
 . $MCKIT_ROOT/build_configs/common.rc
+
+export MCKIT_ROOT="$(pwd)"
+export PATH="$(make_path $MCKIT_ROOT/bin $PATH)"
 
 mckit_load_environment() {
     if [[ -z "$MCKIT_BUILD_CFG" ]]; then

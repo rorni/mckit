@@ -2,7 +2,7 @@
 """
     Nox sessions.
 
-    See `Ciolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_ for details.
+    See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_ for details.
 """
 
 import tempfile
