@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "1.5.1-alpha.0"
+version = "1.5.0-alpha.1"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
