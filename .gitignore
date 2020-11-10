@@ -86,6 +86,7 @@ test.pic
 
 # pyenv and poetry
 .python-version
+setup.py
 
 dist/
 !/setup.py
