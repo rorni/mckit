@@ -14,7 +14,6 @@ from .version import (
     __license__,
     __title__,
     __version__,
-    __version_info__,
     __summary__,
 )
 

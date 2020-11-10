@@ -14,4 +14,9 @@ __copyright__ = (
     "Copyright 2018-2020 Roman Rodionov"  # TODO dvp: move to meta (project.toml)
 )
 __version__ = __distribution__.version
-__version_info__ = tuple(map(int, __version__.split("-")[0].split(".")))
+#
+# The version from metadata may have several formats:
+#  - in release version (there are no prepatch suffixes) it will be plain 1.5.0 for example
+#  - in prepatch version running separately 1.5.0-alpha1
+#  - in prepatch versions test runs it will be 1.5.0a1
+#
