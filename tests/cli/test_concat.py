@@ -15,22 +15,17 @@ from mckit.utils.resource import filename_resolver
 # pylint: disable=invalid-name
 
 
-@pytest.fixture
-def runner():
-    return CliRunner()
-
-
 data_filename_resolver = filename_resolver("tests.cli")
 
 
-def test_when_there_is_no_args(runner):
+def test_when_there_is_no_args(runner, disable_log):
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=["concat"], catch_exceptions=False)
         assert result.exit_code != 0, "Should fail when no arguments provided"
         assert "Usage:" in result.output
 
 
-def test_not_existing_file(runner):
+def test_not_existing_file(runner, disable_log):
     result = runner.invoke(
         mckit, args=["concat", "not-existing.txt"], catch_exceptions=False
     )
@@ -38,7 +33,7 @@ def test_not_existing_file(runner):
     assert "Path 'not-existing.txt' does not exist" in result.output
 
 
-def test_when_only_part_is_specified(runner):
+def test_when_only_part_is_specified(runner, disable_log):
     part = data_filename_resolver("data/concat/test_load_table_1.csv")
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=["concat", part], catch_exceptions=False)
@@ -50,7 +45,7 @@ def test_when_only_part_is_specified(runner):
         ), "Should send output to stdout, when the output is not specified"
 
 
-def test_when_output_is_specified(runner):
+def test_when_output_is_specified(runner, disable_log):
     part = data_filename_resolver("data/concat/test_load_table_1.csv")
     with runner.isolated_filesystem() as prefix:
         output_file = Path(prefix) / "test_when_output_is_specified.txt"
@@ -70,7 +65,7 @@ def test_when_output_is_specified(runner):
 
 
 # noinspection PyCompatibility
-def test_when_two_parts_are_specified(runner):
+def test_when_two_parts_are_specified(runner, disable_log):
     part1 = data_filename_resolver("data/concat/test_load_table_1.csv")
     part2 = data_filename_resolver("data/concat/test_load_table_2.csv")
     with runner.isolated_filesystem() as prefix:
@@ -89,7 +84,7 @@ def test_when_two_parts_are_specified(runner):
         assert "x    ;   y" in text, f"Should contain content of '{part2}'"
 
 
-def test_when_output_file_exists_and_override_is_not_specified(runner):
+def test_when_output_file_exists_and_override_is_not_specified(runner, disable_log):
     part = data_filename_resolver("data/concat/test_load_table_1.csv")
     with runner.isolated_filesystem() as prefix:
         output_file = Path(prefix) / "test_when_output_is_specified.txt"

@@ -32,17 +32,23 @@ context = {}
 @click_loguru.stash_subcommand()
 @click.option("--override/--no-override", default=False)
 @click.version_option(VERSION, prog_name=NAME)
+@logger.catch(
+    reraise=True,
+    onerror=lambda ex: logger.exception(ex),
+)
 def mckit(
     verbose: bool, quiet: bool, logfile: bool, profile_mem: bool, override: bool
 ) -> None:
     logger.info("Running {}", NAME)
-    logger.debug(
-        """Options:
+    logger.trace(
+        """
+        Options:
                verbose {verbose},
                quiet: {quiet},
                logfile: {logfile},
                profile_mem: {profile_mem},
-               override: {override}""",
+               override: {override}
+        """,
         verbose=verbose,
         quiet=quiet,
         logfile=logfile,
@@ -59,7 +65,6 @@ def mckit(
 
 
 @mckit.command()
-@click_loguru.init_logger()
 @click.option(
     "--output", "-o", default=None, help="Output directory, default: <source>.universes"
 )
@@ -79,13 +84,11 @@ def decompose(output, fill_descriptor, source):
 
 
 @mckit.command()
-@click_loguru.init_logger()
 @click.option("--output", "-o", required=True, help="Output file")
 @click.option("--fill-descriptor", default=None, help="TOML file for FILL descriptors")
 @click.argument(
     "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
-@logger.catch
 def compose(output, fill_descriptor, source):
     """Merge universes and envelopes into MCNP model using merge descriptor"""
     if fill_descriptor is None:
@@ -104,7 +107,6 @@ def compose(output, fill_descriptor, source):
 
 
 @mckit.command()
-@click_loguru.init_logger()
 @click.option("--output", "-o", default=None, help="Output directory")
 @click.option(
     "--separators/--no-separators",
@@ -114,7 +116,6 @@ def compose(output, fill_descriptor, source):
 @click.argument(
     "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
-@logger.catch
 def split(output, source, separators):
     """Splits MCNP model to text portions (opposite to concat)"""
     if output is None:
@@ -178,7 +179,6 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
 @click.argument(
     "parts", metavar="<part...>", type=click.Path(exists=True), nargs=-1, required=True
 )
-@logger.catch
 def concat(output, parts_encoding, output_encoding, parts):
     """Concat text files. (will filter texts according specification in future)"""
     override = context["OVERRIDE"]
@@ -196,7 +196,6 @@ def concat(output, parts_encoding, output_encoding, parts):
 @click.argument(
     "sources", metavar="<source>", type=click.Path(exists=True), nargs=-1, required=True
 )
-@logger.catch
 def check(sources: List[click.Path]) -> None:
     """Read MCNP model(s) and show statistics and clashes."""
     for source in sources:

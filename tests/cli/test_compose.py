@@ -2,41 +2,28 @@ from pathlib import Path
 
 from mckit.cli.runner import mckit
 import pytest
-from click.testing import CliRunner
 
 from mckit.parser import from_file
 from mckit.universe import collect_transformations
 from mckit.utils.resource import filename_resolver
 
-# skip the pylint warning on fixture names
-# pylint: disable=redefined-outer-name
-
-# skip the pylint warning on long names: test names should be descriptive
-# pylint: disable=invalid-name
-
-
-@pytest.fixture
-def runner():
-    return CliRunner()
-
-
 data_filename_resolver = filename_resolver("tests.cli")
 
 
-def test_help_compose(runner):
+def test_help_compose(runner, disable_log):
     result = runner.invoke(mckit, args=["compose", "--help"], catch_exceptions=False)
     assert result.exit_code == 0, result.output
     assert "Usage: mckit compose" in result.output
 
 
-def test_when_there_is_no_args(runner):
+def test_when_there_is_no_args(runner, disable_log):
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=["compose"], catch_exceptions=False)
         assert result.exit_code != 0, "Should fail when no arguments provided"
         assert "Usage:" in result.output
 
 
-def test_not_existing_envelopes_file(runner):
+def test_not_existing_envelopes_file(runner, disable_log):
     result = runner.invoke(
         mckit, args=["compose", "not-existing.imcnp"], catch_exceptions=False
     )
@@ -44,7 +31,7 @@ def test_not_existing_envelopes_file(runner):
     assert "Path 'not-existing.imcnp' does not exist" in result.output
 
 
-def test_when_output_is_not_specified(runner):
+def test_when_output_is_not_specified(runner, disable_log):
     source = data_filename_resolver("data/simple_cubes.mcnp")
     result = runner.invoke(mckit, args=["compose", str(source)], catch_exceptions=False)
     assert result.exit_code > 0
@@ -61,7 +48,9 @@ def test_when_output_is_not_specified(runner):
         )
     ],
 )
-def test_when_fill_descriptor_is_not_specified(runner, source, output, expected):
+def test_when_fill_descriptor_is_not_specified(
+    runner, disable_log, source, output, expected
+):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem() as test_folder:
         result = runner.invoke(
@@ -88,7 +77,7 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
         )
     ],
 )
-def test_anonymous_transforms(runner, source, output, expected):
+def test_anonymous_transforms(runner, disable_log, source, output, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem() as test_folder:
         result = runner.invoke(
@@ -115,7 +104,7 @@ def test_anonymous_transforms(runner, source, output, expected):
         )
     ],
 )
-def test_named_transforms(runner, source, output, expected):
+def test_named_transforms(runner, disable_log, source, output, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem() as test_folder:
         result = runner.invoke(

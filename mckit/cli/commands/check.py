@@ -2,39 +2,36 @@
 """
 Проверяет корректность модели и выдает статистику.
 """
-from typing import Any, Callable, Iterable, Optional
 from pathlib import Path
+from typing import Any, Callable, Iterable, Optional
 
 from loguru import logger
 
 from mckit import Universe
-from mckit.universe import collect_transformations
 from mckit.card import Card
 from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
+from mckit.universe import collect_transformations
 
 
 def check_duplicates(
     iterable: Optional[Iterable[Any]], label: str, key: Callable[[Any], Any]
 ) -> None:
     if iterable is None:
-        # logger.info("No %ss are found", label)
-        print("No %ss are found" % label)
+        print(f"No {label}s are found")  # don't use logger here, should go to stdout
     else:
         visited = set()
         for c in iterable:
             k = key(c)
             if k in visited:
-                # logger.error("Duplicate of %s %d is found", label, k)
-                print("Duplicate of %s %d is found" % (label, k))
+                print(f"Duplicate of {label} {k} is found")
             else:
                 visited.add(k)
-        # logger.info("Total of %ss: %d", label, len(visited))
-        print("Total of %ss: %d" % (label, len(visited)))
+        print(f"Total of {label}s: {len(visited)}")
 
 
 def check(source):
     result = 0
-    logger.debug("Check model {}", source)
+    logger.info("Check model {}", source)
     source = Path(source)
     parse_result: ParseResult = from_file(source)
     model = parse_result.universe
