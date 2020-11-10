@@ -5,8 +5,8 @@
 
 """
 from functools import reduce
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
 
 import numpy as np
 import tomlkit as tk
@@ -21,13 +21,13 @@ from mckit.utils import filter_dict
 
 
 def compose(output, fill_descriptor_path, source, override):
-    logger.debug("Loading model from %s", source)
+    logger.info("Loading model from {s}", s=source)
     parse_result: ParseResult = from_file(source)
     envelopes = parse_result.universe
     source = Path(source)
     universes_dir = source.absolute().parent
     assert universes_dir.is_dir()
-    logger.debug("Loading fill-descriptor from %s", fill_descriptor_path)
+    logger.info("Loading fill-descriptor from {f}", f=fill_descriptor_path)
     with fill_descriptor_path.open() as fid:
         fill_descriptor = tk.parse(fid.read())
 
@@ -85,6 +85,7 @@ def compose(output, fill_descriptor_path, source, override):
     save_mcnp(envelopes, output, override)
 
 
+@logger.catch
 def load_universes(fill_descriptor, universes_dir):
     universes = {}
     for k, v in fill_descriptor.items():
@@ -97,7 +98,7 @@ def load_universes(fill_descriptor, universes_dir):
                 universe_path = universes_dir / universe_path
                 if not universe_path.exists():
                     raise FileNotFoundError(universe_path)
-            logger.debug("Loading universe from file '%s'", universe_path)
+            logger.info("Loading file {u}", u=universe_path)
             parse_result: ParseResult = from_file(universe_path)
             universe: mk.Universe = parse_result.universe
             universe.rename(name=universe_name)

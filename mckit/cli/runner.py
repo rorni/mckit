@@ -32,13 +32,18 @@ context = {}
 @click_loguru.stash_subcommand()
 @click.option("--override/--no-override", default=False)
 @click.version_option(VERSION, prog_name=NAME)
+@logger.catch
 def mckit(
     verbose: bool, quiet: bool, logfile: bool, profile_mem: bool, override: bool
 ) -> None:
     logger.info("Running {}", NAME)
     logger.debug(
-        "Options: \
-        verbose {verbose}, quiet: {quiet}, logfile: {logfile}, profile_mem: {profile_mem}, override: {override}",
+        """Options:
+               verbose {verbose},
+               quiet: {quiet},
+               logfile: {logfile},
+               profile_mem: {profile_mem},
+               override: {override}""",
         verbose=verbose,
         quiet=quiet,
         logfile=logfile,

@@ -17,7 +17,7 @@ nox.options.sessions = (
     "black",
     "lint",
     "mypy",
-    "xdoctest",
+    # "xdoctest",
     "tests",
     "coverage",
     "docs",
@@ -40,7 +40,7 @@ def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> Non
         session.install(f"--constraint={requirements.name}", *args, **kwargs)
 
 
-@nox.session(python=["3.8", "3.7", "3.6"])
+@nox.session(python=["3.8", "3.7"])
 def tests(session: Session) -> None:
     """Run the test suite."""
     args = session.posargs or ["--cov", "-m", "not e2e"]
@@ -139,7 +139,7 @@ def mypy(session: Session) -> None:
     )
 
 
-@nox.session(python=["3.8", "3.7", "3.6"])
+@nox.session(python=["3.8", "3.7"])
 def xdoctest(session: Session) -> None:
     """Run examples with xdoctest."""
     args = session.posargs or ["mckit"]
