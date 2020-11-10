@@ -15,10 +15,20 @@ from mckit.cli.commands import do_decompose, do_compose, do_split, do_check
 NAME = meta.__title__
 VERSION = meta.__version__
 LOG_FILE_RETENTION = 3
+NO_LEVEL_BELOW = 30
+
+
+def stderr_log_format_func(msgdict):
+    """Do level-sensitive formatting."""
+    if msgdict["level"].no < NO_LEVEL_BELOW:
+        return "<level>{message}</level>\n"
+    return "<level>{level}</level>: <level>{message}</level>\n"
+
 
 click_loguru = ClickLoguru(
     NAME,
     VERSION,
+    stderr_format_func=stderr_log_format_func,
     retention=LOG_FILE_RETENTION,
     log_dir_parent=".logs",
     timer_log_level="info",

@@ -85,7 +85,6 @@ def compose(output, fill_descriptor_path, source, override):
     save_mcnp(envelopes, output, override)
 
 
-@logger.catch
 def load_universes(fill_descriptor, universes_dir):
     universes = {}
     for k, v in fill_descriptor.items():
