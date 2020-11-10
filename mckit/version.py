@@ -14,6 +14,4 @@ __copyright__ = (
     "Copyright 2018-2020 Roman Rodionov"  # TODO dvp: move to meta (project.toml)
 )
 __version__ = __distribution__.version
-__version_info__ = tuple(
-    map(int, __version__.split(".")[:3])
-)  # leaving only the 3 first digits from version
+__version_info__ = tuple(map(int, __version__.split("-")[0].split(".")))
