@@ -42,7 +42,7 @@ def print_cards(
 def split(
     output_dir: Path, mcnp_file_name: Union[str, Path], override: bool, separators=False
 ) -> None:
-    logger.debug("Splitting model from %s", mcnp_file_name)
+    logger.debug("Splitting model from {}", mcnp_file_name)
     if isinstance(mcnp_file_name, str):
         mcnp_file_name = Path(mcnp_file_name)
     assert output_dir.is_dir()
@@ -61,7 +61,7 @@ def split(
         print_cards(tallies, output_dir, "tallies.txt", override)
         print_cards(others, output_dir, "cards.txt", override)
     print_text(sections.remainder, output_dir, "remainder.txt", override)
-    logger.debug("The parts of %s are saved to %s", mcnp_file_name, output_dir)
+    logger.debug("The parts of %s are saved to {}", mcnp_file_name, output_dir)
     if separators:
         write_separators(output_dir, mcnp_file_name.stem)
 

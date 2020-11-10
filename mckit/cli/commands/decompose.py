@@ -36,7 +36,7 @@ def move_universe_attribute_to_comments(universe):
 
 
 def decompose(output, fill_descriptor_path, source, override):
-    logger.debug("Loading model from %s", source)
+    logger.debug("Loading model from {}", source)
     source = Path(source)
     if output is None:
         output = get_default_output_directory(source)
@@ -87,7 +87,7 @@ def decompose(output, fill_descriptor_path, source, override):
             if universe_name not in already_processed_universes:
                 move_universe_attribute_to_comments(universe)
                 save_mcnp(universe, output / fn, override)
-                logger.debug("The universe %s has been saved to %s", universe_name, fn)
+                logger.debug("The universe %s has been saved to {}", universe_name, fn)
                 already_processed_universes.add(universe_name)
 
     named_transformations_descriptor = tk.table()
@@ -103,7 +103,7 @@ def decompose(output, fill_descriptor_path, source, override):
     with open(fdp, "w") as fid:
         res = tk.dumps(fill_descriptor)
         fid.write(res)
-    logger.debug("Fill descriptor is saved in '%s'", fdp)
+    logger.debug("Fill descriptor is saved in {}", fdp)
     envelopes_path = output / "envelopes.i"
     save_mcnp(model, envelopes_path, override)
-    logger.debug("The envelopes are saved to '%s'", envelopes_path)
+    logger.debug("The envelopes are saved to {}", envelopes_path)

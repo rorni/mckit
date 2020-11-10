@@ -16,7 +16,6 @@ from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 def check_duplicates(
     iterable: Optional[Iterable[Any]], label: str, key: Callable[[Any], Any]
 ) -> None:
-    # logger = logging.getLogger(__name__)
     if iterable is None:
         # logger.info("No %ss are found", label)
         print("No %ss are found" % label)
@@ -35,7 +34,7 @@ def check_duplicates(
 
 def check(source):
     result = 0
-    logger.debug("Check model %s", source)
+    logger.debug("Check model {}", source)
     source = Path(source)
     parse_result: ParseResult = from_file(source)
     model = parse_result.universe

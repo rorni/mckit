@@ -1,7 +1,7 @@
 try:
     import importlib_metadata as meta
 except ImportError:
-    import importlib.metadata as meta
+    import importlib.metadata as meta  # type: ignore
 
 __title__ = "mckit"
 __distribution__ = meta.distribution(__title__)
