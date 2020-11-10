@@ -920,7 +920,9 @@ def read_mcnp(filename: Union[str, Path], encoding: str = "cp1251") -> Universe:
     return read_mcnp_text(text)
 
 
-def read_mcnp_text(text: str,) -> Universe:
+def read_mcnp_text(
+    text: str,
+) -> Universe:
     warn(
         "The function 'read_mcnp_text' is deprecated. Use mckit.parser.from_text() instead.",
         DeprecationWarning,

@@ -41,7 +41,6 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
-nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
@@ -81,7 +80,7 @@ target/
 #VSCode settings
 .vscode
 
-# Local environemnt files for dotenv
+# Local environment files for dotenv
 .env
 test.pic
 
@@ -89,3 +88,4 @@ test.pic
 .python-version
 
 dist/
+!/setup.py
