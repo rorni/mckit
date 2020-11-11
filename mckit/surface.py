@@ -333,7 +333,8 @@ class Surface(Card, MaybeClose):
         return words
 
     def clean_options(self) -> Dict[Text, Any]:
-        return filter_dict(self.options, DROP_OPTIONS)
+        result: Dict[Text, Any] = filter_dict(self.options, DROP_OPTIONS)
+        return result
 
     def compare_transformations(self, tr: Transformation) -> bool:
         my_transformation = self.transformation

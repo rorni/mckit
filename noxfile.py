@@ -13,8 +13,6 @@ from nox.sessions import Session
 
 nox.options.sessions = (
     "safety",
-    "organize_imports",
-    "black",
     "lint",
     "mypy",
     # "xdoctest",
