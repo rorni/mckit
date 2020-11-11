@@ -33,7 +33,7 @@ import mckit as mk
 
 # from mckit import *
 from mckit.box import Box
-from loguru import logger as LOG
+from mckit.utils.logging import logger as LOG
 
 
 def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:

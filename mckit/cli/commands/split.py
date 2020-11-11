@@ -7,7 +7,7 @@
 материалов, трансформаций, sdef и прочие карты. Файлы соответственно: cells.txt, surfaces.txt,
 materials.txt, transformations.txt, sdef.txt, cards.txt
 """
-from loguru import logger
+from mckit.utils.logging import logger
 from pathlib import Path
 from typing import Iterable, Union
 

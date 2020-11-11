@@ -14,7 +14,7 @@ from pathlib import Path
 
 import tomlkit as tk
 from tomlkit.items import item
-from loguru import logger
+from mckit.utils.logging import logger
 
 from mckit import Universe
 from mckit.universe import collect_transformations

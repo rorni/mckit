@@ -1,7 +1,7 @@
 from typing import List
 import os
 import dotenv
-from loguru import logger as LOG
+from mckit.utils.logging import logger as LOG
 from pathlib import Path
 from mckit.parser.mcnp_input_sly_parser import from_file, Card, Universe
 from mckit.utils import assert_all_paths_exist, get_root_dir

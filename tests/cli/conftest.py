@@ -1,5 +1,5 @@
 import pytest
-from loguru import logger
+from mckit.utils.logging import logger
 from click.testing import CliRunner
 
 

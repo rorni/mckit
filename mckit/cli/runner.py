@@ -5,7 +5,7 @@ from typing import List
 
 import click
 from click_loguru import ClickLoguru
-from loguru import logger
+from mckit.utils.logging import logger
 
 import mckit.version as meta
 from mckit.utils import MCNP_ENCODING
@@ -19,7 +19,10 @@ NO_LEVEL_BELOW = 30
 
 
 def stderr_log_format_func(msgdict):
-    """Do level-sensitive formatting."""
+    """Do level-sensitive formatting.
+
+    Just a copy from click-loguru so far."""
+
     if msgdict["level"].no < NO_LEVEL_BELOW:
         return "<level>{message}</level>\n"
     return "<level>{level}</level>: <level>{message}</level>\n"
@@ -42,29 +45,12 @@ context = {}
 @click_loguru.stash_subcommand()
 @click.option("--override/--no-override", default=False)
 @click.version_option(VERSION, prog_name=NAME)
-@logger.catch(
-    reraise=True,
-    onerror=lambda ex: logger.exception(ex),
-)
+@logger.catch(reraise=True)
 def mckit(
     verbose: bool, quiet: bool, logfile: bool, profile_mem: bool, override: bool
 ) -> None:
     logger.info("Running {}", NAME)
-    logger.trace(
-        """
-        Options:
-               verbose {verbose},
-               quiet: {quiet},
-               logfile: {logfile},
-               profile_mem: {profile_mem},
-               override: {override}
-        """,
-        verbose=verbose,
-        quiet=quiet,
-        logfile=logfile,
-        profile_mem=profile_mem,
-        override=override,
-    )
+    logger.debug("Working dir {}", Path(".").absolute())
     #
     # TODO dvp: add customized logger configuring from a configuration toml-file.
     # ensure that ctx.obj exists and is a dict (in case `cli()` is called

@@ -10,7 +10,7 @@ from typing import Dict, Optional
 
 import numpy as np
 import tomlkit as tk
-from loguru import logger
+from mckit.utils.logging import logger
 from tomlkit import items as tk_items
 
 import mckit as mk

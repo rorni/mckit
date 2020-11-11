@@ -5,7 +5,7 @@
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
-from loguru import logger
+from mckit.utils.logging import logger
 
 from mckit import Universe
 from mckit.card import Card
