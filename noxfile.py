@@ -51,7 +51,7 @@ def tests(session: Session) -> None:
     session.run("coverage", "html")
 
 
-@nox.session(python=["3.8"])
+@nox.session(python=["3.7"])
 def lint(session: Session) -> None:
     """Lint using flake8."""
     args = session.posargs or locations
@@ -126,7 +126,7 @@ def organize_imports(session: Session) -> None:
     )
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.7")
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or locations

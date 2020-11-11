@@ -1,22 +1,16 @@
 # -*- coding: utf-8 -*-
-from typing import Any, Dict, Text, Optional, List, Callable, Tuple
 from abc import abstractmethod
+from typing import Any, Dict, Text, Optional, List, Callable, Tuple
+
 import numpy as np
 from numpy import ndarray
 
+from mckit.box import GLOBAL_BOX
 from . import constants
-from .utils.tolerance import MaybeClose, tolerance_estimator, FLOAT_TOLERANCE
-from .utils import (
-    filter_dict,
-    significant_digits,
-    make_hash,
-    significant_array,
-    round_array,
-    round_scalar,
-    are_equal,
-    deepcopy,
-)
+from .card import Card
+from .constants import DROP_OPTIONS
 
+# fmt:off
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import (
     Plane as _Plane,
@@ -32,11 +26,21 @@ from .geometry import (
     EY,
     EZ,
 )
-from mckit.box import GLOBAL_BOX
+# fmt:on
+
 from .printer import add_float, pretty_float
 from .transformation import Transformation
-from .card import Card
-from .constants import DROP_OPTIONS
+from .utils import (
+    filter_dict,
+    significant_digits,
+    make_hash,
+    significant_array,
+    round_array,
+    round_scalar,
+    are_equal,
+    deepcopy,
+)
+from .utils.tolerance import MaybeClose, tolerance_estimator, FLOAT_TOLERANCE
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 __all__ = [
