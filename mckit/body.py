@@ -186,6 +186,7 @@ class Shape(_Shape):
                         else:
                             return "R", []
                 i += 1
+            args = list(set(args))
             args.sort(key=hash)
             if len(args) == 0:
                 opc = "E" if opc == "U" else "R"
@@ -402,6 +403,39 @@ class Shape(_Shape):
     def is_empty(self):
         """Checks if the shape represents an empty set."""
         return self.opc == "E"
+
+    def split_shape(self):
+        shape_groups = []
+        if self.opc == 'U':
+            stat = self.get_stat_table()
+            drop_index = np.nonzero(np.all(stat == -1, axis=1))[0]
+            arg_results = np.delete(stat, drop_index, axis=0)
+            index_groups = self._find_groups(arg_results == +1)
+            for ig in index_groups:
+                index = np.nonzero(ig)[0]
+                args = [self.args[i] for i in index]
+                shape_groups.append(Shape('U', *args))
+        elif self.opc == 'I':
+            arg_groups = [arg.split_shape() for arg in self.args]
+            for args in product(*arg_groups):
+                shape_groups.append(Shape('I', *args))
+        else:
+            shape_groups.append(self)
+        return shape_groups
+
+    @staticmethod
+    def _find_groups(result):
+        groups = [result[i, :] for i in range(result.shape[0])]
+        while True:
+            index = len(groups) - 1
+            for j in range(index - 1, -1, -1):
+                if np.any(groups[index] & groups[j] == 1):
+                    groups[j] |= groups[index]
+                    groups.pop(index)
+                    break
+            else:
+                break
+        return groups    
 
     def get_simplest(self, trim_size=0):
         """Gets the simplest found description of the shape.
@@ -726,6 +760,19 @@ class Body(Card):
         # print(len(variants))
         options = filter_dict(self.options, "original")
         return Body(variants[0], **options)
+
+    def split(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME):
+        """Splits cell into disjoint cells.
+
+        Returns
+        -------
+        cells : list
+
+        """
+        self.shape.collect_statistics(box, min_volume)
+        shape_groups = self.shape.split_shape()
+        bodies = [Body(shape, **self.options) for shape in shape_groups]
+        return bodies
 
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
         """Fills this cell by filling universe.
