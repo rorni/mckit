@@ -29,13 +29,13 @@ TALLY_PATTERN = re.compile(
 
 
 class Kind(IntEnum):
-    COMMENT = (0,)
-    CELL = (1,)
-    SURFACE = (2,)
-    MATERIAL = (3,)
-    TRANSFORMATION = (4,)
-    SDEF = (5,)
-    TALLY = (6,)
+    COMMENT = 0
+    CELL = 1
+    SURFACE = 2
+    MATERIAL = 3
+    TRANSFORMATION = 4
+    SDEF = 5
+    TALLY = 6
     GENERIC = 7
 
     @classmethod
