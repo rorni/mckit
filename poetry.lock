@@ -164,6 +164,18 @@ loguru = ">=0.5.0,<0.6.0"
 memory_profiler = ">=0.57.0,<0.58.0"
 
 [[package]]
+name = "codecov"
+version = "2.1.10"
+description = "Hosted coverage reports for GitHub, Bitbucket and Gitlab"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.dependencies]
+coverage = "*"
+requests = ">=2.7.9"
+
+[[package]]
 name = "colorama"
 version = "0.4.4"
 description = "Cross-platform colored terminal text."
@@ -186,7 +198,7 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 name = "coverage"
 version = "5.3"
 description = "Code coverage measurement for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 
@@ -1216,7 +1228,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "60a4153d12e5ab327fa3c81367e4cb720a67461f01d71d1dbce979c53fad647d"
+content-hash = "9e6115717c7e45d9cce1d38e54b20ae6e3d7918621d9be73eb2fc01174eb9a3c"
 
 [metadata.files]
 alabaster = [
@@ -1277,6 +1289,11 @@ click = [
 click-loguru = [
     {file = "click_loguru-1.3.4-py3-none-any.whl", hash = "sha256:c2a7ab12a40d7d46103c3d1df2752c3d38bf6ba1f0b3227a7329085984440973"},
     {file = "click_loguru-1.3.4.tar.gz", hash = "sha256:f38382f0a924eb388d29f21a20f60b8c805668fb34b396977029643268d52c6a"},
+]
+codecov = [
+    {file = "codecov-2.1.10-py2.py3-none-any.whl", hash = "sha256:61bc71b5f58be8000bf9235aa9d0112f8fd3acca00aa02191bb81426d22a8584"},
+    {file = "codecov-2.1.10-py3.8.egg", hash = "sha256:a333626e6ff882db760ce71a1d84baf80ddff2cd459a3cc49b41fdac47d77ca5"},
+    {file = "codecov-2.1.10.tar.gz", hash = "sha256:d30ad6084501224b1ba699cbf018a340bb9553eb2701301c14133995fdd84f33"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
