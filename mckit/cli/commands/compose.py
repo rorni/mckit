@@ -6,7 +6,7 @@
 """
 from functools import reduce
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import tomlkit as tk
@@ -85,24 +85,44 @@ def compose(output, fill_descriptor_path, source, override):
     save_mcnp(envelopes, output, override)
 
 
-def load_universes(fill_descriptor, universes_dir):
-    universes = {}
+def load_universes(
+    fill_descriptor, universes_dir
+) -> Dict[int, Tuple[mk.Universe, Union[int, List[float]]]]:
+    filler_path_map: Dict[int, Tuple[Path, mk.Universe]] = dict()
+    cell_filler_map: Dict[int, Tuple[mk.Universe, Union[int, List[float]]]] = dict()
+
     for k, v in fill_descriptor.items():
         if isinstance(v, dict) and "universe" in v:
             cell_name = int(k)
             universe_name = int(v["universe"])
             transformation = v.get("transform", None)
             universe_path = Path(v["file"])
-            if not universe_path.exists():
-                universe_path = universes_dir / universe_path
-                if not universe_path.exists():
+            if universe_name in filler_path_map:
+                prev_path, prev_universe = filler_path_map[universe_name]
+                if prev_path == universe_path:
+                    universe = prev_universe
+                else:
+                    raise ValueError(
+                        f'\n \
+                        Filler number {universe_name} specifies different paths to load \n \
+                        "{prev_path}" and "{universe_path}"'
+                    )
+            else:
+                if universe_path.exists():
+                    load_path = universe_path
+                else:
+                    load_path = universes_dir / universe_path
+                if not load_path.exists():
                     raise FileNotFoundError(universe_path)
-            logger.info("Loading file {u}", u=universe_path)
-            parse_result: ParseResult = from_file(universe_path)
-            universe: mk.Universe = parse_result.universe
-            universe.rename(name=universe_name)
-            universes[cell_name] = (universe, transformation)
-    return universes
+                logger.info("Loading file {u}", u=load_path)
+                parse_result: ParseResult = from_file(load_path)
+                universe = parse_result.universe
+                universe.rename(name=universe_name)
+                filler_path_map[universe_name] = (universe_path, universe)
+
+            cell_filler_map[cell_name] = (universe, transformation)
+
+    return cell_filler_map
 
 
 def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transformation]]:

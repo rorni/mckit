@@ -87,7 +87,7 @@ def decompose(output, fill_descriptor_path, source, override):
             if universe_name not in already_processed_universes:
                 move_universe_attribute_to_comments(universe)
                 save_mcnp(universe, output / fn, override)
-                logger.debug("The universe %s has been saved to {}", universe_name, fn)
+                logger.debug("The universe {} has been saved to {}", universe_name, fn)
                 already_processed_universes.add(universe_name)
 
     named_transformations_descriptor = tk.table()

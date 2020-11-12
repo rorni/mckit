@@ -40,7 +40,8 @@ class NameClashError(ValueError):
         if isinstance(result, str):
             ValueError.__init__(self, result)
         else:
-            msg = StringIO("Name clashes found:\n")
+            msg = StringIO()
+            msg.write("\n")
             for kind, index in result.items():
                 for i, u in index.items():
                     universes = reduce(
