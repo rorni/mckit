@@ -21,7 +21,6 @@ idna~=2.10
 imagesize~=1.2.0
 iniconfig~=1.1.1
 loguru~=0.5.3
-mckit~=1.5.0
 nox~=2020.8.22
 numpydoc~=1.1.0
 numpy~=1.19.4
