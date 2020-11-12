@@ -28,36 +28,36 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-def load_version():
-    fd = {}
-    with open("./mckit/version.py") as fid:
-        exec(fid.read(), fd)
-        return (
-            fd["__title__"],
-            fd["__author__"],
-            fd["__license__"],
-            fd["__copyright__"],
-            fd["__ver_major__"],
-            fd["__ver_minor__"],
-            fd["__ver_patch__"],
-            fd["__version_info__"],
-            fd["__ver_sub__"],
-            fd["__version__"],
-        )
+#  def load_version():
+    #  fd = {}
+    #  with open("./mckit/version.py") as fid:
+        #  exec(fid.read(), fd)
+        #  return (
+            #  fd["__title__"],
+            #  fd["__author__"],
+            #  fd["__license__"],
+            #  fd["__copyright__"],
+            #  fd["__ver_major__"],
+            #  fd["__ver_minor__"],
+            #  fd["__ver_patch__"],
+            #  fd["__version_info__"],
+            #  fd["__ver_sub__"],
+            #  fd["__version__"],
+        #  )
 
 
-(
-    __title__,
-    __author__,
-    __license__,
-    __copyright__,
-    __ver_major__,
-    __ver_minor__,
-    __ver_patch__,
-    __version_info__,
-    __ver_sub__,
-    __version__,
-) = load_version()
+#  (
+    #  __title__,
+    #  __author__,
+    #  __license__,
+    #  __copyright__,
+    #  __ver_major__,
+    #  __ver_minor__,
+    #  __ver_patch__,
+    #  __version_info__,
+    #  __ver_sub__,
+    #  __version__,
+#  ) = load_version()
 
 
 class BinaryDistribution(Distribution):
@@ -140,6 +140,11 @@ packages = find_packages(
         "src",
     ),
 )
+__version__ = "0.5.0"
+__title__ = "mckit"
+__author__ = "rorni"
+__license__ = "MIT"
+__copyright__ = "2017-2020"
 
 setup(
     name=__title__,
