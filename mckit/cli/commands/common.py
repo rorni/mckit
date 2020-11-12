@@ -2,7 +2,7 @@ from pathlib import Path
 import typing as tp
 
 import click
-from loguru import logger
+from mckit.utils.logging import logger
 
 from mckit import Universe
 

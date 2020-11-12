@@ -16,7 +16,6 @@ from multiprocessing import Pool
 # from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
 import toolz
-import logging
 
 # from joblib import (
 #     Memory,
@@ -34,13 +33,7 @@ import mckit as mk
 
 # from mckit import *
 from mckit.box import Box
-
-LOG = logging.getLogger(__name__)
-logging.basicConfig(
-    # format='%(asctime)s - %(levelname)-7s - %(name)-20s - %(message)s',
-    format="%(asctime)s - %(levelname)-7s - %(message)s",
-    level=logging.DEBUG,
-)
+from mckit.utils.logging import logger as LOG
 
 
 def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:

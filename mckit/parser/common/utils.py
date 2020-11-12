@@ -5,9 +5,7 @@ C_COMMENT = r"(^|(?<=\n))\s{0,5}[cC]([ ][^\n]*)?\n?"
 RE_C_COMMENT = re.compile(C_COMMENT, re.MULTILINE)
 EOL_COMMENT = r"\$.*[^\n]*"
 RE_EOL_COMMENT = re.compile(EOL_COMMENT, re.MULTILINE)
-LINE = (
-    r"(?P<text>\s*[^ $][^$]*)?(?:\s*\$\s*(?P<comment>.*))?"
-)  # text should contain at list one non space character
+LINE = r"(?P<text>\s*[^ $][^$]*)?(?:\s*\$\s*(?P<comment>.*))?"  # text should contain at list one non space character
 RE_LINE = re.compile(LINE)
 FLOAT = r"[-+]?\d*\.?\d+(?:e[-+]?\d+)?"
 INTEGER = r"\d+"

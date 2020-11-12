@@ -11,7 +11,16 @@ from typing import Any
 import nox
 from nox.sessions import Session
 
-nox.options.sessions = "tests", "lint"  # , "black", "safety"
+nox.options.sessions = (
+    "safety",
+    "lint",
+    "mypy",
+    # "xdoctest",
+    "tests",
+    "coverage",
+    "docs",
+)
+
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
 
@@ -35,12 +44,14 @@ def tests(session: Session) -> None:
     args = session.posargs or ["--cov", "-m", "not e2e"]
     session.run("poetry", "install", "--no-dev", external=True)
     install_with_constraints(
-        session, "coverage[toml]", "pytest", "pytest-cov", "pytest-mock"
+        session, "coverage[toml]", "pytest", "pytest-cov", "pytest-mock", "coverage"
     )
     session.run("pytest", *args)
+    session.run("coverage", "report", "--show-missing", "--skip-covered")
+    session.run("coverage", "html")
 
 
-@nox.session(python=["3.8"])
+@nox.session(python=["3.7"])
 def lint(session: Session) -> None:
     """Lint using flake8."""
     args = session.posargs or locations
@@ -115,7 +126,7 @@ def organize_imports(session: Session) -> None:
     )
 
 
-@nox.session(python=["3.8", "3.7"])
+@nox.session(python="3.7")
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or locations

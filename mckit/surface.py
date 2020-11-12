@@ -1,22 +1,16 @@
 # -*- coding: utf-8 -*-
-from typing import Any, Dict, Text, Optional, List, Callable, Tuple
 from abc import abstractmethod
+from typing import Any, Dict, Text, Optional, List, Callable, Tuple
+
 import numpy as np
 from numpy import ndarray
 
+from mckit.box import GLOBAL_BOX
 from . import constants
-from .utils.tolerance import MaybeClose, tolerance_estimator, FLOAT_TOLERANCE
-from .utils import (
-    filter_dict,
-    significant_digits,
-    make_hash,
-    significant_array,
-    round_array,
-    round_scalar,
-    are_equal,
-    deepcopy,
-)
+from .card import Card
+from .constants import DROP_OPTIONS
 
+# fmt:off
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import (
     Plane as _Plane,
@@ -32,11 +26,21 @@ from .geometry import (
     EY,
     EZ,
 )
-from mckit.box import GLOBAL_BOX
+# fmt:on
+
 from .printer import add_float, pretty_float
 from .transformation import Transformation
-from .card import Card
-from .constants import DROP_OPTIONS
+from .utils import (
+    filter_dict,
+    significant_digits,
+    make_hash,
+    significant_array,
+    round_array,
+    round_scalar,
+    are_equal,
+    deepcopy,
+)
+from .utils.tolerance import MaybeClose, tolerance_estimator, FLOAT_TOLERANCE
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 __all__ = [
@@ -58,7 +62,7 @@ __all__ = [
 
 
 # noinspection PyPep8Naming
-def create_surface(kind, *params, **options):
+def create_surface(kind, *params: Any, **options: Any) -> "Surface":
     """Creates new surface.
 
     Parameters
@@ -333,7 +337,8 @@ class Surface(Card, MaybeClose):
         return words
 
     def clean_options(self) -> Dict[Text, Any]:
-        return filter_dict(self.options, DROP_OPTIONS)
+        result: Dict[Text, Any] = filter_dict(self.options, DROP_OPTIONS)
+        return result
 
     def compare_transformations(self, tr: Transformation) -> bool:
         my_transformation = self.transformation
@@ -773,9 +778,7 @@ class Sphere(Surface, _Sphere):
         if self is other:
             return True
         if not isinstance(other, Sphere):
-            return (
-                False
-            )  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
+            return False  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
         return are_equal(
             (self._radius, self._center, self.transformation),
             (other._radius, other._center, other.transformation),
@@ -1266,9 +1269,7 @@ class GQuadratic(Surface, _GQuadratic):
         if self is other:
             return True
         if not isinstance(other, GQuadratic):
-            return (
-                False
-            )  # TODO dvp: handle cases when other is specialized quadratic surface Sphere, Cone etc.
+            return False  # TODO dvp: handle cases when other is specialized quadratic surface Sphere, Cone etc.
         return estimator(
             (self._k, self._v, self._m, self.transformation),
             (other._k, other._v, other._m, other.transformation),

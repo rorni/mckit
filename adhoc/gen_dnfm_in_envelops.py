@@ -1,7 +1,7 @@
 from typing import List
 import os
 import dotenv
-import logging
+from mckit.utils.logging import logger as LOG
 from pathlib import Path
 from mckit.parser.mcnp_input_sly_parser import from_file, Card, Universe
 from mckit.utils import assert_all_paths_exist, get_root_dir
@@ -10,12 +10,6 @@ dotenv.load_dotenv(dotenv_path=".env", verbose=True)
 DNFM_ROOT: Path = get_root_dir("DNFM_ROOT", "~/dev/mcnp/dnfm")
 CMODEL_ROOT: Path = get_root_dir("CMODEL_ROOT", "~/dev/mcnp/cmodel")
 MODEL_DIR: Path = DNFM_ROOT / "models/c-model"
-LOG: logging.Logger = logging.getLogger(__name__)
-logging.basicConfig(
-    # format='%(asctime)s - %(levelname)-7s - %(name)-20s - %(message)s',
-    format="%(asctime)s - %(levelname)-7s - %(message)s",
-    level=logging.DEBUG,
-)
 LOG.info("DNFM_ROOT=%s", DNFM_ROOT)
 LOG.info("CMODEL_ROOT=%s", CMODEL_ROOT)
 assert_all_paths_exist(CMODEL_ROOT, DNFM_ROOT, MODEL_DIR)

@@ -1,7 +1,7 @@
 from io import StringIO
 
 import pytest
-from loguru import logger
+from mckit.utils.logging import logger
 
 from mckit.cli.runner import mckit, VERSION, meta
 

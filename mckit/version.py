@@ -1,7 +1,7 @@
 try:
     import importlib_metadata as meta
 except ImportError:
-    import importlib.metadata as meta
+    import importlib.metadata as meta  # type: ignore
 
 __title__ = "mckit"
 __distribution__ = meta.distribution(__title__)
@@ -14,6 +14,9 @@ __copyright__ = (
     "Copyright 2018-2020 Roman Rodionov"  # TODO dvp: move to meta (project.toml)
 )
 __version__ = __distribution__.version
-__version_info__ = tuple(
-    map(int, __version__.split(".")[:3])
-)  # leaving only the 3 first digits from version
+#
+# The version from metadata may have several formats:
+#  - in release version (there are no prepatch suffixes) it will be plain 1.5.0 for example
+#  - in prepatch version running separately 1.5.0-alpha1
+#  - in prepatch versions test runs it will be 1.5.0a1
+#

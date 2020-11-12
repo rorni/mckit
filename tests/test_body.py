@@ -1,11 +1,13 @@
-import pytest
-import numpy as np
 import pickle
+import typing as tp
+
+import numpy as np
+import pytest
 
 from mckit.body import Shape, Body
-from mckit.surface import create_surface
 from mckit.box import Box
 from mckit.material import Material
+from mckit.surface import create_surface
 from mckit.transformation import Transformation
 
 
@@ -1888,7 +1890,7 @@ class TestShape:
             ),
         ],
     )
-    def test_points(self, geometry, geom_no, point, ans):
+    def test_points(self, geometry, geom_no: int, point, ans):
         ans = ans[geom_no]
         result = geometry[geom_no].test_points(point)
         np.testing.assert_array_equal(result, ans)
@@ -1917,7 +1919,9 @@ class TestShape:
             [(0, 0, -1), (-1, -1, 0), (0, -1, 0), (0, 0, -1), (0, 0, 0), (0, 0, 0)]
         ),
     )
-    def test_box(self, geometry, box, box_no, case_no, expected):
+    def test_box(
+        self, geometry, box, box_no: int, case_no: int, expected: tp.Tuple[int]
+    ):
         result = geometry[case_no].test_box(box[box_no])
         assert result == expected[box_no]
 
@@ -1947,11 +1951,11 @@ class TestShape:
             tol = 100.0
             bb = geometry[case_no].bounding_box()
         for j, (low, high) in enumerate(expected):
-            bbdim = 0.5 * bb.dimensions[j]
-            assert bb.center[j] - bbdim <= low
-            assert bb.center[j] - bbdim >= low - tol
-            assert bb.center[j] + bbdim >= high
-            assert bb.center[j] + bbdim <= high + tol
+            bbd_halves_of_dimensions = 0.5 * bb.dimensions[j]
+            assert bb.center[j] - bbd_halves_of_dimensions <= low
+            assert bb.center[j] - bbd_halves_of_dimensions >= low - tol
+            assert bb.center[j] + bbd_halves_of_dimensions >= high
+            assert bb.center[j] + bbd_halves_of_dimensions <= high + tol
 
     @pytest.mark.slow
     @pytest.mark.parametrize("box_no", range(len(box_data)))
@@ -1968,7 +1972,7 @@ class TestShape:
             ]
         ),
     )
-    def test_volume(self, geometry, box, box_no, case_no, expected):
+    def test_volume(self, geometry, box, box_no: int, case_no: int, expected):
         v = geometry[case_no].volume(box[box_no], min_volume=1.0e-4)
         assert v == pytest.approx(expected[box_no], rel=1.0e-2)
 
@@ -2060,7 +2064,7 @@ class TestBody:
 
     @pytest.mark.parametrize("case_no", range(len(basic_geoms)))
     @pytest.mark.parametrize("kwargs", kwarg_data)
-    def test_create(self, geometry, case_no, kwargs):
+    def test_create(self, geometry, case_no: int, kwargs):
         shape = geometry[case_no]
         body = Body(shape, **kwargs)
         assert body.shape == shape
@@ -2137,7 +2141,7 @@ class TestBody:
             (11, [Shape("R")]),
         ],
     )
-    def test_simplify(self, geometry, surfaces, case_no, expected, kwarg):
+    def test_simplify(self, geometry, surfaces, case_no: int, expected, kwarg):
         expected = [TestShape.filter_arg(a, surfaces) for a in expected]
         expected_shape = Shape.from_polish_notation(expected)
         body = Body(geometry[case_no], **kwarg)
@@ -2147,6 +2151,79 @@ class TestBody:
         for k, v in kwarg.items():
             assert simple_body.options[k] == v
         assert simple_body.material() == kwarg.get("MAT", None)
+
+    split_surfaces = {
+        1: create_surface("SX", 4, 2, name=1),
+        2: create_surface("SX", -1, 2, name=2),
+        3: create_surface("SX", 5, 2, name=3),
+        4: create_surface("SX", 2, 1, name=4),
+        5: create_surface("SX", 2, 10, name=5),
+        6: create_surface("PX", -2, name=6),
+        7: create_surface("PX", 1, name=7),
+        8: create_surface("PX", 1.2, name=8),
+        9: create_surface("PX", 3, name=9),
+        10: create_surface("CX", 10, name=10),
+        11: create_surface("CX", 1, name=11),
+    }
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize("kwarg", kwarg_data)
+    @pytest.mark.parametrize(
+        "case_no, geometry, ans_geometry",
+        [
+            (0, [1, "C", 2, "C", "U"], [[1, "C"], [2, "C"]]),
+            (1, [1, "C", 3, "C", "U"], [[1, "C", 3, "C", "U"]]),
+            (2, [1, "C"], [[1, "C"]]),
+            (
+                3,
+                [1, "C", 2, "C", "U", 4, "C", "I"],
+                [[1, "C", 4, "C", "I"], [2, "C", 4, "C", "I"]],
+            ),
+            (
+                4,
+                [1, "C", 2, "C", "U", 5, "C", "I"],
+                [[1, "C", 5, "C", "I"], [2, "C", 5, "C", "I"]],
+            ),
+            (5, [4, "C", 5, "U"], [[4, "C"], [5]]),
+            (
+                6,
+                [6, 7, "C", "I", 10, "C", "I", 8, 9, "C", "I", 11, "C", "I", "U"],
+                [[6, 7, "C", "I", 10, "C", "I"], [8, 9, "C", "I", 11, "C", "I"]],
+            ),
+            (
+                7,
+                [6, 8, "C", "I", 10, "C", "I", 8, 9, "C", "I", 11, "C", "I", "U"],
+                [[6, 8, "C", "I", 10, "C", "I"], [8, 9, "C", "I", 11, "C", "I"]],
+            ),
+            (
+                8,
+                [6, 8, "C", "I", 10, "C", "I", 7, 9, "C", "I", 11, "C", "I", "U"],
+                [[6, 8, "C", "I", 10, "C", "I", 7, 9, "C", "I", 11, "C", "I", "U"]],
+            ),
+        ],
+    )
+    def test_split(self, case_no, geometry, ans_geometry, kwarg):
+        origin_shape = Shape.from_polish_notation(
+            [TestShape.filter_arg(a, self.split_surfaces) for a in geometry]
+        )
+        body = Body(origin_shape, **kwarg)
+        expected = set()
+        for ans in ans_geometry:
+            expected.add(
+                Shape.from_polish_notation(
+                    [TestShape.filter_arg(a, self.split_surfaces) for a in ans]
+                )
+            )
+        gb = Box([0, 0, 0], 100, 100, 100)
+        split_bodies = body.split(min_volume=0.001, box=gb)
+        print(body.shape.get_stat_table())
+        assert len(split_bodies) == len(expected)
+        split_shapes = {b.shape for b in split_bodies}
+        assert split_shapes == expected
+        for b in split_bodies:
+            for k, v in kwarg.items():
+                assert b.options[k] == v
+            assert b.material() == kwarg.get("MAT", None)
 
     @pytest.mark.parametrize(
         "fill_tr",
@@ -2196,7 +2273,7 @@ class TestBody:
         ],
     )
     @pytest.mark.parametrize("case_no", range(len(basic_geoms)))
-    def test_transform(self, geometry, tr, case_no, fill_tr):
+    def test_transform(self, geometry, tr, case_no: int, fill_tr):
         # The idea is to generate many random points. This points have some
         # definite test results with respect to the body being tested.
         # After transformation they must have absolutely the same results.
