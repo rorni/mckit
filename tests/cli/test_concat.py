@@ -1,19 +1,8 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 
-import pytest
-
-from click.testing import CliRunner
-
-from mckit.cli.runner import mckit, VERSION
+from mckit.cli.runner import mckit
 from mckit.utils.resource import filename_resolver
-
-# skip the pylint warning on fixture names
-# pylint: disable=redefined-outer-name
-
-# skip the pylint warning on long names: test names should be descriptive
-# pylint: disable=invalid-name
-
 
 data_filename_resolver = filename_resolver("tests.cli")
 
