@@ -95,22 +95,24 @@ def test_anonymous_transforms(runner, disable_log, source, output, expected):
 
 
 @pytest.mark.parametrize(
-    "source, output, expected",
+    "universes",
     [
-        (
-            "data/cubes_with_fill_named_transforms.universes/envelopes.i",
-            "cubes_with_fill_named_transforms.i",
-            "data/cubes_with_fill_named_transforms.mcnp",
-        ),
-        (
-            "data/two_cubes_with_the_same_filler.universes/envelopes.i",
-            "two_cubes_with_the_same_filler.i",
-            "data/two_cubes_with_the_same_filler.mcnp",
+        "cubes_with_fill_named_transforms",
+        "two_cubes_with_the_same_filler",
+        pytest.param(
+            "shared_surface",
+            marks=pytest.mark.xfail(
+                reason="Handling entities shared between universes is not implemented yet."
+            ),
         ),
     ],
 )
-def test_compose(runner, disable_log, source, output, expected):
+def test_compose(runner, disable_log, universes):
+    source = f"data/{universes}.universes/envelopes.i"
+    output = f"{universes}.i"
+    expected = f"data/{universes}.mcnp"
     source = data_filename_resolver(source)
+    assert Path(source).exists(), f"File {source} does not exist"
     with runner.isolated_filesystem() as test_folder:
         result = runner.invoke(
             mckit, args=["compose", "--output", output, source], catch_exceptions=False
@@ -129,6 +131,3 @@ def test_compose(runner, disable_log, source, output, expected):
         assert (
             actual_transformations == expected_transformations
         ), "The transformations should be the same"
-
-
-# def test_two_envelopes_with_same_filler()
