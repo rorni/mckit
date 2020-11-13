@@ -1,27 +1,29 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from contextlib import contextmanager
 from collections import defaultdict
 from io import StringIO
+from itertools import chain
 from functools import reduce
-from typing import Iterable, Dict, Any, List, Set, Union
+from typing import Dict, Any, Iterable, List, NamedTuple, Set, Union
 
+import attr
 import numpy as np
 from attr import attrs, attrib
 from click import progressbar
 
-import mckit as mk
 from .body import Body, Shape
 from .card import Card
 
-# noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
+from mckit.constants import MCNP_ENCODING
+from mckit.utils import filter_dict
 from .box import GLOBAL_BOX, Box
 from .surface import Surface
 from .transformation import Transformation
-from .material import Material
+from .material import Material, Composition
 from .surface import Plane
-from .utils import accept, on_unknown_acceptor
-from mckit.constants import MCNP_ENCODING
-from mckit.utils import filter_dict
+from .utils import accept, build_index_of_named_entities, on_unknown_acceptor
 
 __all__ = [
     "Universe",
@@ -494,9 +496,7 @@ class Universe:
                 surfs.update(c.options["FILL"]["universe"].get_surfaces(inner))
         return surfs
 
-    def get_compositions(
-        self, exclude_common: bool = False
-    ) -> Set[mk.material.Composition]:
+    def get_compositions(self, exclude_common: bool = False) -> Set[Composition]:
         """Gets all compositions of the universe.
 
         Parameters
@@ -529,7 +529,7 @@ class Universe:
         universes = {self}
         for c in self:
             if "FILL" in c.options:
-                u = c.options["FILL"]["universe"]  # TODO dvp: add transformations?
+                u = c.options["FILL"]["universe"]
                 universes.update(u.get_universes())
         return universes
 
@@ -631,16 +631,12 @@ class Universe:
                     m.rename(start_mat)
                     start_mat += 1
 
-    def check_clashes(self, resolve_clashes=False) -> None:
+    def check_clashes(self) -> None:
         result = self.name_clashes()
         if result:
-            if resolve_clashes:
-                pass
-                # TODO rename found clashed objects
-            else:
-                raise NameClashError(result)
+            raise NameClashError(result)
 
-    def save(self, filename, encoding=MCNP_ENCODING, resolve_clashes=False):
+    def save(self, filename, encoding=MCNP_ENCODING):
         """Saves the universe into file.
 
         Parameters
@@ -650,7 +646,8 @@ class Universe:
         encoding: str
             Encoding ot the output file
         """
-        self.check_clashes(resolve_clashes)
+        # NOTE dvp: Don't try to resolve names here, the object shouldn't change on save() function.
+        self.check_clashes()
         transformations = collect_transformations(self)
         if transformations:
             transformations = sorted(transformations, key=Card.name)
@@ -916,3 +913,35 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
 # TODO dvp: it's possible to generalize visiting introducing class Visitor
 #           See: all visit_... functions will be probably not changed on deriving
 #           Use functools partial to hide self parameter when passing the method as a function to accept()
+
+
+class UniverseAnalyserData(NamedTuple):
+    universe: Universe
+    universes_index: Dict[int, Universe]
+    cell_index: Dict[int, Body]
+    surface_index: Dict[int, Surface]
+    composition_index: Dict[int, Composition]
+    transformations_index: Dict[int, Transformation]
+    cells_universe_map: Dict[int, List[int]]
+    surfaces_universe_map: Dict[int, List[int]]
+    compositions_universe_map: Dict[int, List[int]]
+    transformations_universe_map: Dict[int, List[int]]
+
+
+def build_universe_analyser(universe: Universe) -> UniverseAnalyserData:
+    universes = universe.get_universes()
+    universes_index: Dict[int, Universe] = build_index_of_named_entities(universes)
+    cell_index: Dict[int, Body] = build_index_of_named_entities(chain(universes))
+    surface_index: Dict[int, Surface] = build_index_of_named_entities(
+        universe.get_surfaces()
+    )
+    composition_index: Dict[int, Composition] = build_index_of_named_entities(
+        universe.get_compositions()
+    )
+    transformations_index: Dict[int, Transformation] = build_index_of_named_entities(
+        collect_transformations()
+    )
+    cells_universe_map: Dict[int, List[int]]
+    surfaces_universe_map: Dict[int, List[int]]
+    compositions_universe_map: Dict[int, List[int]]
+    transformations_universe_map: Dict[int, List[int]]
