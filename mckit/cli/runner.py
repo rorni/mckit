@@ -5,12 +5,15 @@ from typing import List
 
 import click
 from click_loguru import ClickLoguru
-from mckit.utils.logging import logger
 
 import mckit.version as meta
-from mckit.utils import MCNP_ENCODING
+from mckit.cli.commands import do_check
+from mckit.cli.commands import do_compose
+from mckit.cli.commands import do_decompose
+from mckit.cli.commands import do_split
 from mckit.cli.commands.common import get_default_output_directory
-from mckit.cli.commands import do_decompose, do_compose, do_split, do_check
+from mckit.utils import MCNP_ENCODING
+from mckit.utils.logging import logger
 
 NAME = meta.__title__
 VERSION = meta.__version__
