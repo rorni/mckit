@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import annotations
-
 from contextlib import contextmanager
 from collections import defaultdict
 from io import StringIO
@@ -8,7 +5,6 @@ from itertools import chain
 from functools import reduce
 from typing import Dict, Any, Iterable, List, NamedTuple, Set, Union
 
-import attr
 import numpy as np
 from attr import attrs, attrib
 from click import progressbar
@@ -17,13 +13,22 @@ from .body import Body, Shape
 from .card import Card
 
 from mckit.constants import MCNP_ENCODING
-from mckit.utils import filter_dict
+from mckit.utils import filter_dict, on_unknown_acceptor
+from mckit.utils.Index import (
+    IndexOfNamed,
+    raise_on_duplicate_strategy,
+    ignore_equal_objects_strategy,
+    NumberedItemNotFoundError,
+    StatisticsCollector,
+)
 from .box import GLOBAL_BOX, Box
 from .surface import Surface
 from .transformation import Transformation
 from .material import Material, Composition
 from .surface import Plane
 from .utils import accept
+from mckit.utils.named import Name, default_name_key
+
 
 __all__ = [
     "Universe",
@@ -917,31 +922,36 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
 
 class UniverseAnalyserData(NamedTuple):
     universe: Universe
-    universes_index: Dict[int, Universe]
-    cell_index: Dict[int, Body]
-    surface_index: Dict[int, Surface]
-    composition_index: Dict[int, Composition]
-    transformations_index: Dict[int, Transformation]
-    cells_universe_map: Dict[int, List[int]]
-    surfaces_universe_map: Dict[int, List[int]]
-    compositions_universe_map: Dict[int, List[int]]
-    transformations_universe_map: Dict[int, List[int]]
+    universes_index: Dict[Name, Universe]
+    cell_index: Dict[Name, Body]
+    surface_index: Dict[Name, Surface]
+    composition_index: Dict[Name, Composition]
+    transformations_index: Dict[Name, Transformation]
+    cells_universe_map: Dict[Name, List[Name]]
+    surfaces_universe_map: Dict[Name, List[Name]]
+    compositions_universe_map: Dict[Name, List[Name]]
+    transformations_universe_map: Dict[Name, List[Name]]
 
 
 def build_universe_analyser(universe: Universe) -> UniverseAnalyserData:
     universes = universe.get_universes()
-    universes_index: Dict[int, Universe] = build_index_of_named_entities(universes)
-    cell_index: Dict[int, Body] = build_index_of_named_entities(chain(universes))
-    surface_index: Dict[int, Surface] = build_index_of_named_entities(
-        universe.get_surfaces()
+    universes_duplication_collector = StatisticsCollector()
+    universes_index: Dict[Name, Universe] = IndexOfNamed.from_iterable(
+        universes, on_duplicate=universes_duplication_collector
     )
-    composition_index: Dict[int, Composition] = build_index_of_named_entities(
-        universe.get_compositions()
-    )
-    transformations_index: Dict[int, Transformation] = build_index_of_named_entities(
-        collect_transformations()
-    )
-    cells_universe_map: Dict[int, List[int]]
-    surfaces_universe_map: Dict[int, List[int]]
-    compositions_universe_map: Dict[int, List[int]]
-    transformations_universe_map: Dict[int, List[int]]
+    # for universe in universes:
+    #     cells_duplication_collector = StatisticsCollector
+    #     cell_index: Dict[int, Body] = IndexOfNamed.from_iterable(universes, on_duplicate=universes_duplication_collector)chain(universes))
+    #     surface_index: Dict[int, Surface] = build_index_of_named_entities(
+    #         universe.get_surfaces()
+    #     )
+    # composition_index: Dict[int, Composition] = build_index_of_named_entities(
+    #     universe.get_compositions()
+    # )
+    # transformations_index: Dict[int, Transformation] = build_index_of_named_entities(
+    #     collect_transformations()
+    # )
+    # cells_universe_map: Dict[int, List[int]]
+    # surfaces_universe_map: Dict[int, List[int]]
+    # compositions_universe_map: Dict[int, List[int]]
+    # transformations_universe_map: Dict[int, List[int]]

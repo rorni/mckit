@@ -1,14 +1,11 @@
-from collections import defaultdict
-from typing import Any
-from typing import Dict
 from typing import NamedTuple
 
-import attr
 import pytest
 
 import mckit.utils.named as nm
 from mckit.utils.Index import ignore_equal_objects_strategy
-from mckit.utils.Index import IndexOfNamed, NumberedItemDuplicateError
+from mckit.utils.Index import IndexOfNamed
+from mckit.utils.Index import NumberedItemDuplicateError
 from mckit.utils.Index import raise_on_duplicate_strategy
 from mckit.utils.Index import StatisticsCollector
 
@@ -86,6 +83,16 @@ def test_clashes_on_non_equal_items(entities):
     "entities, expected, expected_collected",
     [
         ([Something2(1, 1), Something2(1, 2)], {1: Something2(1, 2)}, {1: 2}),
+        (
+            [Something2(1, 1), Something2(1, 2), Something2(2, 3)],
+            {1: Something2(1, 2), 2: Something2(2, 3)},
+            {1: 2},
+        ),
+        (
+            [Something2(1, 1), Something2(1, 2), Something2(2, 3), Something2(2, 4)],
+            {1: Something2(1, 2), 2: Something2(2, 4)},
+            {1: 2, 2: 2},
+        ),
     ],
 )
 def test_collect_statistics_on_clashes(entities, expected, expected_collected):
@@ -95,3 +102,18 @@ def test_collect_statistics_on_clashes(entities, expected, expected_collected):
     )
     assert actual == expected
     assert collector == expected_collected
+
+
+# @pytest.mark.parametrize(
+#     "entities, expected, expected_collected",
+#     [
+#         ([Something2(1, 1), Something2(1, 2), Something2(2,3)], {1: Something2(1, 2)}, {1: 2, 2: 1}),
+#     ],
+# )
+# def test_collect_statistics_on_clashes(entities, expected, expected_collected):
+#     collector = StatisticsCollector()
+#     actual = IndexOfNamed.from_iterable(
+#         entities, key=lambda x: x.name, on_duplicate=collector
+#     )
+#     assert actual == expected
+#     assert collector == expected_collected
