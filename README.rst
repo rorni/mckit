@@ -94,6 +94,7 @@ Resources
 * `Budges for README.rst <https://github.com/Naereen/badges/blob/master/README.rst>`_
 * `Commit message format <https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit>`_
 * `Semantic Versioning <https://semver.org/>`_
+* `Typing <https://www.python.org/dev/peps/pep-0484/>`_
 
 Bugs
 ----
