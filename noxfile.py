@@ -182,4 +182,6 @@ def codecov(session: Session) -> None:
 def coverage(session: Session) -> None:
     """Upload coverage data."""
     install_with_constraints(session, "coverage[toml]", "codecov")
+    session.run("coverage", "run", "-m", "pytest", "tests")
+    seession.run("coverage", "report", "--show-missing", "--skip-covered")
     session.run("coverage", "html")
