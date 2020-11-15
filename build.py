@@ -12,17 +12,17 @@ from distutils.command.build_ext import build_ext
 
 
 def get_dirs(environment_variable):
-    include_dirs = os.environ.get(environment_variable, "")
+    dirs = os.environ.get(environment_variable, "")
 
-    if include_dirs:
-        include_dirs = include_dirs.split(os.pathsep)
+    if dirs:
+        dirs = dirs.split(os.pathsep)
     else:
-        include_dirs = []
+        dirs = []
 
-    return include_dirs
+    return dirs
 
 
-def append_if_not_present(destination, value):
+def prepend_if_not_present(destination, value):
     if isinstance(value, list):
         destination.extend(value)
     elif value not in destination:
@@ -30,15 +30,15 @@ def append_if_not_present(destination, value):
 
 
 include_dirs = get_dirs("INCLUDE_PATH")
-append_if_not_present(include_dirs, np.get_include())
+prepend_if_not_present(include_dirs, np.get_include())
 
 library_dirs = get_dirs("LIBRARY_PATH")
 
 if sys.platform.startswith("linux"):
     geometry_dependencies = ["mkl_intel_lp64", "mkl_core", "mkl_sequential", "nlopt"]
-    conda_include_dir = path.join(sys.prefix, "include")
-    append_if_not_present(include_dirs, conda_include_dir)
-    append_if_not_present(library_dirs, path.join(sys.prefix, "lib"))
+    python_include_dir = path.join(sys.prefix, "include")
+    prepend_if_not_present(include_dirs, python_include_dir)
+    prepend_if_not_present(library_dirs, path.join(sys.prefix, "lib"))
 else:
     geometry_dependencies = [
         "mkl_intel_lp64_dll",
@@ -47,13 +47,13 @@ else:
         "libnlopt-0",
     ]
     nlopt_inc = get_dirs("NLOPT")
-    append_if_not_present(include_dirs, nlopt_inc)
+    prepend_if_not_present(include_dirs, nlopt_inc)
     nlopt_lib = get_dirs("NLOPT")
-    append_if_not_present(library_dirs, nlopt_lib)
+    prepend_if_not_present(library_dirs, nlopt_lib)
     mkl_inc = sys.prefix + "\\Library\\include"
-    append_if_not_present(include_dirs, mkl_inc)
+    prepend_if_not_present(include_dirs, mkl_inc)
     mkl_lib = sys.prefix + "\\Library\\lib"
-    append_if_not_present(library_dirs, mkl_lib)
+    prepend_if_not_present(library_dirs, mkl_lib)
 
 geometry_sources = [
     path.join("mckit", "src", src)

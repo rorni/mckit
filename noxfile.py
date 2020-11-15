@@ -23,6 +23,9 @@ nox.options.sessions = (
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
+supported_pythons = "3.9 3.8 3.7".split()
+mypy_pythons = lint_pythons = black_pythons = supported_pythons[-1:]
+
 
 def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
     """Install packages constrained by Poetry's lock file."""
@@ -38,7 +41,7 @@ def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> Non
         session.install(f"--constraint={requirements.name}", *args, **kwargs)
 
 
-@nox.session(python=["3.8", "3.7"])
+@nox.session(python=supported_pythons)
 def tests(session: Session) -> None:
     """Run the test suite."""
     args = session.posargs or ["--cov", "-m", "not e2e"]
@@ -51,7 +54,7 @@ def tests(session: Session) -> None:
     session.run("coverage", "html")
 
 
-@nox.session(python=["3.7"])
+@nox.session(python=lint_pythons)
 def lint(session: Session) -> None:
     """Lint using flake8."""
     args = session.posargs or locations
@@ -69,7 +72,7 @@ def lint(session: Session) -> None:
     session.run("flake8", *args)
 
 
-@nox.session(python=["3.7"])  # TODO dvp: this doesn't work with 3.8 so far
+@nox.session(python=black_pythons)  # TODO dvp: this doesn't work with 3.8 so far
 def black(session: Session) -> None:
     """Run black code formatter."""
     args = session.posargs or locations
@@ -99,7 +102,7 @@ def safety(session: Session) -> None:
 #  Uncomment when proper imports or noorder directive is applied in sensitive files.
 #  Always test after reorganizing ill projects.
 #
-@nox.session(python="3.8")
+@nox.session(python="3.9")
 def organize_imports(session: Session) -> None:
     from glob import glob
 
@@ -126,7 +129,7 @@ def organize_imports(session: Session) -> None:
     )
 
 
-@nox.session(python="3.7")
+@nox.session(python=mypy_pythons)
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or locations
@@ -139,7 +142,7 @@ def mypy(session: Session) -> None:
     )
 
 
-@nox.session(python=["3.8", "3.7"])
+@nox.session(python=supported_pythons)
 def xdoctest(session: Session) -> None:
     """Run examples with xdoctest."""
     args = session.posargs or ["mckit"]

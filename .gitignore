@@ -90,5 +90,4 @@ setup.py
 
 dist/
 !/setup.py
-
 wrk/
