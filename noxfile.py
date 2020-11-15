@@ -46,9 +46,7 @@ def tests(session: Session) -> None:
     """Run the test suite."""
     args = session.posargs or ["--cov", "-m", "not e2e"]
     session.run("poetry", "install", "--no-dev", external=True)
-    install_with_constraints(
-        session, "coverage[toml]", "pytest", "pytest-cov", "pytest-mock", "coverage"
-    )
+    install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
     session.run("pytest", *args)
     session.run("coverage", "report", "--show-missing", "--skip-covered")
     session.run("coverage", "html")
@@ -173,15 +171,16 @@ def docs(session: Session) -> None:
 @nox.session(python="3.7")
 def codecov(session: Session) -> None:
     """Upload coverage data."""
-    install_with_constraints(session, "coverage[toml]", "codecov")
+    session.run("poetry", "install", "--no-dev", external=True)
+    install_with_constraints(
+        session,
+        "coverage[toml]",
+        "pytest",
+        "pytest-cov",
+        "pytest-mock",
+        "coverage",
+        "codecov",
+    )
+    # install_with_constraints(session, "coverage[toml]", "codecov")
     session.run("coverage", "xml", "--fail-under=0")
     session.run("codecov", *session.posargs)
-
-
-@nox.session(python="3.7")
-def coverage(session: Session) -> None:
-    """Upload coverage data."""
-    install_with_constraints(session, "coverage[toml]", "codecov")
-    session.run("coverage", "run", "-m", "pytest", "tests")
-    seession.run("coverage", "report", "--show-missing", "--skip-covered")
-    session.run("coverage", "html")
