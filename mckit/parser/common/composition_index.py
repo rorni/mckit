@@ -1,7 +1,7 @@
 from typing import Optional, Iterable
 
 from mckit.material import Composition, Material
-from mckit.parser.common import Index, NumberedItemNotFoundError
+from mckit.utils.Index import Index, NumberedItemNotFoundError
 
 
 class DummyMaterial(Material):
@@ -42,7 +42,7 @@ def dummy_on_absent_composition_strategy(name: int) -> Optional[DummyComposition
 
 class CompositionStrictIndex(Index):
     def __init__(self, **kwargs):
-        super().__init__(raise_on_absent_composition_strategy, kwargs)
+        super().__init__(raise_on_absent_composition_strategy, **kwargs)
 
     @classmethod
     def from_iterable(cls, items: Iterable[Composition]) -> "CompositionStrictIndex":
@@ -53,7 +53,7 @@ class CompositionStrictIndex(Index):
 
 class CompositionDummyIndex(Index):
     def __init__(self, **kwargs):
-        super().__init__(dummy_on_absent_composition_strategy, kwargs)
+        super().__init__(dummy_on_absent_composition_strategy, **kwargs)
 
 
 class CompositionNotFoundError(NumberedItemNotFoundError):

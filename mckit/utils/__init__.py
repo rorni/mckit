@@ -5,7 +5,6 @@ from .misc import get_decades, significant_digits
 from .misc import make_hashable, significant_array, prettify_float, filter_dict
 from .misc import round_scalar, make_hash, round_array, is_sorted
 from .misc import are_equal, MAX_DIGITS, is_in
-from .named import Name, build_index_of_named_entities, default_name_key
 from .resource import path_resolver, filename_resolver
 from .misc import deepcopy, mids
 from .tolerance import FLOAT_TOLERANCE

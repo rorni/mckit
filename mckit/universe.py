@@ -23,7 +23,7 @@ from .surface import Surface
 from .transformation import Transformation
 from .material import Material, Composition
 from .surface import Plane
-from .utils import accept, build_index_of_named_entities, on_unknown_acceptor
+from .utils import accept
 
 __all__ = [
     "Universe",

@@ -15,10 +15,10 @@ from mckit.parser.common import (
     DummyMaterial,
     DummyComposition,
     CompositionStrictIndex,
-    Index,
 )
 from mckit.material import Material
 from mckit.transformation import Transformation
+from mckit.utils.Index import Index
 
 
 def create_cell(

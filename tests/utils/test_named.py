@@ -1,8 +1,16 @@
+from collections import defaultdict
+from typing import Any
+from typing import Dict
 from typing import NamedTuple
 
+import attr
 import pytest
 
 import mckit.utils.named as nm
+from mckit.utils.Index import ignore_equal_objects_strategy
+from mckit.utils.Index import IndexOfNamed, NumberedItemDuplicateError
+from mckit.utils.Index import raise_on_duplicate_strategy
+from mckit.utils.Index import StatisticsCollector
 
 
 class Something(NamedTuple):
@@ -19,8 +27,8 @@ class Something(NamedTuple):
         ),
     ],
 )
-def test_build_index(entities, expected):
-    actual = nm.build_index_of_named_entities(entities, key=lambda x: x.name)
+def test_index_of_named_happy_path(entities, expected):
+    actual = IndexOfNamed.from_iterable(entities, key=lambda x: x.name)
     assert actual == expected
 
 
@@ -32,11 +40,13 @@ def test_build_index(entities, expected):
 )
 def test_clashes(entities):
     # try:
-    #     actual = nm.build_index_of_named_entities(entities, key=lambda x: x.name)
-    # except nm.DuplicateError as ex:
+    #     actual = IndexOfNamed.from_iterable(entities, key=lambda x: x.name, on_duplicate=raise_on_duplicate_strategy)
+    # except NumberedItemDuplicateError as ex:
     #     pass
-    with pytest.raises(nm.DuplicateError, match="Something"):
-        actual = nm.build_index_of_named_entities(entities, key=lambda x: x.name)
+    with pytest.raises(NumberedItemDuplicateError, match="Something"):
+        actual = IndexOfNamed.from_iterable(
+            entities, key=lambda x: x.name, on_duplicate=raise_on_duplicate_strategy
+        )
         assert not actual
 
 
@@ -47,10 +57,8 @@ def test_clashes(entities):
     ],
 )
 def test_equal_duplicates(entities, expected):
-    actual = nm.build_index_of_named_entities(
-        entities,
-        key=lambda x: x.name,
-        on_clash_strategy=nm.raise_when_not_equal_strategy,
+    actual = IndexOfNamed.from_iterable(
+        entities, key=lambda x: x.name, on_duplicate=ignore_equal_objects_strategy
     )
     assert actual == expected
 
@@ -67,10 +75,23 @@ class Something2(NamedTuple):
     ],
 )
 def test_clashes_on_non_equal_items(entities):
-    with pytest.raises(nm.DuplicateError, match="Something2"):
-        actual = nm.build_index_of_named_entities(
-            entities,
-            key=lambda x: x.name,
-            on_clash_strategy=nm.raise_when_not_equal_strategy,
+    with pytest.raises(NumberedItemDuplicateError, match="Something2"):
+        actual = IndexOfNamed.from_iterable(
+            entities, key=lambda x: x.name, on_duplicate=raise_on_duplicate_strategy
         )
         assert not actual
+
+
+@pytest.mark.parametrize(
+    "entities, expected, expected_collected",
+    [
+        ([Something2(1, 1), Something2(1, 2)], {1: Something2(1, 2)}, {1: 2}),
+    ],
+)
+def test_collect_statistics_on_clashes(entities, expected, expected_collected):
+    collector = StatisticsCollector()
+    actual = IndexOfNamed.from_iterable(
+        entities, key=lambda x: x.name, on_duplicate=collector
+    )
+    assert actual == expected
+    assert collector == expected_collected

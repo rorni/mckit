@@ -6,7 +6,7 @@ from typing import Optional, Text, List
 from toolz import reduce
 
 from .printer import print_card
-from .utils import Name
+from mckit.utils.named import Name
 
 
 class Card(ABC):
