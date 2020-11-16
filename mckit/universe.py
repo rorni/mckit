@@ -795,6 +795,28 @@ class Universe:
             comment=self._comment,
         )
 
+    def apply_transformation(self):
+        """Applies transformation tr to this universe. Returns a new universe.
+
+        Parameters
+        ----------
+        tr : Transformation
+            Transformation to be applied.
+
+        Returns
+        -------
+        u_tr : Universe
+            New transformed universe.
+        """
+        new_cells = [c.apply_transformation() for c in self]
+        return Universe(
+            new_cells,
+            name=self._name,
+            name_rule="clash",
+            verbose_name=self._verbose_name,
+            comment=self._comment,
+        )
+
     @property
     def verbose_name(self) -> str:
         """Gets verbose name of the universe."""

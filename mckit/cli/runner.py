@@ -201,5 +201,22 @@ def check(sources: List[click.Path]) -> None:
         do_check(source)
 
 
+# noinspection PyCompatibility
+@mckit.command()
+@click_loguru.init_logger()
+@click.option(
+    "--transformation",
+    "-t",
+    type=click.STRING,
+    required=True,
+    help="Transformation in MCNP format",
+)
+@click.argument(
+    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
+)
+def transform(transformation: click.STRING, source: click.Path) -> None:
+    """Read MCNP model(s) transform and save as a new new model."""
+
+
 if __name__ == "__main__":
     mckit(obj={})
