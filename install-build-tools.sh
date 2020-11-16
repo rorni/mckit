@@ -26,11 +26,16 @@ function instal_linux_pyenv() {
         # install pyenv
         #
         curl https://pyenv.run | bash
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        # also install tools
+        git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
+        git clone git://github.com/pyenv/pyenv-doctor.git $(pyenv root)/plugins/pyenv-doctor
         # Add the following lines to your ~/.bashrc or ~/.zshrc:
         eval "$(pyenv init -)"
         eval "$(pyenv virtualenv-init -)"
         #
         # In Zsh use pyenv-zsh plugin.
+        
     fi
 }
 
