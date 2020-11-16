@@ -1,4 +1,8 @@
 # tests/conftest.py
+import pickle
+from io import BytesIO
+
+import pytest
 from _pytest.config import Config
 
 

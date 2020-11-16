@@ -1,6 +1,5 @@
-import io
 import os
-import pickle
+
 import numpy as np
 import pytest
 
@@ -17,6 +16,7 @@ from mckit.surface import (
     RCC,
 )
 from mckit.box import Box
+from tests import pass_through_pickle
 
 
 @pytest.fixture(
@@ -37,13 +37,6 @@ def transform(request):
 @pytest.fixture(scope="module")
 def box():
     return Box([0, 0, 0], 2, 2, 2)
-
-
-def pass_through_pickle(surf):
-    with io.BytesIO() as f:
-        pickle.dump(surf, f)
-        f.seek(0)
-        return pickle.load(f)
 
 
 def assert_mcnp_repr(desc, answer):
@@ -3076,10 +3069,7 @@ class TestBOX:
     )
     def test_pickle(self, center, dirx, diry, dirz, options):
         surf = BOX(center, dirx, diry, dirz, **options)
-        with open("test.pic", "bw") as f:
-            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open("test.pic", "br") as f:
-            surf_un = pickle.load(f)
+        surf_un = pass_through_pickle(surf)
         ac, adx, ady, adz = surf_un.get_params()
         np.testing.assert_array_almost_equal(center, ac)
         np.testing.assert_array_almost_equal(dirx, adx)
@@ -3249,10 +3239,7 @@ class TestRCC:
     )
     def test_pickle(self, center, axis, radius, options):
         surf = RCC(center, axis, radius, **options)
-        with open("test.pic", "bw") as f:
-            pickle.dump(surf, f, pickle.HIGHEST_PROTOCOL)
-        with open("test.pic", "br") as f:
-            surf_un = pickle.load(f)
+        surf_un = pass_through_pickle(surf)
         ac, ax, r = surf_un.get_params()
         np.testing.assert_array_almost_equal(center, ac)
         np.testing.assert_array_almost_equal(axis, ax)

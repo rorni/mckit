@@ -10,6 +10,8 @@ from mckit.material import Material
 from mckit.surface import create_surface
 from mckit.transformation import Transformation
 
+from tests import pass_through_pickle
+
 
 @pytest.fixture(scope="module")
 def surfaces():
@@ -2012,10 +2014,12 @@ class TestShape:
         points -= np.array([0.5, 0.5, 0.5])
         points *= np.array([20, 10, 10])
         results = g.test_points(points)
-        with open("test.pic", "bw") as f:
-            pickle.dump(g, f, pickle.HIGHEST_PROTOCOL)
-        with open("test.pic", "br") as f:
-            g_pic = pickle.load(f)
+        g_pic = pass_through_pickle(g)
+        # fn = tmp_path / "test.pic"
+        # with open(fn, "bw") as f:
+        #     pickle.dump(g, f, pickle.HIGHEST_PROTOCOL)
+        # with open(fn, "br") as f:
+        #     g_pic = pickle.load(f)
         result_pic = g_pic.test_points(points)
         np.testing.assert_array_equal(results, result_pic)
 
