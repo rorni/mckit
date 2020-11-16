@@ -167,7 +167,7 @@ memory_profiler = ">=0.57.0,<0.58.0"
 name = "codecov"
 version = "2.1.10"
 description = "Hosted coverage reports for GitHub, Bitbucket and Gitlab"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
@@ -198,7 +198,7 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 name = "coverage"
 version = "5.3"
 description = "Code coverage measurement for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 
@@ -1228,7 +1228,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "7b29dc071bdb489b149c65085195307f3cbd035ca536493400c6a6ed96dbf0b2"
+content-hash = "007018dd667ba6baf89fce16c28020da830b9d0ff9ae3035ce729e67bd5a6238"
 
 [metadata.files]
 alabaster = [
