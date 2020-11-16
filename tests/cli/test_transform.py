@@ -35,37 +35,57 @@ def test_transformation_is_not_defined(runner):
     assert "Missing option" in result.output
 
 
-# def test_not_existing_mcnp_file(runner):
-#     result = runner.invoke(
-#         mckit, args=["transform", "not-existing.imcnp"], catch_exceptions=False
-#     )
-#     assert result.exit_code > 0
-#     assert "Path 'not-existing.imcnp' does not exist" in result.output
-#
-#
-# @pytest.mark.parametrize(
-#     "source, out, expected",
-#     [
-#         (
-#             "cli/data/simple_cubes_with_tallies.mcnp",
-#             "somewhere.dir",
-#             "title.txt cells.txt surfaces.txt materials.txt tallies.txt cards.txt",
-#         )
-#     ],
-# )
-# def test_when_output_dir_is_specified(runner, source, out, expected):
-#     source = data_filename_resolver(source)
-#     with runner.isolated_filesystem():
-#         result = runner.invoke(
-#             mckit, args=["split", "-o", out, source], catch_exceptions=False
-#         )
-#         assert result.exit_code == 0, "Should success without output directory"
-#         out = Path(out)
-#         assert out.is_dir()
-#         expected = expected.split()
-#         for e in expected:
-#             assert (out / e).exists()
-#
+def test_output_is_not_defined(runner):
+    result = runner.invoke(
+        mckit,
+        args=[
+            "transform",
+            "--transformation",
+            "0 0 1",
+            data_filename_resolver("data/simple_cubes.mcnp"),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code > 0
+    assert "Missing option" in result.output
+    assert "output" in result.output
+
+
+def test_not_existing_mcnp_file(runner):
+    result = runner.invoke(
+        mckit,
+        args=["transform", "-t", "o 0 -10", "not-existing.imcnp"],
+        catch_exceptions=False,
+    )
+    assert result.exit_code > 0
+    assert "Path 'not-existing.imcnp' does not exist" in result.output
+
+
+@pytest.mark.parametrize(
+    "msg, _source, transformation,, expected",
+    [
+        (
+            "identical transformation",
+            "data/simple_cubes_with_tallies.mcnp",
+            "tr100 0 0 0",
+            "data/simple_cubes_with_tallies.mcnp",
+        ),
+    ],
+)
+def test_happy_path(runner, msg, _source, transformation, expected):
+    source = data_filename_resolver(_source)
+    out = Path(source).name
+    with runner.isolated_filesystem() as tmp:
+        result = runner.invoke(
+            mckit,
+            args=["transform", "-t", transformation, "-o", str(out), source],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0, "Should success"
+        out_path = Path(out)
+        assert out_path.exists()
+
+
 #
 # @pytest.mark.parametrize(
 #     "source, expected",

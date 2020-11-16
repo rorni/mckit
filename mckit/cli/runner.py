@@ -11,6 +11,7 @@ from mckit.cli.commands import do_check
 from mckit.cli.commands import do_compose
 from mckit.cli.commands import do_decompose
 from mckit.cli.commands import do_split
+from mckit.cli.commands import do_transform
 from mckit.cli.commands.common import get_default_output_directory
 from mckit.utils import MCNP_ENCODING
 from mckit.utils.logging import logger
@@ -211,11 +212,21 @@ def check(sources: List[click.Path]) -> None:
     required=True,
     help="Transformation in MCNP format",
 )
+@click.option(
+    "--output",
+    "-o",
+    type=click.STRING,
+    required=True,
+    help="Output file",
+)
 @click.argument(
     "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
-def transform(transformation: click.STRING, source: click.Path) -> None:
+def transform(
+    transformation: click.STRING, output: click.STRING, source: click.Path
+) -> None:
     """Read MCNP model(s) transform and save as a new new model."""
+    do_transform(transformation, output, source, context["OVERRIDE"])
 
 
 if __name__ == "__main__":
