@@ -4,15 +4,6 @@ import pytest
 
 from mckit.utils.resource import filename_resolver
 from mckit.cli.runner import mckit
-from mckit.cli.commands.common import get_default_output_directory
-from mckit.parser.mcnp_section_parser import is_comment_text
-from mckit.utils.io import MCNP_ENCODING
-
-# skip the pylint warning on fixture names
-# pylint: disable=redefined-outer-name
-
-# skip the pylint warning on long names: test names should be descriptive
-# pylint: disable=invalid-name
 
 
 data_filename_resolver = filename_resolver("tests.cli")
@@ -67,7 +58,7 @@ def test_not_existing_mcnp_file(runner):
         (
             "identical transformation",
             "data/simple_cubes_with_tallies.mcnp",
-            "tr100 0 0 0",
+            "TR1 0 0 0",
             "data/simple_cubes_with_tallies.mcnp",
         ),
     ],
@@ -75,7 +66,7 @@ def test_not_existing_mcnp_file(runner):
 def test_happy_path(runner, msg, _source, transformation, expected):
     source = data_filename_resolver(_source)
     out = Path(source).name
-    with runner.isolated_filesystem() as tmp:
+    with runner.isolated_filesystem():
         result = runner.invoke(
             mckit,
             args=["transform", "-t", transformation, "-o", str(out), source],
