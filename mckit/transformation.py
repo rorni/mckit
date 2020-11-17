@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
 """Represents transformations."""
-from typing import Callable, Any
+from typing import Any
 import numpy as np
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import ORIGIN
 from .card import Card
 from .utils import make_hash
-from .constants import FLOAT_TOLERANCE
 from .utils.tolerance import EstimatorType, MaybeClose, tolerance_estimator
-from .printer import add_float
 
-__all__ = ['Transformation', 'IDENTITY_ROTATION']
+__all__ = ["Transformation", "IDENTITY_ROTATION"]
 
 IDENTITY_ROTATION = np.eye(3)
 
 ANGLE_TOLERANCE = 0.001
 COS_TH = np.sin(ANGLE_TOLERANCE)
+ZERO_COS_TOLERANCE = 2.0e-16
 
 
-class Transformation(Card,  MaybeClose):
+class Transformation(Card, MaybeClose):
     """Geometry transformation object.
 
     Parameters
@@ -64,8 +63,14 @@ class Transformation(Card,  MaybeClose):
         Reverses this transformation, and returns the result.
     """
 
-    def __init__(self, translation=ORIGIN, rotation=None,
-                 indegrees=False, inverted=False, **options):
+    def __init__(
+        self,
+        translation=ORIGIN,
+        rotation=None,
+        indegrees=False,
+        inverted=False,
+        **options,
+    ):
 
         Card.__init__(self, **options)
 
@@ -73,7 +78,9 @@ class Transformation(Card,  MaybeClose):
             translation = np.asarray(translation, dtype=float)
 
         if translation.shape != (3,):
-            raise ValueError(f'Transaction #{self.name()}: wrong length of translation vector.')
+            raise ValueError(
+                f"Transaction #{self.name()}: wrong length of translation vector."
+            )
 
         if rotation is None:
             u = IDENTITY_ROTATION
@@ -81,67 +88,72 @@ class Transformation(Card,  MaybeClose):
             u = np.asarray(rotation, dtype=float)
             if indegrees:
                 u = np.cos(np.multiply(u, np.pi / 180.0))
+            zero_cosines_idx = np.abs(u) < ZERO_COS_TOLERANCE
+            u[zero_cosines_idx] = 0.0
             # TODO: Implement creation from reduced rotation parameter set.
             if u.shape == (9,):
-                u = u.reshape((3, 3), order='F')
+                u = u.reshape((3, 3), order="F")
             if u.shape != (3, 3):
-                raise ValueError(f'Transaction #{self.name()}: wrong number of rotation parameters.')
-            # normalize auxiliary CS basis and orthogonalize it.
-            u, r = np.linalg.qr(u)
-            # QR decomposition returns orthogonal matrix u - which is corrected
-            # rotation matrix, and upper triangular matrix r. On the main
-            # diagonal r contains lengths of corresponding (negative if the
-            # corrected vector is directed opposite to the initial one) input
-            # basis vectors. Other elements are cosines of angles between
-            # different basis vectors.
+                raise ValueError(
+                    f'Transaction{"" if self.is_anonymous else " #" + str(self.name())}: \
+                      wrong number of rotation parameters: {u}.'
+                )
+            if np.array_equal(u, IDENTITY_ROTATION):
+                u = IDENTITY_ROTATION
+            else:
+                # normalize auxiliary CS basis and orthogonalize it.
+                u, r = np.linalg.qr(u)
+                # QR decomposition returns orthogonal matrix u - which is corrected
+                # rotation matrix, and upper triangular matrix r. On the main
+                # diagonal r contains lengths of corresponding (negative if the
+                # corrected vector is directed opposite to the initial one) input
+                # basis vectors. Other elements are cosines of angles between
+                # different basis vectors.
 
-            # cos(pi/2 - ANGLE_TOLERANCE) = sin(ANGLE_TOLERANCE) - maximum
-            # value of cosine of angle between two basis vectors.
-            if abs(r[0, 1]) > COS_TH or abs(r[0, 2]) > COS_TH or \
-                    abs(r[1, 2]) > COS_TH:
-                raise ValueError(f'Transaction #{self.name()}: non-orthogonality is greater than 0.001 rad.')
-            # To preserve directions of corrected basis vectors.
-            for i in range(3):
-                u[:, i] = u[:, i] * np.sign(r[i, i])
+                # cos(pi/2 - ANGLE_TOLERANCE) = sin(ANGLE_TOLERANCE) - maximum
+                # value of cosine of angle between two basis vectors.
+                if (
+                    abs(r[0, 1]) > COS_TH
+                    or abs(r[0, 2]) > COS_TH
+                    or abs(r[1, 2]) > COS_TH
+                ):
+                    raise ValueError(
+                        f"Transaction #{self.name()}: non-orthogonality is greater than 0.001 rad."
+                    )
+                # To preserve directions of corrected basis vectors.
+                for i in range(3):
+                    u[:, i] = u[:, i] * np.sign(r[i, i])
         self._u = u
-        self._t = -np.dot(u, translation) if inverted else translation.copy()
+        if inverted:
+            if u is IDENTITY_ROTATION:
+                self._t = -translation
+            else:
+                self._t = -np.dot(u, translation)
+        else:
+            self._t = translation.copy()
+        # self._t = -np.dot(u, translation) if inverted  else translation.copy()
         self._hash = make_hash(self._t, self._u)
-
-    # @staticmethod
-    # def _get_precision(u, t, box, tol):
-    #     u1 = u.transpose()
-    #     u = 180.0 / np.pi * np.arccos(u)
-    #     t1 = t
-    #     prec = np.finfo(float).precision
-    #     while True:
-    #         u2 = np.cos(np.pi * np.round(u, prec) / 180.0).transpose()
-    #         t2 = np.round(t, prec)
-    #         if np.linalg.norm(t2 - t1) >= tol:
-    #             break
-    #         diffs = [np.dot(u1 - u2, c) + np.dot(u2, t2) - np.dot(u1, t1)
-    #                  for c in box.corners]
-    #         if max(diffs) >= tol:
-    #             break
-    #     return prec + 1
 
     def mcnp_words(self, pretty=False):
         name = self.name()
         if name is None:
             name = 0
-        words = ['*', f'TR{name}']
+        words = ["*", f"TR{name}"]
         words.extend(self.get_words(pretty))
         return words
 
     def get_words(self, pretty=False):
         words = []
         for v in self._t:
-            words.append(' ')
-            words.append("{:.10g}".format(v))  # TODO dvp: check if precision 13 is necessary
+            words.append(" ")
+            words.append(
+                "{:.10g}".format(v)
+            )  # TODO dvp: check if precision 13 is necessary
             # add_float(words, v, pretty)
-        for v in self._u.transpose().ravel():
-            words.append(' ')
-            words.append("{:.10g}".format(np.arccos(v) * 180 / np.pi))
-            # add_float(words, v, pretty)
+        if self._u is not IDENTITY_ROTATION:
+            for v in self._u.transpose().ravel():
+                words.append(" ")
+                words.append("{:.10g}".format(np.arccos(v) * 180 / np.pi))
         return words
 
     def __hash__(self):
@@ -291,19 +303,13 @@ class Transformation(Card,  MaybeClose):
         return Transformation(translation=t1, rotation=u1)
 
     def is_close_to(
-            self,
-            other: Any,
-            estimator: EstimatorType = tolerance_estimator()
+        self, other: Any, estimator: EstimatorType = tolerance_estimator()
     ) -> bool:
         if self is other:
             return True
         if not isinstance(other, Transformation):
             return False
-        return estimator(
-            (self._t, self._u),
-            (other._t, other._u),
-        )
+        return estimator((self._t, self._u), (other._t, other._u))
 
     def __repr__(self):
         return f"Transformation(translation={self._t}, rotation={self._u})"
-

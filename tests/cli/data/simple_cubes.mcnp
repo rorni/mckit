@@ -1,5 +1,5 @@
 testing integration scripts on simple cubic cells
-c 
+c
 c given two envelopes and fillers insert new envelop and filler intersecting
 c the original fillers
 c
@@ -44,7 +44,6 @@ c filler #2
 m1 1001.31c 1.0
 m2 2004.31c 1.0
 c
-c nps 1000  $ TODO? dvp: this doesn't work: only M, TR and MODE cards are known to the mcnp_input_parser for 19-09-07
 c sdef pos=1 1 1
 c ctme 2
 mode n

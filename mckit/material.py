@@ -7,12 +7,12 @@ from operator import xor
 import numpy as np
 from typing import Optional, NewType, Tuple, Iterable
 
-from .printer import print_card, MCNP_FORMATS
+from .printer import MCNP_FORMATS
 from .card import Card
 
-__all__ = ['AVOGADRO', 'Element', 'Composition', 'Material']
+__all__ = ["AVOGADRO", "Element", "Composition", "Material"]
 
-AVOGADRO = 6.02214085774e+23
+AVOGADRO = 6.02214085774e23
 
 _CHARGE_TO_NAME = {}
 _NAME_TO_CHARGE = {}
@@ -20,7 +20,7 @@ _NATURAL_ABUNDANCE = {}
 _ISOTOPE_MASS = {}
 _path = os.path.dirname(sys.modules[__name__].__file__)
 
-with open(_path + '/data/isotopes.dat') as f:
+with open(_path + "/data/isotopes.dat") as f:
     for line in f:
         number, name, *data = line.split()
         number = int(number)
@@ -33,12 +33,12 @@ with open(_path + '/data/isotopes.dat') as f:
             isotope = int(data[i * 3])
             _ISOTOPE_MASS[number][isotope] = float(data[i * 3 + 1])
             abun = data[i * 3 + 2]
-            if abun != '*':
+            if abun != "*":
                 _NATURAL_ABUNDANCE[number][isotope] = float(abun) / 100.0
 
 
-TFraction = NewType('TFraction', Tuple[int, float])
-TFractions = NewType('TFractions', Iterable[TFraction])
+TFraction = NewType("TFraction", Tuple[int, float])
+TFractions = NewType("TFractions", Iterable[TFraction])
 
 
 class Composition(Card):
@@ -73,8 +73,9 @@ class Composition(Card):
     natural(tolerance)
         Try to replace detailed isotope composition with natural elements.
     """
+
     # Relative composition element concentration tolerance
-    _tolerance = 1.e-3
+    _tolerance = 1.0e-3
     # The number of objects created.
     _object_count = 0
 
@@ -82,7 +83,9 @@ class Composition(Card):
     def set_tolerance(cls, value):
         """Sets new tolerance."""
         if cls._object_count > 0:
-            raise AttributeError("Composition instances already exist. Cannot set tolerance.")
+            raise AttributeError(
+                "Composition instances already exist. Cannot set tolerance."
+            )
         cls._tolerance = value
 
     @classmethod
@@ -92,10 +95,10 @@ class Composition(Card):
 
     # TODO dvp: is there specs using both atomic and weight definitions
     def __init__(
-            self,
-            atomic: Optional[TFractions] = None,
-            weight: Optional[TFractions] = None,
-            **options
+        self,
+        atomic: Optional[TFractions] = None,
+        weight: Optional[TFractions] = None,
+        **options
     ):
         Card.__init__(self, **options)
         self._composition = {}
@@ -143,7 +146,7 @@ class Composition(Card):
                     self._composition[el] = 0.0
                 self._composition[el] += frac / norm_factor
         else:
-            raise ValueError('Incorrect set of parameters.')
+            raise ValueError("Incorrect set of parameters.")
         self._hash = reduce(xor, map(hash, self._composition.keys()))
         self._object_count += 1
 
@@ -165,15 +168,17 @@ class Composition(Card):
         return True
 
     def __hash__(self):
-        return reduce(xor, map(hash, self._composition.keys()))   # TODO dvp: why self._hash is not used
+        return reduce(
+            xor, map(hash, self._composition.keys())
+        )  # TODO dvp: why self._hash is not used
 
     def mcnp_words(self, pretty=False):
-        words = ['M{0} '.format(self.name())]
+        words = ["M{0} ".format(self.name())]
         for elem, frac in self._composition.items():
             words.append(elem.mcnp_repr())
-            words.append('  ')
-            words.append(MCNP_FORMATS['material_fraction'].format(frac))
-            words.append('\n')
+            words.append("  ")
+            words.append(MCNP_FORMATS["material_fraction"].format(frac))
+            words.append("\n")
         return words
 
     def __getitem__(self, key):
@@ -265,7 +270,7 @@ class Composition(Card):
         else:
             return Composition(atomic=composition.items(), **self.options)
 
-    def natural(self, tolerance=1.e-8):
+    def natural(self, tolerance=1.0e-8):
         """Tries to replace detailed isotope composition by natural elements.
 
         Modifies current object.
@@ -304,7 +309,11 @@ class Composition(Card):
             tot_frac = sum(isotopes.values())
             for a, frac in isotopes.items():
                 ifrac = frac / tot_frac
-                delta = 2 * abs(ifrac - _NATURAL_ABUNDANCE[q][a]) / (ifrac + _NATURAL_ABUNDANCE[q][a])
+                delta = (
+                    2
+                    * abs(ifrac - _NATURAL_ABUNDANCE[q][a])
+                    / (ifrac + _NATURAL_ABUNDANCE[q][a])
+                )
                 if delta > tolerance:
                     return None
             elem = Element(q * 1000)
@@ -387,8 +396,9 @@ class Material:
     __getitem__(key)
         Gets specific option.
     """
+
     # Relative density tolerance. Relative difference in densities when materials
-    _tolerance = 1.e-3
+    _tolerance = 1.0e-3
     # The number of created Material instances.
     _object_count = 0
 
@@ -396,7 +406,9 @@ class Material:
     def set_tolerance(cls, value):
         """Sets new tolerance."""
         if cls._object_count > 0:
-            raise AttributeError("Material instances already exist. Cannot set tolerance.")
+            raise AttributeError(
+                "Material instances already exist. Cannot set tolerance."
+            )
         cls._tolerance = value
 
     @classmethod
@@ -405,13 +417,13 @@ class Material:
         return cls._tolerance
 
     def __init__(
-            self,
-            atomic: Optional[TFractions] = None,
-            weight: Optional[TFractions] = None,
-            composition: Optional[Composition] = None,
-            density: Optional[float] = None,
-            concentration: Optional[float] = None,
-            **options
+        self,
+        atomic: Optional[TFractions] = None,
+        weight: Optional[TFractions] = None,
+        composition: Optional[Composition] = None,
+        density: Optional[float] = None,
+        concentration: Optional[float] = None,
+        **options
     ):
         # Attributes: _n - atomic density (concentration)
         if isinstance(composition, Composition) and not atomic and not weight:
@@ -478,7 +490,7 @@ class Material:
         factor : float
             By this factor density of material will be multiplied. If factor
             is specified, then its value will be used.
-            
+
         Returns
         -------
         new_mat : Material
@@ -486,10 +498,14 @@ class Material:
         """
         if factor is None:
             factor = old_vol / new_vol
-        return Material(composition=self._composition, concentration=self._n * factor, **self._options)
+        return Material(
+            composition=self._composition,
+            concentration=self._n * factor,
+            **self._options
+        )
 
     @staticmethod
-    def mixture(*materials, fraction_type='weight'):
+    def mixture(*materials, fraction_type="weight"):
         """Creates new material as a mixture of others.
 
         Volume fractions are not needed to be normalized, but normalization has effect.
@@ -516,18 +532,18 @@ class Material:
             New material.
         """
         if not materials:
-            raise ValueError('At least one material must be specified.')
-        if fraction_type == 'weight':
+            raise ValueError("At least one material must be specified.")
+        if fraction_type == "weight":
             fun = lambda m, f: f / m.molar_mass
             norm = sum(fun(m, f) / m.concentration for m, f in materials)
-        elif fraction_type == 'volume':
+        elif fraction_type == "volume":
             fun = lambda m, f: f * m.concentration
             norm = 1
-        elif fraction_type == 'atomic':
+        elif fraction_type == "atomic":
             fun = lambda m, f: f
             norm = sum(fun(m, f) / m.concentration for m, f in materials)
         else:
-            raise ValueError('Unknown fraction type')
+            raise ValueError("Unknown fraction type")
         factor = sum([fun(m, f) for m, f in materials])
         compositions = [(m.composition, fun(m, f) / factor) for m, f in materials]
         new_comp = Composition.mixture(*compositions)
@@ -573,6 +589,7 @@ class Element:
     mcnp_repr()
         Gets MCNP representation of the element.
     """
+
     def __init__(self, name, lib=None, isomer=0, comment=None):
         if isinstance(name, int):
             self._charge = name // 1000
@@ -610,8 +627,11 @@ class Element:
         return self._charge * (self._mass_number + 1) * (self._isomer + 1)
 
     def __eq__(self, other):
-        if self._charge == other.charge and self._mass_number == \
-                other.mass_number and self._isomer == other._isomer:
+        if (
+            self._charge == other.charge
+            and self._mass_number == other.mass_number
+            and self._isomer == other._isomer
+        ):
             return True
         else:
             return False
@@ -619,9 +639,9 @@ class Element:
     def __str__(self):
         name = _CHARGE_TO_NAME[self.charge].capitalize()
         if self._mass_number > 0:
-            name += '-' + str(self._mass_number)
+            name += "-" + str(self._mass_number)
             if self._isomer > 0:
-                name += 'm'
+                name += "m"
             if self._isomer > 1:
                 name += str(self._isomer - 1)
         return name
@@ -630,7 +650,7 @@ class Element:
         """Gets MCNP representation of the element."""
         name = str(self.charge * 1000 + self.mass_number)
         if self.lib is not None:
-            name += '.{0}'.format(self.lib)
+            name += ".{0}".format(self.lib)
         return name
 
     def fispact_repr(self):
@@ -639,7 +659,7 @@ class Element:
         if self._mass_number > 0:
             name += str(self._mass_number)
             if self._isomer > 0:
-                name += 'm'
+                name += "m"
             if self._isomer > 1:
                 name += str(self._isomer - 1)
         return name
@@ -679,11 +699,14 @@ class Element:
             Keys - elements - Element instances, values - atomic fractions.
         """
         result = {}
-        if self._mass_number > 0 and self._mass_number in _NATURAL_ABUNDANCE[self._charge].keys():
+        if (
+            self._mass_number > 0
+            and self._mass_number in _NATURAL_ABUNDANCE[self._charge].keys()
+        ):
             result[self] = 1.0
         elif self._mass_number == 0:
             for at_num, frac in _NATURAL_ABUNDANCE[self._charge].items():
-                elem_name = '{0:d}{1:03d}'.format(self._charge, at_num)
+                elem_name = "{0:d}{1:03d}".format(self._charge, at_num)
                 result[Element(elem_name, lib=self._lib)] = frac
         return result
 
@@ -696,7 +719,6 @@ class Element:
             if l.isdigit():
                 break
         else:
-            return name, '0'
-        q = name[:i-1] if name[i-1] == '-' else name[:i]
+            return name, "0"
+        q = name[: i - 1] if name[i - 1] == "-" else name[:i]
         return q, name[i:]
-

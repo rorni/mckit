@@ -4,42 +4,35 @@
 Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации.
 
 """
-import numpy as np
-from pathlib import Path
 from functools import reduce
+from pathlib import Path
+from typing import Dict, Optional
+
+import numpy as np
 import tomlkit as tk
+from mckit.utils.logging import logger
+from tomlkit import items as tk_items
+
 import mckit as mk
 from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 from .common import save_mcnp
+from mckit import Transformation
 from mckit.utils import filter_dict
 
 
 def compose(output, fill_descriptor_path, source, override):
+    logger.info("Loading model from {s}", s=source)
     parse_result: ParseResult = from_file(source)
     envelopes = parse_result.universe
     source = Path(source)
     universes_dir = source.absolute().parent
     assert universes_dir.is_dir()
-
+    logger.info("Loading fill-descriptor from {f}", f=fill_descriptor_path)
     with fill_descriptor_path.open() as fid:
         fill_descriptor = tk.parse(fid.read())
 
-    universes = {}
-
-    for k, v in fill_descriptor.items():
-        if isinstance(v, dict) and 'universe' in v:
-            cell_name = int(k)
-            universe_name = int(v['universe'])
-            transformation = v.get('transform', None)
-            universe_path = Path(v['file'])
-            if not universe_path.exists():
-                universe_path = universes_dir / universe_path
-                if not universe_path.exists():
-                    raise FileNotFoundError(universe_path)
-            parse_result: ParseResult = from_file(universe_path)
-            universe: mk.Universe = parse_result.universe
-            universe.rename(name=universe_name)
-            universes[cell_name] = (universe, transformation)
+    universes = load_universes(fill_descriptor, universes_dir)
+    named_transformations = load_named_transformations(fill_descriptor)
 
     comps = {}
 
@@ -59,20 +52,76 @@ def compose(output, fill_descriptor_path, source, override):
         cell.options = filter_dict(cell.options, "original")
         cell.options["FILL"] = {"universe": universe}
         if transformation is not None:
-            if isinstance(transformation, tk.array):
-                transformation = np.fromiter(map(float, iter(transformation)), dtype=np.double)
-                transformation = mk.Transformation(
-                    translation=transformation[:3],
-                    rotation=transformation[3:],
-                    indegrees=True,
+            if isinstance(transformation, tk_items.Array):
+                transformation1 = np.fromiter(
+                    map(float, iter(transformation)), dtype=np.double
                 )
-                cell.options["FILL"]["transform"] = transformation
+                try:
+                    translation = transformation1[:3]
+                    if len(transformation1) > 3:
+                        rotation = transformation1[3:]
+                    else:
+                        rotation = None
+                    transformation2 = mk.Transformation(
+                        translation=translation,
+                        rotation=rotation,
+                        indegrees=True,  # Assuming that on decompose we store a transformation in degrees as well
+                    )
+                except ValueError as ex:
+                    raise ValueError(
+                        f"Failed to process FILL transformation in cell #{cell.name()} of universe #{universe.name()}"
+                    ) from ex
+                cell.options["FILL"]["transform"] = transformation2
+            elif isinstance(transformation, tk_items.Integer):
+                assert (
+                    named_transformations is not None
+                ), "There are no named transformations in the fill descriptor file"
+                transformation1 = named_transformations[int(transformation)]
+                cell.options["FILL"]["transform"] = transformation1
             else:
-                # TODO dvp: use parse results to implement this: there's an index of transformations
                 raise NotImplementedError(
-                    """\
-                    Specification of fill with a universe with a named transformation "fill=<...> ( number )" occurs. \
-                    Only anonymous transformations are implemented.\
-                    """
+                    f"Unexpected type of transformation parameter {type(transformation)}"
                 )
     save_mcnp(envelopes, output, override)
+
+
+def load_universes(fill_descriptor, universes_dir):
+    universes = {}
+    for k, v in fill_descriptor.items():
+        if isinstance(v, dict) and "universe" in v:
+            cell_name = int(k)
+            universe_name = int(v["universe"])
+            transformation = v.get("transform", None)
+            universe_path = Path(v["file"])
+            if not universe_path.exists():
+                universe_path = universes_dir / universe_path
+                if not universe_path.exists():
+                    raise FileNotFoundError(universe_path)
+            logger.info("Loading file {u}", u=universe_path)
+            parse_result: ParseResult = from_file(universe_path)
+            universe: mk.Universe = parse_result.universe
+            universe.rename(name=universe_name)
+            universes[cell_name] = (universe, transformation)
+    return universes
+
+
+def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transformation]]:
+    transformations = fill_descriptor.get("named_transformations", None)
+    if transformations:
+        named_transformations = {}
+        for k, v in transformations.items():
+            name = int(k[2:])
+            transform_params = np.fromiter(map(float, v), dtype=np.float)
+            translation = transform_params[:3]
+            if transform_params.size == 9:
+                rotation = transform_params[3:]
+            else:
+                rotation = None
+            # noinspection PyTypeChecker
+            transform = Transformation(
+                translation=translation, rotation=rotation, indegrees=True, name=name
+            )
+            named_transformations[name] = transform
+        return named_transformations
+    else:
+        return None

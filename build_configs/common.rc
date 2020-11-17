@@ -1,22 +1,28 @@
-function make_path() {
-    first="yes"
+
+#
+# Joins words separated with a given separator (first argument).
+#
+function make_list() {
+    local first="yes"
     t=""
+    local separator=$1
+    shift
     for p in $*
     do
-        # echo "#1: p=$p" >> build_utils.test.log
-        array=($(echo ${p//:/ }))
-        for pp in "${array[@]}"
-        do
-            # echo "#2: pp=$pp" >> build_utils.test.log
-            if [[ "$t" != "$pp" ]]         && \
-                [[ "$t" == "${t#${pp}:}" ]] && \
-                [[ "$t" == "${t%:${pp}}" ]] && \
-                [[ "$t" == "${t/:${pp}:}" ]];  then
+            # echo "#1: p=$p" >> build_utils.test.log
+            array=($(echo ${p//:/ }))
+            for pp in "${array[@]}"
+            do
+                # echo "#2: pp=$pp" >> build_utils.test.log
+                if [[ "$t" != "$pp" ]]         && \
+                    [[ "$t" == "${t#${pp}$separator}" ]] && \
+                    [[ "$t" == "${t%$separator${pp}}" ]] && \
+                    [[ "$t" == "${t/$separator${pp}$separator}" ]];  then
                 #  pp is not present in t
                 if [[ $first == "yes" ]]; then
                     first="no"
                 else
-                    t="${t}:"
+                    t="$t$separator"
                 fi
                 t="${t}${pp}"
                 # echo "#3: t=$t" >> build_utils.test.log
@@ -26,9 +32,27 @@ function make_path() {
     echo "$t"
 }
 
+
+#
+# Joins words separated with path separator.
+#
+function make_path() {
+    make_list ":" $*
+}
+
+
+#
+# Joins words separated with space.
+#
+function make_flags() {
+    make_list " " $*
+}
+
+
 function get_absolute_path_name() {
     echo $(readlink -m "$1")
 }
+
 
 function check_dirs() {
     for d in $*
@@ -41,30 +65,33 @@ function check_dirs() {
     return 0
 }
 
-function build_printenv() {
-    echo "EXT_ROOT=$EXT_ROOT"
-    echo "CPATH=$CPATH"
-    echo "C_INCLUDE_PATH=$C_INCLUDE_PATH"
-    echo "CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH"
-    echo "OBJC_INCLUDE_PATH=$OBJC_INCLUDE_PATH"
-    echo "INCLUDE_PATH=$INCLUDE_PATH"
-    echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-    echo "LIBRARY_PATH=$LIBRARY_PATH"
-    echo "PATH=$PATH"
-    echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-    echo "CC=$CC"
-    echo "CXX=$CXX"
-    echo "OBJC=$OBJC"
-    echo "F77=$F77"
-    echo "FC=$FC"
-    echo "TOOLSET=$TOOLSET"
-    echo "TOOLSET_VERSION=$TOOLSET_VERSION"
-    echo "TMPDIR=$TMPDIR"
-    echo "GCC_EXEC_PREFIX=$GCC_EXEC_PREFIX"
-    echo "COMPILER_PATH=$COMPILER_PATH"
-    echo "C_FLAGS=$C_FLAGS"
-    echo "CXX_FLAGS=$CXX_FLAGS"
+
+function filter_printenv() {
+    local what=$*
+    if [[ -z "$what" ]]; then
+        what="$(make_list '|^' \
+            pyenv \
+            poetry \
+            mkl \
+            mckit \
+        )"
+    fi
+    local exclude="$(make_list '|^' \
+        python \
+        old_path \
+        pwd \
+        oldpwd \
+        original_path \
+    )"
+    # echo "include: $what"
+    # echo "exclude: $exclude"
+    (
+        echo "INCLUDE_PATH=$INCLUDE_PATH"
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+        printenv | grep -i -E "$what" | grep -i -v -E "$exclude"
+    ) | sort -u
 }
+
 
 #
 # Creates a given directory (if needed) and changes to it.
@@ -72,3 +99,23 @@ function build_printenv() {
 function mdcd() {
     mkdir -p "$1"  && cd "$1"
 }
+
+
+function show_python_versions() {
+    pyenv install --list | grep -E "^\s*3\.[6789].*"
+}
+
+
+python_prefix(){
+    echo "$(poetry env info --path)"
+}
+
+
+which_python() {
+    echo "$(poetry run which python)"
+}
+
+export PYTHON_ROOT=$(python_prefix)
+export PYTHON="${PYTHON_PREFIX}/bin/python"
+
+# vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai

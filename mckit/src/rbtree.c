@@ -63,7 +63,7 @@ static RBNode ** node_find(const RBTree * rbt, const void * key, RBNode ** paren
     return node;
 }
 
-RBTree * rbtree_create(int (*compare)(const void *, const void *)) 
+RBTree * rbtree_create(int (*compare)(const void *, const void *))
 {
     RBTree * rbt = (RBTree *) malloc(sizeof(RBTree));
     if (rbt != NULL) {
@@ -72,14 +72,14 @@ RBTree * rbtree_create(int (*compare)(const void *, const void *))
         rbt->compare = compare;
     }
     return rbt;
-} 
+}
 
-void rbtree_free(RBTree * rbt) 
+void rbtree_free(RBTree * rbt)
 {
     if (rbt != NULL) {
         if (rbt->root != NULL) node_free(rbt->root);
         free(rbt);
-    }    
+    }
 }
 
 const void * rbtree_get(const RBTree * rbt, const void * key)
@@ -90,24 +90,24 @@ const void * rbtree_get(const RBTree * rbt, const void * key)
     else return NULL;
 }
 
-int rbtree_add(RBTree * rbt, const void * key) 
+int rbtree_add(RBTree * rbt, const void * key)
 {
     RBNode * parent;
     RBNode ** node = node_find(rbt, key, &parent);
     if (*node != NULL) return RBT_KEY_ALREADY_EXISTS;
-    
+
     // New node creation
     *node = (RBNode *) malloc(sizeof(RBNode));
     if (*node == NULL) return RBT_NO_MEMORY;
     node_init(*node, parent, key);
-    
-    if (parent != NULL) {     
+
+    if (parent != NULL) {
         RBNode * blnc = node_add_balance(parent);
         if (blnc != NULL) rbt->root = blnc;
     }
-    
+
     rbt->len++;
-    
+
     return RBT_OK;
 }
 
@@ -117,19 +117,19 @@ void * rbtree_pop(RBTree * rbt, const void * key)
     RBNode *parent, *node;
     if (key == NULL) node = rbt->root;
     else node = *node_find(rbt, key, &parent);
-    
+
     if (node == NULL) return NULL;
-    
+
     // find successor for element being deleted.
     RBNode * rmin = delete_rmin (node, &rbt->root);
     //printf("successor for deletion %d\n", *((int *) rmin->key));
 	if (rmin == NULL) { // if there is no successor, remove element itself.
         RBNode * r = node_del_balance (node);
 	    if (r != NULL)  rbt->root = r;
-	   
+
 	    RBNode * p = node->parent;
 	    if (p == NULL)  rbt->root = NULL; // if element being deleted is root.
-	    else if (p->left == node)  p->left = NULL; // otherwise delete element 
+	    else if (p->left == node)  p->left = NULL; // otherwise delete element
 	    else p->right = NULL;         // from successor parent's children list.
 
 	} else {                     // if the successor exists,
@@ -150,7 +150,7 @@ void * rbtree_pop(RBTree * rbt, const void * key)
     return result;
 }
 
-static size_t fill_node(const RBNode * node, void * array[], size_t index) 
+static size_t fill_node(const RBNode * node, void * array[], size_t index)
 {
     if (node->left != NULL) index = fill_node(node->left, array, index);
     array[index++] = (void*) node->key;
@@ -168,7 +168,7 @@ void * rbtree_to_array(const RBTree * rbt)
     return result;
 }
 
-static void node_init(RBNode * node, RBNode * parent, const void * key) 
+static void node_init(RBNode * node, RBNode * parent, const void * key)
 {
     node->color = RED;
     node->left = NULL;
@@ -200,28 +200,28 @@ static RBNode * node_min(RBNode * node)
  */
 static RBNode * delete_rmin (RBNode *lv, RBNode **root)
 {
-    // Successor is the smallest element in the right branch or the 
+    // Successor is the smallest element in the right branch or the
     // greatest element in the left branch. So if lv->right is not
     // NULL, we will search for smallest element in this branch.
     // Otherwise only one left element can exist and it can be the
     // successor.
     RBNode * rmin = (lv->right != NULL) ? lv->right : lv->left;
     if (rmin == NULL) return NULL;
-    
+
     // If lv->right is NULL then lv->left->left can be only NULL.
     // So in that case this loop won't run.
-    while (rmin->left != NULL)  rmin = rmin->left; 
-    
+    while (rmin->left != NULL)  rmin = rmin->left;
+
     if (rmin != NULL) { // If the successor exists
                         // balance the tree.
         RBNode * r = node_del_balance (rmin);
         if (r != NULL)  *root = r;
-         
+
         // Then delete successor leave rmin from its parent's children list.
         RBNode * p = rmin->parent;
         if (p->left == rmin)  p->left = NULL;
         else p->right = NULL;
-    } 
+    }
     return rmin;
 }
 
@@ -253,7 +253,7 @@ static RBNode * delete_rmin (RBNode *lv, RBNode **root)
  *
  * 5) Otherwise nothing left to do. Remained part is already balanced.
  */
-static RBNode * node_add_balance (RBNode *lv) 
+static RBNode * node_add_balance (RBNode *lv)
 {
     while (1) {
         if (is_red(lv->left) && is_red (lv->right)) {
@@ -275,7 +275,7 @@ static RBNode * node_add_balance (RBNode *lv)
 }
 
 /* Fixes balance of the tree after leave deletion.
- * 
+ *
  * Returns pointer to the new root struct or NULL if root remains unchanged.
  *
  * 1)     p                             p     if rl is RED           p
@@ -283,7 +283,7 @@ static RBNode * node_add_balance (RBNode *lv)
  *    *-> lv==r     ============>   lv==r <-* ============>  lv==rl==r
  *       /   / \                   / \   \                  / \   \   \
  *      l   rl  rr                l  rl  rr                l          rr
- *   
+ *
  * 2)         p                         p
  *            |      rotate_right       |
  *     ll==l==lv <-* ============>      l  <-*
@@ -301,7 +301,7 @@ static RBNode * node_add_balance (RBNode *lv)
  *      /    \      =======>   //   \
  *    bro    lv <-*           bro   lv
  */
-static RBNode * node_del_balance (RBNode *lv) 
+static RBNode * node_del_balance (RBNode *lv)
 {
     while (1) {
         if (is_red (lv->right)) {
@@ -329,7 +329,7 @@ static RBNode * node_del_balance (RBNode *lv)
 }
 
 /* Makes brother of lv to be red.
- * 
+ *
  * Returns pointer to lv's parent.
  *
  *        parent           a==parent  <-*
@@ -337,12 +337,12 @@ static RBNode * node_del_balance (RBNode *lv)
  *       a     lv <-*              lv
  *
  *        parent           *-> parent==a
- *        /    \      =>       /  
+ *        /    \      =>       /
  *   *-> lv     a             lv
  *
- *          |                       |                           |      
+ *          |                       |                           |
  *    a===parent    rotate_right    a===parent   make_bro_red   a===parent <-*
- *   / \       \    ============>  /    /    \   ===========>  /    //   \ 
+ *   / \       \    ============>  /    /    \   ===========>  /    //   \
  *  al ar      lv <-*             al   ar    lv <-*           al    ar   lv
  */
 static RBNode * make_bro_red (RBNode *lv)
@@ -370,18 +370,18 @@ static RBNode * make_bro_red (RBNode *lv)
  */
 static RBNode * rotate_left (RBNode *a)
 {
-    RBNode * b = a->right; // always there is such member. This function 
+    RBNode * b = a->right; // always there is such member. This function
                             // can be called only in such case. b is not NULL!
     RBNode * bl = b->left;
     RBNode * ap = a->parent; // This can be NULL if a is root.
-       
+
     a->right = bl;
     if (bl != NULL)  bl->parent = a;
-    
+
     b->left = a;
     a->parent = b;
     b->parent = ap;
-    
+
     int c = a->color;
     a->color = b->color;
     b->color = c;
@@ -412,7 +412,7 @@ static RBNode * rotate_right (RBNode *b)
 
     b->left = ar;
     if (ar != NULL)  ar->parent = b;
-    
+
     a->right = b;
     b->parent = a;
     a->parent = bp;
@@ -420,7 +420,7 @@ static RBNode * rotate_right (RBNode *b)
     int c = a->color;
     a->color = b->color;
     b->color = c;
-   
+
     if (bp != NULL) {
         if (bp->left == b)  bp->left = a;
         else                bp->right = a;
@@ -434,17 +434,17 @@ static RBNode * rotate_right (RBNode *b)
  *           |           =>         ||      <- this link is then rotated
  *    left===nd===right             nd         if necesary.
  *                                 /  \
- *                             left    right       
+ *                             left    right
  */
-static RBNode * flip_colors (RBNode * node) 
+static RBNode * flip_colors (RBNode * node)
 {
-    node->color = RED; 
-    node->left->color = BLACK; 
+    node->color = RED;
+    node->left->color = BLACK;
     node->right->color = BLACK;
     return node;
 }
 
-static void node_free(RBNode * node) 
+static void node_free(RBNode * node)
 {
     if (node->left != NULL) node_free(node->left);
     if (node->right != NULL) node_free(node->right);

@@ -21,14 +21,17 @@ class DerivedLexer(LexerBase):
     def INTEGER(self, token):
         return self.on_float(token)
 
-    ZERO = r'0'
+    ZERO = r"0"
 
 
-@pytest.mark.parametrize("text, expected_types, expected_values", [
-    ("1 0 3.14", ['INTEGER', 'ZERO', 'FLOAT'], [1, 0, 3.14]),
-    ("3.14 3.14c", ['FLOAT', 'FRACTION'], [3.14, '3.14c']),
-    ("1 0 1e-4", ['INTEGER', 'ZERO', 'FLOAT'], [1, 0, 1e-4]),
-])
+@pytest.mark.parametrize(
+    "text, expected_types, expected_values",
+    [
+        ("1 0 3.14", ["INTEGER", "ZERO", "FLOAT"], [1, 0, 3.14]),
+        ("3.14 3.14c", ["FLOAT", "FRACTION"], [3.14, "3.14c"]),
+        ("1 0 1e-4", ["INTEGER", "ZERO", "FLOAT"], [1, 0, 1e-4]),
+    ],
+)
 def test_derived_lexer(text, expected_types, expected_values):
     lexer = DerivedLexer()
     tokens = list(lexer.tokenize(text))
@@ -38,13 +41,16 @@ def test_derived_lexer(text, expected_types, expected_values):
     assert result == expected_values
 
 
-@pytest.mark.parametrize("text, msg_contains", [
-    ("1~ 0 3.14", "column 2"),
-    ("\n1 0 3.14 ~", "at line 2, column 10"),
-    ("\n1 0 3.14 ~", r"\s{9}\^"),
-    ("\n1 0 3.14 0~", r"\s{10}\^"),
-    ("~", "column 1\n~\n\\^"),
-])
+@pytest.mark.parametrize(
+    "text, msg_contains",
+    [
+        ("1~ 0 3.14", "column 2"),
+        ("\n1 0 3.14 ~", "at line 2, column 10"),
+        ("\n1 0 3.14 ~", r"\s{9}\^"),
+        ("\n1 0 3.14 0~", r"\s{10}\^"),
+        ("~", "column 1\n~\n\\^"),
+    ],
+)
 def test_bad_path(text, msg_contains):
     lexer = DerivedLexer()
     with pytest.raises(LexError, match=msg_contains):
@@ -54,13 +60,13 @@ def test_bad_path(text, msg_contains):
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences
 class MyLexer(LexerBase):
-    literals = {':', '(', ')'}
-    ignore = ' \t'
+    literals = {":", "(", ")"}
+    ignore = " \t"
     reflags = re.IGNORECASE | re.MULTILINE
 
     tokens = {NAME, FLOAT, INTEGER, ZERO}
 
-    NAME = r'\d?[A-Za-z-]+'
+    NAME = r"\d?[A-Za-z-]+"
 
     @_(cmn.FLOAT)
     def FLOAT(self, token):
@@ -70,13 +76,16 @@ class MyLexer(LexerBase):
     def INTEGER(self, token):
         return self.on_integer(token)
 
-    ZERO = r'0'
+    ZERO = r"0"
 
 
-@pytest.mark.parametrize("text, expected_types, expected_values", [
-    ("AAA 1 0 3.14", ['NAME', 'INTEGER', 'ZERO', 'FLOAT'], ['AAA', 1, 0, 3.14]),
-    ("1B 1 0 3.14", ['NAME', 'INTEGER', 'ZERO', 'FLOAT'], ['1B', 1, 0, 3.14]),
-])
+@pytest.mark.parametrize(
+    "text, expected_types, expected_values",
+    [
+        ("AAA 1 0 3.14", ["NAME", "INTEGER", "ZERO", "FLOAT"], ["AAA", 1, 0, 3.14]),
+        ("1B 1 0 3.14", ["NAME", "INTEGER", "ZERO", "FLOAT"], ["1B", 1, 0, 3.14]),
+    ],
+)
 def test_good_path(text, expected_types, expected_values):
     lexer = MyLexer()
     tokens = list(lexer.tokenize(text))
@@ -113,10 +122,10 @@ class MyParser(sly.Parser):
         return [p.FLOAT]
 
 
-@pytest.mark.parametrize("text, expected", [
-    ("AAA 1 1.2 3.4", ("AAA", 1, [1.2, 3.4])),
-    ("A-Z 0", ("A-Z", 0, None)),
-])
+@pytest.mark.parametrize(
+    "text, expected",
+    [("AAA 1 1.2 3.4", ("AAA", 1, [1.2, 3.4])), ("A-Z 0", ("A-Z", 0, None))],
+)
 def test_parser_with_derived_lexer(text, expected):
     lexer = MyLexer()
     parser = MyParser()
@@ -124,5 +133,5 @@ def test_parser_with_derived_lexer(text, expected):
     assert actual == expected
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main()

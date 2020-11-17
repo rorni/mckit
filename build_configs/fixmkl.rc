@@ -1,0 +1,28 @@
+export MKL_ROOT="$(poetry env info --path)"
+if [[ -z MKL_ROOT ]]; then
+    echo "Cannot locate MKL"
+else
+    export LD_LIBRARY_PATH="$(make_path \
+        ${MKL_ROOT}/lib \
+        $HOME/.local/lib \
+        /usr/local/lib:usr/lib \
+        $LD_LIBRARY_PATH \
+    )"
+    export INCLUDE_PATH="$(make_path \
+        ${MKL_ROOT}/include\
+        /usr/local/include \
+        $INCLUDE_PATH \
+    )"
+    if [[ -f "${MKL_ROOT}/lib/libmkl_def.so" ]]; then
+        export LD_PRELOAD=${MKL_ROOT}/lib/libmkl_def.so:${MKL_ROOT}/lib/libmkl_avx.so:${MKL_ROOT}/lib/libmkl_core.so:${MKL_ROOT}/lib/libmkl_intel_lp64.so:${MKL_ROOT}/lib/libmkl_intel_thread.so:${MKL_ROOT}/lib/libiomp5.so
+    else
+        echo "WARNING: MKL files not found in $MKL_ROOT"
+        echo "\nReset environment after installing MKL:"
+        echo ""
+        echo "   poetry add mkl-devel"
+        echo "   poetry install"
+        echo "   . ./setenv.rc reset"
+        echo ""
+    fi
+fi
+# vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai :

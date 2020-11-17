@@ -9,15 +9,13 @@ from mckit.parser.common.utils import drop_c_comments, extract_comments
 class Lexer(LexerBase):
     tokens = {NAME, FLOAT, INTEGER}
 
-    NAME = r'\s{0,5}\*?tr\d+'
-    FLOAT = cmn.FLOAT
-    INTEGER = cmn.INTEGER
+    NAME = r"\s{0,5}\*?tr\d+"
 
-    @_(r'\s{0,5}\*?tr\d+')
+    @_(r"\s{0,5}\*?tr\d+")
     def NAME(self, t):
         if t.value[0].isspace():
             t.value = t.value.lstrip()
-        if t.value[0] == '*':
+        if t.value[0] == "*":
             in_degrees = True
             name = int(t.value[3:])
         else:
@@ -39,7 +37,7 @@ class Lexer(LexerBase):
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
-    @_('NAME transform_params')
+    @_("NAME transform_params")
     def transformation(self, p):
         name, in_degrees = p.NAME
         translation, rotation, inverted = p.transform_params
@@ -51,36 +49,41 @@ class Parser(sly.Parser):
             name=name,
         )
 
-    @_('translation rotation INTEGER')
+    @_("translation rotation")
     def transform_params(self, p):
-        return p.translation, p.rotation, True
+        rotation, inverted = p.rotation
+        return p.translation, rotation, inverted
 
-    @_('translation rotation')
-    def transform_params(self, p):
-        return p.translation, p.rotation, False
-
-    @_('translation')
+    @_("translation")
     def transform_params(self, p):
         return p.translation, None, False
 
-    @_('float float float')
+    @_("float float float")
     def translation(self, p):
         return [f for f in p]
 
+    # TODO dvp: check what to do, if transformation is specified with default values using the MCNP J shortcuts?
+
+    @_("float float float float float float float float float INTEGER")
+    def rotation(self, p):
+        m = p[9]
+        assert m == -1 or m == 1, f"Invalid M option value {m}"
+        return [f for f in p][:-1], m == -1
+
     @_(
-        'float float float float float float float float float',
-        'float float float float float float',
-        'float float float float float',
-        'float float float',
+        "float float float float float float float float float",
+        "float float float float float float",
+        "float float float float float",
+        "float float float",
     )
     def rotation(self, p):
-        return [f for f in p]
+        return [f for f in p], False
 
-    @_('FLOAT')
+    @_("FLOAT")
     def float(self, p):
         return p.FLOAT
 
-    @_('INTEGER')
+    @_("INTEGER")
     def float(self, p):
         return float(p.INTEGER)
 
@@ -92,5 +95,5 @@ def parse(text: str) -> Transformation:
     parser = Parser()
     result: Transformation = parser.parse(lexer.tokenize(text))
     if trailing_comments:
-        result.options['comment'] = trailing_comments
+        result.options["comment"] = trailing_comments
     return result

@@ -1,10 +1,8 @@
 from typing import Any, Dict
 from copy import deepcopy
-import os
 import functools
 import itertools
 import collections
-from pathlib import Path
 import numpy as np
 from numpy import ndarray
 from ..constants import FLOAT_TOLERANCE
@@ -91,7 +89,9 @@ def get_decades(value):
     # return decades
 
     if value != 0:
-        decpow = np.log10(abs(value))  # TODO dvp: log10 will be called billion times on C-model
+        decpow = np.log10(
+            abs(value)
+        )  # TODO dvp: log10 will be called billion times on C-model
     else:
         decpow = 0
     decades = np.trunc(decpow)
@@ -101,12 +101,9 @@ def get_decades(value):
 
 
 def significant_array(
-        array: ndarray,
-        reltol: float = FLOAT_TOLERANCE,
-        resolution: float = None,
+    array: ndarray, reltol: float = FLOAT_TOLERANCE, resolution: float = None
 ) -> ndarray:
-    """The minimum number of significant digits to provide the desired relative and absolute tolerances.
-    """
+    """The minimum number of significant digits to provide the desired relative and absolute tolerances."""
     result = np.empty_like(array, dtype=int)
     for index in zip(*map(np.ravel, np.indices(array.shape))):
         result[index] = significant_digits(array[index], reltol, resolution)
@@ -211,10 +208,7 @@ def _(where: collections.abc.Container, x) -> bool:
     return x in where
 
 
-def filter_dict(
-        a: Dict[Any, Any],
-        *drop_items,
-) -> Dict[Any, Any]:
+def filter_dict(a: Dict[Any, Any], *drop_items) -> Dict[Any, Any]:
     res = {}
     for k, v in a.items():
         # if drop_items is None or not check_if_is_in(k, *drop_items):
@@ -261,7 +255,6 @@ def make_hash(*items) -> int:
     return hash(make_hashable(items[0]))
 
 
-
 # def make_hash(*items) -> int:
 #     """
 #     Makes a hash from a dictionary, list, tuple or set to any level, that contains
@@ -289,26 +282,12 @@ def make_hash(*items) -> int:
 #         raise NotImplementedError(f"Correct the logic of make_hash() method for the type {cls}")
 
 
-def assert_all_paths_exist(*paths):
-    def apply(p: Path):
-        assert p.exists(), "Path \"{}\" doesn't exist".format(p)
-
-    map(apply, paths)
-
-
-def make_dirs(*dirs):
-    def apply(d: Path):
-        d.mkdir(parents=True, exist_ok=True)
-
-    map(apply, dirs)
-
-
-def get_root_dir(environment_variable_name, default):
-    return Path(os.getenv(environment_variable_name, default)).expanduser()
-
-
 def is_sorted(a: np.ndarray) -> bool:
     return np.all(np.diff(a) > 0)
+
+
+def mids(a: np.ndarray) -> np.ndarray:
+    return 0.5 * (a[1:] + a[:-1])
 
 
 def prettify_float(x: float, fmt="{:.13g}") -> str:

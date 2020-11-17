@@ -1,62 +1,41 @@
-import logging
+from enum import IntEnum
 import re
 import sys
 from typing import Iterable, List, Optional, Generator, TextIO, Tuple
-from enum import IntEnum
+
 from attr import attrs, attrib
 
-
-LOG = logging.getLogger(__name__)
-
-
-BLANK_LINE_PATTERN = re.compile(
-    r'\n\s*\n',
-    flags=re.MULTILINE,
-)
-
-COMMENT_LINE_PATTERN = re.compile(
-    r'^\s{,5}[cC]( .*)?\s*$'
-)
-
+BLANK_LINE_PATTERN = re.compile(r"\n\s*\n", flags=re.MULTILINE)
+COMMENT_LINE_PATTERN = re.compile(r"^\s{,5}[cC]( .*)?\s*$")
 # pattern to remove comments from a card text
 REMOVE_COMMENT_PATTERN = re.compile(
-    r'(\s*\$.*$)|(^\s{0,5}c\s.*\n?)',
-    flags=re.MULTILINE | re.IGNORECASE
+    r"(\s*\$.*$)|(^\s{0,5}c\s.*\n?)", flags=re.MULTILINE | re.IGNORECASE
 )
-
-
 # pattern to split section text to optional "comment" and subsequent MCNP card pairs
 CARD_PATTERN = re.compile(
     r"(?P<comment>((^\s{,5}c( .*)?\s*$)\n?)+)?(?P<card>^\s{,5}(\*|\+|\w).*(\n((^\s{,5}c.*\n?)*^\s{5,}\S.*\n?)*)?)?",
-    flags=re.MULTILINE | re.IGNORECASE
+    flags=re.MULTILINE | re.IGNORECASE,
 )
 
 # pattern to replace subsequent spaces with a single one
-SPACE_PATTERN = re.compile(
-    r"\s+",
-    flags=re.MULTILINE
-)
+SPACE_PATTERN = re.compile(r"\s+", flags=re.MULTILINE)
 
-SDEF_PATTERN = re.compile(
-    r"(sdef)|(s[ibp]\d+)|(ds\d+)|(wwp.*)",
-    re.IGNORECASE,
-)
+SDEF_PATTERN = re.compile(r"(sdef)|(s[ibp]\d+)|(ds\d+)|(wwp.*)", re.IGNORECASE)
 
 # pattern to match labels of cards relevant for tallies section
 TALLY_PATTERN = re.compile(
-    r"(?P<tag>f(c|(m(esh)?)?)|(e)|(d[ef]))(?P<number>\d+)",
-    re.IGNORECASE,
+    r"(?P<tag>f(c|(m(esh)?)?)|(e)|(d[ef]))(?P<number>\d+)", re.IGNORECASE
 )
 
 
 class Kind(IntEnum):
-    COMMENT = 0,
-    CELL = 1,
-    SURFACE = 2,
-    MATERIAL = 3,
-    TRANSFORMATION = 4,
-    SDEF = 5,
-    TALLY = 6,
+    COMMENT = (0,)
+    CELL = (1,)
+    SURFACE = (2,)
+    MATERIAL = (3,)
+    TRANSFORMATION = (4,)
+    SDEF = (5,)
+    TALLY = (6,)
     GENERIC = 7
 
     @classmethod
@@ -114,7 +93,6 @@ class Card(object):
     def is_cell(self) -> bool:
         return self.kind is Kind.CELL
 
-
     @property
     def is_surface(self) -> bool:
         return self.kind is Kind.SURFACE
@@ -149,9 +127,13 @@ class InputSections(object):
     def check(self, attribute, value) -> None:
         if self.is_continue:
             if self.cell_cards or self.surface_cards:
-                raise ValueError("Cells and Surfaces shouldn't present in 'continue' mode model")
+                raise ValueError(
+                    "Cells and Surfaces shouldn't present in 'continue' mode model"
+                )
             if not self.data_cards:
-                raise ValueError("At least one data card should present in 'continue' mode model")
+                raise ValueError(
+                    "At least one data card should present in 'continue' mode model"
+                )
 
     def print(self, stream=sys.stdout):
         if self.message:
@@ -245,15 +227,15 @@ def parse_sections_text(text: str) -> InputSections:
     sections = BLANK_LINE_PATTERN.split(text, 5)
 
     # The first line can be message or title.
-    kw = sections[0][:len("message:")].lower()
+    kw = sections[0][: len("message:")].lower()
 
     i = 0
 
-    if 'message:' == kw:
+    if "message:" == kw:
         message = sections[0]
         i += 1
 
-    title, cur_section = sections[i].split('\n', 1)
+    title, cur_section = sections[i].split("\n", 1)
     i += 1
     if not title:
         raise ValueError("Cannot find the MCNP model title")
@@ -263,7 +245,7 @@ def parse_sections_text(text: str) -> InputSections:
     if is_continue:
         data_cards = list(split_to_cards(cur_section))
         if i < len(sections):
-            remainder = '\n\n'.join(sections[i:])
+            remainder = "\n\n".join(sections[i:])
         result = InputSections(
             title,
             cell_cards=cell_cards,
@@ -271,7 +253,7 @@ def parse_sections_text(text: str) -> InputSections:
             data_cards=data_cards,
             message=message,
             remainder=remainder,
-            is_continue=True
+            is_continue=True,
         )
     else:
         cell_cards = list(split_to_cards(cur_section, kind=Kind.CELL))
@@ -284,7 +266,7 @@ def parse_sections_text(text: str) -> InputSections:
                 data_cards = list(split_to_cards(cur_section, kind=None))
                 i += 1
                 if i < len(sections):
-                    remainder = '\n\n'.join(sections[i:])
+                    remainder = "\n\n".join(sections[i:])
         result = InputSections(
             title,
             cell_cards=cell_cards,
@@ -292,7 +274,7 @@ def parse_sections_text(text: str) -> InputSections:
             data_cards=data_cards,
             message=message,
             remainder=remainder,
-            is_continue=False
+            is_continue=False,
         )
 
     return result
@@ -302,21 +284,23 @@ CONTINUE_LEN = len("continue")
 
 
 def check_title_is_continue(title):
-    return title[:CONTINUE_LEN].lower() == 'continue'
+    return title[:CONTINUE_LEN].lower() == "continue"
 
 
 def is_comment(seq):
     if isinstance(seq, str):
         return is_comment_text(seq, skip_asserts=True)
-    res = next((text for text in seq.split('\n') if not is_comment_text(text)), False)
+    res = next((text for text in seq.split("\n") if not is_comment_text(text)), False)
     return not res
 
 
 def is_comment_text(text, skip_asserts=False):
     if not skip_asserts:
         assert isinstance(text, str), "The parameter 'line' should be text"
-    if '\n' in text:
-        res = next((line for line in text.split('\n') if not is_comment_line(line)), False)
+    if "\n" in text:
+        res = next(
+            (line for line in text.split("\n") if not is_comment_line(line)), False
+        )
         return not res
     else:
         return is_comment_line(text, skip_asserts=True)
@@ -325,13 +309,13 @@ def is_comment_text(text, skip_asserts=False):
 def is_comment_line(line: str, skip_asserts=False):
     if not skip_asserts:
         assert isinstance(line, str), "The parameter 'line' should be text"
-        assert '\n' not in line, "The parameter 'line' should be the single text line"
+        assert "\n" not in line, "The parameter 'line' should be the single text line"
     return COMMENT_LINE_PATTERN.match(line)
 
 
 def get_clean_text(text):
-    without_comments = REMOVE_COMMENT_PATTERN.sub('', text)
-    with_spaces_normalized = SPACE_PATTERN.sub(' ', without_comments)
+    without_comments = REMOVE_COMMENT_PATTERN.sub("", text)
+    with_spaces_normalized = SPACE_PATTERN.sub(" ", without_comments)
     return with_spaces_normalized
 
 
@@ -344,7 +328,7 @@ def clean_mcnp_cards(iterable: Iterable[Card]) -> Generator[Card, None, None]:
 
 
 def distribute_cards(
-        cards: Iterable[Card]
+    cards: Iterable[Card],
 ) -> Tuple[List[Card], List[Card], List[Card], List[Card], List[Card]]:
     comment: Optional[Card] = None
 
@@ -355,8 +339,10 @@ def distribute_cards(
             comment = None
         _cards.append(_card)
 
-    materials, transformations, sdef, tallies, others = [], [], [], [], []
-    # type: List[Card], List[Card], List[Card], List[Card], List[Card]
+    # fmt: off
+    materials, transformations, sdef, tallies, others = \
+        [], [], [], [], []  # type: List[Card], List[Card], List[Card], List[Card], List[Card]
+    # fmt: on
 
     for card in cards:
         if card.is_comment:

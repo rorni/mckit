@@ -1,5 +1,5 @@
 plot       1     10/10/18 10:53:08     2    31675204     8786408878
- mctal test data                                                                
+ mctal test data
 ntal     4
     4    5   14   24
 tally    4    1    0

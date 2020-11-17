@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# See Will Koehresen, Jupyter Notebook Extensions 
+# See Will Koehresen, Jupyter Notebook Extensions
 # https://towardsdatascience.com/jupyter-notebook-extensions-517fa69d2231
 # Original: https://gist.github.com/luiscape/24546988ba27dbb7c92b7d3e710b604b
 
@@ -62,5 +62,3 @@ main() {
 
 
 [ -z "$BATS_PREFIX" ] &&  main
-
-

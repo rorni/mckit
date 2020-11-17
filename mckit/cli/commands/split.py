@@ -7,12 +7,11 @@
 материалов, трансформаций, sdef и прочие карты. Файлы соответственно: cells.txt, surfaces.txt,
 materials.txt, transformations.txt, sdef.txt, cards.txt
 """
-import logging
+from mckit.utils.logging import logger
 from pathlib import Path
 from typing import Iterable, Union
 
 import mckit.parser.mcnp_section_parser as sp
-from mckit.parser.mcnp_section_parser import Card
 from .common import check_if_path_exists
 from ...constants import MCNP_ENCODING
 
@@ -21,10 +20,7 @@ INNER_LINE = "-" * 40
 
 
 def print_text(
-        text: str,
-        output_dir: Path,
-        section_file_name: str,
-        override: bool
+    text: str, output_dir: Path, section_file_name: str, override: bool
 ) -> None:
     if text:
         out = output_dir / section_file_name
@@ -33,10 +29,7 @@ def print_text(
 
 
 def print_cards(
-        cards: Iterable[Card],
-        output_dir: Path,
-        section_file_name: str,
-        override: bool
+    cards: Iterable[sp.Card], output_dir: Path, section_file_name: str, override: bool
 ) -> None:
     if cards:
         out = output_dir / section_file_name
@@ -47,13 +40,9 @@ def print_cards(
 
 
 def split(
-        output_dir: Path,
-        mcnp_file_name: Union[str, Path],
-        override: bool,
-        separators=False,
+    output_dir: Path, mcnp_file_name: Union[str, Path], override: bool, separators=False
 ) -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("Splitting model from %s", mcnp_file_name)
+    logger.debug("Splitting model from {}", mcnp_file_name)
     if isinstance(mcnp_file_name, str):
         mcnp_file_name = Path(mcnp_file_name)
     assert output_dir.is_dir()
@@ -63,14 +52,16 @@ def split(
     print_cards(sections.cell_cards, output_dir, "cells.txt", override)
     print_cards(sections.surface_cards, output_dir, "surfaces.txt", override)
     if sections.data_cards:
-        materials, transformations, sdef, tallies, others = sp.distribute_cards(sections.data_cards)
+        materials, transformations, sdef, tallies, others = sp.distribute_cards(
+            sections.data_cards
+        )
         print_cards(materials, output_dir, "materials.txt", override)
         print_cards(transformations, output_dir, "transformations.txt", override)
         print_cards(sdef, output_dir, "sdef.txt", override)
         print_cards(tallies, output_dir, "tallies.txt", override)
         print_cards(others, output_dir, "cards.txt", override)
     print_text(sections.remainder, output_dir, "remainder.txt", override)
-    logger.debug("The parts of %s are saved to %s", mcnp_file_name, output_dir)
+    logger.debug("The parts of %s are saved to {}", mcnp_file_name, output_dir)
     if separators:
         write_separators(output_dir, mcnp_file_name.stem)
 
@@ -85,13 +76,17 @@ def write_separators(output: Path, model: str) -> None:
                 first_line = INNER_LINE
                 second_line = OUTER_LINE
             text = (
-                "c\n" +
-                "c   " + first_line + "\n" +
-                "c\n" +
-                f"c   {start_end} of {model} {section}\n" +
-                "c\n" +
-                "c   " + second_line + "\n" +
                 "c\n"
+                + "c   "
+                + first_line
+                + "\n"
+                + "c\n"
+                + f"c   {start_end} of {model} {section}\n"
+                + "c\n"
+                + "c   "
+                + second_line
+                + "\n"
+                + "c\n"
             )
             path: Path = output / f"{section}_{start_end}.txt"
             path.write_text(text, encoding=MCNP_ENCODING)

@@ -186,7 +186,7 @@ int shape_ultimate_test_box(
             // vary all zero surfaces that remain to be -1 and +1
             Surface **zs = (Surface **) malloc(zero_surfaces * sizeof(Surface*));
             for (int i = 0; i < zero_surfaces; ++i) zs[i] = NULL;
-            
+
             int k = set_zero_surface_pointers(shape, 0, zs, box->subdiv);
             int n = 1 << zero_surfaces;
             for (int i = 0; i < n; ++i) {

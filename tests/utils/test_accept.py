@@ -1,10 +1,10 @@
 from contextlib import contextmanager
-
-from mckit.utils.accept import *
+from typing import Any
+from mckit.utils.accept import accept, on_unknown_acceptor
 
 
 def test_accept_single_level():
-    class DemoContainer(list):  # type: Container['DemoItem']
+    class DemoContainer(list):
         pass
 
     class DemoItem:
@@ -25,16 +25,17 @@ def test_accept_single_level():
             yield at_item, [0, len(demo_obj)]
         else:
             on_unknown_acceptor(demo_obj)
+
     _sum, _len = accept(dc, visit_container)
     assert _sum == my_sum
     assert _len == 10
 
 
 def test_accept_two_levels():
-    class DemoContainer(list):  # type: Container['Intermediate']
+    class DemoContainer(list):
         pass
 
-    class Intermediate(list): # type: Container['DemoItem']
+    class Intermediate(list):
         pass
 
     class DemoItem:
@@ -45,11 +46,8 @@ def test_accept_two_levels():
             return f"Item({self.name})"
 
     dc = DemoContainer(
-        map(Intermediate,
-            [
-                map(DemoItem,range(2)),
-                map(DemoItem, range(2, 4))
-            ]))
+        map(Intermediate, [map(DemoItem, range(2)), map(DemoItem, range(2, 4))])
+    )
     expected = [[sum(range(2)), 2], [sum(range(2, 4)), 2]]
 
     def at_item(initial: Any, b: DemoItem) -> Any:
@@ -78,5 +76,3 @@ def test_accept_two_levels():
 
     actual = accept(dc, visit_container)
     assert actual == expected
-
-
