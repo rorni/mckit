@@ -94,5 +94,9 @@ def build(setup_kwargs):
     This function is mandatory in order to build the extensions.
     """
     setup_kwargs.update(
-        {"ext_modules": ext_modules, "cmdclass": {"build_ext": ExtBuilder}}
+        {
+			"ext_modules": ext_modules, 
+			"cmdclass": {"build_ext": ExtBuilder},
+			"package_data": {"mckit": ["data/isotopes.dat", "libnlopt-0.dll"]},
+		}
     )
