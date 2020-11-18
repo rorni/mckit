@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from collections import defaultdict
 from io import StringIO
-from itertools import chain
 from functools import reduce
 from typing import Dict, Any, Iterable, List, NamedTuple, Set, Union
 
@@ -210,6 +209,12 @@ class Universe:
     def __getitem__(self, item):
         return self._cells.__getitem__(item)
 
+    def __str__(self):
+        return f"Universe(name={self.name()})"
+
+    #
+    # dvp: this doesn't work with dictionaries
+    #
     # def __hash__(self):
     #     return reduce(xor, map(hash, self.cells), 0)
     #
@@ -773,19 +778,8 @@ class Universe:
             result[test == +1] = i
         return result
 
-    def transform(self, tr):
-        """Applies transformation tr to this universe. Returns a new universe.
-
-        Parameters
-        ----------
-        tr : Transformation
-            Transformation to be applied.
-
-        Returns
-        -------
-        u_tr : Universe
-            New transformed universe.
-        """
+    def transform(self, tr: Transformation) -> "Universe":
+        """Applies transformation tr to this universe. Returns a new universe."""
         new_cells = [c.transform(tr) for c in self]
         return Universe(
             new_cells,

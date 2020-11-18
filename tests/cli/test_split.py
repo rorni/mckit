@@ -6,14 +6,8 @@ from click.testing import CliRunner
 from mckit.utils.resource import filename_resolver
 from mckit.cli.runner import mckit
 from mckit.cli.commands.common import get_default_output_directory
-from mckit.parser.mcnp_section_parser import is_comment_text
+from mckit.parser.mcnp_section_parser import is_comment
 from mckit.utils.io import MCNP_ENCODING
-
-# skip the pylint warning on fixture names
-# pylint: disable=redefined-outer-name
-
-# skip the pylint warning on long names: test names should be descriptive
-# pylint: disable=invalid-name
 
 
 @pytest.fixture

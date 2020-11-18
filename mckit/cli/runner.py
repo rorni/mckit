@@ -208,7 +208,7 @@ def check(sources: List[click.Path]) -> None:
 @click.option(
     "--transformation",
     "-t",
-    type=click.STRING,
+    type=click.INT,
     required=True,
     help="Transformation in MCNP format",
 )
@@ -219,14 +219,30 @@ def check(sources: List[click.Path]) -> None:
     required=True,
     help="Output file",
 )
+@click.option(
+    "--transformations",
+    "-i",
+    default="transformations.txt",
+    type=click.Path(exists=True),
+    help="Output file",
+)
 @click.argument(
     "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
 def transform(
-    transformation: click.STRING, output: click.STRING, source: click.Path
+    output: click.STRING,
+    transformation: click.STRING,
+    transformations: click.Path,
+    source: click.Path,
 ) -> None:
     """Read MCNP model(s) transform and save as a new new model."""
-    do_transform(transformation, output, source, context["OVERRIDE"])
+    do_transform(
+        Path(output),
+        transformation,
+        Path(str(transformations)),
+        Path(str(source)),
+        context["OVERRIDE"],
+    )
 
 
 if __name__ == "__main__":

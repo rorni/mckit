@@ -24,7 +24,7 @@ def ensure_upper(text: str):
     return text
 
 
-def drop_c_comments(text):
+def drop_c_comments(text: str) -> str:
     has_comments = RE_C_COMMENT.search(text)
     if has_comments:
         text = RE_C_COMMENT.sub("", text)

@@ -2,8 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from mckit.utils.resource import filename_resolver
 from mckit.cli.runner import mckit
+from mckit.parser import from_file
+from mckit.utils.resource import filename_resolver
 
 
 data_filename_resolver = filename_resolver("tests.cli")
@@ -32,7 +33,7 @@ def test_output_is_not_defined(runner):
         args=[
             "transform",
             "--transformation",
-            "0 0 1",
+            "1",
             data_filename_resolver("data/simple_cubes.mcnp"),
         ],
         catch_exceptions=False,
@@ -45,7 +46,7 @@ def test_output_is_not_defined(runner):
 def test_not_existing_mcnp_file(runner):
     result = runner.invoke(
         mckit,
-        args=["transform", "-t", "o 0 -10", "not-existing.imcnp"],
+        args=["transform", "-t", "1", "not-existing.imcnp"],
         catch_exceptions=False,
     )
     assert result.exit_code > 0
@@ -58,7 +59,7 @@ def test_not_existing_mcnp_file(runner):
         (
             "identical transformation",
             "data/simple_cubes_with_tallies.mcnp",
-            "TR1 0 0 0",
+            "1",
             "data/simple_cubes_with_tallies.mcnp",
         ),
     ],
@@ -66,10 +67,20 @@ def test_not_existing_mcnp_file(runner):
 def test_happy_path(runner, msg, _source, transformation, expected):
     source = data_filename_resolver(_source)
     out = Path(source).name
+    transformations = data_filename_resolver("data/brick-transformations.txt")
     with runner.isolated_filesystem():
         result = runner.invoke(
             mckit,
-            args=["transform", "-t", transformation, "-o", str(out), source],
+            args=[
+                "transform",
+                "-t",
+                transformation,
+                "-i",
+                transformations,
+                "-o",
+                str(out),
+                source,
+            ],
             catch_exceptions=False,
         )
         assert result.exit_code == 0, "Should success"
@@ -77,28 +88,59 @@ def test_happy_path(runner, msg, _source, transformation, expected):
         assert out_path.exists()
 
 
-#
-# @pytest.mark.parametrize(
-#     "source, expected",
-#     [
-#         (
-#             "cli/data/simple_cubes.mcnp",
-#             "title.txt cells.txt surfaces.txt materials.txt cards.txt",
-#         )
-#     ],
-# )
-# def test_when_output_dir_is_not_specified(runner, source, expected):
-#     source = data_filename_resolver(source)
-#     with runner.isolated_filesystem():
-#         result = runner.invoke(mckit, args=["split", source], catch_exceptions=False)
-#         assert result.exit_code == 0, "Should success without output directory"
-#         out = get_default_output_directory(source, ".split")
-#         assert out.is_dir()
-#         expected = expected.split()
-#         for e in expected:
-#             assert (out / e).exists()
-#
-#
+@pytest.mark.parametrize(
+    "source, transformation, transformations, expected",
+    [
+        (
+            "data/brick1.mcnp",
+            "1",
+            "data/brick-transformations.txt",
+            "data/brick1-x+10.mcnp",
+        ),
+        pytest.param(
+            "data/brick1.mcnp",
+            "2",
+            "data/brick-transformations.txt",
+            "data/brick1-rot-z90.mcnp",
+            marks=pytest.mark.xfail(
+                reason="The surfaces are correct, but normal in planes is negative"
+            ),
+        ),
+    ],
+)
+def test_when_transformation_is_specified_by_spec(
+    runner, source, transformation, transformations, expected
+):
+    source = data_filename_resolver(source)
+    transformations = data_filename_resolver(transformations)
+    with runner.isolated_filesystem():
+        out = "test_when_transformation_is_specified_by_spec.out"
+        result = runner.invoke(
+            mckit,
+            args=[
+                "transform",
+                "-o",
+                out,
+                "-t",
+                transformation,
+                "-i",
+                transformations,
+                source,
+            ],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0, f"Failed to transform {source}"
+        expected_universe = from_file(data_filename_resolver(expected)).universe
+        expected_surfaces = list(expected_universe[0])
+        actual_universe = from_file(out).universe
+        actual_surfaces = list(actual_universe[0])
+
+        def key(a):
+            return a.args[0].options["name"]
+
+        assert sorted(actual_surfaces, key=key) == sorted(expected_surfaces, key=key)
+
+
 # @pytest.mark.parametrize(
 #     "source, expected",
 #     [
