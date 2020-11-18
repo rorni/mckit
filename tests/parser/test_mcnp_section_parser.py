@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
+from io import StringIO
+from typing import List
 
 import pytest
-from io import StringIO
 
-from mckit.parser.mcnp_section_parser import *
+import mckit.parser.mcnp_section_parser as sp
+from mckit.parser.mcnp_section_parser import Card
+from mckit.parser.mcnp_section_parser import Kind
 
 
 @pytest.mark.parametrize(
@@ -14,8 +16,8 @@ from mckit.parser.mcnp_section_parser import *
         ("aaa\nbbb", ["aaa\nbbb"]),
     ],
 )
-def test_blank_line_pattern(text, expected):
-    actual = BLANK_LINE_PATTERN.split(text)
+def test_blank_line_pattern(text: str, expected: List[str]) -> None:
+    actual = sp.BLANK_LINE_PATTERN.split(text)
     assert actual == expected
 
 
@@ -33,7 +35,7 @@ def test_blank_line_pattern(text, expected):
     ],
 )
 def test_removing_comment_pattern(text, expected):
-    actual = REMOVE_COMMENT_PATTERN.subn("", text)
+    actual = sp.REMOVE_COMMENT_PATTERN.subn("", text)
     assert expected == actual
 
 
@@ -42,37 +44,27 @@ def test_removing_comment_pattern(text, expected):
     [
         ("1 0 1\n", None, "1 0 1\n"),
         (
-            """
+            """\
 c the preceding comment
-1 0 1
-"""[
-                1:-1
-            ],
-            """
+1 0 1""",
+            """\
 c the preceding comment
-"""[
-                1:
-            ],
+""",
             "1 0 1",
         ),
         (
-            """
+            """\
 c the preceding comment
 1 0 1
  c The next card comment (with space before it)
-  2 $next card
-"""[
-                1:-1
-            ],
-            """
+  2 $next card""",
+            """\
 c the preceding comment
-"""[
-                1:
-            ],
+""",
             "1 0 1\n",
         ),
         (
-            """
+            """\
 C ----------------------------------------------------------------------------C
 C    TRANSFORMATIONS                                                          C
 C    ROTATION WITH RESPECT TO Z-AXIS (-20,|5|,20)                             C
@@ -80,31 +72,23 @@ C ----------------------------------------------------------------------------C
 *TR1    0  0  0
         20.0000    70.0000  90
        110.0000    20.0000  90
-       90        90         0
-"""[
-                1:-1
-            ],
-            """
+       90        90         0""",
+            """\
 C ----------------------------------------------------------------------------C
 C    TRANSFORMATIONS                                                          C
 C    ROTATION WITH RESPECT TO Z-AXIS (-20,|5|,20)                             C
 C ----------------------------------------------------------------------------C
-"""[
-                1:
-            ],
-            """
+""",
+            """\
 *TR1    0  0  0
         20.0000    70.0000  90
        110.0000    20.0000  90
-       90        90         0
-"""[
-                1:-1
-            ],
+       90        90         0""",
         ),
     ],
 )
 def test_card_pattern(text, comment, card):
-    res = CARD_PATTERN.match(text)
+    res = sp.CARD_PATTERN.match(text)
     groups = res.groupdict()
     actual_comment = groups["comment"]
     assert comment == actual_comment
@@ -124,7 +108,7 @@ def test_card_pattern(text, comment, card):
     ],
 )
 def test_tally_pattern(text: str, expected: str, tag: str, number: int) -> None:
-    res = TALLY_PATTERN.fullmatch(text)
+    res = sp.TALLY_PATTERN.fullmatch(text)
     actual = res.group(0) if res else None
     assert actual == expected, f"Should match pattern '{text}'"
     actual_tag = res["tag"]
@@ -135,7 +119,7 @@ def test_tally_pattern(text: str, expected: str, tag: str, number: int) -> None:
 
 @pytest.mark.parametrize("text", ["f", "111"])
 def test_tally_pattern_bad_path(text: str) -> None:
-    res = TALLY_PATTERN.fullmatch(text)
+    res = sp.TALLY_PATTERN.fullmatch(text)
     assert res is None, f"Should not match pattern '{text}'"
 
 
@@ -232,7 +216,7 @@ m100
     ],
 )
 def test_split_to_cards(text, cards, kind):
-    actual_cards = list(split_to_cards(text, kind))
+    actual_cards = list(sp.split_to_cards(text, kind))
     assert actual_cards == cards
 
 
@@ -254,22 +238,22 @@ wwp:n
     ],
 )
 def test_sdef_cards(text):
-    actual_cards = list(split_to_cards(text))
+    actual_cards = list(sp.split_to_cards(text))
     for card in actual_cards:
         assert card.is_sdef, "Should be SDEF card"
 
 
 def test_card_constructor():
-    descr = "1 0 1"
-    c = Card(descr)
-    assert c.text == descr
+    description = "1 0 1"
+    c = Card(description)
+    assert c.text == description
 
 
 def test_input_sections_constructor():
     title = "Testing"
     cell_cards = [Card("1 0 1"), Card("2 0 -1")]
     surface_cards = [Card("1 so 100")]
-    t = InputSections(title, cell_cards, surface_cards, [Card("sdef")])
+    t = sp.InputSections(title, cell_cards, surface_cards, [Card("sdef")])
     assert t.title == title
 
 
@@ -315,7 +299,7 @@ c second line
      2 $continuation
 c trailing comment
 2
-     0 -1  $rrrrrr
+     0 -1  $something
 c z-z-zz-z-z-z
 """[
                 1:-1
@@ -343,7 +327,7 @@ c z-z-zz-z-z-z
     ],
 )
 def test_clean_mcnp_cards(text, expected, kind):
-    actual = list(clean_mcnp_cards(split_to_cards(text, kind)))
+    actual = list(sp.clean_mcnp_cards(sp.split_to_cards(text, kind)))
     assert actual == expected
 
 
@@ -390,7 +374,7 @@ c second line
      2 $continuation
 c trailing comment
 2
-    0 -1  $rrrrrr
+    0 -1  $something
 c z-z-zz-z-z-z
 
 1 so 1
@@ -414,7 +398,7 @@ ctme 3000
 )
 def test_print(text, expected):
     stream = StringIO(text)
-    sections = parse_sections(stream)
+    sections = sp.parse_sections(stream)
     out = StringIO()
     sections.print(out)
     if expected is None:

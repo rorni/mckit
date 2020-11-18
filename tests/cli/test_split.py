@@ -112,7 +112,7 @@ def test_when_separator_files_are_required(runner, source, expected):
         for e in expected:
             assert (out / e).exists()
         text = (out / "cells_start.txt").read_text(encoding=MCNP_ENCODING)
-        assert is_comment_text(text), "Should be MCNP comment text"
+        assert is_comment(text), "Should be MCNP comment text"
 
 
 # @pytest.mark.parametrize("source,expected", [
