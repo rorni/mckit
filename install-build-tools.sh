@@ -43,7 +43,7 @@ function install_python() {
     local version="${1:-3.8.5}"
     pyenv install $version
     python = "python$version"
-    $python -m pip install --upgrade pip
+    $python -m pip install --upgrade pip setuptools wheel
     pyenv local $version
 }
 
