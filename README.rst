@@ -79,8 +79,9 @@ TODO
 * create and link to the readthedocs account
 * add the readthedocs status icon at the document start.
 
-Good reading
-------------
+A Developmer's Reading
+----------------------
+* `The Hitchhicker's guide to Python <https://docs.python-guide.org/>`_ 
 * `Claudio Cjolowicz "Hypermodern Python" <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
 * `Python development best practices 2019 <https://flynn.gg/blog/software-best-practices-python-2019/>`_
 * `Managing Multiple Python Versions With pyenv <https://realpython.com/intro-to-pyenv/>`_
@@ -88,6 +89,7 @@ Good reading
 * `Pytest <https://docs.pytest.org/en/stable/index.html>`_
 * `Linting <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 * `Sphinx, Стандартный синтаксис разметки  reStructuredText, readthedocs <https://sphinx-ru.readthedocs.io/ru/latest/rst-markup.html>`_
+* `Python Packaging Guide <https://packaging.python.org>`_
 
 Resources
 ---------
