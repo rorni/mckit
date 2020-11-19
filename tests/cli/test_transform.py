@@ -97,18 +97,15 @@ def test_happy_path(runner, msg, _source, transformation, expected):
             "data/brick-transformations.txt",
             "data/brick1-x+10.mcnp",
         ),
-        pytest.param(
+        (
             "data/brick1.mcnp",
             "2",
             "data/brick-transformations.txt",
             "data/brick1-rot-z90.mcnp",
-            marks=pytest.mark.xfail(
-                reason="The surfaces are correct, but normal in planes is negative"
-            ),
         ),
     ],
 )
-def test_when_transformation_is_specified_by_spec(
+def test_when_transform_happy_path(
     runner, source, transformation, transformations, expected
 ):
     source = data_filename_resolver(source)

@@ -235,7 +235,7 @@ def transform(
     transformations: click.Path,
     source: click.Path,
 ) -> None:
-    """Read MCNP model(s) transform and save as a new new model."""
+    """Transform MCNP model(s) with one of specified transformatio."""
     do_transform(
         Path(output),
         transformation,
