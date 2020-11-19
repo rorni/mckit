@@ -46,6 +46,7 @@ context = {}
 
 @click_loguru.logging_options
 @click.group(help=meta.__summary__)
+@click_loguru.init_logger()
 @click_loguru.stash_subcommand()
 @click.option("--override/--no-override", default=False)
 @click.version_option(VERSION, prog_name=NAME)
@@ -53,6 +54,10 @@ context = {}
 def mckit(
     verbose: bool, quiet: bool, logfile: bool, profile_mem: bool, override: bool
 ) -> None:
+    if quiet:
+        logger.level("WARNING")
+    if verbose:
+        logger.level("TRACE")
     logger.info("Running {}", NAME)
     logger.debug("Working dir {}", Path(".").absolute())
     #
@@ -243,6 +248,7 @@ def transform(
         Path(str(source)),
         context["OVERRIDE"],
     )
+    logger.info("File {} is transformed to {}", source, output)
 
 
 if __name__ == "__main__":

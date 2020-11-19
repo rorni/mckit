@@ -101,7 +101,7 @@ class IndexOfNamed(Index[Key, Item]):
         default_factory: Callable[[Key], Item] = None,
         on_duplicate: Callable[[Key, Item, Item], None] = None,
         **kwargs,
-    ) -> Type["IndexOfNamed[Key, Item]"]:
+    ) -> "IndexOfNamed[Key, Item]":
         index = cls(default_factory, **kwargs)
 
         def reducer(a, b):
@@ -112,4 +112,4 @@ class IndexOfNamed(Index[Key, Item]):
             a[name] = b
             return a
 
-        return cast(Type["IndexOfNamed[Key, Item]"], reduce(reducer, items, index))
+        return cast("IndexOfNamed[Key, Item]", reduce(reducer, items, index))

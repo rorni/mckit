@@ -31,6 +31,7 @@ def transform(
     parse_result: ParseResult = from_file(source)
     src: Universe = parse_result.universe
     trans = int(transformation)
+    logger.debug("Loading transformations from {}", transformations)
     transformations_text = transformations.read_text()
     transformations_list = list(
         map(
