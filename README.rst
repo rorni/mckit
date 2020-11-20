@@ -75,11 +75,11 @@ TODO
 ~~~~
 .. TODO add nearest future plans.
 
-* implement generation of the documentation for readthedocs
-* create and link to the readthedocs account
-* add the readthedocs status icon at the document start.
+* implement generation of the documentation for `readthedocs`
+* create and link to the `readthedocs` account
+* add the `readthedocs` status icon at the document start.
 
-A Developmer's Reading
+A Developer's Reading
 ----------------------
 * `The Hitchhicker's guide to Python <https://docs.python-guide.org/>`_ 
 * `Claudio Cjolowicz "Hypermodern Python" <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
@@ -90,6 +90,7 @@ A Developmer's Reading
 * `Linting <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 * `Sphinx, Стандартный синтаксис разметки  reStructuredText, readthedocs <https://sphinx-ru.readthedocs.io/ru/latest/rst-markup.html>`_
 * `Python Packaging Guide <https://packaging.python.org>`_
+* `Stop using Anaconda <https://medium.com/swlh/stop-using-anaconda-for-your-data-science-projects-1fc29821c6f6>`_
 
 Resources
 ---------
