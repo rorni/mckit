@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from collections import defaultdict
 from io import StringIO
 from functools import reduce
-from typing import Dict, Any, Iterable, List, Set, Union
+from typing import Any, Dict, Iterable, List, Set, Union
 
 import numpy as np
 from attr import attrs, attrib
@@ -497,6 +497,17 @@ class Universe:
                 surfs.update(c.options["FILL"]["universe"].get_surfaces(inner))
         return surfs
 
+    def get_surfaces_list(self, inner: bool = False):
+        def reducer(surfaces_list, cell):
+            surfaces_list.extend(cell.shape.get_surfaces())
+            if inner and "FILL" in cell.options:
+                surfaces_list.extend(
+                    cell.options["FILL"]["universe"].get_surfaces_list(inner)
+                )
+            return surfaces_list
+
+        return reduce(reducer, self, [])
+
     def get_compositions(self, exclude_common: bool = False) -> Set[Composition]:
         """Gets all compositions of the universe.
 
@@ -780,18 +791,9 @@ class Universe:
             comment=self._comment,
         )
 
-    def apply_transformation(self):
-        """Applies transformation tr to this universe. Returns a new universe.
-
-        Parameters
-        ----------
-        tr : Transformation
-            Transformation to be applied.
-
-        Returns
-        -------
-        u_tr : Universe
-            New transformed universe.
+    def apply_transformation(self) -> "Universe":
+        """Applies transformations specified in cells.
+        Returns a new universe.
         """
         new_cells = [c.apply_transformation() for c in self]
         return Universe(

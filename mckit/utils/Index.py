@@ -8,8 +8,6 @@ from typing import Optional
 from typing import Type
 from typing import TypeVar
 
-import attr
-
 from mckit.utils.named import default_name_key
 from mckit.utils.named import Name
 
@@ -84,11 +82,16 @@ def ignore_equal_objects_strategy(key: Key, prev: Item, curr: Item) -> None:
         raise NumberedItemDuplicateError(key, prev, curr)
 
 
-@attr.s(auto_attribs=True)
 class StatisticsCollector(Dict[Key, int]):
+    def __init__(self, ignore_equal=False):
+        self.ignore_equal = ignore_equal
+
+    def __missing__(self, key):
+        return 1
+
     def __call__(self, key: Key, prev: Item, curr: Item) -> None:
-        value = self.setdefault(key, 1)
-        self[key] = value + 1
+        if not self.ignore_equal or prev != curr:
+            self[key] += 1
 
 
 class IndexOfNamed(Index[Key, Item]):
