@@ -1,12 +1,8 @@
 # tests/conftest.py
-import pickle
-from io import BytesIO
-
-import pytest
 from _pytest.config import Config
 
 
-# TODO dvp: the following doesn't work, but saved as an example of a session fixture
+# TODO dvp: the following doesn't work, check why?
 
 # import os.path
 # import sys
@@ -37,11 +33,11 @@ from _pytest.config import Config
 #             def finalizer():
 #                 pass
 #
-#         request.addfinalizer(finalizer)
+#         request.addfinaYieldGeneratorlizer(finalizer)
 
 
 def pytest_configure(config: Config) -> None:
     config.addinivalue_line("markers", "e2e: mark as end-to-end test.")
     config.addinivalue_line(
-        "markers", 'slow: marks tests as slow (deselect with -m "not slow"'
+        "markers", 'slow: marks tests as slow (deselect with -m "not slow")'
     )

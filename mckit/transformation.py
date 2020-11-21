@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Represents transformations."""
 from typing import Any
+
 import numpy as np
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -37,7 +38,7 @@ class Transformation(Card, MaybeClose):
     indegrees : bool
         How rotation parameters should be treated. If True - rotation matrix
         parameters are given in degrees. Otherwise rotation parameters are basis
-        vectors of local coordinate system. Dafault: False.
+        vectors of local coordinate system. Default: False.
     inverted : bool
         How translation vector should be interpreted. If True - it is the origin
         of local coordinate system defined in the global one. Otherwise - the
@@ -69,7 +70,7 @@ class Transformation(Card, MaybeClose):
         rotation=None,
         indegrees=False,
         inverted=False,
-        **options,
+        **options: Any,
     ):
 
         Card.__init__(self, **options)

@@ -5,7 +5,7 @@ import sys
 from functools import reduce
 from operator import xor
 import numpy as np
-from typing import Optional, NewType, Tuple, Iterable
+from typing import Any, Optional, Tuple, Iterable
 
 from .printer import MCNP_FORMATS
 from .card import Card
@@ -37,8 +37,8 @@ with open(_path + "/data/isotopes.dat") as f:
                 _NATURAL_ABUNDANCE[number][isotope] = float(abun) / 100.0
 
 
-TFraction = NewType("TFraction", Tuple[int, float])
-TFractions = NewType("TFractions", Iterable[TFraction])
+TFraction = Tuple[int, float]
+TFractions = Iterable[TFraction]
 
 
 class Composition(Card):
@@ -98,7 +98,7 @@ class Composition(Card):
         self,
         atomic: Optional[TFractions] = None,
         weight: Optional[TFractions] = None,
-        **options
+        **options: Any
     ):
         Card.__init__(self, **options)
         self._composition = {}

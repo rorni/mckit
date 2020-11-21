@@ -1,23 +1,26 @@
 # -*- coding: utf-8 -*-
-
 """
 Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации.
-
 """
 from functools import reduce
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 import tomlkit as tk
-from mckit.utils.logging import logger
 from tomlkit import items as tk_items
 
 import mckit as mk
-from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
 from .common import save_mcnp
 from mckit import Transformation
+from mckit.parser.mcnp_input_sly_parser import from_file
+from mckit.parser.mcnp_input_sly_parser import ParseResult
 from mckit.utils import filter_dict
+from mckit.utils.logging import logger
 
 
 def compose(output, fill_descriptor_path, source, override):
@@ -137,7 +140,6 @@ def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transforma
                 rotation = transform_params[3:]
             else:
                 rotation = None
-            # noinspection PyTypeChecker
             transform = Transformation(
                 translation=translation, rotation=rotation, indegrees=True, name=name
             )

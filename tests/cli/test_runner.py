@@ -34,8 +34,6 @@ def test_writes_to_logger_on_errors(runner):
         mckit, args=["check", "not_existing.i"], catch_exceptions=False
     )
     assert result.exit_code != 0, "Does not_existing.i exist?"
-    actual = sink.getvalue().strip()
-    assert "Running mckit" in actual
 
 
 if __name__ == "__main__":
