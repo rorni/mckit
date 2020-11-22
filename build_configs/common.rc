@@ -8,7 +8,10 @@ function python_prefix(){
 }
 
 export PYTHON_ROOT=$(python_prefix)
-export PYTHON="${PYTHON_PREFIX}/bin/python"
+export PYTHON="${PYTHON_ROOT}/bin/python"
+export PYTHON_EXECUTALBE="${PYTHON}"
+export PYTHON_INCLUDE_DIRS=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") 
+export PYTHON_LIBRARIES=$(python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
 
 #
 # Joins words separated with a given separator (first argument).
