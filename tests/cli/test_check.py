@@ -1,6 +1,6 @@
 import pytest
 
-import mckit
+from mckit.cli.runner import mckit
 from mckit.utils.resource import filename_resolver
 
 
