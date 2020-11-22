@@ -83,8 +83,9 @@ target/
 # Local environment files for dotenv
 .env
 
-#Local virtual environment
+#Local virtual environments
 .venv
+.nox
 
 # pyenv and poetry
 .python-version

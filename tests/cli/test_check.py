@@ -1,15 +1,7 @@
 import pytest
-from click.testing import CliRunner
 
+import mckit
 from mckit.utils.resource import filename_resolver
-from mckit.cli.runner import mckit
-
-
-# skip the pylint warning on fixture names
-# pylint: disable=redefined-outer-name
-
-# skip the pylint warning on long names: test names should be descriptive
-# pylint: disable=invalid-name
 
 
 data_filename_resolver = filename_resolver("tests")
