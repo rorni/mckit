@@ -1,14 +1,3 @@
-#
-# Shared utility functions to faciliate environment configuring.
-#
-# vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai
-
-function python_prefix(){
-    python -c 'import sys; print(sys.prefix)'
-}
-
-export PYTHON_ROOT=$(python_prefix)
-export PYTHON="${PYTHON_PREFIX}/bin/python"
 
 #
 # Joins words separated with a given separator (first argument).
@@ -21,7 +10,7 @@ function make_list() {
     for p in $*
     do
             # echo "#1: p=$p" >> build_utils.test.log
-            array=($(echo "${p//$separator/ }"))
+            array=($(echo ${p//:/ }))
             for pp in "${array[@]}"
             do
                 # echo "#2: pp=$pp" >> build_utils.test.log
@@ -112,38 +101,21 @@ function mdcd() {
 }
 
 
-function show_python_versions_available() {
-    pyenv install --list | egrep -E "^\s*3\.(6|7|8|9|10)\."
+function show_python_versions() {
+    pyenv install --list | grep -E "^\s*3\.[6789].*"
 }
 
-#
-# On Windows poetry ignores pyenv-win and conda environments
-# To fix this we have to change it's config to use an existing environment,
-# i.e. the one which is currently activated by conda or pyenv-win.
-#
-function fix_poetry_config() {
-    local python_prefix="$(python -c 'import sys; print(sys.prefix)')"
-    poetry config virtualenvs.path  "${python_prefix}" --local
-    poetry config virtualenvs.create  false --local
-}
 
-function poetry_prefix(){
+python_prefix(){
     echo "$(poetry env info --path)"
 }
 
 
-function poetry_python() {
+which_python() {
     echo "$(poetry run which python)"
 }
 
+export PYTHON_ROOT=$(python_prefix)
+export PYTHON="${PYTHON_PREFIX}/bin/python"
 
-#
-# Git finds the most recent tag and adds suffixes corresponding to current branch.
-# If the current branch correspondes to the tag (as it should be for master),
-# then no suffixes are added.
-#
-function sync_toml_version_with_git() {
-    poetry version "$(git describe --always --long HEAD)"
-}
-
-
+# vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai
