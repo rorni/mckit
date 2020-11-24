@@ -45,8 +45,8 @@ def do_build_nlopt(nlopt_source_dir, debug=False) -> None:
         cfg,
         f"-DCMAKE_INSTALL_PREFIX={sys.prefix}",
         f"-DPYTHON_EXECUTABLE={sys.executable}",
-        f"-DPYTHON_INCLUDE_DIRS={get_python_inc()}",
-        f"-DPYTHON_LIBRARIES={get_config_var('LIBDIR')}",
+        f"-DPYTHON_INCLUDE_DIR={get_python_inc()}",
+        f"-DPYTHON_LIBRARY={get_config_var('LIBDIR')}",
     ]
     if platform.system() == "Windows":  # pragma: no cover
         # cmake_args += ["-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)]
