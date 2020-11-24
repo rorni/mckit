@@ -116,7 +116,7 @@ function mdcd() {
 
 
 function show_python_versions_available() {
-    pyenv install --list | egrep -E "^\s*3\.(6|7|8|9|10)\."
+    pyenv update && pyenv install --list | egrep -E "^\s*3\.(6|7|8|9|10)\."
 }
 
 #
@@ -125,7 +125,8 @@ function show_python_versions_available() {
 # i.e. the one which is currently activated by conda or pyenv-win.
 #
 function fix_poetry_config() {
-    local python_prefix="$(python -c 'import sys; print(sys.prefix)')"
+    local python_prefix
+    python_prefix="$(python -c 'import sys; print(sys.prefix)')"
     poetry config virtualenvs.path  "${python_prefix}" --local
     poetry config virtualenvs.create  false --local
 }
@@ -146,7 +147,9 @@ function poetry_python() {
 # then no suffixes are added.
 #
 function sync_toml_version_with_git() {
-    poetry version "$(git describe --always --long HEAD)"
+    local _mgv
+    _mgv="$(git describe --always --long HEAD)"
+    poetry version "${_mgv#v\.}"
 }
 
 
