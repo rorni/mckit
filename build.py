@@ -15,6 +15,13 @@ from setuptools.command.build_ext import build_ext
 from pathlib import Path
 import tempfile
 
+# see https://habr.com/ru/post/210450/
+# from setuptools.dist import Distribution
+
+# class BinaryDistribution(Distribution):
+    # def is_pure(self):
+        # return False
+		
 try:
     import numpy as np
 except ImportError:
@@ -175,6 +182,7 @@ def build(setup_kwargs):
             "ext_modules": ext_modules,
             "cmdclass": {"build_ext": ExtBuilder},
             "package_data": {"mckit": ["data/isotopes.dat", "libnlopt-0.dll"]},
+			# "distclass": BinaryDistribution,
         }
     )
 
