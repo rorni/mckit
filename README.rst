@@ -99,6 +99,11 @@ Resources
 * `Semantic Versioning <https://semver.org/>`_
 * `Typing <https://www.python.org/dev/peps/pep-0484/>`_
 
+Check if we can apply
+---------------------
+* `scikit-build <https://scikit-build.readthedocs.io/en/latest/index.html>`_
+* `Benjamin R. Jack, Hybrid Python/C++ packages, revisited <https://www.benjack.io/2018/02/02/python-cpp-revisited.html>`_
+
 Bugs
 ----
 
