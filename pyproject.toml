@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.4.4-124-g238ab94"
+version = "0.4.5-alpha.0"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -40,6 +40,9 @@ scipy = "^1.5.3"
 sly = "^0.4"
 tomlkit = "^0.7.0"
 toolz = "^0.11.1"
+tqdm = "^4.53.0"
+asyncio = "^3.4.3"
+aiofile = "^3.3.3"
 
 [tool.poetry.dev-dependencies]
 Pygments = "^2.7.2"
