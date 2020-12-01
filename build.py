@@ -7,21 +7,25 @@ import platform
 import re
 import subprocess
 import sys
+
+# noorder=True
+from setuptools import Extension
+from setuptools.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 from distutils.sysconfig import get_python_inc, get_config_var
 from distutils.version import LooseVersion
-from setuptools import Extension
-from setuptools.command.build_ext import build_ext
 from pathlib import Path
+
+# noorder=False
 import tempfile
 
 # see https://habr.com/ru/post/210450/
 # from setuptools.dist import Distribution
 
 # class BinaryDistribution(Distribution):
-    # def is_pure(self):
-        # return False
-		
+# def is_pure(self):
+# return False
+
 try:
     import numpy as np
 except ImportError:
@@ -182,7 +186,7 @@ def build(setup_kwargs):
             "ext_modules": ext_modules,
             "cmdclass": {"build_ext": ExtBuilder},
             "package_data": {"mckit": ["data/isotopes.dat", "libnlopt-0.dll"]},
-			# "distclass": BinaryDistribution,
+            # "distclass": BinaryDistribution,
         }
     )
 
