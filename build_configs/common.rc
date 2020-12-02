@@ -116,7 +116,7 @@ function mdcd() {
 
 
 function show_python_versions_available() {
-    pyenv update && pyenv install --list | egrep -E "^\s*3\.(6|7|8|9|10)\."
+    pyenv update > /dev/null && pyenv install --list | egrep -E "^\s*3\.(6|7|8|9|10)\."
 }
 
 #
