@@ -470,8 +470,8 @@ python-versions = "*"
 
 [[package]]
 name = "intel-openmp"
-version = "2018.0.3"
-description = "OpenMP runtime for Intel and compatible processors"
+version = "2020.0.133"
+description = "Intel(R) OpenMP Runtime Library"
 category = "main"
 optional = false
 python-versions = "*"
@@ -534,30 +534,18 @@ psutil = "*"
 
 [[package]]
 name = "mkl"
-version = "2018.0.3"
+version = "2019.0"
 description = "Math library for Intel and compatible processors"
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-intel-openmp = "2018.0.3"
-
-[[package]]
-name = "mkl-devel"
-version = "2018.0.3"
-description = "Math library for Intel and compatible processors"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-mkl = "2018.0.3"
-mkl-include = "2018.0.3"
+intel-openmp = "*"
 
 [[package]]
 name = "mkl-include"
-version = "2018.0.3"
+version = "2019.0"
 description = "Math library for Intel and compatible processors"
 category = "main"
 optional = false
@@ -1272,7 +1260,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "c48b199c2f05645a73f5632e295d99096ecd2bae23cc639b93818e33220a964e"
+content-hash = "01e01881cb78f4b4241b5e351564a3792b2b23636a12c3220abe526a6febc5f8"
 
 [metadata.files]
 aiofile = [
@@ -1489,9 +1477,7 @@ iniconfig = [
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 intel-openmp = [
-    {file = "intel_openmp-2018.0.3-py2.py3-none-macosx_10_12_intel.macosx_10_12_x86_64.whl", hash = "sha256:b6159733ef488582c975c42e9f388f3e4068f4f84929cc09c5ec26566cb0602a"},
-    {file = "intel_openmp-2018.0.3-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:53213d2583662c1a38b9d19d9cdcc63a065283b7f8616b5db63726a7c35a3822"},
-    {file = "intel_openmp-2018.0.3-py2.py3-none-win_amd64.whl", hash = "sha256:5bd6da4c22334f2709cf4e5619ff2b2671b9085a28bc2e71b68b9bc5953e89b6"},
+    {file = "intel_openmp-2020.0.133-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:cb9a12b0a1cb3f9c44a75959f687e548dc642a9470be3c63f73bccf291b8dcc8"},
 ]
 jinja2 = [
     {file = "Jinja2-2.11.2-py2.py3-none-any.whl", hash = "sha256:f0a4641d3cf955324a89c04f3d94663aa4d638abe8f733ecd3582848e1c37035"},
@@ -1544,17 +1530,14 @@ memory-profiler = [
     {file = "memory_profiler-0.57.0.tar.gz", hash = "sha256:23b196f91ea9ac9996e30bfab1e82fecc30a4a1d24870e81d1e81625f786a2c3"},
 ]
 mkl = [
-    {file = "mkl-2018.0.3-py2.py3-none-macosx_10_12_intel.macosx_10_12_x86_64.whl", hash = "sha256:0525f50c4d20ed721d7a61cb20fd1c2a884b699545106e3c1753e6a74fb90d6f"},
-    {file = "mkl-2018.0.3-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:e569d9d1c53f1ee1d02cfb7dc68bac98480bb8fdb27703729d93e21a4c4462ae"},
-    {file = "mkl-2018.0.3-py2.py3-none-win_amd64.whl", hash = "sha256:bab7256b2c857421d37d750b1821e1ad234d79460e0548062e0d057f16e8a675"},
-]
-mkl-devel = [
-    {file = "mkl_devel-2018.0.3-py2.py3-none-any.whl", hash = "sha256:f61b93caa94a46e87ad1b537046960bdd3f45d2634d5f924bf9fa42b452075bb"},
+    {file = "mkl-2019.0-py2.py3-none-macosx_10_12_intel.macosx_10_12_x86_64.whl", hash = "sha256:23c8e8ba2cac703d8bc357d2bf10519e91dc4371e7dd1decf461f70db20b9783"},
+    {file = "mkl-2019.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:065e3c415029da2b2cdf2097cecb05f67e834354b358448aca683da7f4e3d344"},
+    {file = "mkl-2019.0-py2.py3-none-win_amd64.whl", hash = "sha256:288098fb4762243a83752f8343a89558ea5f9c33eef79221614c6f9534a56445"},
 ]
 mkl-include = [
-    {file = "mkl_include-2018.0.3-py2.py3-none-macosx_10_12_intel.macosx_10_12_x86_64.whl", hash = "sha256:d43228fd25d40bfc3ed6b0cadd4035c94ece052ae9647b63ec76d676f9ac73b0"},
-    {file = "mkl_include-2018.0.3-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:125888c9d8f78eb486ca2880c89d817fddf96217af668a5664f8bca01a2c9489"},
-    {file = "mkl_include-2018.0.3-py2.py3-none-win_amd64.whl", hash = "sha256:cfd689c14b33f6eedff519f3aafeb11accc0d2e8c7c8ffc3a3d6aff88d1f45d7"},
+    {file = "mkl_include-2019.0-py2.py3-none-macosx_10_12_intel.macosx_10_12_x86_64.whl", hash = "sha256:dd9e2224dcdbede569c996f971e663f64f184a432ccb01f2dceca768a77cb2b4"},
+    {file = "mkl_include-2019.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:4a8d9edbe229a1480fc787dc482fe98f118d711265fa3fde37315bfa90b2a048"},
+    {file = "mkl_include-2019.0-py2.py3-none-win_amd64.whl", hash = "sha256:407b45dd6036d89d9478bac5a51560e151a41ee2bf8bc793dbe54dea70937c06"},
 ]
 mypy = [
     {file = "mypy-0.790-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:bd03b3cf666bff8d710d633d1c56ab7facbdc204d567715cb3b9f85c6e94f669"},
