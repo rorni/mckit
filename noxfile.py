@@ -2,7 +2,7 @@
 """
     Nox sessions.
 
-    See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_ for details.
+    See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
 
 import tempfile
@@ -24,7 +24,11 @@ nox.options.sessions = (
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
 supported_pythons = "3.9 3.8 3.7".split()
-mypy_pythons = lint_pythons = black_pythons = supported_pythons[-1:]
+# mypy, black and lint only work with python 3.7: dependencies requirement
+# TODO dvp: check, when updates are available
+mypy_pythons = "3.7"
+black_pythons = "3.7"
+lint_pythons = "3.7"
 
 
 def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
