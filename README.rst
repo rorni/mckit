@@ -1,6 +1,6 @@
 .. include:: preamble.rst
 
-.. |Maintenance yes| image:: https://img.shields.io/badge/Maintained%3F-yes-green.svg
+.. image:: https://img.shields.io/badge/Maintained%3F-yes-green.svg
    :target: https://github.com/rorni/mckit/graphs/commit-activity
 
 .. |Tests| image:: https://github.com/rorni/mckit/workflows/Tests/badge.svg
@@ -15,8 +15,15 @@
 .. |Read the Docs| image:: https://readthedocs.org/projects/mckit/badge/
    :target: https://mckit.readthedocs.io/
 
-MCKIT
-=====
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+
+.. image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
+    :target: https://pycqa.github.io/isort/
+
+
+MCKIT: MCNP model and results processing utilites
+=================================================
 
 Introduction
 ------------

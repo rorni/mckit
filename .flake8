@@ -2,10 +2,10 @@
 #select = ANN,B,B9,BLK,C,D,DAR,E,F,I,S,W
 select = C,E,F,W
 max-complexity = 10
-max-line-length = 132
-ignore = E203,W503
+max-line-length = 88
+extend_ignore = E203
 # E203 Whitespace before ‘:'
-# W503 Line break before binary operator
+# W503 Line break before binary operator, disabled by default
 exclude =
     # No need to traverse our git directory
     .git,

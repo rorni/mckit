@@ -99,6 +99,7 @@ show_missing = true
 
 [tool.isort]
 atomic = true
+ensure_newline_before_comments = true
 known_first_party = "mckit"
 known_typing = "typing,types,typing_extensions,mypy,mypy_extensions"
 sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
@@ -109,5 +110,28 @@ line_length = 88
 include_trailing_comma = true
 lines_between_types = 1
 
+# NOTE: you have to use single-quoted strings in TOML for regular expressions.
+# It's the equivalent of r-strings in Python.  Multiline strings are treated as
+# verbose regular expressions by Black.  Use [ ] to denote a significant space
+# character.
+
 [tool.black]
-line_length = 88
+line-length = 88
+target-version = ['py37']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.nox
+  | \.venv
+  | _build
+  | build
+  | dist
+  | 3rd-party
+  | data
+)/
+'''
