@@ -1076,13 +1076,13 @@ def test_save(universe, case, box):
         (2, {2: {"start_cell": 2}, 1: {"start_cell": 1}}),
     ],
 )
-def test_save_exception(universe, case, rename):
+def test_save_exception(tmp_path, universe, case, rename):
     u = universe(case)
     unvs = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
         unvs[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save("test.i")
+        u.save(tmp_path)
 
 
 @pytest.mark.xfail(reason="Check this renaming")
@@ -1093,13 +1093,13 @@ def test_save_exception(universe, case, rename):
         (2, {1: {"name": 3}, 2: {"name": 3}}),
     ],
 )
-def test_save_exception2(universe, case, rename):
+def test_save_exception2(tmp_path, universe, case, rename):
     u = universe(case)
     unvs = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
         unvs[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save("test.i")
+        u.save(tmp_path)
 
 
 @pytest.mark.parametrize(
