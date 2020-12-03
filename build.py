@@ -185,6 +185,7 @@ def build(setup_kwargs):
             "cmdclass": {"build_ext": ExtBuilder},
             "package_data": {"mckit": ["data/isotopes.dat", "libnlopt-0.dll"]},
             # "distclass": BinaryDistribution,
+            # "setup_requires": ["isort"],
         }
     )
 

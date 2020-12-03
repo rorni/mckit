@@ -78,7 +78,7 @@ wheel = "^0.35.1"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry>=1.0.0", "setuptools", "wheel"]
+requires = ["poetry>=1.0.0", "setuptools>=41.0", "wheel", "cmake", "numpy"]
 
 [tool.poetry.scripts]
 mckit = "mckit.cli.runner:mckit"
