@@ -7,17 +7,15 @@ import platform
 import re
 import subprocess
 import sys
+import tempfile
 
-# noorder=True
-from setuptools import Extension
-from setuptools.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
-from distutils.sysconfig import get_python_inc, get_config_var
+from distutils.sysconfig import get_config_var, get_python_inc
 from distutils.version import LooseVersion
 from pathlib import Path
 
-# noorder=False
-import tempfile
+from setuptools import Extension
+from setuptools.command.build_ext import build_ext
 
 # see https://habr.com/ru/post/210450/
 # from setuptools.dist import Distribution
