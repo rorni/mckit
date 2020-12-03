@@ -1,15 +1,8 @@
-from functools import reduce
-from typing import Callable
-from typing import cast
-from typing import Dict
-from typing import Iterable
-from typing import NoReturn
-from typing import Optional
-from typing import Type
-from typing import TypeVar
+from typing import Callable, Dict, Iterable, NoReturn, Optional, Type, TypeVar, cast
 
-from mckit.utils.named import default_name_key
-from mckit.utils.named import Name
+from functools import reduce
+
+from mckit.utils.named import Name, default_name_key
 
 Key = TypeVar("Key")
 Item = TypeVar("Item")
@@ -70,7 +63,7 @@ class NumberedItemDuplicateError(ValueError):
         self._curr = curr
 
     def __str__(self):
-        return f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"
+        return f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"  # NOQA
 
 
 def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> NoReturn:
@@ -84,6 +77,7 @@ def ignore_equal_objects_strategy(key: Key, prev: Item, curr: Item) -> None:
 
 class StatisticsCollector(Dict[Key, int]):
     def __init__(self, ignore_equal=False):
+        super().__init__(self)
         self.ignore_equal = ignore_equal
 
     def __missing__(self, key):
