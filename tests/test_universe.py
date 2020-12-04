@@ -1,4 +1,5 @@
 import tempfile
+import textwrap
 from typing import Dict, List, Set, Union
 
 import numpy as np
@@ -1123,29 +1124,32 @@ def test_save_exception2(tmp_path, universe, case, rename):
     "case, expected",
     [
         (
-            """0
+            """\
+                0
+                1 0 -1
+                2 0  1
+
+                1 1 so 1
+
+                TR1 1 1 1
+            """,
+            [1],
+        ),
+        (
+            """\
+            0
             1 0 -1
             2 0  1
 
             1 1 so 1
 
             TR1 1 1 1
-                """,
+            """,
             [1],
         ),
         (
-            """0
-            1 0 -1
-            2 0  1
-
-            1 1 so 1
-
-            TR1 1 1 1
-                """,
-            [1],
-        ),
-        (
-            """0
+            """\
+            0
             1 0 -1 -2
             2 0  1
 
@@ -1154,11 +1158,12 @@ def test_save_exception2(tmp_path, universe, case, rename):
 
             TR1 1 1 1
             TR2 -1 -1 -1
-                """,
+            """,
             [1, 2],
         ),
         (
-            """0
+            """\
+            0
             1 0 -1 -2
             2 0  1 fill=1 (3) $ fill with named transformation
             3 0  3 u=1
@@ -1170,12 +1175,13 @@ def test_save_exception2(tmp_path, universe, case, rename):
             TR1 1 1 1
             TR2 -1 -1 -1
             TR3  0 1 0
-                """,
+            """,
             [1, 2, 3],
         ),
     ],
 )
-def test_collect_transformations(case, expected):
+def test_collect_transformations(case: str, expected: List[int]) -> None:
+    case = textwrap.dedent(case)
     u = from_text(case).universe
     actual = sorted(map(int, map(Card.name, collect_transformations(u))))
     assert actual == expected

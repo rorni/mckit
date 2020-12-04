@@ -170,8 +170,16 @@ def docs(session: Session) -> None:
         "sphinx_autorun",
         "sphinx-rtd-theme",
     )
-    session.run("sphinx-build", "docs/source", "docs/_build")
-    session.run("sphinx-autobuild", "docs/source", "docs/_build/html")
+    if session.interactive:
+        session.run(
+            "sphinx-autobuild",
+            "--port=0",
+            "--open-browser",
+            "docs/source",
+            "docs/_build/html",
+        )
+    else:
+        session.run("sphinx-build", "docs/source", "docs/_build")
 
 
 @nox.session(python="3.7")
