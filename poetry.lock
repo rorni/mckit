@@ -451,8 +451,8 @@ python-versions = "*"
 
 [[package]]
 name = "intel-openmp"
-version = "2020.0.133"
-description = "Intel(R) OpenMP Runtime Library"
+version = "2021.1.1"
+description = "Intel OpenMP* Runtime Library"
 category = "main"
 optional = false
 python-versions = "*"
@@ -1487,7 +1487,11 @@ iniconfig = [
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 intel-openmp = [
-    {file = "intel_openmp-2020.0.133-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:cb9a12b0a1cb3f9c44a75959f687e548dc642a9470be3c63f73bccf291b8dcc8"},
+    {file = "intel_openmp-2021.1.1-py2.py3-none-macosx_10_15_x86_64.whl", hash = "sha256:cdbb5a013892b5c12a160ae663760e78683d08240565241678314ff2aa16e5d7"},
+    {file = "intel_openmp-2021.1.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:697ce4903167fcb171a3329c3a4c04ff58f908448e65361f8f610dd4fcc6aa92"},
+    {file = "intel_openmp-2021.1.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:1591afe7729b848fa96d7504968b6339e72da2bd54e947c1d8cd49da8469ce3a"},
+    {file = "intel_openmp-2021.1.1-py2.py3-none-win32.whl", hash = "sha256:2c1241120cf1a341a21af62349e23eba7f24232355302aeae4e8a99f16f86263"},
+    {file = "intel_openmp-2021.1.1-py2.py3-none-win_amd64.whl", hash = "sha256:d62184b92db08cc968531bbca3de17c49563dc2a44178420099b6090518e0b34"},
 ]
 isort = [
     {file = "isort-5.6.4-py3-none-any.whl", hash = "sha256:dcab1d98b469a12a1a624ead220584391648790275560e1a43e54c5dceae65e7"},
