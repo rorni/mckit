@@ -3,8 +3,9 @@
 select = C,E,F,W
 max-complexity = 10
 max-line-length = 88
-extend_ignore = E203
+extend_ignore = E203, E501
 # E203 Whitespace before ‘:'
+# E501 Line too long
 # W503 Line break before binary operator, disabled by default
 exclude =
     # No need to traverse our git directory
