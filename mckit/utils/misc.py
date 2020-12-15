@@ -1,10 +1,16 @@
-from typing import Any, Dict
-from copy import deepcopy
+from typing import Any, Dict, Tuple, cast
+
+import collections
+import collections.abc as abc
 import functools
 import itertools
-import collections
+
+from copy import deepcopy
+
 import numpy as np
+
 from numpy import ndarray
+
 from ..constants import FLOAT_TOLERANCE
 
 MAX_DIGITS = np.finfo(float).precision
@@ -59,10 +65,11 @@ def significant_digits(value, reltol=FLOAT_TOLERANCE, resolution=None):
     dec = get_decades(value)
     low = min(dec, 0)
     high = MAX_DIGITS
+    d = d0 = abs(value)
     while high - low > 1:
         p = round(0.5 * (high + low))
         v = round(value, p)
-        d = max(abs(value), abs(v))
+        d = max(d0, abs(v))
         if abs(value - v) > reltol * d:
             low = p
         else:
@@ -89,13 +96,13 @@ def get_decades(value):
     # return decades
 
     if value != 0:
-        decpow = np.log10(
+        decimal_power = np.log10(
             abs(value)
         )  # TODO dvp: log10 will be called billion times on C-model
     else:
-        decpow = 0
-    decades = np.trunc(decpow)
-    if decpow < 0:
+        decimal_power = 0
+    decades = np.trunc(decimal_power)
+    if decimal_power < 0:
         decades -= 1
     return int(decades)
 
@@ -130,26 +137,26 @@ def round_scalar(value, digits=None):
     return round(value, digits)
 
 
-def round_array(array: ndarray, digarr: ndarray = None):
+def round_array(array: ndarray, digits_array: ndarray = None) -> ndarray:
     """Rounds array to desired precision.
 
     Parameters
     ----------
-    array : numpy.ndarray
+    array :
         Array of values.
-    digarr : arraylike[int]
+    digits_array :
         Array of corresponding significant digits.
 
     Returns
     -------
-    result : numpy.ndarray
+    result :
         Rounded array.
     """
-    if digarr is None:
-        digarr = significant_array(array, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
+    if digits_array is None:
+        digits_array = significant_array(array, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
     result = np.empty_like(array)
     for index in zip(*map(np.ravel, np.indices(array.shape))):
-        result[index] = round_scalar(array[index], digarr[index])
+        result[index] = round_scalar(array[index], digits_array[index])
     return result
 
 
@@ -159,16 +166,16 @@ def are_equal(a, b) -> bool:
 
 
 @are_equal.register
-def _(a: str, b) -> bool:
+def _(a: str, b) -> bool:  # nomypy
     return a is b or a == b
 
 
-@are_equal.register
+@are_equal.register  # type: ignore
 def _(a: ndarray, b) -> bool:
     return np.array_equal(a, b)
 
 
-@are_equal.register
+@are_equal.register  # type: ignore
 def _(a: collections.abc.Iterable, b) -> bool:
     if not issubclass(type(b), collections.abc.Iterable):
         return False
@@ -185,12 +192,12 @@ def is_in(where, x) -> bool:
     return x is where or x == where
 
 
-@is_in.register
+@is_in.register  # type: ignore
 def _(where: str, x) -> bool:
     return x is where or x == where
 
 
-@is_in.register
+@is_in.register  # type: ignore
 def _(where: tuple, x) -> bool:
     for i in where:
         if is_in(i, x):
@@ -198,12 +205,12 @@ def _(where: tuple, x) -> bool:
     return False
 
 
-@is_in.register
+@is_in.register  # type: ignore
 def _(where: collections.abc.Callable, x) -> bool:
     return where(x)
 
 
-@is_in.register
+@is_in.register  # type: ignore
 def _(where: collections.abc.Container, x) -> bool:
     return x in where
 
@@ -229,23 +236,23 @@ def make_hashable(x):
     raise TypeError(f"Don't know how to make {type(x).__name__} objects hashable")
 
 
-@make_hashable.register
+@make_hashable.register  # type: ignore
 def _(x: collections.abc.Hashable):
     return x
 
 
-@make_hashable.register
+@make_hashable.register  # type: ignore
 def _(x: str):
     return x
 
 
-@make_hashable.register
-def _(x: collections.abc.Mapping):
+@make_hashable.register  # type: ignore
+def _(x: collections.abc.Mapping) -> Tuple:
     return tuple(map(lambda i: (i[0], make_hashable(i[1])), x.items()))
 
 
-@make_hashable.register
-def _(x: collections.abc.Iterable) -> int:
+@make_hashable.register  # type: ignore
+def _(x: collections.abc.Iterable) -> Tuple:
     return tuple(map(make_hashable, x))
 
 
@@ -255,42 +262,15 @@ def make_hash(*items) -> int:
     return hash(make_hashable(items[0]))
 
 
-# def make_hash(*items) -> int:
-#     """
-#     Makes a hash from a dictionary, list, tuple or set to any level, that contains
-#     only other hashable types (including any iterables, and
-#     dictionaries).
-#
-#     Modification from: https://stackoverflow.com/questions/5884066/hashing-a-dictionary/22003440#22003440
-#     """
-#
-#     if 1 < len(items):
-#         return hash(tuple(map(make_hash, items)))
-#     else:
-#         item = items[0]
-#         cls = type(item)
-#         if issubclass(cls, Hashable):
-#             return hash(item)
-#         if issubclass(cls, Iterable):
-#             if issubclass(cls, Dict):
-#                 new_o = copy.deepcopy(item)
-#                 for k, v in new_o.items():
-#                     new_o[k] = make_hash(v)
-#                 return hash(tuple(frozenset(sorted(new_o.items()))))
-#             else:
-#                 return hash(tuple(map(make_hash, item)))
-#         raise NotImplementedError(f"Correct the logic of make_hash() method for the type {cls}")
-
-
 def is_sorted(a: np.ndarray) -> bool:
-    return np.all(np.diff(a) > 0)
+    return cast(bool, np.all(np.diff(a) > 0))
 
 
 def mids(a: np.ndarray) -> np.ndarray:
     return 0.5 * (a[1:] + a[:-1])
 
 
-def prettify_float(x: float, fmt="{:.13g}") -> str:
+def prettify_float(x: float, fmt: str = "{:.13g}") -> str:
     if x.is_integer():
         return str(int(x))
     else:

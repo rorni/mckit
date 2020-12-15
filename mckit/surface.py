@@ -1251,7 +1251,7 @@ class GQuadratic(Surface, _GQuadratic):
     def __hash__(self) -> int:
         return self._hash
 
-    def __eq__(self, other: Surface) -> bool:
+    def __eq__(self, other) -> bool:
         if self is other:
             return True
 
