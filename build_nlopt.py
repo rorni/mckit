@@ -35,23 +35,26 @@ def do_build_nlopt(
         raise ValueError(f"Path {nlopt_path} is not a directory")
     cfg = "Debug" if debug else "Release"
     cmake_args = [
-        "--config",
-        cfg,
         f"-DCMAKE_INSTALL_PREFIX={sys.prefix}",
         f"-DPYTHON_EXECUTABLE={sys.executable}",
         f"-DPYTHON_INCLUDE_DIR={get_python_inc()}",
         f"-DPYTHON_LIBRARY={get_config_var('LIBDIR')}",
     ]
+    build_args = ["--config", cfg]
     if platform.system() == "Windows":  # pragma: no cover
+        # cmake_args += [
+		#	"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
+		#]
         if sys.maxsize > 2 ** 32:
             cmake_args += ["-A", "x64"]
+        build_args += ["--", "/m"]
     else:
         cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
     env = os.environ.copy()
     cmd = ["cmake"] + cmake_args + [nlopt_source_dir]
     print(f"Execute CMake configure: {cmd}")
     if 0 == subprocess.check_call(cmd, cwd=build_directory, env=env):
-        cmd = ["cmake", "--build", "."]
+        cmd = ["cmake", "--build", "."] + build_args
         print(f"Execute CMake build: {cmd}")
         if 0 == subprocess.check_call(cmd, cwd=build_directory):
             cmd = ["cmake", "--install", "."]

@@ -11,6 +11,36 @@ from typing import Any
 import nox
 from nox.sessions import Session
 
+import os
+import tempfile
+
+
+class CustomNamedTemporaryFile:
+    """
+    This custom implementation is needed because of the following limitation of tempfile.NamedTemporaryFile:
+
+    > Whether the name can be used to open the file a second time, while the named temporary file is still open,
+    > varies across platforms (it can be so used on Unix; it cannot on Windows NT or later).
+    """
+    def __init__(self, mode='wb', delete=True):
+        self._mode = mode
+        self._delete = delete
+
+    def __enter__(self):
+        # Generate a random temporary file name
+        file_name = os.path.join(tempfile.gettempdir(), os.urandom(24).hex())
+        # Ensure the file is created
+        open(file_name, "x").close()
+        # Open the file in the given mode
+        self._tempFile = open(file_name, self._mode)
+        return self._tempFile
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._tempFile.close()
+        if self._delete:
+            os.remove(self._tempFile.name)
+
+
 nox.options.sessions = (
     "safety",
     "lint",
@@ -33,16 +63,20 @@ lint_pythons = "3.7"
 
 def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
     """Install packages constrained by Poetry's lock file."""
-    with tempfile.NamedTemporaryFile() as requirements:
+    # with tempfile.NamedTemporaryFile() as requirements:
+    requirements_name = "tmp-requirements.txt"
+    try:
         session.run(
             "poetry",
             "export",
             "--dev",
             "--format=requirements.txt",
-            f"--output={requirements.name}",
+            f"--output={requirements_name}",
             external=True,
         )
-        session.install(f"--constraint={requirements.name}", *args, **kwargs)
+        session.install(f"--constraint={requirements_name}", *args, **kwargs)
+    finally:
+        os.unlink(requirements_name)
 
 
 @nox.session(python=supported_pythons)
@@ -82,7 +116,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.8", venv_backend='conda')
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     with tempfile.NamedTemporaryFile() as requirements:
