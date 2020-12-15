@@ -31,7 +31,6 @@ sys.path.append("..")
 
 import mckit as mk
 
-# from mckit import *
 from mckit.box import Box
 from mckit.utils.logging import logger as LOG
 
