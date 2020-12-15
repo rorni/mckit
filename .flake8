@@ -20,7 +20,7 @@ exclude =
     # This contains builds of flake8 that we don't want to check
     dist,
     # Parser files use a lot of attributes generated with metaclass and not
-    # recognized by flake8:w::wqjЖцлоЖоло
+    # recognized by flake8
     mckit/parser,
     tests/parser
     # __init__ issues to much "imported but not used"

@@ -105,10 +105,10 @@ def safety(session: Session) -> None:
 #  Always test after reorganizing ill projects.
 #
 @nox.session(python="3.9")
-def organize_imports(session: Session) -> None:
+def isort(session: Session) -> None:
     from glob import glob
 
-    install_with_constraints(session, "reorder-python-imports")
+    install_with_constraints(session, "isort")
     search_patterns = [
         "*.py",
         "mckit/*.py",
@@ -119,13 +119,8 @@ def organize_imports(session: Session) -> None:
     ]
     files_to_process = sum(map(lambda p: glob(p, recursive=True), search_patterns), [])
     session.run(
-        "python",
-        "-m",
-        "reorder_python_imports",
-        "--py36-plus",
-        "--diff-only",
-        "--application-directories",
-        "mckit:tests:benchmarks:profiles",
+        "isort",
+        "--diff",
         *files_to_process,
         external=True,
     )
