@@ -5,40 +5,13 @@
     See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
 
+import os
 import tempfile
 from typing import Any
+from contextlib import contextmanager
 
 import nox
 from nox.sessions import Session
-
-import os
-import tempfile
-
-
-class CustomNamedTemporaryFile:
-    """
-    This custom implementation is needed because of the following limitation of tempfile.NamedTemporaryFile:
-
-    > Whether the name can be used to open the file a second time, while the named temporary file is still open,
-    > varies across platforms (it can be so used on Unix; it cannot on Windows NT or later).
-    """
-    def __init__(self, mode='wb', delete=True):
-        self._mode = mode
-        self._delete = delete
-
-    def __enter__(self):
-        # Generate a random temporary file name
-        file_name = os.path.join(tempfile.gettempdir(), os.urandom(24).hex())
-        # Ensure the file is created
-        open(file_name, "x").close()
-        # Open the file in the given mode
-        self._tempFile = open(file_name, self._mode)
-        return self._tempFile
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._tempFile.close()
-        if self._delete:
-            os.remove(self._tempFile.name)
 
 
 nox.options.sessions = (
@@ -59,27 +32,69 @@ supported_pythons = "3.9 3.8 3.7".split()
 mypy_pythons = "3.7"
 black_pythons = "3.7"
 lint_pythons = "3.7"
+# on_windows = platform.system() == "Windows"
 
 
-def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
-    """Install packages constrained by Poetry's lock file."""
-    # with tempfile.NamedTemporaryFile() as requirements:
-    requirements_name = "tmp-requirements.txt"
+@contextmanager
+def collect_dev_requirements(session: Session) -> None:
+    req_path = os.path.join(tempfile.gettempdir(), os.urandom(24).hex())
     try:
         session.run(
             "poetry",
             "export",
             "--dev",
+            "--without-hashes",
             "--format=requirements.txt",
-            f"--output={requirements_name}",
+            f"--output={req_path}",
             external=True,
         )
-        session.install(f"--constraint={requirements_name}", *args, **kwargs)
+        yield req_path
     finally:
-        os.unlink(requirements_name)
+        os.unlink(req_path)
 
 
-@nox.session(python=supported_pythons)
+
+
+# see https://stackoverflow.com/questions/59768651/how-to-use-nox-with-poetry
+def install_with_constraints(
+    session: Session, *args: str, **kwargs: Any
+) -> None:
+    """
+    Install packages constrained by Poetry's lock file.
+
+    This function is a wrapper for nox.sessions.Session.install. It
+    invokes pip to install packages inside of the session's virtualenv.
+    Additionally, pip is passed a constraints file generated from
+    Poetry's lock file, to ensure that the packages are pinned to the
+    versions specified in poetry.lock. This allows you to manage the
+    packages as Poetry development dependencies.
+
+    Arguments:
+        session: The Session object.
+        args: Command-line arguments for pip.
+        kwargs: Additional keyword arguments for Session.install.
+    """
+    with collect_dev_requirements(session) as req_path:
+        session.install(f"--constraint={req_path}", *args, **kwargs)
+
+#  def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
+    #  """Install packages constrained by Poetry's lock file."""
+    #  with tempfile.NamedTemporaryFile() as requirements:
+        #  if on_windows:
+            #  requirements.close()
+        #  session.run(
+            #  "poetry",
+            #  "export",
+            #  "--without-hashes",
+            #  "--dev",
+            #  "--format=requirements.txt",
+            #  f"--output={requirements.name}",
+            #  external=True,
+        #  )
+        #  session.install(f"--constraint={requirements.name}", *args, **kwargs)
+
+
+@nox.session(python=supported_pythons, venv_backend='venv')
 def tests(session: Session) -> None:
     """Run the test suite."""
     args = session.posargs or ["--cov", "-m", "not e2e"]
@@ -116,21 +131,12 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.8", venv_backend='conda')
+@nox.session(python="3.8", venv_backend='venv')
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
-    with tempfile.NamedTemporaryFile() as requirements:
-        session.run(
-            "poetry",
-            "export",
-            "--dev",
-            "--format=requirements.txt",
-            "--without-hashes",
-            f"--output={requirements.name}",
-            external=True,
-        )
+    with collect_dev_requirements(session) as req_path:
         install_with_constraints(session, "safety")
-        session.run("safety", "check", f"--file={requirements.name}", "--full-report")
+        session.run("safety", "check", f"--file={req_path}", "--full-report")
 
 
 #  This dangerous on ill complex project: may cause cyclic dependency

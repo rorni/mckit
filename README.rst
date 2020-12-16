@@ -105,6 +105,7 @@ Resources
 * `Commit message format <https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit>`_
 * `Semantic Versioning <https://semver.org/>`_
 * `Typing <https://www.python.org/dev/peps/pep-0484/>`_
+* `Why pyproject.toml <https://www.python.org/dev/peps/pep-0518/>`_
 
 Check if we can apply these packaging tools
 -------------------------------------------
@@ -135,7 +136,7 @@ To provide proper change logs, apply this format for commit messages::
       │       │
       │       └─⫸ Summary in present tense. Not capitalized. No period at the end.
       │
-      └─⫸ Commit Type: breaking|build|ci|documentation|enhancement|bug|performance|refactoring|removal|style|testing
+      └─⫸ Commit Type: breaking|build|ci|documentation|feature|bug|performance|refactoring|removal|style|testing
 
 
 .. list-table:: Commit types description
@@ -152,7 +153,7 @@ To provide proper change logs, apply this format for commit messages::
       - Continuous Integration'
     * - documentation
       - Documentation
-    * - enhancement
+    * - feature
       - Features
     * - bug
       - Fixes bug, no other changes in the code

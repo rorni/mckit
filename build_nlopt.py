@@ -43,8 +43,8 @@ def do_build_nlopt(
     build_args = ["--config", cfg]
     if platform.system() == "Windows":  # pragma: no cover
         # cmake_args += [
-		#	"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
-		#]
+        # "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
+        #]
         if sys.maxsize > 2 ** 32:
             cmake_args += ["-A", "x64"]
         build_args += ["--", "/m"]

@@ -48,6 +48,7 @@ nlopt = "^2.6.2"
 mkl = "^2021.1.1"
 mkl-include = "^2021.1.1"
 python-dotenv = "^0.15.0"
+jupyterlab = "^2.2.9"
 
 [tool.poetry.dev-dependencies]
 Pygments = "^2.7.2"
@@ -79,6 +80,7 @@ sphinxcontrib-napoleon = "^0.7"
 xdoctest = "^0.15.0"
 wheel = "^0.35.1"
 sphinx-autobuild = "^2020.9.1"
+jupyterlab = "^2.2.9"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
