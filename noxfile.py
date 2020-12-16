@@ -101,8 +101,9 @@ def tests(session: Session) -> None:
     session.run("poetry", "install", "--no-dev", external=True)
     install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
     session.run("pytest", *args)
-    session.run("coverage", "report", "--show-missing", "--skip-covered")
-    session.run("coverage", "html")
+    if "--cov" in args:
+        session.run("coverage", "report", "--show-missing", "--skip-covered")
+        session.run("coverage", "html")
 
 
 @nox.session(python=lint_pythons)
