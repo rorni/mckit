@@ -17,7 +17,7 @@ class Box(_Box):
             *geometry_box.dimensions,
             geometry_box.ex,
             geometry_box.ey,
-            geometry_box.ez
+            geometry_box.ez,
         )
 
     def __eq__(self, other):

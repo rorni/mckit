@@ -7,10 +7,15 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
       with:
-        python-version: '3.7'
+        python-version: '3.8'
         architecture: x64
-    - run: pip install nox==2020.8.22
-    - run: pip install poetry==1.1.4
-    - run: nox --sessions tests-3.7 codecov
+    - name: Install nox
+      run: pip install nox==2020.8.22
+    - name: Install poetry
+      run: pip install poetry==1.1.4
+    - name: Checkout submodules
+      run: git submodule update --init --recursive --depth=1
+    - name: Run pytest, coverage and upload results to codecov
+      run: nox --sessions tests-3.8 codecov
       env:
         CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}

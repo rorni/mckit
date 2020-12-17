@@ -10,7 +10,7 @@ class DummyMaterial(Material):
         name: int,
         *,
         density: Optional[float] = None,
-        concentration: Optional[float] = None
+        concentration: Optional[float] = None,
     ) -> None:
         assert (density is None) ^ (
             concentration is None

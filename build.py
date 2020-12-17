@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 
 # https://stackoverflow.com/questions/60073711/how-to-build-c-extensions-via-poetry
+from typing import List, Union
+
 import os
 import os.path as path
-from typing import List, Union
 import sys
 
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
+import numpy as np  # numpy is in build requirements, so, it should be available
+
+from build_nlopt import build_nlopt
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 
 # see https://habr.com/ru/post/210450/
 from setuptools.dist import Distribution
 
-import numpy as np  # numpy is in build requirements, so, it should be available
+build_nlopt()
 
 
 class BinaryDistribution(Distribution):
@@ -56,9 +60,7 @@ platform = sys.platform.lower()
 
 if platform.startswith("linux"):
     geometry_dependencies = [
-        "mkl_intel_lp64",
-        "mkl_core",
-        "mkl_sequential",
+        "mkl_rt",  # dvp: use -lmkl_rt instead of -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
         "nlopt",
     ]
     python_include_dir = path.join(sys.prefix, "include")
