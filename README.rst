@@ -60,6 +60,7 @@ From source: ::
 
     # if you have `poetry` installed
     poetry build
+    poetry install
 
     # either (without poetry)
     pip install .
