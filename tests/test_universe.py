@@ -1,29 +1,35 @@
-import pytest
-import numpy as np
 import tempfile
+import textwrap
+from typing import Dict, List, Set, Union
 
-from mckit.material import Material, Element
-from mckit.parser import from_text, from_file, ParseResult
-from mckit.transformation import Transformation
+import numpy as np
+import pytest
+
+from mckit.body import Body, Card, Shape
 from mckit.box import Box
-from mckit.universe import (
-    Universe,
-    NameClashError,
-    cell_selector,
-    surface_selector,
-    collect_transformations,
-)
-from mckit.body import Card, Body, Shape
+from mckit.material import Composition, Element, Material
+from mckit.parser import ParseResult, from_file, from_text
 from mckit.surface import Sphere, Surface, create_surface
-from mckit.material import Composition
+from mckit.transformation import Transformation
+from mckit.universe import (
+    NameClashError,
+    Universe,
+    cell_selector,
+    collect_transformations,
+    surface_selector,
+)
 from mckit.utils.resource import filename_resolver
 
 data_filename_resolver = filename_resolver("tests")
 
+TStatItem = Dict[
+    int, Union[List[int], Set[Universe]]
+]  # TODO dvp: cool but isn't this too much freedom?
+TStat = Dict[str, TStatItem]
+
 
 @pytest.fixture(scope="module")
 def universe():
-
     cases = {
         1: "universe_test_data/universe1.i",
         2: "universe_test_data/universe2.i",
@@ -35,7 +41,7 @@ def universe():
         1022: "universe_test_data/universe1022.i",
     }
 
-    def _universe(case):
+    def _universe(case: int) -> Universe:
         result: ParseResult = from_file(data_filename_resolver(cases[case]))
         return result.universe
 
@@ -341,22 +347,22 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_co
     s_before = u.get_surfaces()
     c_before = u.get_compositions()
     if new_surfs is None or new_name is None or new_comps is None:
-        with pytest.raises(NameClashError) as x:
+        with pytest.raises(NameClashError):
             u.add_cells(cells, name_rule=name_rule)
     else:
         u.add_cells(cells, name_rule=name_rule)
         s_after = u.get_surfaces()
         c_after = u.get_compositions()
-        acells = u._cells[-len(new_name) :]
+        added_cells = u._cells[-len(new_name) :]
         if isinstance(cells, Body):
             cells = [cells]
-        for acell, cell, name in zip(acells, cells, new_name):
-            assert acell.shape == cell.shape
-            assert acell is not cell
-            assert acell.name() == name
-            assert acell.options["U"] is u
+        for added_cell, cell, name in zip(added_cells, cells, new_name):
+            assert added_cell.shape == cell.shape
+            assert added_cell is not cell
+            assert added_cell.name() == name
+            assert added_cell.options["U"] is u
             if cell.material() is not None:
-                assert acell.material().composition == cell.material().composition
+                assert added_cell.material().composition == cell.material().composition
 
         assert_change(s_before, s_after, new_surfs)
         assert_change(c_before, c_after, new_comps)
@@ -379,16 +385,16 @@ def test_add_cells_neg(universe, case, cells, shapes):
     s_after = u.get_surfaces()
     if isinstance(cells, Body):
         cells = [cells]
-    acells = u._cells[-len(cells) :]
+    added_cells = u._cells[-len(cells) :]
     if isinstance(cells, Body):
         cells = [cells]
-    for acell, cell, shape in zip(acells, cells, shapes):
-        assert acell.shape == shape
-        assert acell is not cell
-        assert acell.name() == cell.name()
-        assert acell.options["U"] is u
+    for added_cell, cell, shape in zip(added_cells, cells, shapes):
+        assert added_cell.shape == shape
+        assert added_cell is not cell
+        assert added_cell.name() == cell.name()
+        assert added_cell.options["U"] is u
         if cell.material() is not None:
-            assert acell.material().composition == cell.material().composition
+            assert added_cell.material().composition == cell.material().composition
 
     assert_change(s_before, s_after, {})
 
@@ -598,12 +604,12 @@ def test_copy(universe, case):
         assert cc is not c
         assert c.name() == cc.name()
         assert c.shape == cc.shape
-    surfs = {s.name(): s for s in u.get_surfaces()}
-    csurfs = {s.name(): s for s in uc.get_surfaces()}
-    assert surfs == csurfs
-    for k, v in surfs.items():
-        assert csurfs[k] is not v
-        assert csurfs[k] == v
+    surfaces_idx = {s.name(): s for s in u.get_surfaces()}
+    copy_surfaces_idx = {s.name(): s for s in uc.get_surfaces()}
+    assert surfaces_idx == copy_surfaces_idx
+    for k, v in surfaces_idx.items():
+        assert copy_surfaces_idx[k] is not v
+        assert copy_surfaces_idx[k] == v
 
 
 @pytest.mark.slow
@@ -620,11 +626,11 @@ def test_bounding_box(universe, tol, case, expected):
         tol = 100.0
         bb = u.bounding_box()
     for j, (low, high) in enumerate(expected):
-        bbdim = 0.5 * bb.dimensions[j]
-        assert bb.center[j] - bbdim <= low
-        assert bb.center[j] - bbdim >= low - tol
-        assert bb.center[j] + bbdim >= high
-        assert bb.center[j] + bbdim <= high + tol
+        dimensions = 0.5 * bb.dimensions[j]
+        assert bb.center[j] - dimensions <= low
+        assert bb.center[j] - dimensions >= low - tol
+        assert bb.center[j] + dimensions >= high
+        assert bb.center[j] + dimensions <= high + tol
 
 
 @pytest.mark.parametrize(
@@ -655,9 +661,9 @@ def test_select(universe, case, condition, inner, answer):
 )
 def test_get_universes(universe, case, answer):
     u = universe(case)
-    unvs = u.get_universes()
-    assert len(unvs) == len(answer.keys())
-    named_u = {x.name(): x for x in unvs}
+    universes = u.get_universes()
+    assert len(universes) == len(answer.keys())
+    named_u = {x.name(): x for x in universes}
     for k, v in named_u.items():
         names = {c.name() for c in v}
         assert names == answer[k]
@@ -699,14 +705,19 @@ def test_get_universes(universe, case, answer):
         (4, {}, {}),
     ],
 )
-def test_name_clashes(universe, case, rename, stat):
-    u = universe(case)
-    unvs = {x.name(): x for x in u.get_universes()}
+def test_name_clashes(
+    universe,
+    case: int,
+    rename: Dict[int, Dict[str, int]],
+    stat: TStat,
+):
+    u: Universe = universe(case)
+    universes_index: Dict[int, Universe] = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
-        unvs[uname].rename(**ren_dict)
+        universes_index[uname].rename(**ren_dict)
     for stat_item in stat.values():
-        for name, ulist in stat_item.items():
-            stat_item[name] = {unvs[uname] for uname in ulist}
+        for kind, universe_names in stat_item.items():
+            stat_item[kind] = {universes_index[uname] for uname in universe_names}
     s = u.name_clashes()
     assert s == stat
 
@@ -776,17 +787,24 @@ def test_name_clashes(universe, case, rename, stat):
         ),
     ],
 )
-def test_name_clashes_with_common_materials(universe, case, common_mat, stat):
+def test_name_clashes_with_common_materials(
+    universe,
+    case: int,
+    common_mat: Set[Composition],
+    stat: TStat,
+):
     u = universe(case)
-    unvs = {x.name(): x for x in u.get_universes()}
+    universes_idx = {x.name(): x for x in u.get_universes()}
     u.set_common_materials(common_mat)
     for stat_item in stat.values():
-        for name, ulist in stat_item.items():
-            stat_item[name] = {unvs[uname] if uname else None for uname in ulist}
+        for kind, universes_names in stat_item.items():
+            stat_item[kind] = {
+                universes_idx[uname] if uname else None for uname in universes_names
+            }
     s = u.name_clashes()
     for c in u._common_materials:
         print(c.mcnp_repr())
-    for name, un in unvs.items():
+    for name, un in universes_idx.items():
         print(name)
         for c in un.get_compositions():
             print(c.mcnp_repr())
@@ -827,11 +845,11 @@ def test_name_clashes_with_common_materials(universe, case, common_mat, stat):
 )
 def test_set_common_materials(universe, case, common_mat):
     u = universe(case)
-    unvs = u.get_universes()
-    mats_before = {un: un.get_compositions() for un in unvs}
+    universes = u.get_universes()
+    mats_before = {un: un.get_compositions() for un in universes}
     u.set_common_materials(common_mat)
     cm = {c: c for c in common_mat}
-    for un in unvs:
+    for un in universes:
         assert mats_before[un] == un.get_compositions()
         for c in un:
             mat = c.material()
@@ -957,33 +975,33 @@ def test_rename(universe, case, start, answer):
     u = universe(case)
     u.rename(**start)
     assert u.name() == answer["name"]
-    cnames = sorted(c.name() for c in u)
-    snames = sorted(s.name() for s in u.get_surfaces())
-    mnames = sorted(m.name() for m in u.get_compositions())
-    assert cnames == answer["cell"]
-    assert snames == answer["surface"]
-    assert mnames == answer["material"]
+    cell_names = sorted(c.name() for c in u)
+    surface_names = sorted(s.name() for s in u.get_surfaces())
+    composition_names = sorted(m.name() for m in u.get_compositions())
+    assert cell_names == answer["cell"]
+    assert surface_names == answer["surface"]
+    assert composition_names == answer["material"]
 
 
 @pytest.mark.parametrize("case", [1, 2])
 def test_alone(universe, case):
     u = universe(case)
-    uc = u.alone()
-    assert uc is not u
-    assert 0 == uc.name()
-    assert u.verbose_name == uc.verbose_name
-    assert len(u._cells) == len(uc._cells)
-    for c, cc in zip(u, uc):
+    current_universe = u.alone()
+    assert current_universe is not u
+    assert 0 == current_universe.name()
+    assert u.verbose_name == current_universe.verbose_name
+    assert len(u._cells) == len(current_universe._cells)
+    for c, cc in zip(u, current_universe):
         assert cc is not c
         assert c.name() == cc.name()
         assert c.shape == cc.shape
         assert "FILL" not in cc.options
     surfs = {s.name(): s for s in u.get_surfaces()}
-    csurfs = {s.name(): s for s in uc.get_surfaces()}
-    assert surfs == csurfs
+    current_universe_surfs = {s.name(): s for s in current_universe.get_surfaces()}
+    assert surfs == current_universe_surfs
     for k, v in surfs.items():
-        assert csurfs[k] is not v
-        assert csurfs[k] == v
+        assert current_universe_surfs[k] is not v
+        assert current_universe_surfs[k] == v
 
 
 @pytest.mark.parametrize(
@@ -1025,8 +1043,8 @@ def test_alone(universe, case):
 def test_rename_when_common_mat(universe, case, common, start, answer):
     u = Universe(universe(case), common_materials=common)
     u.rename(start_mat=start)
-    mnames = sorted(m.name() for m in u.get_compositions())
-    assert mnames == answer
+    composition_names = sorted(m.name() for m in u.get_compositions())
+    assert composition_names == answer
 
 
 @pytest.mark.slow
@@ -1059,11 +1077,11 @@ def test_save(universe, case, box):
 
     points = box.generate_random_points(100000)
     universes_orig = {x.name(): x for x in u.get_universes()}
-    universes_answ = {x.name(): x for x in ur.get_universes()}
-    assert universes_orig.keys() == universes_answ.keys()
+    universes_expected = {x.name(): x for x in ur.get_universes()}
+    assert universes_orig.keys() == universes_expected.keys()
     for k, univ in universes_orig.items():
         test_a = univ.test_points(points)
-        test_f = universes_answ[k].test_points(points)
+        test_f = universes_expected[k].test_points(points)
         np.testing.assert_array_equal(test_f, test_a)
 
 
@@ -1076,13 +1094,13 @@ def test_save(universe, case, box):
         (2, {2: {"start_cell": 2}, 1: {"start_cell": 1}}),
     ],
 )
-def test_save_exception(universe, case, rename):
+def test_save_exception(tmp_path, universe, case, rename):
     u = universe(case)
-    unvs = {x.name(): x for x in u.get_universes()}
+    universes_idx = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
-        unvs[uname].rename(**ren_dict)
+        universes_idx[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save("test.i")
+        u.save(tmp_path)
 
 
 @pytest.mark.xfail(reason="Check this renaming")
@@ -1093,69 +1111,77 @@ def test_save_exception(universe, case, rename):
         (2, {1: {"name": 3}, 2: {"name": 3}}),
     ],
 )
-def test_save_exception2(universe, case, rename):
+def test_save_exception2(tmp_path, universe, case, rename):
     u = universe(case)
-    unvs = {x.name(): x for x in u.get_universes()}
+    universes_idx = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
-        unvs[uname].rename(**ren_dict)
+        universes_idx[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save("test.i")
+        u.save(tmp_path)
 
 
 @pytest.mark.parametrize(
     "case, expected",
     [
         (
-            """0
-1 0 -1
-2 0  1
+            """\
+                0
+                1 0 -1
+                2 0  1
 
-1 1 so 1
+                1 1 so 1
 
-TR1 1 1 1
-    """,
+                TR1 1 1 1
+            """,
             [1],
         ),
         (
-            """0
-1 0 -1
-2 0  1
+            """\
+            0
+            1 0 -1
+            2 0  1
 
-1 1 so 1
+            1 1 so 1
 
-TR1 1 1 1
-    """,
+            TR1 1 1 1
+            """,
             [1],
         ),
         (
-            """0
-1 0 -1 -2
-2 0  1
+            """\
+            0
+            1 0 -1 -2
+            2 0  1
 
-1 1 so 2
-2 2 so 3
+            1 1 so 2
+            2 2 so 3
 
-TR1 1 1 1
-TR2 -1 -1 -1
-    """,
+            TR1 1 1 1
+            TR2 -1 -1 -1
+            """,
             [1, 2],
         ),
-        #     ("""0       TODO dvp: doesn't work, check what's wrong with that on parsing
-        # 1 0 -1 -2
-        # 2 0  1 fill=1 3
-        # 3 0  3 u=1
-        #
-        # 1 1 so 2
-        # 2 2 so 3
-        # 3 so 4
-        #
-        # TR1 1 1 1
-        # TR2 -1 -1 -1
-        # TR3  0 1 0
-        #     """, [1, 2, 3]),
+        (
+            """\
+            0
+            1 0 -1 -2
+            2 0  1 fill=1 (3) $ fill with named transformation
+            3 0  3 u=1
+
+            1 1 so 2
+            2 2 so 3
+            3 so 4
+
+            TR1 1 1 1
+            TR2 -1 -1 -1
+            TR3  0 1 0
+            """,
+            [1, 2, 3],
+        ),
     ],
 )
-def test_collect_transformations(case, expected):
+def test_collect_transformations(case: str, expected: List[int]) -> None:
+    case = textwrap.dedent(case)
     u = from_text(case).universe
     actual = sorted(map(int, map(Card.name, collect_transformations(u))))
     assert actual == expected

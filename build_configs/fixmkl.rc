@@ -13,8 +13,20 @@ else
         /usr/local/include \
         $INCLUDE_PATH \
     )"
-    if [[ -f "${MKL_ROOT}/lib/libmkl_def.so" ]]; then
-        export LD_PRELOAD=${MKL_ROOT}/lib/libmkl_def.so:${MKL_ROOT}/lib/libmkl_avx.so:${MKL_ROOT}/lib/libmkl_core.so:${MKL_ROOT}/lib/libmkl_intel_lp64.so:${MKL_ROOT}/lib/libmkl_intel_thread.so:${MKL_ROOT}/lib/libiomp5.so
+    if [[ -f "${MKL_ROOT}/lib/libmkl_def.so.1" ]]; then
+        libs_to_load=(
+            libmkl_def.so.1
+            libmkl_avx2.so.1
+            libmkl_core.so.1
+            libmkl_intel_lp64.so.1
+            libmkl_intel_thread.so.1
+            libiomp5.so
+        )
+        for f in $libs_to_load[@]; do
+            LD_PRELOAD="$(make_path ${MKL_ROOT}/lib/$f $LD_PRELOAD)"
+        done
+        # echo $LD_PRELOAD
+        export LD_PRELOAD
     else
         echo "WARNING: MKL files not found in $MKL_ROOT"
         echo "\nReset environment after installing MKL:"

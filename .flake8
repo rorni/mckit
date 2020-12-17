@@ -2,10 +2,14 @@
 #select = ANN,B,B9,BLK,C,D,DAR,E,F,I,S,W
 select = C,E,F,W
 max-complexity = 10
-max-line-length = 132
-ignore = E203,W503
-# E203 Whitespace before ‘:'
-# W503 Line break before binary operator
+max-line-length = 88
+ignore = 
+    # E203: Whitespace before ‘:'
+    E203,
+    # E501: Line too long
+    E501,
+    # W503: Line break before binary operator: for compatibility with black settings
+    W503
 exclude =
     # No need to traverse our git directory
     .git,
@@ -20,7 +24,7 @@ exclude =
     # This contains builds of flake8 that we don't want to check
     dist,
     # Parser files use a lot of attributes generated with metaclass and not
-    # recognized by flake8:w::wqjЖцлоЖоло
+    # recognized by flake8
     mckit/parser,
     tests/parser
     # __init__ issues to much "imported but not used"

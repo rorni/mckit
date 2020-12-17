@@ -1,4 +1,4 @@
-import os
+import platform
 
 import numpy as np
 import pytest
@@ -2500,7 +2500,7 @@ class TestCone:
 
     # TODO dvp: check the reason of rounding error in this test"
     @pytest.mark.skipif(
-        os.uname().nodename == "dvp-K56",
+        platform.uname().node == "dvp-K56",
         reason="Check the rounding error occuring on dvp-K56 machine",
     )
     @pytest.mark.parametrize(
