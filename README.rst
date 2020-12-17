@@ -6,8 +6,10 @@
 .. image:: https://github.com/dvp2015/mckit/workflows/Tests/badge.svg
    :target: https://github.com/dvp2015/mckit/actions?workflow=Tests
 
-.. |Codecov| image:: https://codecov.io/gh/rorni/mckit/branch/master/graph/badge.svg)
-    :target: https://codecov.io/gh/rorni/mckit
+
+.. image:: https://codecov.io/gh/dvp2015/mckit/branch/devel/graph/badge.svg?token=05OFBQS3RX
+   :target: https://codecov.io/gh/dvp2015/mckit
+
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/mckit.svg
    :target: https://pypi.org/project/mckit/
