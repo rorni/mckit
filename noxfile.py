@@ -205,7 +205,7 @@ def docs(session: Session) -> None:
         session.run("sphinx-build", "docs/source", "docs/_build")
 
 
-@nox.session(python="3.7")
+@nox.session(python="3.8")
 def codecov(session: Session) -> None:
     """Upload coverage data."""
     session.run("poetry", "install", "--no-dev", external=True)
