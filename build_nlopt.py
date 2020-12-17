@@ -42,9 +42,6 @@ def do_build_nlopt(
     ]
     build_args = ["--config", cfg]
     if platform.system() == "Windows":  # pragma: no cover
-        # cmake_args += [
-        # "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
-        #]
         if sys.maxsize > 2 ** 32:
             cmake_args += ["-A", "x64"]
         build_args += ["--", "/m"]
@@ -74,11 +71,7 @@ def build_nlopt():
             "CMake >= 3.19.0 is required: CMake should support `cmake --install .`"
         )
     nlopt_path = (Path.cwd() / "3rd-party/nlopt").absolute()
-    argv = sys.argv[1:]
-    if argv:
-        build_directory = argv[0]
-    else:
-        build_directory = nlopt_path / "build"
+    build_directory = nlopt_path / "build"
     build_directory.mkdir(parents=True, exist_ok=True)
     do_build_nlopt(str(nlopt_path), str(build_directory))
 
