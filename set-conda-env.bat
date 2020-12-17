@@ -44,10 +44,17 @@ pytest -m "not slow"
 ::
 call conda install pywin32=227 -y
 call poetry run python -m ipykernel install --user --name mckit4
+:: To use this environment in jupyter:
+:: - Run 'jupyter lab'  (note: 'jupyter notebook' is deprecated, but works so far)
+:: - Open or create notebook
+:: - Select kernel mckit4
+:: - check if 'import mckit' in the notebook works
 
 :: verify nox
 nox --list
+:: safety first - run this on every dependency addition or update
 nox -s safety
+:: test often - not tested commits is a road to hell
 nox -s tests  -- -m "not slow" --cov
 
 :: verify if 'pip' is able to collect the dependencies wheels

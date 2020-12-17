@@ -25,8 +25,8 @@
 MCKIT: MCNP model and results processing utilites
 =================================================
 
-Introduction
-------------
+Purpose
+-------
 
 The package |mckit| provides library to work with
 MCNP models and results. The package also provides command line interface, which 
@@ -46,28 +46,43 @@ The library can be used for more complicated and specific tasks.
 Install
 -------
 
-With setup.py: ::
+From source: ::
 
     git clone git@github.com:rorni/mckit.git
     cd mckit
-    python setup.py build
-    python setup.py install
+
+    # set local python environment with `pyenv`, `venv` or `conda`
+    # pyenv virtualenv 3.9.1 mckit
+    # pyenv local mckit 3.9.1 3.8.5 3.7.9 3.6.12
+    # or
+    # conda create -n mckit python=3.9
+    # conda activate mckit
+
+    # if you have `poetry` installed
+    poetry build
+
+    # either (without poetry)
+    pip install .
+
+
+From wheel: ::
+
+    pip install <wheel>
+
+
+
 
 Copyright
 ---------
 |mckit| is free software.
-TODO add dependencies licenses here
+
+The dependencies are declared in the package meta-information.
 
 
 Contributors
 ------------
 * `Roman Rodionov <mailto:r.rodionov@iterrf.ru>`_
 * `Dmitry Portnov <mailto:dmitri_portnov@yahoo.com>`_
-
-Copyright
----------
-|mckit| is free software.
-.. TODO add dependencies licenses here
 
 
 Tutorial
