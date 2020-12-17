@@ -16,14 +16,15 @@ import nox
 
 from nox.sessions import Session
 
+# TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
     "safety",
-    "lint",
-    "mypy",
+    # "lint",
+    # "mypy",
     # "xdoctest",
     "tests",
-    "codecov",
-    "docs",
+    # "codecov",
+    # "docs",
 )
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
