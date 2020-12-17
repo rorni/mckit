@@ -163,7 +163,7 @@ To provide proper change logs, apply this format for commit messages::
       │       │
       │       └─⫸ Summary in present tense. Not capitalized. No period at the end.
       │
-      └─⫸ Commit Type: breaking|build|ci|documentation|feature|bug|performance|refactoring|removal|style|testing
+      └─⫸ Commit Type: breaking|build|ci|doc|feature|bug|performance|refactoring|removal|style|test
 
 
 .. list-table:: Commit types description
@@ -178,20 +178,20 @@ To provide proper change logs, apply this format for commit messages::
       - Build System
     * - ci
       - Continuous Integration'
-    * - documentation
+    * - doc
       - Documentation
     * - feature
-      - Features
+      - Features change to satisfy tests
     * - bug
       - Fixes bug, no other changes in the code
     * - performance
       - Performance, benchmarks or profiling changes.
     * - refactoring
-      - Refactoring
+      - Refactoring code without changes in features and tests
     * - removal
       - Removing and deprecations in code or dependencies
     * - style
-      - Code and documentation style improvements.
-    * - testing
-      - Changes in tests
+      - Code and documentation style improvements. No changes in tests and features.
+    * - test
+      - Changes in tests without adding features
 

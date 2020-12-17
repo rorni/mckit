@@ -6,9 +6,9 @@ categories:
   - title: ':construction_worker: Continuous Integration'
     label: 'ci'
   - title: ':books: Documentation'
-    label: 'documentation'
+    label: 'doc'
   - title: ':rocket: Features'
-    label: 'enhancement'
+    label: 'feature'
   - title: ':beetle: Fixes'
     label: 'bug'
   - title: ':racehorse: Performance'
@@ -20,7 +20,7 @@ categories:
   - title: ':lipstick: Style'
     label: 'style'
   - title: ':rotating_light: Testing'
-    label: 'testing'
+    label: 'test'
 template: |
   ## What’s Changed
 
