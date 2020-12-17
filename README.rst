@@ -1,10 +1,10 @@
 .. include:: preamble.rst
 
 .. image:: https://img.shields.io/badge/Maintained%3F-yes-green.svg
-   :target: https://github.com/rorni/mckit/graphs/commit-activity
+   :target: https://github.com/dvp2015/mckit/graphs/commit-activity
 
-.. |Tests| image:: https://github.com/rorni/mckit/workflows/Tests/badge.svg
-   :target: https://github.com/rorni/mckit/actions?workflow=Tests
+.. image:: https://github.com/dvp2015/mckit/workflows/Tests/badge.svg
+   :target: https://github.com/dvp2015/mckit/actions?workflow=Tests
 
 .. |Codecov| image:: https://codecov.io/gh/rorni/mckit/branch/master/graph/badge.svg)
     :target: https://codecov.io/gh/rorni/mckit
@@ -20,6 +20,10 @@
 
 .. image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
     :target: https://pycqa.github.io/isort/
+
+.. image:: https://img.shields.io/github/license/dvp2015/mckit
+   :target: https://github.com/dvp2015/mckit
+
 
 
 MCKIT: MCNP model and results processing utilites
