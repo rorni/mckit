@@ -3,7 +3,7 @@
 .. |---| unicode:: U+02014 .. длинное тире
 .. |date| date:: %d.%m.%Y
 .. |time| date:: %H:%M
-.. |mckit| replace:: **mckit**
+.. |mckit| replace:: ``mckit``
 .. |br| raw:: html
 
        <br />

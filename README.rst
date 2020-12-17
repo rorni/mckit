@@ -70,6 +70,9 @@ From wheel: ::
     pip install <wheel>
 
 
+From PyPI: ::
+
+    To be implemented
 
 
 Copyright
@@ -97,6 +100,7 @@ TODO
 ~~~~
 .. TODO add nearest future plans.
 
+* translate documentation to English
 * implement generation of the documentation for `readthedocs`
 * create and link to the `readthedocs` account
 * add the `readthedocs` status icon at the document start.
