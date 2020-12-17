@@ -2,7 +2,7 @@
 from typing import Dict, NoReturn, List
 import pytest
 
-from mckit.parser.common.Index import Index
+from mckit.utils.Index import Index
 
 
 def dummy_strategy(c: int) -> int:

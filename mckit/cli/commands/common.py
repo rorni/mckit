@@ -1,13 +1,15 @@
-from pathlib import Path
 import typing as tp
+from io import StringIO
+from pathlib import Path
 
 import click
+
+from mckit.constants import MCNP_ENCODING
+from mckit.universe import Universe
+from mckit.universe import UniverseAnalyser
 from mckit.utils.logging import logger
 
-from mckit import Universe
-
 # This is the encoding swallowing non ascii (neither unicode) symbols happening in MCNP models code
-from mckit.constants import MCNP_ENCODING
 
 
 def check_if_path_exists(path: tp.Union[str, Path], override: bool):
@@ -23,7 +25,14 @@ def check_if_path_exists(path: tp.Union[str, Path], override: bool):
 
 def save_mcnp(model: Universe, path: tp.Union[str, Path], override: bool):
     check_if_path_exists(path, override)
-    model.save(path, encoding=MCNP_ENCODING)
+    analyser = UniverseAnalyser(model)
+    if analyser.we_are_all_clear():
+        model.save(path, encoding=MCNP_ENCODING, check_clashes=False)
+    else:
+        out = StringIO()
+        out.write("Duplicates found:\n")
+        analyser.print_duplicates_map(stream=out)
+        raise ValueError(out.getvalue())
 
 
 def get_default_output_directory(source, suffix):

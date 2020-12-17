@@ -1,9 +1,10 @@
 from typing import List, Tuple, Optional
 import sly
 from mckit.surface import Surface, create_surface
-from mckit.parser.common import Lexer as LexerBase, Index, TransformationStrictIndex
+from mckit.parser.common import Lexer as LexerBase, TransformationStrictIndex
 import mckit.parser.common.utils as pu  # parse utils
 from mckit.parser.common.utils import drop_c_comments, extract_comments
+from mckit.utils.Index import Index
 
 SURFACE_TYPES = {
     "P",

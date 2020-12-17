@@ -29,7 +29,6 @@ from mckit.constants import MCNP_ENCODING
 from mckit.card import Card
 from mckit.universe import Universe, produce_universes
 from mckit.parser.common import (
-    Index,
     CellStrictIndex,
     SurfaceStrictIndex,
     CompositionStrictIndex,
@@ -44,6 +43,7 @@ from mckit.parser.transformation_parser import (
 from mckit.parser.material_parser import parse as parse_composition, Composition
 from mckit.parser.surface_parser import parse as parse_surface, Surface
 from mckit.parser.cell_parser import parse as parse_cell, Body
+from mckit.utils.Index import Index
 
 T = NewType("T", Any)
 T1 = NewType("T1", Any)
@@ -88,7 +88,7 @@ def from_text(text: str) -> ParseResult:
         # fmt: off
         text_compositions, text_transformations, _, _, _ = distribute_cards(
             sections.data_cards
-        )  # type: List[TextCard], List[TextCard]
+        )  # type: List[TextCard], List[TextCard], List[TextCard], List[TextCard], List[TextCard],
         # fmt: on
         transformations = parse_transformations(text_transformations)
         transformations_index = TransformationStrictIndex.from_iterable(transformations)

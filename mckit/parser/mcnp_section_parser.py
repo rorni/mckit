@@ -1,9 +1,15 @@
-from enum import IntEnum
 import re
 import sys
-from typing import Iterable, List, Optional, Generator, TextIO, Tuple
+from enum import IntEnum
+from typing import Generator
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import TextIO
+from typing import Tuple
 
-from attr import attrs, attrib
+from attr import attrib
+from attr import attrs
 
 BLANK_LINE_PATTERN = re.compile(r"\n\s*\n", flags=re.MULTILINE)
 COMMENT_LINE_PATTERN = re.compile(r"^\s{,5}[cC]( .*)?\s*$")
@@ -29,13 +35,13 @@ TALLY_PATTERN = re.compile(
 
 
 class Kind(IntEnum):
-    COMMENT = (0,)
-    CELL = (1,)
-    SURFACE = (2,)
-    MATERIAL = (3,)
-    TRANSFORMATION = (4,)
-    SDEF = (5,)
-    TALLY = (6,)
+    COMMENT = 0
+    CELL = 1
+    SURFACE = 2
+    MATERIAL = 3
+    TRANSFORMATION = 4
+    SDEF = 5
+    TALLY = 6
     GENERIC = 7
 
     @classmethod
@@ -54,7 +60,7 @@ class Kind(IntEnum):
             return Kind.SDEF
         if TALLY_PATTERN.match(label):
             return Kind.TALLY
-        if is_comment_text(text, skip_asserts=True):
+        if is_comment(text):
             return Kind.COMMENT
         return Kind.GENERIC
 
@@ -156,7 +162,7 @@ class InputSections(object):
             print(self.remainder, file=stream)
 
 
-def split_to_cards(text, kind=None):
+def split_to_cards(text: str, kind: Kind = None) -> Generator[Card, None, None]:
     for res in CARD_PATTERN.finditer(text):
         groups = res.groupdict()
         comment = groups["comment"]
@@ -287,16 +293,8 @@ def check_title_is_continue(title):
     return title[:CONTINUE_LEN].lower() == "continue"
 
 
-def is_comment(seq):
-    if isinstance(seq, str):
-        return is_comment_text(seq, skip_asserts=True)
-    res = next((text for text in seq.split("\n") if not is_comment_text(text)), False)
-    return not res
-
-
-def is_comment_text(text, skip_asserts=False):
-    if not skip_asserts:
-        assert isinstance(text, str), "The parameter 'line' should be text"
+def is_comment(text: str) -> bool:
+    assert isinstance(text, str), "The parameter 'line' should be text"
     if "\n" in text:
         res = next(
             (line for line in text.split("\n") if not is_comment_line(line)), False
@@ -306,14 +304,14 @@ def is_comment_text(text, skip_asserts=False):
         return is_comment_line(text, skip_asserts=True)
 
 
-def is_comment_line(line: str, skip_asserts=False):
+def is_comment_line(line: str, skip_asserts=False) -> bool:
     if not skip_asserts:
         assert isinstance(line, str), "The parameter 'line' should be text"
         assert "\n" not in line, "The parameter 'line' should be the single text line"
-    return COMMENT_LINE_PATTERN.match(line)
+    return COMMENT_LINE_PATTERN.match(line) is not None
 
 
-def get_clean_text(text):
+def get_clean_text(text: str) -> str:
     without_comments = REMOVE_COMMENT_PATTERN.sub("", text)
     with_spaces_normalized = SPACE_PATTERN.sub(" ", without_comments)
     return with_spaces_normalized

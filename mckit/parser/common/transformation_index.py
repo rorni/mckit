@@ -1,7 +1,7 @@
 from typing import Optional, Iterable
 
 from mckit.transformation import Transformation
-from mckit.parser.common import Index, NumberedItemNotFoundError
+from mckit.utils.Index import Index, NumberedItemNotFoundError
 
 
 class DummyTransformation(Transformation):
@@ -21,7 +21,7 @@ def dummy_on_absent_transformation_strategy(name: int) -> Optional[DummyTransfor
 
 class TransformationStrictIndex(Index):
     def __init__(self, **kwargs):
-        super().__init__(raise_on_absent_transformation_strategy, kwargs)
+        super().__init__(raise_on_absent_transformation_strategy, **kwargs)
 
     @classmethod
     def from_iterable(
@@ -34,7 +34,7 @@ class TransformationStrictIndex(Index):
 
 class TransformationDummyIndex(Index):
     def __init__(self, **kwargs):
-        super().__init__(dummy_on_absent_transformation_strategy, kwargs)
+        super().__init__(dummy_on_absent_transformation_strategy, **kwargs)
 
 
 class TransformationNotFoundError(NumberedItemNotFoundError):

@@ -10,7 +10,8 @@ import pytest
 from zipfile import ZipFile
 from mckit.utils.resource import path_resolver
 from mckit.constants import MCNP_ENCODING
-from mckit import read_mcnp_text, Universe
+from mckit.parser.mcnp_input_parser import read_mcnp_text
+from mckit import Universe
 from mckit.parser.mcnp_input_sly_parser import ParseResult, from_text
 
 data_filename_resolver = path_resolver("benchmarks")

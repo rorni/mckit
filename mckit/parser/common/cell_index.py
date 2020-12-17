@@ -2,7 +2,7 @@ from typing import Optional, Iterable
 
 from mckit.body import Body, Card, GLOBAL_BOX
 from mckit.constants import MIN_BOX_VOLUME
-from mckit.parser.common import Index, NumberedItemNotFoundError
+from mckit.utils.Index import Index, NumberedItemNotFoundError
 
 
 class DummyCell(Body):
@@ -11,7 +11,7 @@ class DummyCell(Body):
     def __init__(self, name: int):
         self._name = name
         options = {"name": name, "comment": "dummy"}
-        Card.__init__(self, options)
+        Card.__init__(self, **options)
 
     def __hash__(self):
         return Card.__hash__(self)
@@ -58,7 +58,7 @@ def dummy_on_absent_cell_strategy(name: int) -> Optional[DummyCell]:
 
 class CellStrictIndex(Index):
     def __init__(self, **kwargs):
-        super().__init__(raise_on_absent_cell_strategy, kwargs)
+        super().__init__(raise_on_absent_cell_strategy, **kwargs)
 
     @classmethod
     def from_iterable(cls, items: Iterable[Body]) -> "CellStrictIndex":
@@ -69,7 +69,7 @@ class CellStrictIndex(Index):
 
 class CellDummyIndex(Index):
     def __init__(self, **kwargs):
-        super().__init__(dummy_on_absent_cell_strategy, kwargs)
+        super().__init__(dummy_on_absent_cell_strategy, **kwargs)
 
 
 class CellNotFoundError(NumberedItemNotFoundError):

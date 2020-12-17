@@ -1,0 +1,9 @@
+from typing import NewType
+from typing import cast
+
+Name = NewType("Name", int)
+"""The card names are integer"""
+
+
+def default_name_key(x) -> Name:
+    return cast(Name, x.name())

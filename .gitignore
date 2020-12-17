@@ -82,11 +82,18 @@ target/
 
 # Local environment files for dotenv
 .env
-test.pic
+
+#Local virtual environments
+.venv
+.nox
 
 # pyenv and poetry
 .python-version
 setup.py
+# The poetry config file poetry.toml is specific for each developer's environment
+poetry.toml
+
 
 dist/
 !/setup.py
+wrk/

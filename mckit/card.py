@@ -1,10 +1,12 @@
 """Features, common for all cards"""
-from typing import Optional, Text, List
 from abc import ABC, abstractmethod
-from toolz import reduce
 from operator import xor
+from typing import Optional, Text, List
+
+from toolz import reduce
 
 from .printer import print_card
+from mckit.utils.named import Name
 
 
 class Card(ABC):
@@ -13,7 +15,11 @@ class Card(ABC):
     def __init__(self, **options):
         self.options = options
 
-    def name(self) -> Optional[int]:
+    def name(
+        self,
+    ) -> Optional[
+        Name
+    ]:  # TODO dvp: we'd better have special property name, don't use options for that
         """Returns card's name."""
         return self.options.get("name", None)
 
@@ -24,10 +30,10 @@ class Card(ABC):
 
     @property
     def is_anonymous(self):
-        return not self.name()
+        return self.name() is None
 
     @abstractmethod
-    def mcnp_words(self, pretty=False):
+    def mcnp_words(self, pretty=False) -> List[Text]:
         """Gets a list of card words."""
 
     @property
@@ -38,23 +44,27 @@ class Card(ABC):
     def has_comment_above(self) -> bool:
         return "comment_above" in self.options.keys()
 
-    def mcnp_repr(self, pretty: bool = False) -> List[Text]:
+    def mcnp_repr(self, pretty: bool = False) -> Text:
         """Gets str representation of the card."""
+        # TODO dvp: try to use original texts, if available
         # if self.has_original:
         #     if self.has_comment_above:
         #         return self.comment_above + '\n' + self.original
         #     else:
         #         return self.original
         # else:
-        return print_card(self.mcnp_words(pretty))
+        text: Text = print_card(self.mcnp_words(pretty))
+        return text
 
     @property
     def comment_above(self) -> Optional[Text]:
-        return self.options.get("comment_above", None)
+        comment: Optional[Text] = self.options.get("comment_above", None)
+        return comment
 
     @property
     def original(self) -> Optional[Text]:
-        return self.options.get("original", None)
+        original: Text = self.options.get("original", None)
+        return original
 
     def drop_original(self) -> None:
         del self.options["original"]

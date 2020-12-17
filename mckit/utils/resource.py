@@ -1,7 +1,6 @@
 import pkg_resources as pkg
 import inspect
 
-# noinspection PyCompatibility
 from pathlib import Path
 
 
@@ -15,7 +14,6 @@ def filename_resolver(package=None):
     def func(resource):
         return resource_manager.resource_filename(package, resource)
 
-    # noinspection PyCompatibility
     func.__doc__ = f"Computes file names for resources located in {package}"
 
     return func

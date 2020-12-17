@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import abstractmethod
-from typing import Any, Dict, Text, Optional, List, Callable, Tuple
+from typing import Any, Dict, Text, Optional, List, Callable, Sequence, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
@@ -175,7 +175,7 @@ def create_surface(kind, *params: Any, **options: Any) -> "Surface":
         axis = params[3:6]
         radius = params[6]
         return RCC(center, axis, radius, **options)
-    # ---------- Axisymmetric surface defined by points ------
+    # ---------- Axis-symmetric surface defined by points ------
     else:
         if len(params) == 2:
             return Plane(axis, -params[0], **options)
@@ -749,7 +749,9 @@ class Sphere(Surface, _Sphere):
                              created. Transformation instance.
     """
 
-    def __init__(self, center: np.ndarray, radius: float, **options: Any):
+    def __init__(
+        self, center: Union[Sequence[float], np.ndarray], radius: float, **options: Any
+    ):
         center = np.asarray(center, dtype=np.float)
         radius = float(radius)
         Surface.__init__(self, **options)
@@ -1249,7 +1251,7 @@ class GQuadratic(Surface, _GQuadratic):
     def __hash__(self) -> int:
         return self._hash
 
-    def __eq__(self, other: Surface) -> bool:
+    def __eq__(self, other) -> bool:
         if self is other:
             return True
 

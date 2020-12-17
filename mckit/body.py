@@ -1,5 +1,6 @@
 import typing as tp
 import os
+from copy import deepcopy
 from functools import reduce
 from itertools import product, groupby, permutations
 from multiprocessing import Pool
@@ -8,22 +9,22 @@ from typing import Iterable, List, NewType, Optional, Set, Union
 import numpy as np
 from click import progressbar
 
-import mckit as mk
 import mckit.material as mm
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import Shape as _Shape
-from mckit.box import GLOBAL_BOX, Box
+from .box import GLOBAL_BOX, Box
 from .constants import MIN_BOX_VOLUME
 from .printer import print_card, CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .card import Card
-from mckit.utils import filter_dict
+from .utils import filter_dict
 
 __all__ = ["Shape", "Body", "simplify", "GLOBAL_BOX", "Card", "TGeometry", "TGeometry"]
 
 
+# noinspection PyProtectedMember
 class Shape(_Shape):
     """Describes shape.
 
@@ -228,13 +229,13 @@ class Shape(_Shape):
             k: list(v) for k, v in groupby(sorted(other.args, key=hash), key=hash)
         }
         flag = False  # TODO dvp: check is this statement doesn't break tests
-        for hval, entities in self_groups.items():
+        for hash_value, entities in self_groups.items():
             flag = False
-            if hval not in other_groups.keys():
+            if hash_value not in other_groups.keys():
                 return False
-            if len(entities) != len(other_groups[hval]):
+            if len(entities) != len(other_groups[hash_value]):
                 return False
-            for other_entities in permutations(other_groups[hval]):
+            for other_entities in permutations(other_groups[hash_value]):
                 for se, oe in zip(entities, other_entities):
                     if not (se == oe):
                         break
@@ -578,8 +579,9 @@ TOperation = NewType("TOperation", str)
 TGeometry = NewType("TGeometry", Union[List[Union[Surface, TOperation]], Shape, "Body"])
 
 
+# noinspection PyProtectedMember
 class Body(Card):
-    """Represents MCNP's cell.
+    """Represents MCNP cell.
 
     Parameters
     ----------
@@ -774,6 +776,7 @@ class Body(Card):
         bodies = [Body(shape, **self.options) for shape in shape_groups]
         return bodies
 
+    # noinspection PyShadowingNames
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
         """Fills this cell by filling universe.
 
@@ -844,6 +847,23 @@ class Body(Card):
             tr_in = fill.get("transform", Transformation())
             new_tr = tr.apply2transform(tr_in)
             fill["transform"] = new_tr
+        return cell
+
+    def apply_transformation(self) -> "Body":
+        """Actually apply transformation to this cell."""
+        geometry = self._shape.apply_transformation()
+        options = filter_dict(self.options, "original")
+        cell = Body(geometry, **options)
+        fill = cell.options.get("FILL", None)
+        if fill:
+            tr_in = fill.get("transform", None)
+            filling_universe = fill["universe"]
+            new_filling_universe = (
+                deepcopy(filling_universe).transform(tr_in).apply_transformation()
+            )
+            cell.options["FILL"] = {"universe": new_filling_universe}
+            # TODO dvp: this should create a lot of cell clashes on complex models with multiple filling with
+            #           one universe. Should be resolved before saving.
         return cell
 
 

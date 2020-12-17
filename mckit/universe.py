@@ -1,27 +1,39 @@
-# -*- coding: utf-8 -*-
+import operator
+import sys
 from contextlib import contextmanager
 from collections import defaultdict
 from io import StringIO
 from functools import reduce
-from typing import Iterable, Dict, Any, List, Set, Union
+from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Set,
+    Union,
+    Tuple,
+    Optional,
+    Callable,
+    cast,
+)
 
 import numpy as np
 from attr import attrs, attrib
 from click import progressbar
 
-import mckit as mk
 from .body import Body, Shape
 from .card import Card
 
-# noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
+from mckit.constants import MCNP_ENCODING
+from mckit.utils import filter_dict
 from .box import GLOBAL_BOX, Box
 from .surface import Surface
 from .transformation import Transformation
-from .material import Material
+from .material import Material, Composition
 from .surface import Plane
-from .utils import accept, on_unknown_acceptor
-from mckit.constants import MCNP_ENCODING
-from mckit.utils import filter_dict
+from .utils import accept
+from .utils import on_unknown_acceptor
 
 __all__ = [
     "Universe",
@@ -30,7 +42,11 @@ __all__ = [
     "cell_selector",
     "surface_selector",
     "collect_transformations",
+    "UniverseAnalyser",
 ]
+
+from .utils.Index import StatisticsCollector, IndexOfNamed
+from .utils.named import Name
 
 
 class NameClashError(ValueError):
@@ -40,7 +56,8 @@ class NameClashError(ValueError):
         if isinstance(result, str):
             ValueError.__init__(self, result)
         else:
-            msg = StringIO("Name clashes found:\n")
+            msg = StringIO()
+            msg.write("\n")
             for kind, index in result.items():
                 for i, u in index.items():
                     universes = reduce(
@@ -170,15 +187,15 @@ class Universe:
     def __init__(
         self,
         cells,
-        name=0,
-        verbose_name=None,
-        comment=None,
-        name_rule="keep",
-        common_materials=None,
+        name: Name = 0,
+        verbose_name: str = None,
+        comment: str = None,
+        name_rule: str = "keep",
+        common_materials: Set[Composition] = None,
     ):
-        self._name: int = name
+        self._name = name
         self._comment = comment
-        self._verbose_name: str = verbose_name
+        self._verbose_name = verbose_name
         self._cells = []
         if common_materials is None:
             common_materials = set()
@@ -202,6 +219,12 @@ class Universe:
     def __getitem__(self, item):
         return self._cells.__getitem__(item)
 
+    def __str__(self):
+        return f"Universe(name={self.name()})"
+
+    #
+    # dvp: this doesn't work with dictionaries
+    #
     # def __hash__(self):
     #     return reduce(xor, map(hash, self.cells), 0)
     #
@@ -493,9 +516,18 @@ class Universe:
                 surfs.update(c.options["FILL"]["universe"].get_surfaces(inner))
         return surfs
 
-    def get_compositions(
-        self, exclude_common: bool = False
-    ) -> Set[mk.material.Composition]:
+    def get_surfaces_list(self, inner: bool = False):
+        def reducer(surfaces_list, cell):
+            surfaces_list.extend(cell.shape.get_surfaces())
+            if inner and "FILL" in cell.options:
+                surfaces_list.extend(
+                    cell.options["FILL"]["universe"].get_surfaces_list(inner)
+                )
+            return surfaces_list
+
+        return reduce(reducer, self, [])
+
+    def get_compositions(self, exclude_common: bool = False) -> Set[Composition]:
         """Gets all compositions of the universe.
 
         Parameters
@@ -528,11 +560,11 @@ class Universe:
         universes = {self}
         for c in self:
             if "FILL" in c.options:
-                u = c.options["FILL"]["universe"]  # TODO dvp: add transformations?
+                u = c.options["FILL"]["universe"]
                 universes.update(u.get_universes())
         return universes
 
-    def name(self) -> int:
+    def name(self) -> Name:
         """Gets numeric name of the universe."""
         return self._name
 
@@ -630,26 +662,28 @@ class Universe:
                     m.rename(start_mat)
                     start_mat += 1
 
-    def check_clashes(self, resolve_clashes=False) -> None:
+    def check_clashes(self) -> None:
         result = self.name_clashes()
         if result:
-            if resolve_clashes:
-                pass
-                # TODO rename found clashed objects
-            else:
-                raise NameClashError(result)
+            raise NameClashError(result)
 
-    def save(self, filename, encoding=MCNP_ENCODING, resolve_clashes=False):
-        """Saves the universe into file.
+    def save(
+        self,
+        filename: Union[str, Path],
+        encoding: str = MCNP_ENCODING,
+        check_clashes: bool = True,
+    ):
+        """Saves the universe into file."""
+        # NOTE dvp: Don't try to resolve names here, the object shouldn't change on save() function.
+        # self.check_clashes()
+        if check_clashes:
+            analyser = UniverseAnalyser(self)
+            if not analyser.we_are_all_clear():
+                out = StringIO()
+                out.write("Duplicates found:\n")
+                analyser.print_duplicates_map(stream=out)
+                raise NameClashError(out.getvalue())
 
-        Parameters
-        ----------
-        filename : str, Path
-            File name, universe to be saved to.
-        encoding: str
-            Encoding ot the output file
-        """
-        self.check_clashes(resolve_clashes)
         transformations = collect_transformations(self)
         if transformations:
             transformations = sorted(transformations, key=Card.name)
@@ -770,20 +804,22 @@ class Universe:
             result[test == +1] = i
         return result
 
-    def transform(self, tr):
-        """Applies transformation tr to this universe. Returns a new universe.
-
-        Parameters
-        ----------
-        tr : Transformation
-            Transformation to be applied.
-
-        Returns
-        -------
-        u_tr : Universe
-            New transformed universe.
-        """
+    def transform(self, tr: Transformation) -> "Universe":
+        """Applies transformation tr to this universe. Returns a new universe."""
         new_cells = [c.transform(tr) for c in self]
+        return Universe(
+            new_cells,
+            name=self._name,
+            name_rule="clash",
+            verbose_name=self._verbose_name,
+            comment=self._comment,
+        )
+
+    def apply_transformation(self) -> "Universe":
+        """Applies transformations specified in cells.
+        Returns a new universe.
+        """
+        new_cells = [c.apply_transformation() for c in self]
         return Universe(
             new_cells,
             name=self._name,
@@ -824,9 +860,9 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
     universe : Universe
         The top level universe with name = 0.
     """
-    groups: Dict[int, _UniverseCellsGroup] = {}
+    groups: Dict[Name, _UniverseCellsGroup] = {}
     for c in cells:
-        universe_no: int = c.options.get("U", 0)
+        universe_no: Name = c.options.get("U", 0)
         if universe_no in groups:
             groups[universe_no].cells.append(c)
         else:
@@ -915,3 +951,158 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
 # TODO dvp: it's possible to generalize visiting introducing class Visitor
 #           See: all visit_... functions will be probably not changed on deriving
 #           Use functools partial to hide self parameter when passing the method as a function to accept()
+
+
+# TODO dvp: make names of cards not optional
+IU = Tuple[List[Optional[Name]], Name]
+"""Entities, Universe name"""
+
+E2U = Dict[Name, Dict[Name, int]]
+"""Map Entity name -> Universe Name -> Count"""
+
+
+def entity_to_universe_map_reducer(result: E2U, entry: IU) -> E2U:
+    entities_names, universe_name = entry
+
+    def inner_reducer(_result: E2U, entity_name: Name) -> E2U:
+        _result[entity_name][universe_name] += 1
+        return _result
+
+    return reduce(inner_reducer, entities_names, result)
+
+
+def cells_to_universe_mapper(universe: Universe) -> IU:
+    return list(map(Body.name, universe)), universe.name()
+
+
+def surfaces_to_universe_mapper(universe: Universe) -> IU:
+    return (
+        list(map(Surface.name, universe.get_surfaces_list(inner=False))),
+        universe.name(),
+    )
+
+
+def compositions_to_universe_mapper(universe: Universe) -> IU:
+    return (
+        list(map(Composition.name, universe.get_compositions(exclude_common=False))),
+        universe.name(),
+    )
+
+
+def transformations_to_universe_mapper(universe: Universe) -> IU:
+    return (
+        list(
+            map(Transformation.name, collect_transformations(universe, recursive=False))
+        ),
+        universe.name(),
+    )
+
+
+def is_shared_between_universes(item: Tuple[Name, Dict[Name, int]]) -> bool:
+    entity, universes_counts = item
+    return 1 < len(universes_counts.keys())
+
+
+def make_universe_counter_map():
+    return defaultdict(int)
+
+
+def collect_shared_entities(
+    entities_extractor: Callable[[Universe], IU], universes: Iterable[Universe]
+) -> E2U:
+    return dict(
+        filter(
+            is_shared_between_universes,
+            reduce(
+                entity_to_universe_map_reducer,
+                map(entities_extractor, universes),
+                cast(E2U, defaultdict(make_universe_counter_map)),
+            ).items(),
+        )
+    )
+
+
+class UniverseAnalyser:
+    def __init__(self, universe: Universe):
+        self.universe = universe
+        universes = self.universe.get_universes()
+        self.universe_duplicates = StatisticsCollector(ignore_equal=True)
+        self.universes_index = IndexOfNamed.from_iterable(
+            universes,
+            on_duplicate=self.universe_duplicates,
+        )
+        self.cell_duplicates = StatisticsCollector()
+        cells: List[Body] = reduce(operator.add, map(list, universes), [])
+        self.cell_index = IndexOfNamed[Name, Body].from_iterable(
+            cells,
+            on_duplicate=self.cell_duplicates,
+        )
+        self.cell_to_universe_map = collect_shared_entities(
+            cells_to_universe_mapper, universes
+        )
+        self.surface_duplicates = StatisticsCollector(ignore_equal=True)
+        self.surface_index = IndexOfNamed[Name, Surface].from_iterable(
+            universe.get_surfaces_list(inner=True),
+            on_duplicate=self.surface_duplicates,
+        )
+        self.surface_to_universe_map = collect_shared_entities(
+            surfaces_to_universe_mapper, universes
+        )
+        self.composition_duplicates = StatisticsCollector(ignore_equal=True)
+        self.composition_index = IndexOfNamed[Name, Composition].from_iterable(
+            universe.get_compositions(),
+            on_duplicate=self.composition_duplicates,
+        )
+        self.compositions_to_universe_map = collect_shared_entities(
+            compositions_to_universe_mapper, universes
+        )
+        self.transformation_duplicates = StatisticsCollector(ignore_equal=True)
+        self.transformation_index = IndexOfNamed[Name, Transformation].from_iterable(
+            collect_transformations(universe, recursive=True),
+            on_duplicate=self.transformation_duplicates,
+        )
+        self.transformations_to_universe_map = collect_shared_entities(
+            transformations_to_universe_mapper, universes
+        )
+
+    def duplicates(self):
+        return (
+            self.cell_duplicates,
+            self.surface_duplicates,
+            self.composition_duplicates,
+            self.transformation_duplicates,
+        )
+
+    def duplicates_maps(self):
+        return (
+            self.cell_to_universe_map,
+            self.surface_to_universe_map,
+            self.compositions_to_universe_map,
+            self.transformations_to_universe_map,
+        )
+
+    def we_are_all_clear(self) -> bool:
+        return not any(self.duplicates())
+
+    def print_duplicates_map(self, stream=sys.stdout):
+        def printer(_, item: Tuple[str, E2U]):
+            tag, info = item
+            entities = sorted(list(info.keys()))
+            for e in entities:
+                universes_count_map = info[e]
+                universes = sorted(list(universes_count_map.keys()))
+                print(f"{tag} {e} occurs", file=stream)
+                for u in universes:
+                    print(
+                        f"   in universe {u} {universes_count_map[u]} times",
+                        file=stream,
+                    )
+
+        reduce(
+            printer,
+            zip(
+                ["cell", "surface", "composition", "transformation"],
+                self.duplicates_maps(),
+            ),
+            None,
+        )

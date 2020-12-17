@@ -1,32 +1,33 @@
 # Set output for parser debugging before importing Parser classes.
 # from sly import Parser as SlyParser
 # SlyParser.debugfile = "sly-debug.out"
-from typing import Optional, List
-import pytest
-import mckit.parser.cell_parser as clp
+from typing import List, Optional
 
-from mckit.body import Body, TGeometry
-from mckit.parser.common import (
-    CellStrictIndex,
-    CellDummyIndex,
-    DummySurface,
-    SurfaceStrictIndex,
-    SurfaceDummyIndex,
-    DummyMaterial,
-    DummyComposition,
-    CompositionStrictIndex,
-    Index,
-)
+import mckit.parser.cell_parser as clp
+import pytest
+
+from mckit.body import Body
 from mckit.material import Material
+from mckit.parser.common import (
+    CellDummyIndex,
+    CellStrictIndex,
+    CompositionStrictIndex,
+    DummyComposition,
+    DummyMaterial,
+    DummySurface,
+    SurfaceDummyIndex,
+    SurfaceStrictIndex,
+)
 from mckit.transformation import Transformation
+from mckit.utils.Index import Index
 
 
 def create_cell(
     cell_no: int,
-    geometry: TGeometry,
+    geometry: List,
     material: Optional[Material] = None,
     transformation: Optional[Transformation] = None,
-    **options
+    **options,
 ):
     if not options:
         options = dict()

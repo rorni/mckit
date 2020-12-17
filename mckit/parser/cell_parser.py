@@ -1,20 +1,20 @@
 from typing import Optional
-import sly
-from mckit.body import Shape, Body
-from mckit.surface import Surface
-from mckit.material import Material
-from mckit.transformation import Transformation
-import mckit.parser.common.utils as pu
 
-from mckit.parser.common import (
-    Lexer as LexerBase,
-    Index,
-    CellStrictIndex,
-    SurfaceStrictIndex,
-    TransformationStrictIndex,
-    CompositionStrictIndex,
-)
+import sly
+
+import mckit.parser.common.utils as pu
+from mckit.body import Body
+from mckit.body import Shape
+from mckit.material import Material
+from mckit.parser.common import CellStrictIndex
+from mckit.parser.common import CompositionStrictIndex
+from mckit.parser.common import Lexer as LexerBase
+from mckit.parser.common import SurfaceStrictIndex
+from mckit.parser.common import TransformationStrictIndex
+from mckit.surface import Surface
+from mckit.transformation import Transformation
 from mckit.utils import filter_dict
+from mckit.utils.Index import Index
 
 CELL_WORDS = {"U", "MAT", "LAT", "TMP", "RHO", "VOL", "PMT"}
 
@@ -317,7 +317,7 @@ class Parser(sly.Parser):
     @_("float float float float float float float float float INTEGER")
     def rotation(self, p):
         m = p[9]
-        assert m == -1 or m == 1, f"Invalid value for transformation M paraameter {m}"
+        assert m == -1 or m == 1, f"Invalid value for transformation M parameter {m}"
         return [f for f in p][:-1], m == -1
 
     @_(
@@ -335,9 +335,9 @@ class Parser(sly.Parser):
     #
     @_('IMP ":" particle_list float_list')
     def imp_attribute(self, p):
-        lenp = len(p.particle_list)
-        if lenp != len(p.float_list):
-            while len(p.float_list) < lenp:
+        number_of_particles = len(p.particle_list)
+        if number_of_particles != len(p.float_list):
+            while len(p.float_list) < number_of_particles:
                 p.float_list.append(p.float_list[-1])
         result = dict(("IMP" + k, v) for k, v in zip(p.particle_list, p.float_list))
         return result

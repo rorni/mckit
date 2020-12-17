@@ -1,5 +1,5 @@
 """Functions for printing."""
-from typing import List, Optional, Any
+from typing import Any, List, Optional, Text
 import warnings
 
 from mckit.utils import get_decades, significant_digits, prettify_float
@@ -9,8 +9,8 @@ MCNP_FORMATS = {"importance": "{0:.3f}", "material_fraction": "{0:.6e}"}
 
 
 def print_card(
-    tokens: List[str], offset: int = 8, maxcol: int = 80, sep: str = "\n"
-) -> str:
+    tokens: List[Text], offset: int = 8, maxcol: int = 80, sep: str = "\n"
+) -> Text:
     """Produce string in MCNP card format.
 
     Parameters

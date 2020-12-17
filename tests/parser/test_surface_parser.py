@@ -1,8 +1,9 @@
 import pytest
-from mckit.parser.common import IgnoringIndex
+
 import mckit.parser.common.transformation_index as ti
 import mckit.parser.surface_parser as srp
 from mckit.surface import create_surface
+from mckit.utils.Index import IgnoringIndex
 
 
 @pytest.mark.parametrize(
@@ -15,10 +16,10 @@ from mckit.surface import create_surface
         ),
         (
             """
-158214   RPP  +558.364973080895990 +902.003588792269060  &
-          -428.589771011879980 -105.426621291914000  &
-          +438.709115982056010 +662.547063827514990
-            """,
+    158214   RPP  +558.364973080895990 +902.003588792269060  &
+              -428.589771011879980 -105.426621291914000  &
+              +438.709115982056010 +662.547063827514990
+                """,
             [
                 ("INTEGER", 158214),
                 ("SURFACE_TYPE", "RPP"),
@@ -49,10 +50,10 @@ def test_surface_lexer(text, expected):
         ),
         (
             """
-158214   RPP  +558.364973080895990 +902.003588792269060  &
-          -428.589771011879980 -105.426621291914000  &
-          +438.709115982056010 +662.547063827514990
-     """,
+    158214   RPP  +558.364973080895990 +902.003588792269060  &
+              -428.589771011879980 -105.426621291914000  &
+              +438.709115982056010 +662.547063827514990
+         """,
             create_surface(
                 "RPP",
                 558.364973080895990,
@@ -72,8 +73,8 @@ def test_good_path(text, expected):
 
 
 # noinspection PyTypeChecker
-@pytest.mark.parametrize("text,expected", [("1 2 PX 0", create_surface("PX", 0.0))])
-def test_absent_surface_with_ignore_strategy(text, expected):
+@pytest.mark.parametrize("text, expected", [("1 2 PX 0", create_surface("PX", 0.0))])
+def test_absent_transformation_with_ignore_strategy(text, expected):
     actual = srp.parse(text, transformations=IgnoringIndex())
     assert actual == expected
     assert "transform" not in actual.options

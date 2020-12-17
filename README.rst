@@ -1,6 +1,6 @@
 .. include:: preamble.rst
 
-.. |Maintenance yes| image:: https://img.shields.io/badge/Maintained%3F-yes-green.svg
+.. image:: https://img.shields.io/badge/Maintained%3F-yes-green.svg
    :target: https://github.com/rorni/mckit/graphs/commit-activity
 
 .. |Tests| image:: https://github.com/rorni/mckit/workflows/Tests/badge.svg
@@ -15,11 +15,18 @@
 .. |Read the Docs| image:: https://readthedocs.org/projects/mckit/badge/
    :target: https://mckit.readthedocs.io/
 
-MCKIT
-=====
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
 
-Introduction
-------------
+.. image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
+    :target: https://pycqa.github.io/isort/
+
+
+MCKIT: MCNP model and results processing utilites
+=================================================
+
+Purpose
+-------
 
 The package |mckit| provides library to work with
 MCNP models and results. The package also provides command line interface, which 
@@ -39,28 +46,43 @@ The library can be used for more complicated and specific tasks.
 Install
 -------
 
-With setup.py: ::
+From source: ::
 
     git clone git@github.com:rorni/mckit.git
     cd mckit
-    python setup.py build
-    python setup.py install
+
+    # set local python environment with `pyenv`, `venv` or `conda`
+    # pyenv virtualenv 3.9.1 mckit
+    # pyenv local mckit 3.9.1 3.8.5 3.7.9 3.6.12
+    # or
+    # conda create -n mckit python=3.9
+    # conda activate mckit
+
+    # if you have `poetry` installed
+    poetry build
+
+    # either (without poetry)
+    pip install .
+
+
+From wheel: ::
+
+    pip install <wheel>
+
+
+
 
 Copyright
 ---------
 |mckit| is free software.
-TODO add dependencies licenses here
+
+The dependencies are declared in the package meta-information.
 
 
 Contributors
 ------------
 * `Roman Rodionov <mailto:r.rodionov@iterrf.ru>`_
 * `Dmitry Portnov <mailto:dmitri_portnov@yahoo.com>`_
-
-Copyright
----------
-|mckit| is free software.
-.. TODO add dependencies licenses here
 
 
 Tutorial
@@ -75,12 +97,13 @@ TODO
 ~~~~
 .. TODO add nearest future plans.
 
-* implement generation of the documentation for readthedocs
-* create and link to the readthedocs account
-* add the readthedocs status icon at the document start.
+* implement generation of the documentation for `readthedocs`
+* create and link to the `readthedocs` account
+* add the `readthedocs` status icon at the document start.
 
-Good reading
-------------
+A Developer's Reading
+----------------------
+* `The Hitchhicker's guide to Python <https://docs.python-guide.org/>`_ 
 * `Claudio Cjolowicz "Hypermodern Python" <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
 * `Python development best practices 2019 <https://flynn.gg/blog/software-best-practices-python-2019/>`_
 * `Managing Multiple Python Versions With pyenv <https://realpython.com/intro-to-pyenv/>`_
@@ -88,12 +111,22 @@ Good reading
 * `Pytest <https://docs.pytest.org/en/stable/index.html>`_
 * `Linting <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 * `Sphinx, Стандартный синтаксис разметки  reStructuredText, readthedocs <https://sphinx-ru.readthedocs.io/ru/latest/rst-markup.html>`_
+* `Python Packaging Guide <https://packaging.python.org>`_
+* `Stop using Anaconda <https://medium.com/swlh/stop-using-anaconda-for-your-data-science-projects-1fc29821c6f6>`_
 
 Resources
 ---------
 * `Budges for README.rst <https://github.com/Naereen/badges/blob/master/README.rst>`_
 * `Commit message format <https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit>`_
 * `Semantic Versioning <https://semver.org/>`_
+* `Typing <https://www.python.org/dev/peps/pep-0484/>`_
+* `Why pyproject.toml <https://www.python.org/dev/peps/pep-0518/>`_
+
+Check if we can apply these packaging tools
+-------------------------------------------
+* `Packaging Tutorial: <https://python-packaging-tutorial.readthedocs.io/en/latest/binaries_dependencies.html>`_
+* `scikit-build <https://scikit-build.readthedocs.io/en/latest/index.html>`_
+* `Benjamin R. Jack, Hybrid Python/C++ packages, revisited <https://www.benjack.io/2018/02/02/python-cpp-revisited.html>`_
 
 Bugs
 ----
@@ -118,7 +151,7 @@ To provide proper change logs, apply this format for commit messages::
       │       │
       │       └─⫸ Summary in present tense. Not capitalized. No period at the end.
       │
-      └─⫸ Commit Type: breaking|build|ci|documentation|enhancement|bug|performance|refactoring|removal|style|testing
+      └─⫸ Commit Type: breaking|build|ci|documentation|feature|bug|performance|refactoring|removal|style|testing
 
 
 .. list-table:: Commit types description
@@ -135,7 +168,7 @@ To provide proper change logs, apply this format for commit messages::
       - Continuous Integration'
     * - documentation
       - Documentation
-    * - enhancement
+    * - feature
       - Features
     * - bug
       - Fixes bug, no other changes in the code

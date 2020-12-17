@@ -5,12 +5,16 @@ from typing import List
 
 import click
 from click_loguru import ClickLoguru
-from mckit.utils.logging import logger
 
 import mckit.version as meta
-from mckit.utils import MCNP_ENCODING
+from mckit.cli.commands import do_check
+from mckit.cli.commands import do_compose
+from mckit.cli.commands import do_decompose
+from mckit.cli.commands import do_split
+from mckit.cli.commands import do_transform
 from mckit.cli.commands.common import get_default_output_directory
-from mckit.cli.commands import do_decompose, do_compose, do_split, do_check
+from mckit.utils import MCNP_ENCODING
+from mckit.utils.logging import logger
 
 NAME = meta.__title__
 VERSION = meta.__version__
@@ -42,6 +46,7 @@ context = {}
 
 @click_loguru.logging_options
 @click.group(help=meta.__summary__)
+@click_loguru.init_logger()
 @click_loguru.stash_subcommand()
 @click.option("--override/--no-override", default=False)
 @click.version_option(VERSION, prog_name=NAME)
@@ -49,6 +54,10 @@ context = {}
 def mckit(
     verbose: bool, quiet: bool, logfile: bool, profile_mem: bool, override: bool
 ) -> None:
+    if quiet:
+        logger.level("WARNING")
+    if verbose:
+        logger.level("TRACE")
     logger.info("Running {}", NAME)
     logger.debug("Working dir {}", Path(".").absolute())
     #
@@ -196,6 +205,50 @@ def check(sources: List[click.Path]) -> None:
     """Read MCNP model(s) and show statistics and clashes."""
     for source in sources:
         do_check(source)
+
+
+# noinspection PyCompatibility
+@mckit.command()
+@click_loguru.init_logger()
+@click.option(
+    "--transformation",
+    "-t",
+    type=click.INT,
+    required=True,
+    help="Transformation in MCNP format",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.STRING,
+    required=True,
+    help="Output file",
+)
+@click.option(
+    "--transformations",
+    "-i",
+    default="transformations.txt",
+    type=click.Path(exists=True),
+    help="Output file",
+)
+@click.argument(
+    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
+)
+def transform(
+    output: click.STRING,
+    transformation: click.STRING,
+    transformations: click.Path,
+    source: click.Path,
+) -> None:
+    """Transform MCNP model(s) with one of specified transformatio."""
+    do_transform(
+        Path(output),
+        transformation,
+        Path(str(transformations)),
+        Path(str(source)),
+        context["OVERRIDE"],
+    )
+    logger.info("File {} is transformed to {}", source, output)
 
 
 if __name__ == "__main__":
