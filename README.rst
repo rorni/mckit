@@ -125,6 +125,7 @@ Resources
 * `Semantic Versioning <https://semver.org/>`_
 * `Typing <https://www.python.org/dev/peps/pep-0484/>`_
 * `Why pyproject.toml <https://www.python.org/dev/peps/pep-0518/>`_
+* `Git branching and tagging best practices <https://nvie.com/posts/a-successful-git-branching-model/>`_
 
 Check if we can apply these packaging tools
 -------------------------------------------
