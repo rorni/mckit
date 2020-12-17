@@ -70,10 +70,15 @@ def build_nlopt():
         raise RuntimeError(
             "CMake >= 3.19.0 is required: CMake should support `cmake --install .`"
         )
-    nlopt_path = (Path.cwd() / "3rd-party/nlopt").absolute()
-    build_directory = nlopt_path / "build"
-    build_directory.mkdir(parents=True, exist_ok=True)
-    do_build_nlopt(str(nlopt_path), str(build_directory))
+    if 0 == subprocess.check_call(
+        "git submodule update --init --recursive --depth=1".split()
+    ):
+        nlopt_path = (Path.cwd() / "3rd-party/nlopt").absolute()
+        build_directory = nlopt_path / "build"
+        build_directory.mkdir(parents=True, exist_ok=True)
+        do_build_nlopt(str(nlopt_path), str(build_directory))
+    else:
+        raise EnvironmentError("Failed to update Git submodules")
 
 
 # TODO dvp: add more functionality to this build script: debug, clean build and so on.
