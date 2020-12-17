@@ -6,6 +6,7 @@
 """
 
 from typing import Any, Generator, List
+from pathlib import Path
 
 import os
 import tempfile
@@ -83,7 +84,8 @@ def tests(session: Session) -> None:
     args = session.posargs or ["--cov", "-m", "not e2e"]
     session.run("poetry", "install", "--no-dev", external=True)
     install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
-    session.run("pytest", *args)
+    path = Path(session.bin).parent
+    session.run("pytest", env={"LD_LIBRARY_PATH": str(path / "lib")}, *args)
     if "--cov" in args:
         session.run("coverage", "report", "--show-missing", "--skip-covered")
         session.run("coverage", "html")
@@ -219,3 +221,9 @@ def codecov(session: Session) -> None:
     # install_with_constraints(session, "coverage[toml]", "codecov")
     session.run("coverage", "xml", "--fail-under=0")
     session.run("codecov", *session.posargs)
+
+
+@nox.session(python="3.9", venv_backend="venv")
+def test_nox(session: Session) -> None:
+    path = Path(session.bin)
+    print("bin", path.parent)

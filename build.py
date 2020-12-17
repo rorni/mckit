@@ -60,9 +60,7 @@ platform = sys.platform.lower()
 
 if platform.startswith("linux"):
     geometry_dependencies = [
-        "mkl_intel_lp64",
-        "mkl_core",
-        "mkl_sequential",
+        "mkl_rt",  # dvp: use -lmkl_rt instead of -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
         "nlopt",
     ]
     python_include_dir = path.join(sys.prefix, "include")

@@ -13,28 +13,28 @@ else
         /usr/local/include \
         $INCLUDE_PATH \
     )"
-    if [[ -f "${MKL_ROOT}/lib/libmkl_def.so.1" ]]; then
-        libs_to_load=(
-            libmkl_def.so.1
-            libmkl_avx2.so.1
-            libmkl_core.so.1
-            libmkl_intel_lp64.so.1
-            libmkl_intel_thread.so.1
-            libiomp5.so
-        )
-        for f in $libs_to_load[@]; do
-            LD_PRELOAD="$(make_path ${MKL_ROOT}/lib/$f $LD_PRELOAD)"
-        done
-        # echo $LD_PRELOAD
-        export LD_PRELOAD
-    else
-        echo "WARNING: MKL files not found in $MKL_ROOT"
-        echo "\nReset environment after installing MKL:"
-        echo ""
-        echo "   poetry add mkl-devel"
-        echo "   poetry install"
-        echo "   . ./setenv.rc reset"
-        echo ""
-    fi
+    # if [[ -f "${MKL_ROOT}/lib/libmkl_def.so.1" ]]; then
+        # libs_to_load=(
+            # libmkl_def.so.1
+            # libmkl_avx2.so.1
+            # libmkl_core.so.1
+            # libmkl_intel_lp64.so.1
+            # libmkl_intel_thread.so.1
+            # libiomp5.so
+        # )
+        # for f in $libs_to_load[@]; do
+            # LD_PRELOAD="$(make_path ${MKL_ROOT}/lib/$f $LD_PRELOAD)"
+        # done
+        # # echo $LD_PRELOAD
+        # export LD_PRELOAD
+    # else
+        # echo "WARNING: MKL files not found in $MKL_ROOT"
+        # echo "\nReset environment after installing MKL:"
+        # echo ""
+        # echo "   poetry add mkl-devel"
+        # echo "   poetry install"
+        # echo "   . ./setenv.rc reset"
+        # echo ""
+    # fi
 fi
 # vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai :
