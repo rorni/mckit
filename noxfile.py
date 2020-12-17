@@ -5,14 +5,16 @@
     See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
 
+from typing import Any, Generator, List
+
 import os
 import tempfile
-from typing import Any
+
 from contextlib import contextmanager
 
 import nox
-from nox.sessions import Session
 
+from nox.sessions import Session
 
 nox.options.sessions = (
     "safety",
@@ -27,16 +29,16 @@ nox.options.sessions = (
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
 supported_pythons = "3.9 3.8 3.7".split()
-# mypy, black and lint only work with python 3.7: dependencies requirement
+black_pythons = "3.9"  # TODO dvp: target-version in pyproject.toml is still py38, check on updates of black
+
+# mypy and flake8 only work with python 3.7: dependencies requirement
 # TODO dvp: check, when updates are available
 mypy_pythons = "3.7"
-black_pythons = "3.7"
 lint_pythons = "3.7"
-# on_windows = platform.system() == "Windows"
 
 
 @contextmanager
-def collect_dev_requirements(session: Session) -> None:
+def collect_dev_requirements(session: Session) -> Generator[str, None, None]:
     req_path = os.path.join(tempfile.gettempdir(), os.urandom(24).hex())
     try:
         session.run(
@@ -53,12 +55,8 @@ def collect_dev_requirements(session: Session) -> None:
         os.unlink(req_path)
 
 
-
-
 # see https://stackoverflow.com/questions/59768651/how-to-use-nox-with-poetry
-def install_with_constraints(
-    session: Session, *args: str, **kwargs: Any
-) -> None:
+def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
     """
     Install packages constrained by Poetry's lock file.
 
@@ -77,24 +75,8 @@ def install_with_constraints(
     with collect_dev_requirements(session) as req_path:
         session.install(f"--constraint={req_path}", *args, **kwargs)
 
-#  def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
-    #  """Install packages constrained by Poetry's lock file."""
-    #  with tempfile.NamedTemporaryFile() as requirements:
-        #  if on_windows:
-            #  requirements.close()
-        #  session.run(
-            #  "poetry",
-            #  "export",
-            #  "--without-hashes",
-            #  "--dev",
-            #  "--format=requirements.txt",
-            #  f"--output={requirements.name}",
-            #  external=True,
-        #  )
-        #  session.install(f"--constraint={requirements.name}", *args, **kwargs)
 
-
-@nox.session(python=supported_pythons, venv_backend='venv')
+@nox.session(python=supported_pythons, venv_backend="venv")
 def tests(session: Session) -> None:
     """Run the test suite."""
     args = session.posargs or ["--cov", "-m", "not e2e"]
@@ -132,7 +114,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.8", venv_backend='venv')
+@nox.session(python="3.8", venv_backend="venv")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     with collect_dev_requirements(session) as req_path:
@@ -158,7 +140,9 @@ def isort(session: Session) -> None:
         "profiles/*.py",
         "adhoc/*.py",
     ]
-    files_to_process = sum(map(lambda p: glob(p, recursive=True), search_patterns), [])
+    files_to_process: List[str] = sum(
+        map(lambda p: glob(p, recursive=True), search_patterns), []
+    )
     session.run(
         "isort",
         "--diff",
