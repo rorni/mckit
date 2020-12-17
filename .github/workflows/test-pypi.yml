@@ -17,6 +17,8 @@ jobs:
         poetry version patch &&
         version=$(poetry version | awk '{print $2}') &&
         poetry version $version.dev.$(date +%s)
+    - name: Checkout submodules
+      run: git submodule update --init --recursive --depth=1
     - run: poetry build
     - uses: pypa/gh-action-pypi-publish@v1.0.0a0
       with:
