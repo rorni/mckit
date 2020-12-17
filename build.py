@@ -9,7 +9,17 @@ import sys
 
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
-import numpy as np  # numpy is in build requirements, so, it should be available
+# TODO dvp: check if the issue with build requirements is resolved and poetry updated
+# see https://github.com/python-poetry/poetry/pull/2794
+# import numpy as np  # numpy is in build requirements, so, it should be available
+# workaround
+try:
+    import numpy as np
+except ImportError:
+    import subprocess
+
+    subprocess.check_call("pip install numpy".split())
+    import numpy as np
 
 from build_nlopt import build_nlopt
 from setuptools import Extension
@@ -83,6 +93,8 @@ elif "win" in platform and "darwin" not in sys.platform.lower():
     mkl_lib = sys.prefix + "\\Library\\lib"
     library_dirs = insert_directories(library_dirs, mkl_lib)
     extra_compile_args = ["/O2"]
+else:
+    raise EnvironmentError(f"Cannot recognize platform {platform}")
 
 geometry_sources = [
     path.join("mckit", "src", src)
