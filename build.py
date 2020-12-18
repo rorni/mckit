@@ -18,7 +18,7 @@ try:
 except ImportError:
     import subprocess
 
-    subprocess.check_call("poetry run -m pip install numpy".split())
+    subprocess.check_call("poetry run python -m pip install numpy".split())
     import numpy as np
 
 from build_nlopt import build_nlopt
