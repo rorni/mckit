@@ -1,20 +1,36 @@
 #!/usr/bin/env python3
 
 # https://stackoverflow.com/questions/60073711/how-to-build-c-extensions-via-poetry
+from typing import List, Union
+
 import os
 import os.path as path
-from typing import List, Union
+import subprocess
 import sys
 
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
+# TODO dvp: check if the issue with build requirements is resolved and poetry updated
+# see https://github.com/python-poetry/poetry/pull/2794
+# import numpy as np  # numpy is in build requirements, so, it should be available
+# workaround
+try:
+    import numpy as np
+except ImportError:
+    subprocess.check_call("poetry run python -m pip install numpy".split())
+    import numpy as np
+
+    # same as above for mkl
+    subprocess.check_call("poetry run python -m pip install mkl-devel".split())
+
+from build_nlopt import build_nlopt
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 
 # see https://habr.com/ru/post/210450/
 from setuptools.dist import Distribution
 
-import numpy as np  # numpy is in build requirements, so, it should be available
+build_nlopt()
 
 
 class BinaryDistribution(Distribution):
@@ -56,9 +72,7 @@ platform = sys.platform.lower()
 
 if platform.startswith("linux"):
     geometry_dependencies = [
-        "mkl_intel_lp64",
-        "mkl_core",
-        "mkl_sequential",
+        "mkl_rt",  # dvp: use -lmkl_rt instead of -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
         "nlopt",
     ]
     python_include_dir = path.join(sys.prefix, "include")
@@ -81,6 +95,8 @@ elif "win" in platform and "darwin" not in sys.platform.lower():
     mkl_lib = sys.prefix + "\\Library\\lib"
     library_dirs = insert_directories(library_dirs, mkl_lib)
     extra_compile_args = ["/O2"]
+else:
+    raise EnvironmentError(f"Cannot recognize platform {platform}")
 
 geometry_sources = [
     path.join("mckit", "src", src)

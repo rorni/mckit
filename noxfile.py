@@ -6,6 +6,7 @@
 """
 
 from typing import Any, Generator, List
+from pathlib import Path
 
 import os
 import tempfile
@@ -16,14 +17,15 @@ import nox
 
 from nox.sessions import Session
 
+# TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
     "safety",
-    "lint",
-    "mypy",
+    # "lint",
+    # "mypy",
     # "xdoctest",
     "tests",
-    "codecov",
-    "docs",
+    # "codecov",
+    # "docs",
 )
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
@@ -82,7 +84,8 @@ def tests(session: Session) -> None:
     args = session.posargs or ["--cov", "-m", "not e2e"]
     session.run("poetry", "install", "--no-dev", external=True)
     install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
-    session.run("pytest", *args)
+    path = Path(session.bin).parent
+    session.run("pytest", env={"LD_LIBRARY_PATH": str(path / "lib")}, *args)
     if "--cov" in args:
         session.run("coverage", "report", "--show-missing", "--skip-covered")
         session.run("coverage", "html")
@@ -202,7 +205,7 @@ def docs(session: Session) -> None:
         session.run("sphinx-build", "docs/source", "docs/_build")
 
 
-@nox.session(python="3.7")
+@nox.session(python="3.8")
 def codecov(session: Session) -> None:
     """Upload coverage data."""
     session.run("poetry", "install", "--no-dev", external=True)
@@ -218,3 +221,9 @@ def codecov(session: Session) -> None:
     # install_with_constraints(session, "coverage[toml]", "codecov")
     session.run("coverage", "xml", "--fail-under=0")
     session.run("codecov", *session.posargs)
+
+
+@nox.session(python="3.9", venv_backend="venv")
+def test_nox(session: Session) -> None:
+    path = Path(session.bin)
+    print("bin", path.parent)

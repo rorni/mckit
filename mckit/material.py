@@ -426,7 +426,7 @@ class Material:
         composition: Composition = None,
         density: float = None,
         concentration: float = None,
-        **options
+        **options,
     ):
         # Attributes: _n - atomic density (concentration)
         if isinstance(composition, Composition) and not atomic and not weight:
@@ -504,7 +504,7 @@ class Material:
         return Material(
             composition=self._composition,
             concentration=self._n * factor,
-            **self._options
+            **self._options,
         )
 
     @staticmethod

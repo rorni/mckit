@@ -84,7 +84,15 @@ jupyterlab = "^2.2.9"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core>=1.0.0", "setuptools>=41.0", "wheel", "cmake", "numpy"]
+requires = [
+    "poetry-core>=1.0.0",
+    "setuptools>=41.0",
+    "wheel",
+    "cmake>=3.19.0",
+    "mkl-devel",
+    "numpy",
+    "nlopt"
+]
 
 [tool.poetry.scripts]
 mckit = "mckit.cli.runner:mckit"
