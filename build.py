@@ -5,6 +5,7 @@ from typing import List, Union
 
 import os
 import os.path as path
+import subprocess
 import sys
 
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
@@ -16,10 +17,11 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 try:
     import numpy as np
 except ImportError:
-    import subprocess
-
     subprocess.check_call("poetry run python -m pip install numpy".split())
     import numpy as np
+
+    # same as above for mkl
+    subprocess.check_call("poetry run python -m pip install mkl-devel".split())
 
 from build_nlopt import build_nlopt
 from setuptools import Extension
