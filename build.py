@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # https://stackoverflow.com/questions/60073711/how-to-build-c-extensions-via-poetry
+from pathlib import Path
 from typing import List, Union
 
 import os
@@ -81,9 +82,10 @@ if platform.startswith("linux"):
     extra_compile_args = ["-O3", "-w"]
 elif "win" in platform and "darwin" not in sys.platform.lower():
     geometry_dependencies = [
-        "mkl_intel_lp64_dll",
-        "mkl_core_dll",
-        "mkl_sequential_dll",
+        "mkl_rt",
+        #  "mkl_intel_lp64_dll",
+        #  "mkl_core_dll",
+        #  "mkl_sequential_dll",
         "libnlopt-0",
     ]
     nlopt_inc = get_dirs("NLOPT")
@@ -128,6 +130,13 @@ class ExtBuilder(build_ext):
             raise BuildFailed("File not found. Could not compile C extension.")
 
     def build_extension(self, ext):
+        ext_dir = Path(self.get_ext_fullpath(ext.name)).parent.absolute()
+        _ed = ext_dir.as_posix()
+        # - make sure path ends with delimiter
+        # - required for auto-detection of auxiliary "native" libs
+        if not _ed.endswith(os.path.sep):
+            _ed += os.path.sep
+
         try:
             build_ext.build_extension(self, ext)
         except (CCompilerError, DistutilsExecError, DistutilsPlatformError, ValueError):

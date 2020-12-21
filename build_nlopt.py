@@ -10,10 +10,14 @@ from distutils.sysconfig import get_config_var, get_python_inc
 from distutils.version import LooseVersion
 from pathlib import Path
 
+
 try:
     import numpy as np
 except ImportError:
     np = None
+
+MIN_CMAKE_VERSION = "3.18.4"
+SYSTEM_WINDOWS = platform.system() == "Windows"
 
 
 def get_cmake_version() -> LooseVersion:
@@ -41,7 +45,7 @@ def do_build_nlopt(
         f"-DPYTHON_LIBRARY={get_config_var('LIBDIR')}",
     ]
     build_args = ["--config", cfg]
-    if platform.system() == "Windows":  # pragma: no cover
+    if SYSTEM_WINDOWS:  # pragma: no cover
         if sys.maxsize > 2 ** 32:
             cmake_args += ["-A", "x64"]
         build_args += ["--", "/m"]
@@ -66,9 +70,9 @@ def do_build_nlopt(
 
 def build_nlopt():
     cmake_version = get_cmake_version()
-    if cmake_version < "3.19.0":
+    if cmake_version < MIN_CMAKE_VERSION:
         raise RuntimeError(
-            "CMake >= 3.19.0 is required: CMake should support `cmake --install .`"
+            f"CMake >= {MIN_CMAKE_VERSION} is required: CMake should support `cmake --install .`"
         )
     if 0 == subprocess.check_call(
         "git submodule update --init --recursive --depth=1".split()
