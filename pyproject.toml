@@ -145,8 +145,14 @@ exclude = '''
   | \.venv
   | _build
   | build
+  | build_configs
   | dist
   | 3rd-party
   | data
+  | htmlcov
+  | mckit\.egg-info
+  | notebooks
+  | tutorial
+  | wrk
 )/
 '''
