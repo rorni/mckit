@@ -83,14 +83,8 @@ elif "win" in platform and "darwin" not in sys.platform.lower():
         "mkl_rt",
         "nlopt",
     ]
-    mkl_inc = os.join(sys.prefix, "Library/include")
-    include_dirs = insert_directories(include_dirs, mkl_inc)
-    mkl_lib = os.join(sys.prefix, "Library/lib")
-    library_dirs = insert_directories(library_dirs, mkl_lib)
-    nlopt_inc = os.join(sys.prefix, "include")
-    include_dirs = insert_directories(include_dirs, nlopt_inc)
-    nlopt_lib = os.join(sys.prefix, "lib")
-    library_dirs = insert_directories(library_dirs, nlopt_lib)
+    include_dirs = insert_directories(include_dirs, os.path.join(sys.prefix, "Library/include"))
+    library_dirs = insert_directories(library_dirs, os.path.join(sys.prefix, "Library/lib"))
     extra_compile_args = ["/O2"]
 else:
     raise EnvironmentError(f"Cannot recognize platform {platform}")
