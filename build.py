@@ -147,10 +147,9 @@ def build(setup_kwargs):
             "package_data": {"mckit": ["data/isotopes.dat", "libnlopt-0.dll"]},
             "distclass": BinaryDistribution,
             "install_requires": [
+                "cmake==3.18.4",
                 "numpy>=1.13",
                 "mkl-devel",
-                "mkl",
-                "mkl-include",
                 "nlopt",
             ],
         }
