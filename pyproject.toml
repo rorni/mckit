@@ -81,6 +81,7 @@ xdoctest = "^0.15.0"
 wheel = "^0.35.1"
 sphinx-autobuild = "^2020.9.1"
 jupyterlab = "^2.2.9"
+cmake = "3.18.4"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
@@ -88,7 +89,7 @@ requires = [
     "poetry-core>=1.0.0",
     "setuptools>=41.0",
     "wheel",
-    "cmake>=3.18.4",
+    "cmake==3.18.4",   # this version is available on PyPI, TODO dvp: check for updates
     "mkl-devel",
     "numpy",
     "nlopt"

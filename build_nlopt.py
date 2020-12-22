@@ -38,8 +38,11 @@ def do_build_nlopt(
     if not nlopt_path.is_dir():
         raise ValueError(f"Path {nlopt_path} is not a directory")
     cfg = "Debug" if debug else "Release"
+    install_prefix = sys.prefix
+    if SYSTEM_WINDOWS:
+        install_prefix = os.path.join(install_prefix, "Library")
     cmake_args = [
-        f"-DCMAKE_INSTALL_PREFIX={sys.prefix}",
+        f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
         f"-DPYTHON_EXECUTABLE={sys.executable}",
         f"-DPYTHON_INCLUDE_DIR={get_python_inc()}",
         f"-DPYTHON_LIBRARY={get_config_var('LIBDIR')}",

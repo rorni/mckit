@@ -18,11 +18,9 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 try:
     import numpy as np
 except ImportError:
-    subprocess.check_call("poetry run python -m pip install numpy".split())
+    subprocess.check_call("poetry run python -m pip install mkl-devel numpy".split())
     import numpy as np
 
-    # same as above for mkl
-    subprocess.check_call("poetry run python -m pip install mkl-devel".split())
 
 from build_nlopt import build_nlopt
 from setuptools import Extension
@@ -73,7 +71,7 @@ platform = sys.platform.lower()
 
 if platform.startswith("linux"):
     geometry_dependencies = [
-        "mkl_rt",  # dvp: use -lmkl_rt instead of -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
+        "mkl_rt",
         "nlopt",
     ]
     python_include_dir = path.join(sys.prefix, "include")
@@ -83,22 +81,21 @@ if platform.startswith("linux"):
 elif "win" in platform and "darwin" not in sys.platform.lower():
     geometry_dependencies = [
         "mkl_rt",
-        #  "mkl_intel_lp64_dll",
-        #  "mkl_core_dll",
-        #  "mkl_sequential_dll",
-        "libnlopt-0",
+        "nlopt",
     ]
-    nlopt_inc = get_dirs("NLOPT")
-    include_dirs = insert_directories(include_dirs, nlopt_inc)
-    nlopt_lib = get_dirs("NLOPT")
-    library_dirs = insert_directories(library_dirs, nlopt_lib)
-    mkl_inc = sys.prefix + "\\Library\\include"
+    mkl_inc = os.join(sys.prefix, "Library/include")
     include_dirs = insert_directories(include_dirs, mkl_inc)
-    mkl_lib = sys.prefix + "\\Library\\lib"
+    mkl_lib = os.join(sys.prefix, "Library/lib")
     library_dirs = insert_directories(library_dirs, mkl_lib)
+    nlopt_inc = os.join(sys.prefix, "include")
+    include_dirs = insert_directories(include_dirs, nlopt_inc)
+    nlopt_lib = os.join(sys.prefix, "lib")
+    library_dirs = insert_directories(library_dirs, nlopt_lib)
     extra_compile_args = ["/O2"]
 else:
     raise EnvironmentError(f"Cannot recognize platform {platform}")
+
+
 
 geometry_sources = [
     path.join("mckit", "src", src)
@@ -137,6 +134,8 @@ class ExtBuilder(build_ext):
         if not _ed.endswith(os.path.sep):
             _ed += os.path.sep
 
+        print(f"*** build: _ed directory {_ed}")
+
         try:
             build_ext.build_extension(self, ext)
         except (CCompilerError, DistutilsExecError, DistutilsPlatformError, ValueError):
@@ -162,3 +161,5 @@ def build(setup_kwargs):
             ],
         }
     )
+
+

@@ -243,6 +243,14 @@ loguru = ">=0.5.0,<0.6.0"
 memory_profiler = ">=0.57.0,<0.58.0"
 
 [[package]]
+name = "cmake"
+version = "3.18.4"
+description = "CMake is an open-source, cross-platform family of tools designed to build, test and package software"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "codecov"
 version = "2.1.10"
 description = "Hosted coverage reports for GitHub, Bitbucket and Gitlab"
@@ -1886,7 +1894,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "7fb5f40f08dafdd8d1ea342a4f6ca6e105e3fa7be6ef79edb7f385269bbaf065"
+content-hash = "e1840c128bfd6d2e93dbaa5e5ada29c29a7cadfde96e8678713ef2d470f529ff"
 
 [metadata.files]
 aiofile = [
@@ -2036,6 +2044,19 @@ click = [
 click-loguru = [
     {file = "click_loguru-1.3.4-py3-none-any.whl", hash = "sha256:c2a7ab12a40d7d46103c3d1df2752c3d38bf6ba1f0b3227a7329085984440973"},
     {file = "click_loguru-1.3.4.tar.gz", hash = "sha256:f38382f0a924eb388d29f21a20f60b8c805668fb34b396977029643268d52c6a"},
+]
+cmake = [
+    {file = "cmake-3.18.4-py2-none-macosx_10_6_x86_64.whl", hash = "sha256:4ad9bec90067658340e232f40d5dd7251ced599e18680595bf8070655295cf5f"},
+    {file = "cmake-3.18.4-py2-none-manylinux1_i686.whl", hash = "sha256:1b2955414700fca26a044620d8b4e71ea783ff1b751e64c64a845092edeb0fb7"},
+    {file = "cmake-3.18.4-py2-none-manylinux1_x86_64.whl", hash = "sha256:bac963066661ca8b4ae737e264bbed8f9dbf9f9125f83bb4cae39725ad3e4c1a"},
+    {file = "cmake-3.18.4-py2-none-win32.whl", hash = "sha256:ef8c4005b896a0c7d3751cd3985849e8776a0101747a1c168c4d05001ef610ee"},
+    {file = "cmake-3.18.4-py2-none-win_amd64.whl", hash = "sha256:95bfb6f4d18c7fb4a28fc5316d6b8c508843a4f1d0689c1ec48766a8847391af"},
+    {file = "cmake-3.18.4-py3-none-macosx_10_6_x86_64.whl", hash = "sha256:72907b519444f01284f1b839b4eeb865f4cf4ccf91feb61e74ef909c849ae724"},
+    {file = "cmake-3.18.4-py3-none-manylinux1_i686.whl", hash = "sha256:7b6c9ef84c842dfe363f480f261ce9f2c17bcf8a914e49a414d4ce6f8b4ab895"},
+    {file = "cmake-3.18.4-py3-none-manylinux1_x86_64.whl", hash = "sha256:b9b8025fbd508a9a172ae7cc2e3f41a21bb0f04457d7eb40875d56dd2e59c5d6"},
+    {file = "cmake-3.18.4-py3-none-win32.whl", hash = "sha256:339e1ed717bd31269466eba5d30670109c3356913321cb7e945b1e5af366b200"},
+    {file = "cmake-3.18.4-py3-none-win_amd64.whl", hash = "sha256:0506c7a690cf5e402314f992b954847b9737efd42429b746d9882a54ed68f177"},
+    {file = "cmake-3.18.4.tar.gz", hash = "sha256:40b9a559e4e0dc43ff130a9df2272f495ad73844b395c2b01648efac3d69d34d"},
 ]
 codecov = [
     {file = "codecov-2.1.10-py2.py3-none-any.whl", hash = "sha256:61bc71b5f58be8000bf9235aa9d0112f8fd3acca00aa02191bb81426d22a8584"},
