@@ -8,6 +8,7 @@ import os
 import os.path as path
 import subprocess
 import sys
+import platform
 
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
@@ -22,14 +23,14 @@ except ImportError:
     import numpy as np
 
 
-from build_nlopt import build_nlopt
+from build_nlopt import NLOptBuildExtension, NLOptBuild
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 
 # see https://habr.com/ru/post/210450/
 from setuptools.dist import Distribution
 
-build_nlopt()
+# build_nlopt()
 
 
 class BinaryDistribution(Distribution):
@@ -67,28 +68,22 @@ include_dirs = get_dirs("INCLUDE_PATH")
 include_dirs = insert_directories(include_dirs, np.get_include())
 
 library_dirs = get_dirs("LIBRARY_PATH")
-platform = sys.platform.lower()
 
-if platform.startswith("linux"):
-    geometry_dependencies = [
-        "mkl_rt",
-        "nlopt",
-    ]
-    python_include_dir = path.join(sys.prefix, "include")
-    include_dirs = insert_directories(include_dirs, python_include_dir)
+geometry_dependencies = [
+    "mkl_rt",
+    "nlopt",
+]
+
+if platform.system() == "Linux":
+    include_dirs = insert_directories(include_dirs, path.join(sys.prefix, "include"))
     library_dirs = insert_directories(library_dirs, path.join(sys.prefix, "lib"))
     extra_compile_args = ["-O3", "-w"]
-elif "win" in platform and "darwin" not in sys.platform.lower():
-    geometry_dependencies = [
-        "mkl_rt",
-        "nlopt",
-    ]
+elif platform.system() == "Windows":
     include_dirs = insert_directories(include_dirs, os.path.join(sys.prefix, "Library/include"))
     library_dirs = insert_directories(library_dirs, os.path.join(sys.prefix, "Library/lib"))
     extra_compile_args = ["/O2"]
 else:
-    raise EnvironmentError(f"Cannot recognize platform {platform}")
-
+    raise EnvironmentError(f"Not implemented for platform {platform.system()}")
 
 
 geometry_sources = [
@@ -98,6 +93,9 @@ geometry_sources = [
 
 
 ext_modules = [
+    NLOptBuildExtension(
+        "mckit.nlopt"
+    ),
     Extension(
         "mckit.geometry",
         sources=geometry_sources,
@@ -109,31 +107,22 @@ ext_modules = [
 ]
 
 
-class BuildFailed(Exception):
-    pass
-
-
-class ExtBuilder(build_ext):
-    def run(self):
-        try:
-            build_ext.run(self)
-        except (DistutilsPlatformError, FileNotFoundError):
-            raise BuildFailed("File not found. Could not compile C extension.")
-
-    def build_extension(self, ext):
-        ext_dir = Path(self.get_ext_fullpath(ext.name)).parent.absolute()
-        _ed = ext_dir.as_posix()
-        # - make sure path ends with delimiter
-        # - required for auto-detection of auxiliary "native" libs
-        if not _ed.endswith(os.path.sep):
-            _ed += os.path.sep
-
-        print(f"*** build: _ed directory {_ed}")
-
-        try:
-            build_ext.build_extension(self, ext)
-        except (CCompilerError, DistutilsExecError, DistutilsPlatformError, ValueError):
-            raise BuildFailed("Could not compile C extension.")
+# class BuildFailed(Exception):
+#     pass
+#
+#
+# class ExtBuilder(build_ext):
+#     def run(self):
+#         try:
+#             build_ext.run(self)
+#         except (DistutilsPlatformError, FileNotFoundError):
+#             raise BuildFailed("File not found. Could not compile C extension.")
+#
+#     def build_extension(self, ext):
+#         try:
+#             build_ext.build_extension(self, ext)
+#         except (CCompilerError, DistutilsExecError, DistutilsPlatformError, ValueError):
+#             raise BuildFailed("Could not compile C extension.")
 
 
 def build(setup_kwargs):
@@ -143,7 +132,7 @@ def build(setup_kwargs):
     setup_kwargs.update(
         {
             "ext_modules": ext_modules,
-            "cmdclass": {"build_ext": ExtBuilder},
+            "cmdclass": {"build_ext": NLOptBuild},
             "package_data": {"mckit": ["data/isotopes.dat", "libnlopt-0.dll"]},
             "distclass": BinaryDistribution,
             "install_requires": [

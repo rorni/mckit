@@ -44,7 +44,6 @@ asyncio = "^3.4.3"
 aiofile = "^3.3.3"
 isort = "^5.6.4"
 mkl-devel = "^2021.1.1"
-nlopt = "^2.6.2"
 mkl = "^2021.1.1"
 mkl-include = "^2021.1.1"
 python-dotenv = "^0.15.0"
@@ -91,8 +90,7 @@ requires = [
     "wheel",
     "cmake==3.18.4",   # this version is available on PyPI, TODO dvp: check for updates
     "mkl-devel",
-    "numpy",
-    "nlopt"
+    "numpy"
 ]
 
 [tool.poetry.scripts]

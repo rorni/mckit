@@ -957,17 +957,6 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
-name = "nlopt"
-version = "2.6.2"
-description = "Library for nonlinear optimization, wrapping many algorithms for global and local, constrained or unconstrained, optimization"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-numpy = ">=1.14"
-
-[[package]]
 name = "nodeenv"
 version = "1.5.0"
 description = "Node.js virtual environment builder"
@@ -1894,7 +1883,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "e1840c128bfd6d2e93dbaa5e5ada29c29a7cadfde96e8678713ef2d470f529ff"
+content-hash = "5c6c8f3280f5f1c828f8fd697212d5762850351704f3f66e4b141809a4a4a789"
 
 [metadata.files]
 aiofile = [
@@ -2369,29 +2358,6 @@ nbformat = [
 nest-asyncio = [
     {file = "nest_asyncio-1.4.3-py3-none-any.whl", hash = "sha256:dbe032f3e9ff7f120e76be22bf6e7958e867aed1743e6894b8a9585fe8495cc9"},
     {file = "nest_asyncio-1.4.3.tar.gz", hash = "sha256:eaa09ef1353ebefae19162ad423eef7a12166bcc63866f8bff8f3635353cd9fa"},
-]
-nlopt = [
-    {file = "nlopt-2.6.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:47c00465f38dd9cfdf87812b68de4c8fafa9d54e88f49b023a8d34b724277730"},
-    {file = "nlopt-2.6.2-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:b50534d30587edabfe3916c77bf510aede3f5882e49aa1444ffd2cd738e933d2"},
-    {file = "nlopt-2.6.2-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:6c76d6cdb2d523b56927ddc6bd43e4f04a52812d2b28c2f0a04e9689f4c52139"},
-    {file = "nlopt-2.6.2-cp36-cp36m-win32.whl", hash = "sha256:e9a26ef5af8e5f9eef9af5a1f9568003a47bce3068e65f90204adad742738d71"},
-    {file = "nlopt-2.6.2-cp36-cp36m-win_amd64.whl", hash = "sha256:52749528c3ec5643ec2d2a705ab97baf6bc235bd05ebc634060363ea8150ccae"},
-    {file = "nlopt-2.6.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:1bacc8aeb1448abcca9985eb1a24e4762346b031000d390aa344032d5d1623b2"},
-    {file = "nlopt-2.6.2-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:33d1727c73444c84b7540bcfb0878bd8027578bb19195740f240ee6b7601ef89"},
-    {file = "nlopt-2.6.2-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:1f34e8b007b94bbc452b89faea6272f58ab77f75d0aee9f1b01db68fc7729e74"},
-    {file = "nlopt-2.6.2-cp37-cp37m-win32.whl", hash = "sha256:85eda29e9bc5956366e6df7061d2c92c00fde9b52151aa996c8f92aae518241f"},
-    {file = "nlopt-2.6.2-cp37-cp37m-win_amd64.whl", hash = "sha256:f3590b028acb0c5fca877047fe908e782de91f3b2524db1e4bfa48c43472b8f2"},
-    {file = "nlopt-2.6.2-cp37-none-manylinux1_x86_64.whl", hash = "sha256:d4c7eecaad2b14d1aab1a04ed4ad9ed33d37edfbbc3244ef453c4700d5e23c0f"},
-    {file = "nlopt-2.6.2-cp37-none-win_amd64.whl", hash = "sha256:3ed8fdd2a9b6439451a3742e3e87a610e06660be1a67427ae4a8a69af7b6b13b"},
-    {file = "nlopt-2.6.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:5d9c40250e35b239c5fc2777eedc0552e0e6c6c594c37056ea698069381539ae"},
-    {file = "nlopt-2.6.2-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:a00bbd9080ff13d674d4ba3e6b6353b9bb6c75128d0118ab4673196cfed43745"},
-    {file = "nlopt-2.6.2-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:5ebdd6870d842b83333704459fa3490fc1fd1c167a9854978f3e96e14af77940"},
-    {file = "nlopt-2.6.2-cp38-cp38-win32.whl", hash = "sha256:3f5cc08e8c210df1483d7138a979433784443625ca19702f40714823b8e87837"},
-    {file = "nlopt-2.6.2-cp38-cp38-win_amd64.whl", hash = "sha256:30e8383d3c6ec2cca312eb3d7d0379e495b615d5756aeb3e8b58ff82dfce66a4"},
-    {file = "nlopt-2.6.2-cp38-none-manylinux1_x86_64.whl", hash = "sha256:9442d14c83394605c593d8deafce900559e2e214f09005b41bb463583aa8909d"},
-    {file = "nlopt-2.6.2-cp38-none-win_amd64.whl", hash = "sha256:89e700af8b12559dab872bf00a6111bc31f5a30ca6789ce1cee3b4d4b7d283bd"},
-    {file = "nlopt-2.6.2-py38-none-win_amd64.whl", hash = "sha256:b52e04f339549c59a30f73b782b41ea07247f3055a3bfebfdd2d95c868fb1383"},
-    {file = "nlopt-2.6.2.tar.gz", hash = "sha256:21f10b0bbcf32b4d370c371e967c01df50ce96c258f483a32b9140b57e9e410d"},
 ]
 nodeenv = [
     {file = "nodeenv-1.5.0-py2.py3-none-any.whl", hash = "sha256:5304d424c529c997bc888453aeaa6362d242b6b4631e90f3d4bf1b290f1c84a9"},

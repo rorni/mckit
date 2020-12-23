@@ -1,6 +1,5 @@
 # flake8: noqa F401
 
-import nlopt  # this should load nlopt.dll allocated along with nlopt python package
 
 from .universe import Universe
 from .surface import create_surface, Plane, Sphere, Cylinder, Cone, Torus, GQuadratic
