@@ -108,7 +108,10 @@ show_missing = true
 # fail_under = 100  # So far, this is just a dream.
 
 [tool.poetry.urls]
+"Repository" = "https://github.com/rorni/mckit"
 "Bug Tracker" = "https://github.com/rorni/mckit/issues"
+# "Documentation" TODO
+
 
 [tool.isort]
 atomic = true

@@ -37,6 +37,8 @@ echo .
 
 :: install mckit to the current environment
 call poetry install
+:: or, if there are no external poetry instance,
+:: pip install .
 
 :: build mckit itself
 :: This is called 
@@ -49,18 +51,7 @@ mckit --version
 :: verify pytest
 pytest -m "not slow"
 
-:: Jupyter setup
-::
-:: tornado (in jupyter) doesn't work with newer version of pywin, check this on jupyter dependencies updates
-:: TODO dvp: check on dependencies updates
-::
-call conda install pywin32=227 -y
-call poetry run python -m ipykernel install --user --name %mckit%
-:: To use this environment in jupyter:
-:: - Run 'jupyter lab'  (note: 'jupyter notebook' is deprecated, but works so far)
-:: - Open or create notebook
-:: - Select kernel %mckit%
-:: - check if 'import mckit' in the notebook works
+call create-jk
 
 :: verify nox
 nox --list

@@ -6,9 +6,7 @@ import re
 import shutil
 import sys
 
-from distutils.sysconfig import get_config_var, get_python_inc
-from distutils.version import LooseVersion
-from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
+from distutils.sysconfig import get_config_var, get_python_inc, customize_compiler
 from pathlib import Path
 from setuptools import Extension
 from subprocess import check_call
@@ -71,27 +69,32 @@ class BuildFailed(Exception):
 
 
 class NLOptBuild(build_ext):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.compiler is None:
+            from distutils.ccompiler import new_compiler
+            self.compiler = new_compiler(compiler=self.compiler,
+                                         dry_run=self.dry_run,
+                                         force=self.force)
+            # customize_compiler(self.compiler)
+
     def run(self):
 
         if platform.system() not in ("Windows", "Linux", "Darwin"):
-            raise RuntimeError(f"Unsupported os: {platform.system()}")
+            raise EnvironmentError(f"Unsupported os: {platform.system()}")
 
         for ext in self.extensions:
             if isinstance(ext, NLOptBuildExtension):
                 self.build_extension(ext)
+            else:
+                build_ext.build_extension(self, ext)
 
     @property
     def config(self):
         return "Debug" if self.debug else "Release"
 
     def build_extension(self, ext: Extension):
-
-        if not isinstance(ext, NLOptBuildExtension):
-            try:
-                build_ext.build_extension(self, ext)
-            except (CCompilerError, DistutilsExecError, DistutilsPlatformError, ValueError):
-                raise BuildFailed("Could not compile C extension.")
-            return
 
         check_cmake_installed()
 
@@ -108,7 +111,7 @@ class NLOptBuild(build_ext):
         if SYSTEM_WINDOWS:
             install_prefix = os.path.join(install_prefix, "Library")
 
-        # CMake configure
+        print("CMake configure")
         cmd = [
             "cmake",
             "-LAH",
@@ -134,7 +137,7 @@ class NLOptBuild(build_ext):
                 "CXXFLAGS": f'{os.environ.get("CXXFLAGS", "")} -DVERSION_INFO="{self.distribution.get_version()}"'
             })
 
-        # CMake build
+        print("CMake build")
         execute_command([
             'cmake',
             '--build',
@@ -145,9 +148,10 @@ class NLOptBuild(build_ext):
             "-m" if platform.system() == "Windows" else "-j2"
         ], cwd=build_dir)
 
+        print("CMake install")
         execute_command([
             'cmake',
-            'install',
+            '--install',
             '.',
         ], cwd=build_dir)
 

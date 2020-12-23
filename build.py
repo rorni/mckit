@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # https://stackoverflow.com/questions/60073711/how-to-build-c-extensions-via-poetry
-from pathlib import Path
+from distutils.sysconfig import  get_python_inc, get_python_lib
 from typing import List, Union
 
 import os
@@ -9,6 +9,7 @@ import os.path as path
 import subprocess
 import sys
 import platform
+from pathlib import Path
 
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
@@ -25,12 +26,9 @@ except ImportError:
 
 from build_nlopt import NLOptBuildExtension, NLOptBuild
 from setuptools import Extension
-from setuptools.command.build_ext import build_ext
 
 # see https://habr.com/ru/post/210450/
 from setuptools.dist import Distribution
-
-# build_nlopt()
 
 
 class BinaryDistribution(Distribution):
@@ -66,8 +64,10 @@ def insert_directories(
 include_dirs = get_dirs("INCLUDE_PATH")
 
 include_dirs = insert_directories(include_dirs, np.get_include())
+include_dirs = insert_directories(include_dirs, get_python_inc())
 
 library_dirs = get_dirs("LIBRARY_PATH")
+library_dirs = insert_directories(library_dirs, os.path.join(sys.prefix, "libs"))  # for PythonXX.dll
 
 geometry_dependencies = [
     "mkl_rt",
@@ -94,7 +94,7 @@ geometry_sources = [
 
 ext_modules = [
     NLOptBuildExtension(
-        "mckit.nlopt"
+        "nlopt"
     ),
     Extension(
         "mckit.geometry",
@@ -103,6 +103,7 @@ ext_modules = [
         libraries=geometry_dependencies,
         library_dirs=library_dirs,
         extra_compile_args=extra_compile_args,
+        language="c",
     ),
 ]
 
@@ -133,14 +134,14 @@ def build(setup_kwargs):
         {
             "ext_modules": ext_modules,
             "cmdclass": {"build_ext": NLOptBuild},
-            "package_data": {"mckit": ["data/isotopes.dat", "libnlopt-0.dll"]},
+            "package_data": {"mckit": ["data/isotopes.dat", "nlopt.dll"]},
             "distclass": BinaryDistribution,
-            "install_requires": [
+            "setup_requires": [
                 "cmake==3.18.4",
                 "numpy>=1.13",
                 "mkl-devel",
-                "nlopt",
             ],
+            "long_description": Path("README.rst").read_text(encoding="utf8"),
         }
     )
 
