@@ -1,71 +1,141 @@
+@echo off
 ::
 :: Prepare conda environment for mckit development on Windows.
 ::
 :: dvp, Dec 2020
 ::
 
-set mckit=%1
-
-if "%mckit%"=="" (
-    set mckit=mckit
+if "%1"=="--help" (
+    echo.
+    echo Usage:
+    echo.
+    echo set-conda-env conda_env install_tool python_version
+    echo.
+    echo All the parameters are optional.
+    echo.
+    echo Defaults:
+    echo   conda_env=mckit
+    echo   install_tool=pip   another valid value: poetry
+    echo   python_version=3.9
+    echo.
+    goto END
 )
 
-echo Installing conda/mckit environment %mckit%
+set mckit=%1
+shift
+if "%mckit%"=="" set mckit=mckit
+
+
+set install_tool=%1
+shift
+if "%install_tool%"=="" set install_tool=pip
+
+if "%install_tool%"=="pip" (
+    echo Installing %mckit% with pip
+) else (
+    if "%install_tool%"=="poetry" (
+        call poetry --version > NUL
+        if not errorlevel 0 (
+            echo ERROR\: Poetry is not available
+            echo        See poetry install instructions: https://python-poetry.org
+            goto END
+        )
+    ) else (
+        echo ERROR\: unknown install tool %install_tool%. Should be either `pip` or `poetry`
+        goto END
+    )
+)
+
+set python_version=%1
+shift
+if "%python_version%"=="" (
+    set python_version=3.9
+)
+
+
+echo Installing conda environment %mckit% with %install_tool%
 
 call conda deactivate
 call conda activate
 call conda env remove -n %mckit% -q -y
-call conda create -n %mckit% python=3.8 -q -y
+call conda create -n %mckit% python=%python_version% -q -y
 call conda activate %mckit%
 
 :: 1) Conda downgrades mkl, so we use pip instead (ant it works fine for us)
 :: 2) We need numpy to build nlopt, other packages are installed just for convenience
-pip install mkl-devel numpy scipy scikit-learn numexpr
+:: pip install mkl-devel numpy scipy scikit-learn numexpr
 
-:: The following two commands should point to the same environment
-call conda env list
-call poetry env info --path
-echo .
-echo Check the previous two outputs: do they point to the same environment?
-echo ---------------------------------------------------------------------
-echo Set IDE (VSCode, PyCharm etc.) to use this environment.
-echo .
-
-:: build and install nlopt to the current environment (for developers only, requires CMake)
-:: This is called automatically on poetry build
-:: python build_nlopt.py
 
 :: install mckit to the current environment
-call poetry install
-:: or, if there are no external poetry instance,
-:: pip install .
-
-:: build mckit itself
-:: This is called 
-:: call poetry build
-
-
-:: check if mckit is actually installed and everything is OK with dependencies
+if "%install_tool%"=="pip" (
+    pip install .
+) else (
+    :: In development environment use
+    :: pip install -e
+    :: or, if poetry is available (this is preferable)
+    :: The following two commands should point to the same environment
+    call conda env list
+    call poetry env info --path
+    echo.
+    echo Check the previous two outputs\: do they point to the same environment?
+    echo ----------------------------------------------------------------------
+    echo.
+    call poetry install
+)
 mckit --version
+if errorlevel 0  goto SUCCESS1
 
-:: verify pytest
+echo "ERROR: failed to install mckit"
+goto END
+
+
+:SUCCESS1
+echo.
+echo SUCCESS: mckit has been installed
+echo.
 pytest -m "not slow"
+if errorlevel 0 goto SUCCESS2
 
-call create-jk
+echo ERROR: failed to run tests
+goto END
 
-:: verify nox
-nox --list
-:: safety first - run this on every dependency addition or update
-nox -s safety
-:: test often - not tested commits is a road to hell
-:: TODO dvp: nox fails on Windows after changes in 0.5.1
-::      however it worked fine in 0.4
-::      Fix this: probably use environment setting as
-::      it was done for LD_LIBRARY_PATH
-:: nox -s tests -p 3.8 -- -m "not slow" --cov
+:SUCCESS2
+echo.
+echo SUCCESS: pytest is passed OK
+echo.
 
-:: verify if 'pip' is able to collect the dependencies wheels
-:: Note:
-::     'poetry build' (see above) creates the wheel for mckit
-::     So, this command is not necessary, just demo how does 'pip' work without setup.py.
-:: pip wheel -w dist --verbose .
+
+if "%install_tool%"=="poetry" (
+    :: verify nox
+    nox --list
+    :: safety first - run this on every dependency addition or update
+    :: test often - who doesn't?
+    nox -s safety,tests -p 3.9 -- -m "not slow" --cov
+    call poetry build
+) else (
+    :: verify if 'pip' is able to collect the dependencies wheels
+    pip wheel -w dist .
+)
+
+if errorlevel 0 goto SUCCESS3
+
+echo ERROR: failed to collect dependencies with pip
+goto END
+
+:SUCCESS3
+echo.
+echo SUCCESS!
+echo --------
+echo.
+echo Usage:
+echo.
+mckit --help > NUL
+echo.
+echo Conda environment %mckit% is all clear.
+echo Set your IDE to use %CONDA_PREFIX%\python.exe
+echo.
+echo Enjoy!
+echo.
+call create-jk %mckit%
+
+:END

@@ -1,5 +1,6 @@
-%% set jupyter kernel for conda environment
-:: Jupyter setup
+@echo off
+::
+:: Jupyter kernel setup
 ::
 ::
 :: dvp, Dec 2020
@@ -16,14 +17,15 @@ echo Creating jupyter kernel for conda environment %mckit%
 :: Fix pywin32 version for tornado
 :: tornado (in jupyter) doesn't work with newer version of pywin, check this on jupyter dependencies updates
 :: TODO dvp: check on dependencies updates
-:: The follwing sets version 228 on python39 (after pip or poetry it was 300)
-call conda install pywin32
+:: The following sets version 228 on python39 (after pip or poetry it was 300)
+call conda install pywin32 -y
 
 :: Create jupyter kernel pointing to the conda environment
-call poetry run python -m ipykernel install --user --name %mckit%
-
-:: To use this environment in jupyter:
-:: - Run 'jupyter lab'  (note: 'jupyter notebook' is deprecated, but works so far)
-:: - Open or create notebook
-:: - Select kernel %mckit%
-:: - check if 'import mckit' in the notebook works
+call python -m ipykernel install --user --name %mckit%
+if errorlevel 0 (
+    echo "To use %mckit% environment in jupyter:"
+    echo "  - Run 'jupyter lab'"
+    echo "  - Open or create notebook"
+    echo "  - Select kernel %mckit%"
+    echo "  - check if 'import mckit' in the notebook works"
+)

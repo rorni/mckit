@@ -17,18 +17,20 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 # see https://github.com/python-poetry/poetry/pull/2794
 # import numpy as np  # numpy is in build requirements, so, it should be available
 # workaround
-try:
-    import numpy as np
-except ImportError:
-    subprocess.check_call("poetry run python -m pip install mkl-devel numpy".split())
-    import numpy as np
-
+# try:
+#     import numpy as np
+# except ImportError:
+#     subprocess.check_call("poetry run python -m pip install mkl-devel numpy".split())
+#     import numpy as np
+import numpy as np
 
 from build_nlopt import NLOptBuildExtension, NLOptBuild
 from setuptools import Extension
 
 # see https://habr.com/ru/post/210450/
 from setuptools.dist import Distribution
+
+PLATFORM_SYSTEM = platform.system()
 
 
 class BinaryDistribution(Distribution):
@@ -74,16 +76,16 @@ geometry_dependencies = [
     "nlopt",
 ]
 
-if platform.system() == "Linux":
+if PLATFORM_SYSTEM == "Linux":
     include_dirs = insert_directories(include_dirs, path.join(sys.prefix, "include"))
     library_dirs = insert_directories(library_dirs, path.join(sys.prefix, "lib"))
     extra_compile_args = ["-O3", "-w"]
-elif platform.system() == "Windows":
+elif PLATFORM_SYSTEM == "Windows":
     include_dirs = insert_directories(include_dirs, os.path.join(sys.prefix, "Library/include"))
     library_dirs = insert_directories(library_dirs, os.path.join(sys.prefix, "Library/lib"))
     extra_compile_args = ["/O2"]
 else:
-    raise EnvironmentError(f"Not implemented for platform {platform.system()}")
+    raise EnvironmentError(f"Not implemented for platform {PLATFORM_SYSTEM}")
 
 
 geometry_sources = [
