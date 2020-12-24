@@ -129,7 +129,7 @@ echo --------
 echo.
 echo Usage:
 echo.
-mckit --help > NUL
+mckit --help
 echo.
 echo Conda environment %mckit% is all clear.
 echo Set your IDE to use %CONDA_PREFIX%\python.exe
