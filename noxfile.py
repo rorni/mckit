@@ -5,13 +5,14 @@
     See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
 
+from typing import Any, Generator, List
+
 import os
 import platform
 import tempfile
-from pathlib import Path
-from typing import Any, Generator, List
 
 from contextlib import contextmanager
+from pathlib import Path
 
 import nox
 
@@ -88,7 +89,9 @@ def tests(session: Session) -> None:
     install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
     path = Path(session.bin).parent
     if on_windows:
-        session.bin_paths.insert(0, str(path / "Library/bin"))  # here all the DLLs should be installed
+        session.bin_paths.insert(
+            0, str(path / "Library/bin")
+        )  # here all the DLLs should be installed
     session.log(f"Session path: {session.bin_paths}")
     session.run("pytest", env={"LD_LIBRARY_PATH": str(path / "lib")}, *args)
     if "--cov" in args:
