@@ -4,12 +4,12 @@
 
     See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
-
 from typing import Any, Generator, List
 
 import os
 import platform
 import tempfile
+from glob import glob
 
 from contextlib import contextmanager
 from pathlib import Path
@@ -140,7 +140,7 @@ def safety(session: Session) -> None:
 #
 @nox.session(python="3.9")
 def isort(session: Session) -> None:
-    from glob import glob
+    """Organize imports"""
 
     install_with_constraints(session, "isort")
     search_patterns = [

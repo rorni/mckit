@@ -22,10 +22,13 @@ call conda install pywin32 -y
 
 :: Create jupyter kernel pointing to the conda environment
 call python -m ipykernel install --user --name %mckit%
-if errorlevel 0 (
-    echo "To use %mckit% environment in jupyter:"
-    echo "  - Run 'jupyter lab'"
-    echo "  - Open or create notebook"
-    echo "  - Select kernel %mckit%"
-    echo "  - check if 'import mckit' in the notebook works"
+if errorlevel 1 (
+    echo ERROR: something wrong with installing Jupyter kernel for %mckit% environment
+    set errorlevel=1
+) else (
+    echo To use %mckit% environment in jupyter
+    echo   - Run 'jupyter lab'
+    echo   - Open or create notebook
+    echo   - Select kernel %mckit%
+    echo   - check if 'import mckit' in the notebook works
 )

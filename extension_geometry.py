@@ -2,12 +2,18 @@ import os
 import platform
 import sys
 
+import importlib.metadata as meta
+
 from distutils.sysconfig import get_python_inc
+
 
 import numpy as np
 
 from extension_utils import SYSTEM_WINDOWS, get_dirs, insert_directories
 from setuptools import Extension
+
+mkl_distribution = meta.distribution("mkl")
+site_packages = mkl_distribution.locate_file(".")
 
 include_dirs = get_dirs("INCLUDE_PATH")
 include_dirs = insert_directories(include_dirs, np.get_include())
@@ -20,12 +26,12 @@ geometry_dependencies = [
 ]
 
 if SYSTEM_WINDOWS:
-    library_dirs = insert_directories(
-        library_dirs, os.path.join(sys.prefix, "libs")
-    )  # for PythonXX.dll
     include_dirs = insert_directories(
         include_dirs, os.path.join(sys.prefix, "Library/include")
     )
+    library_dirs = insert_directories(
+        library_dirs, os.path.join(sys.prefix, "libs")
+    )  # for PythonXX.dll
     library_dirs = insert_directories(
         library_dirs, os.path.join(sys.prefix, "Library/lib")
     )

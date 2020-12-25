@@ -25,3 +25,4 @@ class NLOptBuildExtension(Extension):
         # Source dir should be at the root directory
         self.source_dir = Path(__file__).parent.absolute() / "3rd-party" / "nlopt"
         self.version = get_nlopt_version(self.source_dir)
+        self.language = "c++"

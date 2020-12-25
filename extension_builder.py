@@ -9,7 +9,6 @@ from pathlib import Path
 from extension_nlopt import NLOptBuildExtension
 from extension_utils import (
     SYSTEM_WINDOWS,
-    check_cmake_installed,
     create_directory,
     execute_command,
 )
@@ -39,21 +38,20 @@ class MCKitBuilder(build_ext):
         if platform.system() not in ("Windows", "Linux", "Darwin"):
             raise EnvironmentError(f"Unsupported os: {platform.system()}")
 
-        for ext in self.extensions:
-            if isinstance(ext, NLOptBuildExtension):
-                self.build_extension(ext)
-            else:
-                build_ext.build_extension(self, ext)
+        for extension in self.extensions:
+            self.build_extension(extension)
 
     @property
     def config(self):
         return "Debug" if self.debug else "Release"
 
-    def build_extension(self, ext: Extension):
+    def build_extension(self, extension: Extension) -> None:
 
-        check_cmake_installed()
+        if not isinstance(extension, NLOptBuildExtension):
+            build_ext.build_extension(self, extension)
+            return
 
-        ext_dir = Path(self.get_ext_fullpath(ext.name)).parent.absolute()
+        ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
         _ed = ext_dir.as_posix()
         # - make sure path ends with delimiter
         # - required for auto-detection of auxiliary "native" libs
@@ -78,7 +76,7 @@ class MCKitBuilder(build_ext):
             "-DNLOPT_GUILE=OFF",
             "-DNLOPT_MATLAB=OFF",
             "-DNLOPT_OCTAVE=OFF",
-            ext.source_dir.as_posix(),
+            extension.source_dir.as_posix(),
         ]
 
         if platform.system() == "Windows":
@@ -89,10 +87,10 @@ class MCKitBuilder(build_ext):
         execute_command(
             cmd=cmd,
             cwd=build_dir,
-            env={
-                **os.environ.copy(),
-                "CXXFLAGS": f'{os.environ.get("CXXFLAGS", "")} -DVERSION_INFO="{self.distribution.get_version()}"',
-            },
+            # env={
+            #     **os.environ.copy(),
+            #     "CXXFLAGS": f'{os.environ.get("CXXFLAGS", "")} -DVERSION_INFO="{self.distribution.get_version()}"',
+            # },
         )
 
         print("--- CMake build")
@@ -119,8 +117,10 @@ class MCKitBuilder(build_ext):
             cwd=build_dir,
         )
 
-        package_dir = str((Path(__file__).parent / "mckit").absolute())
         if SYSTEM_WINDOWS:
             nlopt_dll = str(Path(build_dir) / "Release/nlopt.dll")
-            shutil.copy2(nlopt_dll, package_dir)
-            print(f"--- nlopt.dll is updated in {package_dir}")
+            mckit_folder = Path(extension.source_dir).parent.parent / 'mckit'
+            assert mckit_folder.is_dir()
+            assert (mckit_folder / '__init__.py').exists()
+            shutil.copy2(nlopt_dll, str(mckit_folder))
+            print(f"--- nlopt.dll is updated in {mckit_folder}")

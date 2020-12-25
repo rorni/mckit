@@ -5,6 +5,8 @@
 :: dvp, Dec 2020
 ::
 
+set mckit_version=5.1
+
 if "%1"=="--help" (
     echo.
     echo Usage:
@@ -23,7 +25,7 @@ if "%1"=="--help" (
 
 set mckit=%1
 shift
-if "%mckit%"=="" set mckit=mckit
+if "%mckit%"=="" set mckit=mckit%mckit_version%
 
 
 set install_tool=%1
@@ -35,7 +37,7 @@ if "%install_tool%"=="pip" (
 ) else (
     if "%install_tool%"=="poetry" (
         call poetry --version > NUL
-        if not errorlevel 0 (
+        if errorlevel 1 (
             echo ERROR\: Poetry is not available
             echo        See poetry install instructions: https://python-poetry.org
             goto END
@@ -68,6 +70,13 @@ call conda activate %mckit%
 
 :: install mckit to the current environment
 if "%install_tool%"=="pip" (
+    :: numpy and mkl-devel is to be installed first
+    :: These are also installed to temporary build directory by pip, but
+    :: there's no guarantee, that the headers will be available.
+    :: See Paul Moore comment at
+    :: https://discuss.python.org/t/how-to-get-pip-tmp-pip-build-env-xxx-overlay-prefix-in-setup-py-for-include-lib-dir/2811/4
+    pip install mkl-devel
+    pip install numpy
     pip install .
 ) else (
     :: In development environment use
@@ -82,27 +91,30 @@ if "%install_tool%"=="pip" (
     echo.
     call poetry install
 )
+if errorlevel 1  (
+    echo "ERROR: failed to run install with %install_tool%"
+    goto END
+)
+
 mckit --version
-if errorlevel 0  goto SUCCESS1
-
-echo "ERROR: failed to install mckit"
-goto END
-
-
-:SUCCESS1
+if errorlevel 1  (
+    echo "ERROR: failed to install mckit"
+    goto END
+)
 echo.
 echo SUCCESS: mckit has been installed
 echo.
+
+
 pytest -m "not slow"
-if errorlevel 0 goto SUCCESS2
-
-echo ERROR: failed to run tests
-goto END
-
-:SUCCESS2
+if errorlevel 1 (
+    echo ERROR: failed to run tests
+    goto END
+)
 echo.
 echo SUCCESS: pytest is passed OK
 echo.
+
 
 
 if "%install_tool%"=="poetry" (
@@ -112,17 +124,24 @@ if "%install_tool%"=="poetry" (
     :: test often - who doesn't?
     nox -s safety,tests -p 3.9 -- -m "not slow" --cov
     call poetry build
+    if errorlevel 1 (
+        echo ERROR: failed to run poetry build
+        goto END
+    )
 ) else (
     :: verify if 'pip' is able to collect the dependencies wheels
     pip wheel -w dist .
+    if errorlevel 1 (
+        echo ERROR: failed to collect dependencies with pip
+        goto END
+    )
 )
 
-if errorlevel 0 goto SUCCESS3
+call create-jk %mckit%
+if errorlevel 1 (
+    goto END
+)
 
-echo ERROR: failed to collect dependencies with pip
-goto END
-
-:SUCCESS3
 echo.
 echo SUCCESS!
 echo --------
@@ -136,6 +155,6 @@ echo Set your IDE to use %CONDA_PREFIX%\python.exe
 echo.
 echo Enjoy!
 echo.
-call create-jk %mckit%
+
 
 :END
