@@ -19,7 +19,7 @@ function install_poetry() {
     fi
 }
 
-function instal_linux_pyenv() {
+function install_linux_pyenv() {
     export PATH="~/.pyenv/bin:$PATH"
     if [[ ! -e pyenv ]]; then
         #
@@ -34,13 +34,13 @@ function instal_linux_pyenv() {
         eval "$(pyenv init -)"
         eval "$(pyenv virtualenv-init -)"
         #
-        # In Zsh use pyenv-zsh plugin.
-        
+        # In Zsh you can use pyenv-zsh plugin.
+        #
     fi
 }
 
 function install_python() {
-    local version="${1:-3.8.5}"
+    local version="${1:-3.9.1}"
     pyenv install $version
     python = "python$version"
     $python -m pip install --upgrade pip setuptools wheel
@@ -87,7 +87,7 @@ function install_all() {
         echo "ERROR: Install build tools is not implemented for $OS"
         echo "       See the comment in ${0}"
         # There's Windows version for pyenv: https://pypi.org/project/pyenv-win/1.1.2/"
-        # To install poetry on Windos use:
+        # To install poetry on Windows use:
         #  (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
         # Then setup PATH: remember pyenv should appear in the PATH before poetry.
         # In that case poetry will use the local virtual environment created by pyenv.
