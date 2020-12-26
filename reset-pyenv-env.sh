@@ -38,7 +38,7 @@ get_args() {
   poetry "--version"
   if [[ ! $?  ]]; then
       echo "ERROR: Poetry is not available"
-      exit 1
+      return 1
   fi
 
   python_version=${1:-$default_python_version}
@@ -66,13 +66,15 @@ reset_env() {
   mckit --version
   if [[ ! $? ]]; then
       echo "ERROR: failed to install mckit"
-      exit 1
+      return 1
   fi
 
   echo
   echo "SUCCESS: mckit has been installed"
   echo
+}
 
+check_environment() {
   poetry run pytest -m "not slow"
   if [[ $? ]]; then
       echo
@@ -80,12 +82,17 @@ reset_env() {
       echo
   else
       echo "ERROR: failed to run tests"
-      exit 1
+      return 1
   fi
 
   poetry run nox --list
   poetry run nox -s safety
   poetry run nox -s tests -p 3.9 -- -m "not slow" --cov
+
+  create-jk.sh "$mckit"
+  if [[ ! $? ]]; then
+      return 1
+  fi
 
   echo
   echo SUCCESS!
@@ -95,17 +102,16 @@ reset_env() {
   echo
   mckit --help
   echo
-  echo PyEnv environment %mckit% is all clear.
+  echo "PyEnv environment $mckit is all clear."
   echo "Set your IDE to use $(pyenv which python)"
   echo
   echo Enjoy!
   echo
-  create-jk "$mckit"
 }
 
 main() {
   echo "Running: $*"
-  get_args "$@" && reset_env
+  get_args "$@" && reset_env && check_environment
 }
 
 main "$@"

@@ -1,20 +1,17 @@
-from typing import Dict, List, Union
+from typing import Dict, List
 
+import distutils.log as log
 import os
 import platform
 import shutil
 
+from distutils.sysconfig import get_python_inc
 from pathlib import Path
 from subprocess import check_call
 
+import numpy as np
+
 SYSTEM_WINDOWS = platform.system() == "Windows"
-
-
-def check_cmake_installed() -> None:
-    try:
-        check_call(["cmake", "--version"])
-    except OSError:  # pragma: no cover
-        raise EnvironmentError("CMake must be installed to build nlopt")
 
 
 def create_directory(path: Path) -> Path:
@@ -24,33 +21,32 @@ def create_directory(path: Path) -> Path:
     return path
 
 
-def execute_command(
-    cmd: List[str], cwd: Path, env: Dict[str, str] = os.environ
-) -> None:
-    print(cwd.as_posix(), ":", " ".join(cmd))
-    check_call(cmd, cwd=cwd, env=env)
+np_include = np.get_include()
+site = Path(*(Path(np_include).parts[:-6]))
+python_inc = get_python_inc()
+include_dirs = [python_inc, np_include]
+
+if SYSTEM_WINDOWS:
+    include_dirs.append(str(site / "Library/include"))
+    library_dirs = [str(site / "libs"), str(site / "Library/lib")]
+    extra_compile_args = ["/O2"]
+else:
+    if platform.system() != "Linux":
+        print(
+            f"--- WARNING: the build scenario is not tested on platform {platform.system()}.",
+            "             Trying the scenario for Linux.",
+            sep="\n",
+        )
+    include_dirs.append(str(site / "include"))
+    library_dirs = [str(site / "lib")]
+    extra_compile_args = ["-O3", "-w"]
 
 
-def get_dirs(environment_variable: str) -> List[str]:
-    dirs = os.environ.get(environment_variable, "")
-
-    if dirs:
-        dirs = dirs.split(os.pathsep)
-    else:
-        dirs = []
-
-    return dirs
+def check_directories(*directories: str) -> None:
+    for directory in directories:
+        if not Path(directory).is_dir():
+            raise EnvironmentError(f"The directory {directory} does not exist")
 
 
-def insert_directories(
-    destination: List[str], value: Union[str, List[str]]
-) -> List[str]:
-    dirs = []
-    if isinstance(value, list):
-        dirs.extend(value)
-    elif value not in destination:
-        dirs.append(value)
-    for old in destination:
-        if old not in dirs:
-            dirs.append(old)
-    return dirs
+check_directories(*include_dirs)
+check_directories(*library_dirs)
