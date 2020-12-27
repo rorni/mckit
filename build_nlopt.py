@@ -10,7 +10,7 @@ from extension_utils import SYSTEM_WINDOWS, create_directory, python_inc, site
 
 
 def execute_command(
-    cmd: List[str], cwd: Path, env: Dict[str, str] = os.environ
+    cmd: List[str], cwd: Path = Path.cwd(), env: Dict[str, str] = os.environ
 ) -> None:
     print(f"--- {cwd.as_posix()}: {' '.join(cmd)}")
     check_call(cmd, cwd=cwd, env=env)
@@ -19,6 +19,10 @@ def execute_command(
 def build_nlopt() -> None:
 
     source_dir = Path(__file__).parent.absolute() / "3rd-party" / "nlopt"
+    if not source_dir.exists():
+        execute_command(
+            ["git", "submodule", "update", "--init", "--recursive", "--depth=1"]
+        )
     build_dir = create_directory(source_dir / "build")
     install_prefix = str(site)
 

@@ -23,7 +23,10 @@ def build(setup_kwargs):
 
     ext_modules = [geometry_extension]
 
-    package_data = ["data/isotopes.dat"]  # , "nlopt.dll", ]
+    package_data = [
+        "data/isotopes.dat",
+        "nlopt.dll",
+    ]
     mckit_package_path = Path(__file__).parent / "mckit"
     for mask in ["*.pyd", "*.so"]:
         package_data.extend(map(lambda x: str(x.name), mckit_package_path.glob(mask)))
