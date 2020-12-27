@@ -2505,7 +2505,7 @@ class TestCone:
     #     and platform.uname().node == "dvp-K56",
     #     reason="Check the rounding error occuring on dvp-K56 machine",
     # )
-    @pytest.skip(reason="Fails on MacOS")
+    @pytest.skip(msg="Fails on MacOS")
     @pytest.mark.parametrize(
         "surface, answer",
         zip(
