@@ -235,3 +235,4 @@ def codecov(session: Session) -> None:
 def test_nox(session: Session) -> None:
     path = Path(session.bin)
     print("bin", path.parent)
+    session.run("pip", "install", ".")

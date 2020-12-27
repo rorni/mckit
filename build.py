@@ -1,10 +1,12 @@
 from typing import List, Optional
-
+import os
 from pathlib import Path
-
+from setuptools import Extension
+from setuptools.command.build_ext import build_ext
 from extension_geometry import geometry_extension
-from build_nlopt import build_nlopt
+from build_nlopt import build_nlopt, create_directory
 from setuptools.dist import Distribution
+import distutils.log as log
 
 build_nlopt()
 
@@ -12,6 +14,27 @@ build_nlopt()
 class BinaryDistribution(Distribution):
     def is_pure(self):  # noqa
         return False
+
+
+class MCKitBuilder(build_ext):
+    def build_extension(self, extension: Extension) -> None:
+        ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
+        _ed = ext_dir.as_posix()
+        # - make sure path ends with delimiter
+        # - required for auto-detection of auxiliary "native" libs
+        if not _ed.endswith(os.path.sep):
+            _ed += os.path.sep
+
+        build_dir = create_directory(Path(self.build_temp))
+        log.info(f"Build dir {build_dir}")
+
+        # install_prefix = sys.prefix
+        # if SYSTEM_WINDOWS:
+        #     install_prefix = os.path.join(install_prefix, "Library")
+        # .. build and install nlopt
+        # .. add numpy include dir to extension.include_dirs from current isolated build instance
+        # .. copy nlopt.dll to mckit package dir in isolated build direcotry
+        build_ext.build_extension(self, extension)
 
 
 def build(setup_kwargs):
@@ -46,6 +69,7 @@ def build(setup_kwargs):
     setup_kwargs.update(
         {
             "ext_modules": ext_modules,
+            "cmdclass": {"build_ext": MCKitBuilder},
             "package_data": {"mckit": package_data},
             "distclass": BinaryDistribution,
             "long_description": Path("README.rst").read_text(encoding="utf8"),
