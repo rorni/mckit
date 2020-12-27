@@ -1,0 +1,60 @@
+# -*- coding: utf-8 -*-
+"""
+Проверяет корректность модели и выдает статистику.
+"""
+from pathlib import Path
+from typing import Any, Callable, Iterable, Optional
+
+from mckit.utils.logging import logger
+
+from mckit import Universe
+from mckit.card import Card
+from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
+from mckit.universe import collect_transformations
+
+
+def check_duplicates(
+    iterable: Optional[Iterable[Any]], label: str, key: Callable[[Any], Any]
+) -> None:
+    if iterable is None:
+        print(f"No {label}s are found")  # don't use logger here, should go to stdout
+    else:
+        visited = set()
+        for c in iterable:
+            k = key(c)
+            if k in visited:
+                print(f"Duplicate of {label} {k} is found")
+            else:
+                visited.add(k)
+        print(f"Total of {label}s: {len(visited)}")
+
+
+def check(source):
+    result = 0
+    logger.info("Check model {}", source)
+    source = Path(source)
+    parse_result: ParseResult = from_file(source)
+    model = parse_result.universe
+    logger.debug("Read the model okay")
+    universes = model.get_universes()
+    check_duplicates(universes, "universe", Universe.name)
+    cells = []
+    surfaces = []
+    transformations = []
+    compositions = []
+    for u in universes:
+        cells.extend(u)
+        surfaces.extend(u.get_surfaces(inner=False))
+        transformations_to_add = collect_transformations(u)
+        if transformations_to_add:
+            transformations.extend(transformations_to_add)
+        compositions.extend(u.get_compositions())
+    if not transformations:
+        transformations = None
+    if not compositions:
+        compositions = None
+    check_duplicates(cells, "cell", Card.name)
+    check_duplicates(surfaces, "surface", Card.name)
+    check_duplicates(transformations, "transformation", Card.name)
+    check_duplicates(compositions, "composition", Card.name)
+    return result

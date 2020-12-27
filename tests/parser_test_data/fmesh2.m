@@ -1,5 +1,5 @@
 mcnp   version 5     ld=09292010  probid =  05/24/18 12:21:45
- fmesh test                                                                      
+ fmesh test
  Number of histories used for normalizing tallies =      10000000.00
 
  Mesh Tally Number        24
@@ -253,4 +253,3 @@ mcnp   version 5     ld=09292010  probid =  05/24/18 12:21:45
    Total        2.500     4.375     0.500 1.05266E-04 1.65994E-02
    Total        2.500     4.375     0.700 9.46564E-05 1.68611E-02
    Total        2.500     4.375     0.900 2.10722E-04 1.28862E-02
-

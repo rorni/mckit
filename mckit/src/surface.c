@@ -4,7 +4,20 @@
 #include "mkl.h"
 #include "surface.h"
 
+// dvp:
+// Don't use "standard" macro "max": it can cause not obvious effects.
+// To avoid this, libraries usually undefine it, we'd better follow this
+// practice.
+#ifdef max
+# undef max
+#endif
+
 #define surface_INIT(surf) (surf)->last_box = 0; (surf)->last_box_result = 0;
+
+static double _max(double a, double b)
+{
+    return (a < b)? b : a;
+}
 
 /*
  *  In all sufr_func functions the first argument is space dimension. This argument introduced
@@ -66,6 +79,64 @@ double cylinder_func(
     return cblas_ddot(NDIM, a, 1, a, 1) - pow(an, 2) - pow(data->radius, 2);
 }
 
+double RCC_func(
+    unsigned int n,
+    const double * x,
+    double * grad,
+    void * f_data
+)
+{
+    RCC * data = (RCC *) f_data;
+    double gcyl[NDIM];
+    double gtop[NDIM];
+    double gbot[NDIM];
+    for (int i = 0; i < NDIM; ++i) {
+        gcyl[i] = 0;
+        gtop[i] = 0;
+        gbot[i] = 0;
+    }
+    double cyl_obj = cylinder_func(n, x, gcyl, data->cyl);
+    double top_obj = plane_func(n, x, gtop, data->top);
+    double bot_obj = plane_func(n, x, gbot, data->bot);
+
+    double tot_wgt = abs(top_obj + bot_obj);
+    double top_wgt = abs(top_obj) / tot_wgt;
+    double bot_wgt = abs(bot_obj) / tot_wgt;
+
+    double h = abs(data->top->offset + data->bot->offset);
+    if (grad != NULL) {
+        cblas_daxpy(NDIM, top_wgt, gtop, 1, grad, 1);
+        cblas_daxpy(NDIM, bot_wgt, gbot, 1, grad, 1);
+        cblas_daxpy(NDIM, 1, gcyl, 1, grad, 1);
+    }
+    return _max(cyl_obj, _max(top_obj, bot_obj));
+}
+
+double BOX_func(
+    unsigned int n,
+    const double * x,
+    double * grad,
+    void * f_data
+)
+{
+    BOX * data = (BOX *) f_data;
+    double gp[NDIM * BOX_PLANE_NUM];
+    double result[BOX_PLANE_NUM];
+    for (int i = 0; i < NDIM * BOX_PLANE_NUM; ++i) gp[i] = 0;
+
+    int index = 0;
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        result[i] = plane_func(n, x, gp + i * NDIM, data->planes[i]);
+        if (result[i] > result[index]) index = i;
+    }
+
+    if (grad != NULL) {
+        cblas_dcopy(NDIM, gp + index * NDIM, 1, grad, 1);
+    }
+
+    return result[index];
+}
+
 double cone_func(
     unsigned int n,
     const double * x,
@@ -98,11 +169,12 @@ double gq_func(
     if (grad != NULL) {
         cblas_dcopy(NDIM, data->v, 1, grad, 1);
         cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 2, data->m, NDIM, x, 1, 1, grad, 1);
+        cblas_dscal(NDIM, data->factor, grad, 1);
     }
     double y[NDIM];
     cblas_dcopy(NDIM, data->v, 1, y, 1);
     cblas_dgemv(CblasRowMajor, CblasNoTrans, NDIM, NDIM, 1, data->m, NDIM, x, 1, 1, y, 1);
-    return cblas_ddot(NDIM, y, 1, x, 1) + data->k;
+    return (cblas_ddot(NDIM, y, 1, x, 1) + data->k) * data->factor;
 }
 
 double clip_negative_values(double value)
@@ -165,6 +237,12 @@ double surface_func(
         case GQUADRATIC:
             fval = gq_func(n, x, grad, f_data);
             break;
+        case MRCC:
+            fval = RCC_func(n, x, grad, f_data);
+            break;
+        case MBOX:
+            fval = BOX_func(n, x, grad, f_data);
+            break;
         default:
             fval = 0;
             break;
@@ -220,6 +298,34 @@ int cylinder_init(
     for (i = 0; i < NDIM; ++i) {
         surf->point[i] = point[i];
         surf->axis[i] = axis[i];
+    }
+    return SURFACE_SUCCESS;
+}
+
+int RCC_init(
+    RCC * surf,
+    Cylinder * cyl,
+    Plane * top,
+    Plane * bot
+)
+{
+    surface_INIT((Surface *) surf);
+    surf->base.type = MRCC;
+    surf->cyl = cyl;
+    surf->top = top;
+    surf->bot = bot;
+    return SURFACE_SUCCESS;
+}
+
+int BOX_init(
+    BOX * surf,
+    Plane ** planes
+)
+{
+    surface_INIT((Surface *) surf);
+    surf->base.type = MBOX;
+    for (int i = 0; i < BOX_PLANE_NUM; ++i) {
+        surf->planes[i] = planes[i];
     }
     return SURFACE_SUCCESS;
 }
@@ -280,13 +386,15 @@ int gq_init(
     GQuadratic * surf,
     const double * m,
     const double * v,
-    double k
+    double k,
+    double factor
 )
 {
     int i, j;
     surface_INIT((Surface *) surf);
     surf->base.type = GQUADRATIC;
     surf->k = k;
+    surf->factor = factor;
     for (i = 0; i < NDIM; ++i) {
         surf->v[i] = v[i];
         for (j = 0; j < NDIM; ++j) surf->m[i * NDIM + j] = m[i * NDIM + j];
@@ -349,19 +457,23 @@ int surface_test_box(Surface * surf, const Box * box)
         // exists inside the box if all corner results are negative. SLSQP optimization method
         // is used.
         double x[NDIM], opt_val;
+        double xtol[NDIM];
         nlopt_result opt_result;
-        
+
         nlopt_opt opt;
         opt = nlopt_create(NLOPT_LD_SLSQP, 3);
         nlopt_set_lower_bounds(opt, box->lb);
         nlopt_set_upper_bounds(opt, box->ub);
-        
+
         if (sign > 0) nlopt_set_min_objective(opt, surface_func, surf);
         else          nlopt_set_max_objective(opt, surface_func, surf);
-    
+
+        for (i = 0; i < NDIM; ++i) xtol[i] = box->dims[i] / 1000;
+
         nlopt_add_inequality_mconstraint(opt, 6, box_ieqcons, (void*) box, NULL);
         nlopt_set_stopval(opt, 0);
         nlopt_set_maxeval(opt, 1000); // TODO: consider passing this parameter.
+        // nlopt_set_xtol_abs(opt, xtol);
 
         // Because the problem is nonlinear, the points, where gradient is 0 exist.
         // To avoid such trap we start optimization from several points - box's corners.
@@ -376,9 +488,10 @@ int surface_test_box(Surface * surf, const Box * box)
         nlopt_destroy(opt);
     }
     // Cache test result;
-    surf->last_box = box->subdiv;
-    surf->last_box_result = sign;
-    
+    if (!(box->subdiv & HIGHEST_BIT)) {
+        surf->last_box = box->subdiv;
+        surf->last_box_result = sign;
+    }
+
     return sign;
 }
-

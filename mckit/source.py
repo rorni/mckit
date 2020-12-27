@@ -1,5 +1,5 @@
-from .activation import EBINS_24
-from .fmesh import SparseData
+# -*- coding: utf-8 -*-
+
 from .printer import print_card, separate
 
 
@@ -41,6 +41,7 @@ class Distribution:
     variable : str
         Name of source variable.
     """
+
     def __init__(self, name, values, probs, variable=None):
         self._name = name
         self._var = variable
@@ -68,27 +69,27 @@ class Distribution:
         tokens = []
         discrete = Distribution.is_discrete(self._values, len(self._probs))
         if isinstance(self._values[0], Distribution):
-            tokens.append('S')
+            tokens.append("S")
             for v in self._values:
                 tokens.append(str(v.name))
         else:
-            tokens.append('L' if discrete else 'H')
+            tokens.append("L" if discrete else "H")
             for v in self._values:
                 tokens.append(str(v))
 
         if isinstance(self._probs, Distribution):
-            tokens.insert(0, 'DS{0}'.format(self._name))
+            tokens.insert(0, "DS{0}".format(self._name))
             prob_tokens = None
         else:
-            tokens.insert(0, 'SI{0}'.format(self._name))
-            prob_tokens = ['SP{0}'.format(self._name), 'D']
+            tokens.insert(0, "SI{0}".format(self._name))
+            prob_tokens = ["SP{0}".format(self._name), "D"]
             if not discrete:
-                prob_tokens.append('0')
+                prob_tokens.append("0")
             for p in self._probs:
                 prob_tokens.append(str(p))
         card = print_card(separate(tokens))
         if prob_tokens:
-            card += '\n' + print_card(separate(prob_tokens))
+            card += "\n" + print_card(separate(prob_tokens))
         return card
 
     def get_inner(self):
@@ -180,7 +181,7 @@ def expand_matrix_distribution(intensities, *var_values, start_name=1):
 
     Parameters
     ----------
-    intensities : np.ndarray or SparseData
+    intensities : array_like
         A matrix of source intensities.
     var_values : tuple
         A tuple of variable values along each axis. Length of var_values must
@@ -209,9 +210,6 @@ def expand_matrix_distribution(intensities, *var_values, start_name=1):
             uniq_values.append(dists)
         exp_var_values.append([])
 
-    if not isinstance(intensities, SparseData):
-        intensities = SparseData.from_dense(intensities)
-
     exp_intensities = []
     for index, intensity in intensities:
         for j, i in enumerate(index):
@@ -234,76 +232,32 @@ class Source:
     mcnp_repr()
         Gets a string representation of corresponding MCNP card.
     """
+
     def __init__(self, **variables):
         self._variables = variables
 
     def mcnp_repr(self):
         """Gets a string representation of corresponding MCNP card."""
-        tokens = ['SDEF']
+        tokens = ["SDEF"]
         cards = []
         extra_cards = []
         for k, v in self._variables.items():
-            tokens.append('{0}={1}'.format(k, Source._var_repr(k, v)))
+            tokens.append("{0}={1}".format(k, Source._var_repr(k, v)))
             if isinstance(v, Distribution):
                 cards.append(v.mcnp_repr())
                 for ec in sorted(v.get_inner(), key=lambda x: x.name):
                     extra_cards.append(ec.mcnp_repr())
         cards.insert(0, print_card(separate(tokens)))
         cards.extend(extra_cards)
-        return '\n'.join(cards)
+        return "\n".join(cards)
 
     @staticmethod
     def _var_repr(key, value):
         if isinstance(value, Distribution):
             dep = value.depends_on()
-            result = 'D{0}'.format(value.name)
+            result = "D{0}".format(value.name)
             if dep:
-                result = 'F{0} '.format(dep.variable) + result
+                result = "F{0} ".format(dep.variable) + result
         else:
             result = str(value)
         return result
-
-
-def activation_gamma_source(data, mesh, ebins=EBINS_24):
-    """Creates activation gamma source.
-
-    Parameters
-    ----------
-    data : dict
-        A dictionary of spectrum data. cell->mesh of ndarrays.
-    mesh : RectMesh or CylMesh
-        Defines mesh form.
-    ebins : array_like
-        A list of gamma energy bin boundaries.
-
-    Returns
-    -------
-    source : Source
-        Gamma source.
-    """
-    shape = (len(ebins)-1, *mesh.shape, len(data.keys()))
-    intensities = SparseData(shape)
-    cell_names = []
-    for i, (c, spec_data) in enumerate(data.items()):
-        cell_names.append(c['name'])
-        for index, flux in spec_data:
-            for j, f in enumerate(flux):
-                intensities[(j, *index, i)] = f
-
-    xbins = mesh._xbins
-    ybins = mesh._ybins
-    zbins = mesh._zbins
-    free_name, (ed, xd, yd, zd, cd), probs = expand_matrix_distribution(
-        intensities, ebins, xbins, ybins, zbins, cell_names, start_name=10
-    )
-    cell_dist = Distribution(1, cd, probs, 'CEL')
-    e_dist = Distribution(2, ed, cell_dist, 'ERG')
-    x_dist = Distribution(3, xd, cell_dist, 'X')
-    y_dist = Distribution(4, yd, cell_dist, 'Y')
-    z_dist = Distribution(5, zd, cell_dist, 'Z')
-
-    src_params = {
-        'PAR': 2, 'EFF': 1.e-2, 'CEL': cell_dist, 'ERG': e_dist,
-        'X': x_dist, 'Y': y_dist, 'Z': z_dist
-    }
-    return Source(**src_params)

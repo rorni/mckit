@@ -1,20 +1,30 @@
-# -*- coding: utf-8 -*-
+# flake8: noqa F401
+
 
 from .universe import Universe
-from .surface import create_surface, Plane, Sphere, Cylinder, Cone, Torus, \
-    GQuadratic
+from .surface import create_surface, Plane, Sphere, Cylinder, Cone, Torus, GQuadratic
 from .body import Shape, Body
 from .transformation import Transformation
 from .material import AVOGADRO, Element, Composition, Material
-from .activation import mesh_activation
-from . import activation
 from .fmesh import FMesh
-from .parser.mcnp_input_parser import read_mcnp
 from .parser.meshtal_parser import read_meshtal
+from .parser.mctal_parser import read_mctal
+from .version import (
+    __author__,
+    __copyright__,
+    __license__,
+    __title__,
+    __version__,
+    __summary__,
+)
+import os
+import sys
+import platform
 
-__all__ = [
-    'Universe', 'create_surface', 'Plane', 'Sphere', 'Cylinder', 'Cone',
-    'Torus', 'GQuadratic', 'Shape', 'Body', 'Transformation', 'AVOGADRO',
-    'Element', 'Composition', 'Material', 'activation', 'mesh_activation',
-    'FMesh', 'read_mcnp'
-]
+if platform.system() == "Windows":
+    os.add_dll_directory(
+        os.path.join(sys.prefix, "Library", "bin")
+    )  # nlopt.dll should be there
+
+
+__doc__ = __summary__

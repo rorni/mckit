@@ -1,0 +1,194 @@
+#
+# Shared utility functions to faciliate environment configuring.
+#
+# vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai
+
+function python_prefix(){
+    python -c 'import sys; print(sys.prefix)'
+}
+
+export PYTHON_ROOT=$(python_prefix)
+export PYTHON="${PYTHON_ROOT}/bin/python"
+export PYTHON_EXECUTALBE="${PYTHON}"
+export PYTHON_INCLUDE_DIR=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())") 
+export PYTHON_LIBRARY=$(python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+
+#
+# Joins words separated with a given separator (first argument).
+#
+function make_list() {
+    local first="yes"
+    t=""
+    local separator=$1
+    shift
+    for p in $*
+    do
+            # echo "#1: p=$p" >> build_utils.test.log
+            array=($(echo "${p//$separator/ }"))
+            for pp in "${array[@]}"
+            do
+                # echo "#2: pp=$pp" >> build_utils.test.log
+                if [[ "$t" != "$pp" ]]         && \
+                    [[ "$t" == "${t#${pp}$separator}" ]] && \
+                    [[ "$t" == "${t%$separator${pp}}" ]] && \
+                    [[ "$t" == "${t/$separator${pp}$separator}" ]];  then
+                #  pp is not present in t
+                if [[ $first == "yes" ]]; then
+                    first="no"
+                else
+                    t="$t$separator"
+                fi
+                t="${t}${pp}"
+                # echo "#3: t=$t" >> build_utils.test.log
+            fi
+        done
+    done
+    echo "$t"
+}
+
+
+#
+# Joins words separated with path separator.
+#
+function make_path() {
+    make_list ":" $*
+}
+
+
+#
+# Joins words separated with space.
+#
+function make_flags() {
+    make_list " " $*
+}
+
+
+function get_absolute_path_name() {
+    echo $(readlink -m "$1")
+}
+
+
+function check_dirs() {
+    for d in $*
+    do
+        if [[ ! -d $d ]]; then
+            echo "ERROR: directory $d doesn't exist!"
+            return 1
+        fi
+    done
+    return 0
+}
+
+
+function filter_printenv() {
+    local what=$*
+    if [[ -z "$what" ]]; then
+        what="$(make_list '|^' \
+            pyenv \
+            poetry \
+            mkl \
+            mckit \
+        )"
+    fi
+    local exclude="$(make_list '|^' \
+        python \
+        old_path \
+        pwd \
+        oldpwd \
+        original_path \
+    )"
+    # echo "include: $what"
+    # echo "exclude: $exclude"
+    (
+        echo "INCLUDE_PATH=$INCLUDE_PATH"
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+        printenv | grep -i -E "$what" | grep -i -v -E "$exclude"
+    ) | sort -u
+}
+
+
+#
+# Creates a given directory (if needed) and changes to it.
+#
+function mdcd() {
+    mkdir -p "$1"  && cd "$1"
+}
+
+
+function show_python_versions_available() {
+    pyenv update > /dev/null && pyenv install --list | egrep -E "^\s*3\.(6|7|8|9|10)\."
+}
+
+#
+# On Windows poetry ignores pyenv-win and conda environments
+# To fix this we have to change it's config to use an existing environment,
+# i.e. the one which is currently activated by conda or pyenv-win.
+#
+function fix_poetry_config() {
+    local python_prefix
+    python_prefix="$(python -c 'import sys; print(sys.prefix)')"
+    poetry config virtualenvs.path  "${python_prefix}" --local
+    poetry config virtualenvs.create  false --local
+}
+
+function poetry_prefix(){
+    echo "$(poetry env info --path)"
+}
+
+
+function poetry_python() {
+    echo "$(poetry run which python)"
+}
+
+
+#
+# TODO dvp
+#
+# Git finds the most recent tag and adds suffixes corresponding to current branch.
+# If the current branch correspondes to the tag (as it should be for master),
+# then no suffixes are added.
+#
+# Make this match the poetry pattern
+# VERSION_PATTERN = re.compile(
+        # r"""
+        # ^
+        # v?
+        # (?:
+         # (?:(?P<epoch>[0-9]+)!)?                           # epoch
+         # (?P<release>[0-9]+(?:\.[0-9]+)*)                  # release segment
+         # (?P<pre>                                          # pre-release
+          # [-_.]?
+          # (?P<pre_l>(a|b|c|rc|alpha|beta|pre|preview))
+          # [-_.]?
+          # (?P<pre_n>[0-9]+)?
+         # )?
+         # (?P<post>                                         # post release
+          # (?:-(?P<post_n1>[0-9]+))
+          # |
+          # (?:
+           # [-_.]?
+           # (?P<post_l>post|rev|r)
+           # [-_.]?
+           # (?P<post_n2>[0-9]+)?
+          # )
+         # )?
+         # (?P<dev>                                          # dev release
+          # [-_.]?
+          # (?P<dev_l>dev)
+          # [-_.]?
+          # (?P<dev_n>[0-9]+)?
+         # )?
+         # )
+         # (?:\+(?P<local>[a-z0-9]+(?:[-_.][a-z0-9]+)*))?       # local version
+         # $
+         # """,
+         # re.IGNORECASE | re.VERBOSE,
+         # )
+# or apply poetry-dynamic-versioning plugin
+# function sync_toml_version_with_git() {
+    # local _mgv
+    # _mgv="$(git describe --always --long HEAD)"
+    # poetry version "${_mgv#v\.}"
+# }
+
+
