@@ -22,7 +22,8 @@ def create_directory(path: Path) -> Path:
 
 
 np_include = np.get_include()
-site = Path(*(Path(np_include).parts[:-6]))
+drop_parts = 5 if SYSTEM_WINDOWS else 6
+site = Path(*(Path(np_include).parts[:-drop_parts]))
 python_inc = get_python_inc()
 include_dirs = [python_inc, np_include]
 
