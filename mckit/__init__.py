@@ -17,5 +17,14 @@ from .version import (
     __version__,
     __summary__,
 )
+import os
+import sys
+import platform
+
+if platform.system() == "Windows":
+    os.add_dll_directory(
+        os.path.join(sys.prefix, "Library", "bin")
+    )  # nlopt.dll should be there
+
 
 __doc__ = __summary__
