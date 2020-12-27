@@ -1,13 +1,10 @@
-from typing import Dict, List
-
-import distutils.log as log
 import os
 import platform
 import shutil
+import sys
 
 from distutils.sysconfig import get_python_inc
 from pathlib import Path
-from subprocess import check_call
 
 import numpy as np
 
@@ -29,7 +26,7 @@ include_dirs = [python_inc, np_include]
 
 if SYSTEM_WINDOWS:
     include_dirs.append(str(site / "Library/include"))
-    library_dirs = [str(site / "libs"), str(site / "Library/lib")]
+    library_dirs = [os.path.join(sys.base_prefix, "libs"), str(site / "Library/lib")]
     extra_compile_args = ["/O2"]
 else:
     if platform.system() != "Linux":
