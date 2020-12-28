@@ -18,4 +18,4 @@ jobs:
       run: git submodule update --init --recursive --depth=1
     - run: pip install nox==2020.8.22
     - run: pip install poetry==1.1.4
-    - run: nox
+    - run: nox -p  ${{ matrix.python-version }}
