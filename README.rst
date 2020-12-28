@@ -1,4 +1,12 @@
-.. include:: preamble.rst
+.. |copy| unicode:: 0xA9 .. copyright
+.. |(TM)| unicode:: U+2122 .. trademark
+.. |---| unicode:: U+02014 .. long dash
+.. |date| date:: %d.%m.%Y
+.. |time| date:: %H:%M
+.. |mckit| replace:: ``mckit``
+.. |br| raw:: html
+
+       <br />
 
 .. image:: https://img.shields.io/badge/Maintained%3F-yes-green.svg
    :target: https://github.com/dvp2015/mckit/graphs/commit-activity
@@ -60,7 +68,7 @@ From source: ::
     # set local python environment with `pyenv`, `venv` or `conda`
     # pyenv virtualenv 3.9.1 mckit
     # pyenv local mckit 3.9.1 3.8.5 3.7.9 3.6.12
-    # or
+    # or (conda is better for Windows)
     # conda create -n mckit python=3.9
     # conda activate mckit
 
@@ -68,9 +76,12 @@ From source: ::
     poetry build
     poetry install
 
-    # either (without poetry)
+    # either
     pip install .
 
+There are also scripts to setup virtual environment: ::
+    - Linux:   reset-pyenv-env.sh
+    - Windows: reset-conda-env.bat
 
 From wheel: ::
 
@@ -79,7 +90,7 @@ From wheel: ::
 
 From PyPI: ::
 
-    To be implemented
+    pip install mckit
 
 
 Copyright
