@@ -9,7 +9,8 @@ if platform.system() == "Windows":
     assert os.path.exists(
         os.path.join(lib_path, "nlopt.dll")
     ), f"nlopt.dll should be in ${lib_path} before importing mckit"
-    os.add_dll_directory(lib_path)
+    if hasattr(os, "add_dll_directory"):
+        os.add_dll_directory(lib_path)
 
 
 from .universe import Universe
