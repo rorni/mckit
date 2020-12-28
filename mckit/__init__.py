@@ -9,7 +9,7 @@ if platform.system() == "Windows":
     assert os.path.exists(
         os.path.join(lib_path, "nlopt.dll")
     ), f"nlopt.dll should be in ${lib_path} before importing mckit"
-    if hasattr(os, "add_dll_directory"):
+    if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
         os.add_dll_directory(lib_path)
 
 
