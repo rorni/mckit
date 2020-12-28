@@ -34,5 +34,5 @@ jobs:
         run: pip install nox==2020.8.22
       - name: Install poetry
         run: pip install poetry==1.1.4
-      - name: Run nox -p ${{ matrix.python-version }}
-        run: nox -p ${{ matrix.python-version }}
+      - name: Run nox tests -p ${{ matrix.python-version }}
+        run: nox -s tests -p ${{ matrix.python-version }}
