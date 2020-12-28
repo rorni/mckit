@@ -35,4 +35,4 @@ jobs:
       - name: Install poetry
         run: pip install poetry==1.1.4
       - name: Run nox -p ${{ matrix.python-version }}
-        run: nox
+        run: nox -p ${{ matrix.python-version }}
