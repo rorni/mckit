@@ -1,5 +1,18 @@
 # flake8: noqa F401
 
+import os
+import sys
+import platform
+
+if platform.system() == "Windows":
+    lib_path = os.path.join(sys.prefix, "Library", "bin")
+    assert os.path.exists(
+        os.path.join(lib_path, "nlopt.dll")
+    ), f"nlopt.dll should be in ${lib_path} before importing mckit"
+    if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
+        os.add_dll_directory(lib_path)
+
+
 from .universe import Universe
 from .surface import create_surface, Plane, Sphere, Cylinder, Cone, Torus, GQuadratic
 from .body import Shape, Body
@@ -16,5 +29,6 @@ from .version import (
     __version__,
     __summary__,
 )
+
 
 __doc__ = __summary__

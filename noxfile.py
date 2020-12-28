@@ -4,14 +4,15 @@
 
     See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
-
 from typing import Any, Generator, List
-from pathlib import Path
 
 import os
+import platform
 import tempfile
+from glob import glob
 
 from contextlib import contextmanager
+from pathlib import Path
 
 import nox
 
@@ -37,6 +38,8 @@ black_pythons = "3.9"  # TODO dvp: target-version in pyproject.toml is still py3
 # TODO dvp: check, when updates are available
 mypy_pythons = "3.7"
 lint_pythons = "3.7"
+
+on_windows = platform.system() == "Windows"
 
 
 @contextmanager
@@ -85,6 +88,11 @@ def tests(session: Session) -> None:
     session.run("poetry", "install", "--no-dev", external=True)
     install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
     path = Path(session.bin).parent
+    if on_windows:
+        session.bin_paths.insert(
+            0, str(path / "Library/bin")
+        )  # here all the DLLs should be installed
+    session.log(f"Session path: {session.bin_paths}")
     session.run("pytest", env={"LD_LIBRARY_PATH": str(path / "lib")}, *args)
     if "--cov" in args:
         session.run("coverage", "report", "--show-missing", "--skip-covered")
@@ -132,7 +140,7 @@ def safety(session: Session) -> None:
 #
 @nox.session(python="3.9")
 def isort(session: Session) -> None:
-    from glob import glob
+    """Organize imports"""
 
     install_with_constraints(session, "isort")
     search_patterns = [
@@ -227,3 +235,4 @@ def codecov(session: Session) -> None:
 def test_nox(session: Session) -> None:
     path = Path(session.bin)
     print("bin", path.parent)
+    session.run("pip", "install", ".")

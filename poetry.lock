@@ -243,6 +243,14 @@ loguru = ">=0.5.0,<0.6.0"
 memory_profiler = ">=0.57.0,<0.58.0"
 
 [[package]]
+name = "cmake"
+version = "3.18.4"
+description = "CMake is an open-source, cross-platform family of tools designed to build, test and package software"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "codecov"
 version = "2.1.10"
 description = "Hosted coverage reports for GitHub, Bitbucket and Gitlab"
@@ -949,17 +957,6 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
-name = "nlopt"
-version = "2.6.2"
-description = "Library for nonlinear optimization, wrapping many algorithms for global and local, constrained or unconstrained, optimization"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-numpy = ">=1.14"
-
-[[package]]
 name = "nodeenv"
 version = "1.5.0"
 description = "Node.js virtual environment builder"
@@ -1429,7 +1426,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 
 [[package]]
 name = "safety"
-version = "1.9.0"
+version = "1.10.0"
 description = "Checks installed dependencies for known vulnerabilities."
 category = "dev"
 optional = false
@@ -1497,7 +1494,7 @@ python-versions = "*"
 
 [[package]]
 name = "sphinx"
-version = "3.3.1"
+version = "3.4.1"
 description = "Python documentation generator"
 category = "main"
 optional = false
@@ -1523,8 +1520,8 @@ sphinxcontrib-serializinghtml = "*"
 
 [package.extras]
 docs = ["sphinxcontrib-websupport"]
-lint = ["flake8 (>=3.5.0)", "flake8-import-order", "mypy (>=0.790)", "docutils-stubs"]
-test = ["pytest", "pytest-cov", "html5lib", "typed-ast", "cython"]
+lint = ["flake8 (>=3.5.0)", "isort", "mypy (>=0.790)", "docutils-stubs"]
+test = ["pytest", "pytest-cov", "html5lib", "cython", "typed-ast"]
 
 [[package]]
 name = "sphinx-autobuild"
@@ -1742,14 +1739,15 @@ python-versions = ">= 3.5"
 
 [[package]]
 name = "tqdm"
-version = "4.54.1"
+version = "4.55.0"
 description = "Fast, Extensible Progress Meter"
 category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
 
 [package.extras]
-dev = ["py-make (>=0.1.0)", "twine", "argopt", "pydoc-markdown", "wheel"]
+dev = ["py-make (>=0.1.0)", "twine", "wheel"]
+telegram = ["requests"]
 
 [[package]]
 name = "traitlets"
@@ -1886,7 +1884,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "7fb5f40f08dafdd8d1ea342a4f6ca6e105e3fa7be6ef79edb7f385269bbaf065"
+content-hash = "5c6c8f3280f5f1c828f8fd697212d5762850351704f3f66e4b141809a4a4a789"
 
 [metadata.files]
 aiofile = [
@@ -2036,6 +2034,19 @@ click = [
 click-loguru = [
     {file = "click_loguru-1.3.4-py3-none-any.whl", hash = "sha256:c2a7ab12a40d7d46103c3d1df2752c3d38bf6ba1f0b3227a7329085984440973"},
     {file = "click_loguru-1.3.4.tar.gz", hash = "sha256:f38382f0a924eb388d29f21a20f60b8c805668fb34b396977029643268d52c6a"},
+]
+cmake = [
+    {file = "cmake-3.18.4-py2-none-macosx_10_6_x86_64.whl", hash = "sha256:4ad9bec90067658340e232f40d5dd7251ced599e18680595bf8070655295cf5f"},
+    {file = "cmake-3.18.4-py2-none-manylinux1_i686.whl", hash = "sha256:1b2955414700fca26a044620d8b4e71ea783ff1b751e64c64a845092edeb0fb7"},
+    {file = "cmake-3.18.4-py2-none-manylinux1_x86_64.whl", hash = "sha256:bac963066661ca8b4ae737e264bbed8f9dbf9f9125f83bb4cae39725ad3e4c1a"},
+    {file = "cmake-3.18.4-py2-none-win32.whl", hash = "sha256:ef8c4005b896a0c7d3751cd3985849e8776a0101747a1c168c4d05001ef610ee"},
+    {file = "cmake-3.18.4-py2-none-win_amd64.whl", hash = "sha256:95bfb6f4d18c7fb4a28fc5316d6b8c508843a4f1d0689c1ec48766a8847391af"},
+    {file = "cmake-3.18.4-py3-none-macosx_10_6_x86_64.whl", hash = "sha256:72907b519444f01284f1b839b4eeb865f4cf4ccf91feb61e74ef909c849ae724"},
+    {file = "cmake-3.18.4-py3-none-manylinux1_i686.whl", hash = "sha256:7b6c9ef84c842dfe363f480f261ce9f2c17bcf8a914e49a414d4ce6f8b4ab895"},
+    {file = "cmake-3.18.4-py3-none-manylinux1_x86_64.whl", hash = "sha256:b9b8025fbd508a9a172ae7cc2e3f41a21bb0f04457d7eb40875d56dd2e59c5d6"},
+    {file = "cmake-3.18.4-py3-none-win32.whl", hash = "sha256:339e1ed717bd31269466eba5d30670109c3356913321cb7e945b1e5af366b200"},
+    {file = "cmake-3.18.4-py3-none-win_amd64.whl", hash = "sha256:0506c7a690cf5e402314f992b954847b9737efd42429b746d9882a54ed68f177"},
+    {file = "cmake-3.18.4.tar.gz", hash = "sha256:40b9a559e4e0dc43ff130a9df2272f495ad73844b395c2b01648efac3d69d34d"},
 ]
 codecov = [
     {file = "codecov-2.1.10-py2.py3-none-any.whl", hash = "sha256:61bc71b5f58be8000bf9235aa9d0112f8fd3acca00aa02191bb81426d22a8584"},
@@ -2349,29 +2360,6 @@ nest-asyncio = [
     {file = "nest_asyncio-1.4.3-py3-none-any.whl", hash = "sha256:dbe032f3e9ff7f120e76be22bf6e7958e867aed1743e6894b8a9585fe8495cc9"},
     {file = "nest_asyncio-1.4.3.tar.gz", hash = "sha256:eaa09ef1353ebefae19162ad423eef7a12166bcc63866f8bff8f3635353cd9fa"},
 ]
-nlopt = [
-    {file = "nlopt-2.6.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:47c00465f38dd9cfdf87812b68de4c8fafa9d54e88f49b023a8d34b724277730"},
-    {file = "nlopt-2.6.2-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:b50534d30587edabfe3916c77bf510aede3f5882e49aa1444ffd2cd738e933d2"},
-    {file = "nlopt-2.6.2-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:6c76d6cdb2d523b56927ddc6bd43e4f04a52812d2b28c2f0a04e9689f4c52139"},
-    {file = "nlopt-2.6.2-cp36-cp36m-win32.whl", hash = "sha256:e9a26ef5af8e5f9eef9af5a1f9568003a47bce3068e65f90204adad742738d71"},
-    {file = "nlopt-2.6.2-cp36-cp36m-win_amd64.whl", hash = "sha256:52749528c3ec5643ec2d2a705ab97baf6bc235bd05ebc634060363ea8150ccae"},
-    {file = "nlopt-2.6.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:1bacc8aeb1448abcca9985eb1a24e4762346b031000d390aa344032d5d1623b2"},
-    {file = "nlopt-2.6.2-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:33d1727c73444c84b7540bcfb0878bd8027578bb19195740f240ee6b7601ef89"},
-    {file = "nlopt-2.6.2-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:1f34e8b007b94bbc452b89faea6272f58ab77f75d0aee9f1b01db68fc7729e74"},
-    {file = "nlopt-2.6.2-cp37-cp37m-win32.whl", hash = "sha256:85eda29e9bc5956366e6df7061d2c92c00fde9b52151aa996c8f92aae518241f"},
-    {file = "nlopt-2.6.2-cp37-cp37m-win_amd64.whl", hash = "sha256:f3590b028acb0c5fca877047fe908e782de91f3b2524db1e4bfa48c43472b8f2"},
-    {file = "nlopt-2.6.2-cp37-none-manylinux1_x86_64.whl", hash = "sha256:d4c7eecaad2b14d1aab1a04ed4ad9ed33d37edfbbc3244ef453c4700d5e23c0f"},
-    {file = "nlopt-2.6.2-cp37-none-win_amd64.whl", hash = "sha256:3ed8fdd2a9b6439451a3742e3e87a610e06660be1a67427ae4a8a69af7b6b13b"},
-    {file = "nlopt-2.6.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:5d9c40250e35b239c5fc2777eedc0552e0e6c6c594c37056ea698069381539ae"},
-    {file = "nlopt-2.6.2-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:a00bbd9080ff13d674d4ba3e6b6353b9bb6c75128d0118ab4673196cfed43745"},
-    {file = "nlopt-2.6.2-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:5ebdd6870d842b83333704459fa3490fc1fd1c167a9854978f3e96e14af77940"},
-    {file = "nlopt-2.6.2-cp38-cp38-win32.whl", hash = "sha256:3f5cc08e8c210df1483d7138a979433784443625ca19702f40714823b8e87837"},
-    {file = "nlopt-2.6.2-cp38-cp38-win_amd64.whl", hash = "sha256:30e8383d3c6ec2cca312eb3d7d0379e495b615d5756aeb3e8b58ff82dfce66a4"},
-    {file = "nlopt-2.6.2-cp38-none-manylinux1_x86_64.whl", hash = "sha256:9442d14c83394605c593d8deafce900559e2e214f09005b41bb463583aa8909d"},
-    {file = "nlopt-2.6.2-cp38-none-win_amd64.whl", hash = "sha256:89e700af8b12559dab872bf00a6111bc31f5a30ca6789ce1cee3b4d4b7d283bd"},
-    {file = "nlopt-2.6.2-py38-none-win_amd64.whl", hash = "sha256:b52e04f339549c59a30f73b782b41ea07247f3055a3bfebfdd2d95c868fb1383"},
-    {file = "nlopt-2.6.2.tar.gz", hash = "sha256:21f10b0bbcf32b4d370c371e967c01df50ce96c258f483a32b9140b57e9e410d"},
-]
 nodeenv = [
     {file = "nodeenv-1.5.0-py2.py3-none-any.whl", hash = "sha256:5304d424c529c997bc888453aeaa6362d242b6b4631e90f3d4bf1b290f1c84a9"},
     {file = "nodeenv-1.5.0.tar.gz", hash = "sha256:ab45090ae383b716c4ef89e690c41ff8c2b257b85b309f01f3654df3d084bd7c"},
@@ -2670,8 +2658,8 @@ requests = [
     {file = "requests-2.25.0.tar.gz", hash = "sha256:7f1a0b932f4a60a1a65caa4263921bb7d9ee911957e0ae4a23a6dd08185ad5f8"},
 ]
 safety = [
-    {file = "safety-1.9.0-py2.py3-none-any.whl", hash = "sha256:86c1c4a031fe35bd624fce143fbe642a0234d29f7cbf7a9aa269f244a955b087"},
-    {file = "safety-1.9.0.tar.gz", hash = "sha256:23bf20690d4400edc795836b0c983c2b4cbbb922233108ff925b7dd7750f00c9"},
+    {file = "safety-1.10.0-py2.py3-none-any.whl", hash = "sha256:69437acf5dd617abd7086ccd0d50e813e67aa969bb9ca90f1847d5fbea047dcc"},
+    {file = "safety-1.10.0.tar.gz", hash = "sha256:2ebc71b44666588d7898905d86d575933fcd5fa3c92d301ed12482602b1e928a"},
 ]
 scipy = [
     {file = "scipy-1.5.4-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:4f12d13ffbc16e988fa40809cbbd7a8b45bc05ff6ea0ba8e3e41f6f4db3a9e47"},
@@ -2720,8 +2708,8 @@ snowballstemmer = [
     {file = "snowballstemmer-2.0.0.tar.gz", hash = "sha256:df3bac3df4c2c01363f3dd2cfa78cce2840a79b9f1c2d2de9ce8d31683992f52"},
 ]
 sphinx = [
-    {file = "Sphinx-3.3.1-py3-none-any.whl", hash = "sha256:d4e59ad4ea55efbb3c05cde3bfc83bfc14f0c95aa95c3d75346fcce186a47960"},
-    {file = "Sphinx-3.3.1.tar.gz", hash = "sha256:1e8d592225447104d1172be415bc2972bd1357e3e12fdc76edf2261105db4300"},
+    {file = "Sphinx-3.4.1-py3-none-any.whl", hash = "sha256:aeef652b14629431c82d3fe994ce39ead65b3fe87cf41b9a3714168ff8b83376"},
+    {file = "Sphinx-3.4.1.tar.gz", hash = "sha256:e450cb205ff8924611085183bf1353da26802ae73d9251a8fcdf220a8f8712ef"},
 ]
 sphinx-autobuild = [
     {file = "sphinx-autobuild-2020.9.1.tar.gz", hash = "sha256:4b184a7db893f2100bbd831991ae54ca89167a2b9ce68faea71eaa9e37716aed"},
@@ -2842,8 +2830,8 @@ tornado = [
     {file = "tornado-6.1.tar.gz", hash = "sha256:33c6e81d7bd55b468d2e793517c909b139960b6c790a60b7991b9b6b76fb9791"},
 ]
 tqdm = [
-    {file = "tqdm-4.54.1-py2.py3-none-any.whl", hash = "sha256:d4f413aecb61c9779888c64ddf0c62910ad56dcbe857d8922bb505d4dbff0df1"},
-    {file = "tqdm-4.54.1.tar.gz", hash = "sha256:38b658a3e4ecf9b4f6f8ff75ca16221ae3378b2e175d846b6b33ea3a20852cf5"},
+    {file = "tqdm-4.55.0-py2.py3-none-any.whl", hash = "sha256:0cd81710de29754bf17b6fee07bdb86f956b4fa20d3078f02040f83e64309416"},
+    {file = "tqdm-4.55.0.tar.gz", hash = "sha256:f4f80b96e2ceafea69add7bf971b8403b9cba8fb4451c1220f91c79be4ebd208"},
 ]
 traitlets = [
     {file = "traitlets-5.0.5-py3-none-any.whl", hash = "sha256:69ff3f9d5351f31a7ad80443c2674b7099df13cc41fc5fa6e2f6d3b0330b0426"},

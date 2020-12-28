@@ -97,3 +97,4 @@ poetry.toml
 dist/
 !/setup.py
 wrk/
+*.dll

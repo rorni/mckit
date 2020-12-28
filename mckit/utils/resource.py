@@ -1,5 +1,5 @@
-import pkg_resources as pkg
 import inspect
+import pkg_resources as pkg
 
 from pathlib import Path
 

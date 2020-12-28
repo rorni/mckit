@@ -44,7 +44,6 @@ asyncio = "^3.4.3"
 aiofile = "^3.3.3"
 isort = "^5.6.4"
 mkl-devel = "^2021.1.1"
-nlopt = "^2.6.2"
 mkl = "^2021.1.1"
 mkl-include = "^2021.1.1"
 python-dotenv = "^0.15.0"
@@ -81,6 +80,7 @@ xdoctest = "^0.15.0"
 wheel = "^0.35.1"
 sphinx-autobuild = "^2020.9.1"
 jupyterlab = "^2.2.9"
+cmake = "3.18.4"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
@@ -88,10 +88,9 @@ requires = [
     "poetry-core>=1.0.0",
     "setuptools>=41.0",
     "wheel",
-    "cmake>=3.19.0",
-    "mkl-devel",
+    "cmake",
     "numpy",
-    "nlopt"
+    "mkl-devel",
 ]
 
 [tool.poetry.scripts]
@@ -109,7 +108,10 @@ show_missing = true
 # fail_under = 100  # So far, this is just a dream.
 
 [tool.poetry.urls]
+"Repository" = "https://github.com/rorni/mckit"
 "Bug Tracker" = "https://github.com/rorni/mckit/issues"
+# "Documentation" TODO
+
 
 [tool.isort]
 atomic = true
@@ -144,8 +146,14 @@ exclude = '''
   | \.venv
   | _build
   | build
+  | build_configs
   | dist
   | 3rd-party
   | data
+  | htmlcov
+  | mckit\.egg-info
+  | notebooks
+  | tutorial
+  | wrk
 )/
 '''

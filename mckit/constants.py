@@ -2,8 +2,7 @@
 
 import numpy as np
 
-# noinspection PyUnresolvedReferences,PyPackageRequirement,PyPackageRequirements
-from .geometry import MIN_VOLUME
+# from mckit.geometry import MIN_VOLUME
 
 __all__ = [
     "MIN_BOX_VOLUME",
@@ -14,7 +13,7 @@ __all__ = [
     "DROP_OPTIONS",
 ]
 
-MIN_BOX_VOLUME = MIN_VOLUME
+MIN_BOX_VOLUME = 0.001
 
 # Resolution of float number
 RESOLUTION = np.finfo(float).resolution
