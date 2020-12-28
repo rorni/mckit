@@ -1,12 +1,11 @@
 from typing import List, Optional
-import os
+import sys
 from pathlib import Path
+from build_nlopt import build_nlopt, SYSTEM_WINDOWS
+from extension_geometry import geometry_extension
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
-from extension_geometry import geometry_extension
-from build_nlopt import build_nlopt, create_directory
 from setuptools.dist import Distribution
-import distutils.log as log
 
 build_nlopt()
 
@@ -17,24 +16,25 @@ class BinaryDistribution(Distribution):
 
 
 class MCKitBuilder(build_ext):
+    def __init__(self, dist: Distribution, **kwargs) -> None:
+        build_ext.__init__(self, dist, **kwargs)
+        pass
+
+    def finalize_options(self):
+        build_ext.finalize_options(self)
+        # Late import to use numpy installed on isolated build
+        import numpy as np
+
+        self.include_dirs.append(np.get_include())
+        library_dir = Path(sys.prefix) / ("Library/lib" if SYSTEM_WINDOWS else "lib")
+        self.library_dirs.append(str(library_dir))
+
     def build_extension(self, extension: Extension) -> None:
-        ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
-        _ed = ext_dir.as_posix()
-        # - make sure path ends with delimiter
-        # - required for auto-detection of auxiliary "native" libs
-        if not _ed.endswith(os.path.sep):
-            _ed += os.path.sep
-
-        build_dir = create_directory(Path(self.build_temp))
-        log.info(f"Build dir {build_dir}")
-
-        # install_prefix = sys.prefix
-        # if SYSTEM_WINDOWS:
-        #     install_prefix = os.path.join(install_prefix, "Library")
-        # .. build and install nlopt
-        # .. add numpy include dir to extension.include_dirs from current isolated build instance
-        # .. copy nlopt.dll to mckit package dir in isolated build direcotry
         build_ext.build_extension(self, extension)
+
+        assert extension.name == "mckit.geometry"
+        # ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
+        # .. copy nlopt.dll to mckit source package dir
 
 
 def build(setup_kwargs):
@@ -50,9 +50,9 @@ def build(setup_kwargs):
         "data/isotopes.dat",
         "nlopt.dll",
     ]
-    mckit_package_path = Path(__file__).parent / "mckit"
-    for mask in ["*.pyd", "*.so"]:
-        package_data.extend(map(lambda x: str(x.name), mckit_package_path.glob(mask)))
+    # mckit_package_path = Path(__file__).parent / "mckit"
+    # for mask in ["*.pyd", "*.so"]:
+    #     package_data.extend(map(lambda x: str(x.name), mckit_package_path.glob(mask)))
     print("--- mckit data:", package_data)
 
     setup_requires = setup_kwargs.get("setup_requires")  # type: Optional[List[str]]

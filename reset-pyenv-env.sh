@@ -89,7 +89,7 @@ check_environment() {
   poetry run nox -s safety
   poetry run nox -s tests -p 3.9 -- -m "not slow" --cov
 
-  create-jk.sh "$mckit"
+  ./create-jk.sh "$mckit"
   if [[ ! $? ]]; then
       return 1
   fi
