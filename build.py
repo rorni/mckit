@@ -25,8 +25,12 @@ class MCKitBuilder(build_ext):
         # Late import to use numpy installed on isolated build
         import numpy as np
 
+        root_prefix = Path(sys.prefix)
+        if SYSTEM_WINDOWS:
+            root_prefix = root_prefix / "Library"
         self.include_dirs.append(np.get_include())
-        library_dir = Path(sys.prefix) / ("Library/lib" if SYSTEM_WINDOWS else "lib")
+        self.include_dirs.append(str(root_prefix / "include"))
+        library_dir = root_prefix / "lib"
         self.library_dirs.append(str(library_dir))
 
     def build_extension(self, extension: Extension) -> None:
