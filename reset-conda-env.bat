@@ -68,8 +68,13 @@ if "%install_tool%"=="pip" (
     ::   pip install . installs mckit with wrong version of pyd module: for the oldest python
     ::   in the range specified in pyproject.toml
     ::   So, you need poetry anyway:
+    del dist\mckit*amd64.whl
     call poetry build
-    pip install dist/mckit*amd64.whl
+    call poetry export --without-hashes --format requirements.txt --dev > requirements-dev.txt
+    for %%f in ( dist\mckit*amd64.whl )  do (
+        pip install %%f
+        pip install -r requirements-dev.txt
+    )
 ) else (
     ::   this creates egg-link in the environment to current directory (development install)
     call poetry install
