@@ -6,10 +6,19 @@ authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
 homepage = "https://github.com/rorni/mckit"
 repository = "https://github.com/rorni/mckit"
-license = "MIT"
+documentation = "https://mckit.readthedocs.io"
+license = "GPL3"
 keywords = ["mckit", "MCNP"]
 build = "build.py"
-documentation = "https://mckit.readthedocs.io"
+readme = "README.rst"
+packages = [
+    { include = "mckit" }
+]
+include = [
+    "mckit/data/isotopes.dat",
+    "mckit/*.pyd",
+    "mckit/*.dll"
+]
 # Select from PyPI classifiers: https://pypi.org/classifiers/
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -87,7 +96,7 @@ cmake = "3.18.4"
 build-backend = "poetry.core.masonry.api"
 requires = [
     "poetry-core>=1.0.0",
-    "setuptools>=41.0",
+    "setuptools>=43.0",
     "wheel",
     "cmake",
     "numpy",
