@@ -79,16 +79,6 @@ if "%install_tool%"=="pip" (
     pip install numpy
     pip install .
 ) else (
-    :: In development environment use
-    :: pip install -e
-    :: or, if poetry is available (this is preferable)
-    :: The following two commands should point to the same environment
-    call conda env list
-    call poetry env info --path
-    echo.
-    echo Check the previous two outputs\: do they point to the same environment?
-    echo ----------------------------------------------------------------------
-    echo.
     call poetry install
 )
 if errorlevel 1  (
@@ -122,7 +112,7 @@ if "%install_tool%"=="poetry" (
     nox --list
     :: safety first - run this on every dependency addition or update
     :: test often - who doesn't?
-    nox -s safety,tests -p 3.9 -- -m "not slow" --cov
+    nox -s safety -s tests -p 3.9 -- -m "not slow" --cov
     call poetry build
     if errorlevel 1 (
         echo ERROR: failed to run poetry build
