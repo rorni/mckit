@@ -63,20 +63,7 @@ call conda env remove -n %mckit% -q -y
 call conda create -n %mckit% python=%python_version% -q -y
 call conda activate %mckit%
 
-:: 1) Conda downgrades mkl, so we use pip instead (ant it works fine for us)
-:: 2) We need numpy to build nlopt, other packages are installed just for convenience
-:: pip install mkl-devel numpy scipy scikit-learn numexpr
-
-
-:: install mckit to the current environment
 if "%install_tool%"=="pip" (
-    :: numpy and mkl-devel is to be installed first
-    :: These are also installed to temporary build directory by pip, but
-    :: there's no guarantee, that the headers will be available.
-    :: See Paul Moore comment at
-    :: https://discuss.python.org/t/how-to-get-pip-tmp-pip-build-env-xxx-overlay-prefix-in-setup-py-for-include-lib-dir/2811/4
-    pip install mkl-devel
-    pip install numpy
     pip install .
 ) else (
     call poetry install
