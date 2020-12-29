@@ -30,23 +30,22 @@ if "%mckit%"=="" set mckit=mckit%mckit_version%
 
 set install_tool=%1
 shift
-if "%install_tool%"=="" set install_tool=pip
+if "%install_tool%"=="" set install_tool=poetry
 
-if "%install_tool%"=="pip" (
-    echo Installing %mckit% with pip
+if "%install_tool%"=="poetry" (
+    call poetry --version > NUL
+    if errorlevel 1 (
+        echo ERROR\: Poetry is not available
+        echo        See poetry install instructions: https://python-poetry.org
+        goto END
+    )
 ) else (
-    if "%install_tool%"=="poetry" (
-        call poetry --version > NUL
-        if errorlevel 1 (
-            echo ERROR\: Poetry is not available
-            echo        See poetry install instructions: https://python-poetry.org
-            goto END
-        )
-    ) else (
+    if "%install_tool%" NEQ "pip" (
         echo ERROR\: unknown install tool %install_tool%. Should be either `pip` or `poetry`
         goto END
     )
 )
+
 
 set python_version=%1
 shift
