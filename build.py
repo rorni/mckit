@@ -54,9 +54,11 @@ def build(setup_kwargs):
         "data/isotopes.dat",
         "nlopt.dll",
     ]
-    # mckit_package_path = Path(__file__).parent / "mckit"
-    # for mask in ["*.pyd", "*.so"]:
-    #     package_data.extend(map(lambda x: str(x.name), mckit_package_path.glob(mask)))
+    if SYSTEM_WINDOWS:
+        mckit_package_path = Path(__file__).parent / "mckit"
+        for mask in ["*.pyd", "*.so"]:
+            package_data.extend(map(lambda x: str(x.name), mckit_package_path.glob(mask)))
+
     print("--- mckit data:", package_data)
 
     setup_requires = setup_kwargs.get("setup_requires")  # type: Optional[List[str]]
