@@ -26,7 +26,7 @@ def build_nlopt(*, install_prefix: str = None, build_dir: Path = None, clean=Tru
 
     # TODO dvp: check if something is to be done to support build isolation, use build_ext.build_temp probably?
     if build_dir is None:
-        build_dir = create_directory(source_dir / "build", clean=clean)
+        build_dir = create_directory(source_dir / "build", clean=True)
 
     if install_prefix is None:
         install_prefix = sys.prefix

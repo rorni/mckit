@@ -63,8 +63,15 @@ call conda create -n %mckit% python=%python_version% -q -y
 call conda activate %mckit%
 
 if "%install_tool%"=="pip" (
-    pip install .
+    ::   this actually installs the package to the environment
+    :: Note
+    ::   pip install . installs mckit with wrong version of pyd module: for the oldest python
+    ::   in the range specified in pyproject.toml
+    ::   So, you need poetry anyway:
+    call poetry build
+    pip install dist/mckit*amd64.whl
 ) else (
+    ::   this creates egg-link in the environment to current directory (development install)
     call poetry install
 )
 if errorlevel 1  (
