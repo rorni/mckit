@@ -125,7 +125,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.8", venv_backend="venv")
+@nox.session(python="3.9")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     with collect_dev_requirements(session) as req_path:

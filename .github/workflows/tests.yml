@@ -21,7 +21,7 @@ jobs:
         python-version: ['3.7', '3.8', '3.9']
         exclude:
           - os: windows-latest
-          - python-version: 3.7   # py37 on Windows takes too much
+            python-version: 3.7   # py37 on Windows takes too much, and it wants nlopt.dll
       fail-fast: false
     steps:
       - name: Checkout repository
@@ -36,5 +36,8 @@ jobs:
         run: pip install nox==2020.8.22
       - name: Install poetry
         run: pip install poetry==1.1.4
-      - name: Run nox tests -p ${{ matrix.python-version }}
+      - name: Run nox safety tests
+        run: nox -s safety -p ${{ matrix.python-version }}
+        if: matrix.python-version == '3.9'    # the version is restricted in noxfile.py
+      - name: Run nox tests
         run: nox -s tests -p ${{ matrix.python-version }}

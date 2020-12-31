@@ -6,10 +6,19 @@ authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
 homepage = "https://github.com/rorni/mckit"
 repository = "https://github.com/rorni/mckit"
-license = "MIT"
+documentation = "https://mckit.readthedocs.io"
+license = "GPL3"
 keywords = ["mckit", "MCNP"]
 build = "build.py"
-documentation = "https://mckit.readthedocs.io"
+readme = "README.rst"
+packages = [
+    { include = "mckit" }
+]
+include = [
+    "mckit/data/isotopes.dat",
+    "mckit/*.pyd",
+    "mckit/*.dll"
+]
 # Select from PyPI classifiers: https://pypi.org/classifiers/
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -21,6 +30,8 @@ classifiers = [
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Physics",
 ]
+exclude = [".*__pycache__.*", "*.py[co]$"]
+
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -47,7 +58,7 @@ mkl-devel = "^2021.1.1"
 mkl = "^2021.1.1"
 mkl-include = "^2021.1.1"
 python-dotenv = "^0.15.0"
-jupyterlab = "^2.2.9"
+certifi = {version = "2020.6.20", python = "<3.8", platform = "Windows"}
 
 [tool.poetry.dev-dependencies]
 Pygments = "^2.7.2"
@@ -86,7 +97,7 @@ cmake = "3.18.4"
 build-backend = "poetry.core.masonry.api"
 requires = [
     "poetry-core>=1.0.0",
-    "setuptools>=41.0",
+    "setuptools>=43.0",
     "wheel",
     "cmake",
     "numpy",

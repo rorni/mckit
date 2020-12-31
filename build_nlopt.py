@@ -16,7 +16,7 @@ def execute_command(
     check_call(cmd, cwd=cwd, env=env)
 
 
-def build_nlopt(*, install_prefix: str = None, build_dir: Path = None) -> None:
+def build_nlopt(*, install_prefix: str = None, build_dir: Path = None, clean=True) -> Path:
 
     source_dir = Path(__file__).parent.absolute() / "3rd-party" / "nlopt"
     if not source_dir.exists():
@@ -26,7 +26,7 @@ def build_nlopt(*, install_prefix: str = None, build_dir: Path = None) -> None:
 
     # TODO dvp: check if something is to be done to support build isolation, use build_ext.build_temp probably?
     if build_dir is None:
-        build_dir = create_directory(source_dir / "build")
+        build_dir = create_directory(source_dir / "build", clean=True)
 
     if install_prefix is None:
         install_prefix = sys.prefix
@@ -79,6 +79,8 @@ def build_nlopt(*, install_prefix: str = None, build_dir: Path = None) -> None:
         ],
         cwd=build_dir,
     )
+
+    return build_dir
 
 
 if __name__ == "__main__":
