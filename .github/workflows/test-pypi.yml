@@ -36,5 +36,6 @@ jobs:
     # - run: nox -s tests -p ${{ matrix.python-version }}    
     - run: poetry install --no-dev
     - run: poetry build
-    - run: poetry publish -r https://test.pypi.org/legacy/ -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }}
+    - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
+    - run: poetry publish -r testpypi -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }}
       
