@@ -1,29 +1,11 @@
-.. |copy| unicode:: 0xA9 .. copyright
-.. |(TM)| unicode:: U+2122 .. trademark
-.. |---| unicode:: U+02014 .. long dash
-.. |date| date:: %d.%m.%Y
-.. |time| date:: %H:%M
-.. |mckit| replace:: ``mckit``
-.. |br| raw:: html
-
-       <br />
-
 .. image:: https://img.shields.io/badge/Maintained%3F-yes-green.svg
    :target: https://github.com/dvp2015/mckit/graphs/commit-activity
 
 .. image:: https://github.com/dvp2015/mckit/workflows/Tests/badge.svg
    :target: https://github.com/dvp2015/mckit/actions?workflow=Tests
 
-
 .. image:: https://codecov.io/gh/dvp2015/mckit/branch/devel/graph/badge.svg?token=05OFBQS3RX
    :target: https://codecov.io/gh/dvp2015/mckit
-
-
-.. |PyPI| image:: https://img.shields.io/pypi/v/mckit.svg
-   :target: https://pypi.org/project/mckit/
-
-.. |Read the Docs| image:: https://readthedocs.org/projects/mckit/badge/
-   :target: https://mckit.readthedocs.io/
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
@@ -77,7 +59,7 @@ Command line interface
       concat     Concat text files.
       decompose  Separate an MCNP model to envelopes and filling universes
       split      Splits MCNP model to text portions (opposite to concat)
-      transform  Transform MCNP model(s) with one of specified transformatio.
+      transform  Transform MCNP model(s) with one of specified transformation.
 
 
 Library
@@ -89,8 +71,6 @@ material masses, and more.
 
 .. code-block:: python
 
-    # ...
-
     LOG.info("Loading c-model envelopes")
     envelopes = load_model(str(CMODEL_ROOT / "c-model.universes/envelopes.i"))
 
@@ -99,7 +79,7 @@ material masses, and more.
 
     LOG.info("Attaching bounding boxes to c-model envelopes %s", cells_to_fill)
     attach_bounding_boxes(
-        [envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1
+        [envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunk_size=1
     )
     LOG.info("Backing up original envelopes")
     envelopes_original = envelopes.copy()
@@ -148,5 +128,3 @@ Contributors
 
 * `Roman Rodionov <mailto:r.rodionov@iterrf.ru>`_
 * `Dmitri Portnov <mailto:dmitri_portnov@yahoo.com>`_
-
-

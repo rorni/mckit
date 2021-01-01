@@ -36,36 +36,6 @@ From PyPI: ::
 
     pip install mckit
 
-
-
-
-Versioning
-----------
-
-This software follows `Semantic Versioning`_
-
-
-How to develop?
----------------
-
-Should be installed:
-
-* `virtualenv`
-* GNU Make as `make`
-* Python 3.5+ as `python3`
-
-
-For setting up developer environment just type
-
-    .. code-block::
-
-        make develop
-
-
-.. _Semantic Versioning: http://semver.org/
-
-
-
 Tutorial
 --------
 See the notebook in ``tutorial`` folder.
@@ -165,4 +135,3 @@ To provide proper change logs, apply this format for commit messages::
       - Code and documentation style improvements. No changes in tests and features.
     * - test
       - Changes in tests without adding features
-
