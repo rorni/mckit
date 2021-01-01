@@ -139,7 +139,7 @@ def subtract_model_from_cell(
     return new_cell
 
 
-def set_common_materials(*universes) -> tp.NoReturn:
+def set_common_materials(*universes) -> None:
     universes_collection = toolz.reduce(
         set.union, map(mk.Universe.get_universes, universes)
     )
