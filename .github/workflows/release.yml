@@ -23,6 +23,6 @@ jobs:
     - name: Checkout submodules
       run: git submodule update --init --recursive --depth=1
     - run: nox -s tests -p ${{ matrix.python-version }}
-    - run: poetry install
+    - run: poetry install --no-dev
     - run: poetry build
     - run: poetry publish --username=__token__ --password=${{ secrets.PYPI_TOKEN }}
