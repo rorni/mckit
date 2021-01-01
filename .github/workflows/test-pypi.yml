@@ -1,7 +1,7 @@
 name: TestPyPI
 
 defaults:
-  run: 
+  run:
     shell: bash
 
 on:
@@ -33,9 +33,8 @@ jobs:
         poetry version $version.dev.$(date +%s)
     - name: Checkout submodules
       run: git submodule update --init --recursive --depth=1
-    # - run: nox -s tests -p ${{ matrix.python-version }}    
+    # - run: nox -s tests -p ${{ matrix.python-version }}
     - run: poetry install --no-dev
     - run: poetry build
     - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
     - run: poetry publish -r testpypi -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }}
-      

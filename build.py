@@ -98,7 +98,9 @@ def update_package_data(setup_kwargs: Dict[str, Any], nlopt_build_dir: Path) -> 
             package_data.append("nlopt.dll")
 
         for mask in ["*.pyd"]:
-            package_data.extend(map(lambda x: str(x.name), mckit_package_path.glob(mask)))
+            package_data.extend(
+                map(lambda x: str(x.name), mckit_package_path.glob(mask))
+            )
 
     setup_kwargs["package_data"] = {"mckit": package_data}
 

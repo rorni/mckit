@@ -14,7 +14,7 @@ _sources_root = os.path.join("mckit", "src")
 _sources = list(
     map(
         partial(os.path.join, _sources_root),
-        ["geometrymodule.c", "box.c", "surface.c", "shape.c", "rbtree.c"]  # noqa
+        ["geometrymodule.c", "box.c", "surface.c", "shape.c", "rbtree.c"],  # noqa
     )
 )
 

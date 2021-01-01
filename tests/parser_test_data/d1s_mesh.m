@@ -1,5 +1,5 @@
-mcnp   version 5.mpi ld=05022018  probid =  12/17/18 14:06:18 
- Test of neutron flux calculations for reference.                                
+mcnp   version 5.mpi ld=05022018  probid =  12/17/18 14:06:18
+ Test of neutron flux calculations for reference.
  Number of histories used for normalizing tallies =     766606920.00
 
  Mesh Tally Number        14
@@ -804,5 +804,6 @@ Decay Time:      4.000
          0.00 0.01737     0.01117     0.00902     0.01120     0.01731
          2.00 0.01894     0.01349     0.01115     0.01358     0.01914
          4.00 0.02244     0.01877     0.01717     0.01886     0.02224
+
 
 
