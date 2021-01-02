@@ -14,7 +14,7 @@ jobs:
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest] #, macos-latest, windows-latest]
         python-version: ['3.7', '3.8', '3.9']
         exclude:
           - os: windows-latest
@@ -62,7 +62,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
-        password: ${{ secrets.pypi_password }}
+        password: ${{ secrets.TEST_PYPI_TOKEN }}
         repository_url: https://test.pypi.org/legacy/ 
         packages_dir: ./dist/
 #    - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
