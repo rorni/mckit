@@ -66,12 +66,17 @@ def build(setup_kwargs: Dict[str, Any]) -> None:
 def update_setup_requires(setup_kwargs: Dict[str, Any]) -> None:
     """ fix for poetry issue: it doesn't install setup requirements """
     setup_requires = setup_kwargs.get("setup_requires")  # type: Optional[List[str]]
-    if setup_requires is None:
-        setup_requires = []
+    assert (
+        setup_requires is None
+    ), "Poetry has created setup_requires! Check the setup-generated.py"
+    setup_requires = []
     setup_requires.extend(
         [
             # pip builds pyd for wrong (the oldest) version, attempt to fix (failed)
             # f"python_requires=={sysconfig.get_python_version()}",
+            "poetry-core>=1.0.0",
+            "setuptools>=43.0",
+            "wheel",
             "cmake>=3.18.4",
             "numpy>=1.13",
             "mkl-devel",

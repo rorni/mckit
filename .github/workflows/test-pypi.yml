@@ -26,7 +26,12 @@ jobs:
       with:
         python-version: ${{matrix.python-version}}
         architecture: x64
-    - run: pip install poetry==1.1.4
+    - name: Install poetry
+      run:  |
+        set -e
+        python -m ensurepip
+        python -m pip install -U pip
+        pip install poetry==1.1.4
     - run: >-
         poetry version patch &&
         version=$(poetry version | awk '{print $2}') &&

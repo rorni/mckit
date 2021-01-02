@@ -14,7 +14,6 @@ jobs:
   tests:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: "${{ matrix.os }}"
-
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -36,8 +35,8 @@ jobs:
         run: pip install nox==2020.8.22
       - name: Install poetry
         run: pip install poetry==1.1.4
-      - name: Run nox safety tests
-        run: nox -s safety -p ${{ matrix.python-version }}
-        if: matrix.python-version == '3.9'    # the version is restricted in noxfile.py
+      - name: Run Safety test
+        run: nox -s safety
+        if: matrix.python-version == '3.9'  && matrix.os == "ubuntu-latest"
       - name: Run nox tests
         run: nox -s tests -p ${{ matrix.python-version }}
