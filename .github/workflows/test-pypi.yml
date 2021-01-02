@@ -9,7 +9,7 @@ on:
     branches:
       - master
 jobs:
-  test_pypi:
+  build_wheels:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: "${{ matrix.os }}"
     strategy:
@@ -36,5 +36,34 @@ jobs:
     # - run: nox -s tests -p ${{ matrix.python-version }}
     - run: poetry install --no-dev
     - run: poetry build
-    - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
-    - run: poetry publish -r testpypi -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }}
+    - uses: actions/upload-artifact@v2
+      with:
+        name: "wheels"
+        path: dist/*.whl
+  publish_wheels:  
+    name: "Publishing wheels"
+    runs-on: "${{ ubuntu-latest }}"
+    steps:    
+    - uses: actions/checkout@v2
+   # - run: pip install poetry==1.1.4
+    - uses: actions/download-artifact@v2
+      with:
+        name: "wheels"
+        path: dist/
+    - name: GitHub Release wheels (deploy)
+      if: (github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags'))
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/*.whl
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
+        repository_url: https://test.pypi.org/legacy/ 
+        packages_dir: ./dist/
+#    - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
+#    - run: poetry publish -r testpypi -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }}
