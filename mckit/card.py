@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from operator import xor
 from typing import Optional, Text, List
 
-from toolz import reduce
+from functools import reduce
 
 from .printer import print_card
 from mckit.utils.named import Name
