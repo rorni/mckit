@@ -15,7 +15,7 @@ from multiprocessing import Pool
 
 # from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
-import toolz
+from functools import reduce
 
 # from joblib import (
 #     Memory,
@@ -140,10 +140,8 @@ def subtract_model_from_cell(
 
 
 def set_common_materials(*universes) -> None:
-    universes_collection = toolz.reduce(
-        set.union, map(mk.Universe.get_universes, universes)
-    )
-    common_materials = toolz.reduce(
+    universes_collection = reduce(set.union, map(mk.Universe.get_universes, universes))
+    common_materials = reduce(
         set.union, map(mk.Universe.get_compositions, universes_collection)
     )
     for u in universes_collection:
