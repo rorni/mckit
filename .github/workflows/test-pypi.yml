@@ -39,7 +39,10 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: "wheels"
-        path: dist/*.whl
+        path: |
+          dist/*.whl
+          dist/*.tar.gz
+        retention-days: 5
   publish_wheels:  
     name: "Publishing wheels"
     runs-on: ubuntu-latest
@@ -50,14 +53,16 @@ jobs:
       with:
         name: "wheels"
         path: dist/
-    - name: GitHub Release wheels (deploy)
-      if: (github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags'))
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          dist/*.whl
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
+    # - name: GitHub Release wheels (deploy)
+    #  if: (github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags'))
+    #  uses: softprops/action-gh-release@v1
+    #  with:
+    #    files: |
+    #      dist/*.whl
+    #  env:
+    #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+    - name: Check dist directory
+      run:  ls dist   
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@master
       with:
