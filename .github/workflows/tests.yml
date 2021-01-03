@@ -37,6 +37,6 @@ jobs:
         run: pip install poetry==1.1.4
       - name: Run Safety test
         run: nox -s safety
-        if: matrix.python-version == '3.9'  && matrix.os == ubuntu-latest
+        if: matrix.python-version == '3.9'  && matrix.os == 'ubuntu-latest'
       - name: Run nox tests
         run: nox -s tests -p ${{ matrix.python-version }}
