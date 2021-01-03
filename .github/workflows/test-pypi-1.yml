@@ -1,4 +1,4 @@
-name: TestPyPI
+name: TestPyPI-1
 
 defaults:
   run:
