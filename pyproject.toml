@@ -17,8 +17,12 @@ packages = [
 include = [
     "mckit/data/isotopes.dat",
     "mckit/*.pyd",
-    "mckit/*.dll"
+    "mckit/*.dll",
+    "CONTRIBUTING.rst",
+    "tests/.*",
+    "docs/.*"
 ]
+exclude = [".*__pycache__.*", ".*.py[co]$"]
 # Select from PyPI classifiers: https://pypi.org/classifiers/
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -30,7 +34,6 @@ classifiers = [
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-exclude = [".*__pycache__.*", "*.py[co]$"]
 
 
 [tool.poetry.dependencies]
@@ -49,8 +52,6 @@ scipy = "^1.5.3"
 sly = "^0.4"
 tomlkit = "^0.7.0"
 tqdm = "^4.53.0"
-asyncio = "^3.4.3"
-aiofile = "^3.3.3"
 mkl-devel = "^2021.1.1"
 mkl = "^2021.1.1"
 mkl-include = "^2021.1.1"
@@ -87,7 +88,6 @@ sphinxcontrib-napoleon = "^0.7"
 xdoctest = "^0.15.0"
 wheel = "^0.35.1"
 sphinx-autobuild = "^2020.9.1"
-jupyterlab = "^2.2.9"
 cmake = "3.18.4"
 rstcheck = "^3.3.1"
 isort = "^5.7.0"

@@ -28,7 +28,7 @@ jobs:
         set -e
         python -m ensurepip
         python -m install -U pip
-        pip install nox==2020.8.22
+        pip install nox==2020.12.31
         pip install poetry==1.1.4
     - name: Checkout submodules
       run: git submodule update --init --recursive --depth=1

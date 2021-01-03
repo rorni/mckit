@@ -32,7 +32,7 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
       - name: Install nox
-        run: pip install nox==2020.8.22
+        run: pip install nox==2020.12.31
       - name: Install poetry
         run: pip install poetry==1.1.4
       - name: Run Safety test
