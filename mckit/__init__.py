@@ -8,15 +8,16 @@ from ctypes import cdll
 from pathlib import Path
 
 if platform.system() == "Windows":
-    nlopt_lib_path = os.path.join(sys.prefix, "Library", "bin")
+    dll_path = os.path.join(sys.prefix, "Library", "bin")
+    nlopt_lib_path = os.path.join(dll_path, "nlopt.dll")
     assert os.path.exists(
-        os.path.join(nlopt_lib_path, "nlopt.dll")
+       nlopt_lib_path
     ), f"nlopt.dll should be in ${nlopt_lib_path} before importing mckit"
     if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
-        os.add_dll_directory(nlopt_lib_path)
-    nlopt_lib = cdll.LoadLibrary(nlopt_lib_path)
+        os.add_dll_directory(dll_path)
+    nlopt_lib = cdll.LoadLibrary(nlopt_lib_path)  # to guarantee dll loading 
 else:
-    if os.environ.get("LD_LIBRARY_PATH") is None:
+    if os.environ.get("LD_LIBRARY_PATH") is None:  # a user can use other location form mkl library.
         # preload library
         mkl_lib_path = Path(sys.prefix, "lib", "libmkl_rt.so.1")
         assert (
