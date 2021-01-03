@@ -60,7 +60,7 @@ jobs:
         set -e
         poetry version patch
         version=$(poetry version --short)
-        poetry version $version.dev.${{ matrix.os }}-${{ matrix.python-version }}.$(date +%s)
+        poetry version $version.dev.$(date +%s)+${{ matrix.os }}-py${{ matrix.python-version }}
     - name: Checkout submodules
       run: git submodule update --init --recursive --depth=1
     - run: poetry install --no-dev
