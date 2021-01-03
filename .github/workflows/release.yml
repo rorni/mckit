@@ -1,4 +1,8 @@
 name: Release
+#on:
+#  release:
+#    types:
+#      - created
 on:
   push:
     tags:
@@ -67,4 +71,4 @@ jobs:
       run: |
         poetry install --no-dev --no-root
         poetry build
-#        poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+        poetry publish --dry-run  -u __token__ -p ${{ secrets.PYPI_TOKEN }}
