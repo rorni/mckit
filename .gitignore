@@ -96,3 +96,4 @@ poetry.toml
 
 dist/
 wrk/
+setup-generated.py
