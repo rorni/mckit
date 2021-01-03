@@ -72,8 +72,6 @@ jobs:
         files: dist/*.whl
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Check dist directory
-      run:  ls dist
     - name: Publish to PyPI
       run: |
         poetry config repositories.testpypi https://test.pypi.org/legacy/

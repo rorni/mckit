@@ -4,8 +4,33 @@ on:
     tags:
       - '*.*.*'
 jobs:
+  lint:
+    name: "Code quality check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+#      - uses: actions/setup-python@v1
+#        with:
+#          python-version: '3.9'
+#          architecture: x64
+#      - name: Checkout submodules
+#        run: git submodule update --init --recursive --depth=1
+#      - name: Install nox
+#        run: pip install nox==2020.12.31
+#      - name: Install poetry
+#        run:  |
+#          set -e
+#          python -m ensurepip
+#          python -m pip install -U pip
+#          pip install poetry==1.1.4
+#      - name: Run Safety test
+#        run: nox -s safety
+#      - name: Run nox tests
+#        run: nox -s tests -p 3.9 -- -m "not slow"
   build_wheels:
     runs-on: ${{ matrix.os }}
+    needs: lint
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -38,6 +63,8 @@ jobs:
         printf 'Tag version:    %s\n' ${{ steps.tag.outputs.tag }}
         printf 'Branch version: %s\n' $(poetry version --short)
         poetry version ${{ steps.tag.outputs.tag }}
-    - run: poetry install --no-dev
-    - run: poetry build
-    - run: poetry publish --username=__token__ --password=${{ secrets.PYPI_TOKEN }}
+    - name: Publish package for ${{ matrix.os }}, python ${{ matrix.python-version }}
+      run: |
+        poetry install --no-dev --no-root
+        poetry build
+#        poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
