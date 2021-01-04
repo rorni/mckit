@@ -69,6 +69,6 @@ jobs:
         poetry build -f wheel
     - name: Build sdist
       run:  poetry build -f sdist
-      if:   matix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+      if:   matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
     - name: Publish package for ${{ matrix.os }}, python ${{ matrix.python-version }}
       run:  poetry publish  -u __token__ -p ${{ secrets.PYPI_TOKEN }}
