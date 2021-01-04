@@ -4,11 +4,8 @@ on:
   push:
     branches: ["master", "devel"]
   pull_request:
-  workflow_dispatch:
-
-defaults:
-  run:
-    shell: bash
+    branches: ["master", "devel"]
+#    workflow_dispatch:
 
 jobs:
   tests:
