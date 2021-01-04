@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.5.3"
+version = "0.5.4-alpha.0"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -80,7 +80,7 @@ pytest = "^6.1.2"
 pytest-benchmark = "^3.2.3"
 pytest-cov = "^2.10.1"
 pytest-mock = "^3.3.1"
-safety = "^1.9.0"
+safety = "^1.10.1"
 sphinx-autodoc-typehints = "^1.11.1"
 sphinx-autorun = "^1.1.1"
 sphinx-rtd-theme = "^0.5.0"
