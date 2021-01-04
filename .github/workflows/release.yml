@@ -56,7 +56,7 @@ jobs:
       run: |
         set -e
         python -m ensurepip
-        python -m install -U pip
+        python -m pip install -U pip
         pip install nox==2020.12.31
         pip install poetry==1.1.4
     - name: Checkout submodules
