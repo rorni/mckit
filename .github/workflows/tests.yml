@@ -14,6 +14,10 @@ jobs:
   tests:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
+    if: |
+      !startsWith(github.event.head_commit.message, 'bump:') &&
+      !startsWith(github.event.head_commit.message, 'ci:') &&
+      !contains(github.event.head_commit.message, '[skip_ci]')
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
