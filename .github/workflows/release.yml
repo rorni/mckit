@@ -63,8 +63,12 @@ jobs:
         printf 'Tag version:    %s\n' ${{ steps.tag.outputs.tag }}
         printf 'Branch version: %s\n' $(poetry version --short)
         poetry version ${{ steps.tag.outputs.tag }}
-    - name: Publish package for ${{ matrix.os }}, python ${{ matrix.python-version }}
+    - name: Build wheel
       run: |
         poetry install --no-dev --no-root
-        poetry build
-        poetry publish  -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+        poetry build -f wheel
+    - name: Build sdist
+      run:  poetry build -f sdist
+      if:   matix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+    - name: Publish package for ${{ matrix.os }}, python ${{ matrix.python-version }}
+      run:  poetry publish  -u __token__ -p ${{ secrets.PYPI_TOKEN }}
