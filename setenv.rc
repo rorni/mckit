@@ -6,35 +6,33 @@
 #
 
 export MCKIT_ROOT="$(pwd)"
-. $MCKIT_ROOT/build_configs/common.rc
-export PATH="$(make_path $MCKIT_ROOT/bin $PATH)"
+. $MCKIT_ROOT/scripts/common.rc
+export PATH="$(make_path $MCKIT_ROOT/scripts $PATH)"
 
 mckit_load_environment() {
-    if [[ -z "$MCKIT_BUILD_CFG" ]]; then
-        if [[ -r ./.local.env ]]; then
-            local env="./.local.env"
-        else
-            local env="build_configs/$(hostname).rc"
-        fi
-        if [[ -r  "$env" ]]; then
-            echo "Sourcing environment from $env"
-            source "$env"
-            export MCKIT_BUILD_CFG="$env"
-            return 0
-        else
-            echo "Cannot find environment file $env"
-            return 1
-        fi
-    else
+    if [[ -n "$MCKIT_BUILD_CFG" ]]; then
         echo "MCKIT build config is already loaded: $MCKIT_BUILD_CFG"
         echo "Use 'reset' argument to reload it."
-        return 0
+        return 1
+    fi
+    if [[ -r ./.local.env ]]; then
+        local env="./.local.env"
+    else
+        local env="scripts/$(hostname).rc"
+    fi
+    if [[ -r  "$env" ]]; then
+        echo "Sourcing environment from $env"
+        source "$env"
+        export MCKIT_BUILD_CFG="$env"
+    else
+        echo "Using common environment: there's no host specific configuration file $env"
+        export MCKIT_BUILD_CFG="common"
     fi
 }
 
 
 mckit_checkenv() {
-    [ -n MCKIT_BUILD_CFG ]
+  [ -n "$MCKIT_BUILD_CFG" ]
 }
 
 
@@ -54,6 +52,6 @@ mckit_update_dot_env() {
 }
 
 
-[ -n "$BATS_PREFIX" ] ||  mckit_update_dot_env $*
+[ -n "$BATS_PREFIX" ] ||  mckit_update_dot_env "$@"
 
-# vim: set ts=4 sw=0 tw=79 ss=0 ft=sh et ai :
+# vim: set ts=4 sw=0 tw=88 ss=0 ft=sh et ai :
