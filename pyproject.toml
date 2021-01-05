@@ -18,7 +18,9 @@ include = [
     "mckit/data/isotopes.dat",
     "mckit/*.pyd",
     "mckit/*.dll",
-    "CONTRIBUTING.rst",
+    "build_nlop.py",
+    "extensionm_utils.py",
+    "extension_geometry.py",
     "tests/.*",
     "docs/.*"
 ]
