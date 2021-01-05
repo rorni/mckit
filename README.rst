@@ -21,14 +21,17 @@
 MCKIT: MCNP model and results processing utilities
 ==================================================
 
+The mckit package provides a programming framework and command line tools to manipulate complex MCNP models.
+When a model is rather complex and its description occupies thousands of text lines it becomes hard to modify it and integrate several model manually.
+The package automates integration process.
 
 .. TODO The complete documentation is available in the following languages:
 
-* `English documentation`_
-* `Russian documentation`_
+.. * `English documentation`_
+.. * `Russian documentation`_
 
-.. _English documentation: https://mckit.readthedocs.io/en/latest/
-.. _Russian documentation: https://mckit.readthedocs.io/ru/latest/
+.. .. _English documentation: https://mckit.readthedocs.io/en/latest/
+.. .. _Russian documentation: https://mckit.readthedocs.io/ru/latest/
 
 .. contents:: Table of contents
 
