@@ -97,3 +97,4 @@ poetry.toml
 dist/
 wrk/
 setup-generated.py
+poetry_setup_kwargs.txt
