@@ -18,13 +18,23 @@ include = [
     "mckit/data/isotopes.dat",
     "mckit/*.pyd",
     "mckit/*.dll",
-    "build_nlop.py",
-    "extensionm_utils.py",
+    "build_nlopt.py",
+    "extension_utils.py",
     "extension_geometry.py",
-    "tests/.*",
-    "docs/.*"
+    "tests/*",
+    "docs/*",
+    "3rd-party/nlopt/AUTHORS",
+    "3rd-party/nlopt/COPY*",
+    "3rd-party/nlopt/README.md",
+    "3rd-party/nlopt/CMakeLists.txt",
+    "3rd-party/nlopt/*.in",
+    "3rd-party/nlopt/cmake/*",
+    "3rd-party/nlopt/src/*",
 ]
-exclude = [".*__pycache__.*", ".*.py[co]$"]
+exclude = [
+#    "__pycache__",
+    ".py[co]$",
+]
 # Select from PyPI classifiers: https://pypi.org/classifiers/
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -93,6 +103,7 @@ sphinx-autobuild = "^2020.9.1"
 cmake = "3.18.4"
 rstcheck = "^3.3.1"
 isort = "^5.7.0"
+yappi = "^1.3.2"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
