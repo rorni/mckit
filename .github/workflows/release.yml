@@ -68,7 +68,7 @@ jobs:
         poetry install --no-dev --no-root
         poetry build -f wheel
     - name: Build sdist
-      run:  poetry build -f sdist
+      run:  python setup-generated.py sdist --formats=gztar,xztar,zip
       if:   matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
     - name: Publish package for ${{ matrix.os }}, python ${{ matrix.python-version }}
       run:  poetry publish  -u __token__ -p ${{ secrets.PYPI_TOKEN }}
