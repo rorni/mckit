@@ -16,20 +16,6 @@ packages = [
 ]
 include = [
     "mckit/data/isotopes.dat",
-    "mckit/*.pyd",
-    "mckit/*.dll",
-    "build_nlopt.py",
-    "extension_utils.py",
-    "extension_geometry.py",
-    "tests/*",
-    "docs/*",
-    "3rd-party/nlopt/AUTHORS",
-    "3rd-party/nlopt/COPY*",
-    "3rd-party/nlopt/README.md",
-    "3rd-party/nlopt/CMakeLists.txt",
-    "3rd-party/nlopt/*.in",
-    "3rd-party/nlopt/cmake/*",
-    "3rd-party/nlopt/src/*",
 ]
 exclude = [
 #    "__pycache__",
