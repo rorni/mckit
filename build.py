@@ -41,7 +41,6 @@ class MCKitBuilder(build_ext):
     def build_extension(self, extension: Extension) -> None:
         assert extension.name == "mckit.geometry"
         ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
-        print("--- ext dir: ", ext_dir, file=sys.stderr)
         nlopt_lib = NLOPT_BUILD_DIR / (
             "Release/nlopt.dll" if SYSTEM_WINDOWS else "libnlopt.so.0"
         )

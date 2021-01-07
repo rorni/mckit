@@ -107,7 +107,7 @@ if "%install_tool%"=="poetry" (
         goto END
     )
 ) else (
-    pip wheel -w dist .
+    pip install .
     if errorlevel 1 (
         echo ERROR: failed to collect dependencies with pip
         goto END

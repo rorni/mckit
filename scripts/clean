@@ -19,6 +19,7 @@ clean() {
         deldir build dist .egg *.egg-info
         deldir_recursively  "__pycache__" ".benchmarks"
         rm -f mckit/geometry*.so
+        rm -f setup.py
     else
         deldir "$@"
     fi
