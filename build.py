@@ -43,8 +43,8 @@ class MCKitBuilder(build_ext):
         nlopt_lib = nlopt_build_dir / (
             "Release/nlopt.dll" if SYSTEM_WINDOWS else "libnlopt.so.0"
         )
-        save_nlopt_lib_to_source(ext_dir, nlopt_lib)
         build_ext.build_extension(self, extension)
+        save_nlopt_lib_to_source(ext_dir, nlopt_lib)
 
 
 def build(setup_kwargs: Dict[str, Any]) -> None:
