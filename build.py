@@ -13,8 +13,6 @@ from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.dist import Distribution
 
-NLOPT_BUILD_DIR = build_nlopt(clean=True)
-
 
 class BinaryDistribution(Distribution):
     def is_pure(self):  # noqa
@@ -41,7 +39,8 @@ class MCKitBuilder(build_ext):
     def build_extension(self, extension: Extension) -> None:
         assert extension.name == "mckit.geometry"
         ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
-        nlopt_lib = NLOPT_BUILD_DIR / (
+        nlopt_build_dir = build_nlopt(clean=False)
+        nlopt_lib = nlopt_build_dir / (
             "Release/nlopt.dll" if SYSTEM_WINDOWS else "libnlopt.so.0"
         )
         save_nlopt_lib_to_source(ext_dir, nlopt_lib)
@@ -83,6 +82,7 @@ def update_setup_requires(setup_kwargs: Dict[str, Any]) -> None:
         "mkl-devel",
     ]
     setup_kwargs["setup_requires"] = setup_requires
+    save_generated_setup()
 
 
 def update_package_data(setup_kwargs: Dict[str, Any]) -> None:
@@ -105,3 +105,30 @@ def save_setup_kwargs(setup_kwargs: Dict[str, Any]) -> None:
     kwargs_path = Path(__file__).parent / "poetry_setup_kwargs.txt"
     with kwargs_path.open(mode="w") as fid:
         pprint(setup_kwargs, fid, indent=4)
+
+
+def save_generated_setup() -> None:
+    """Save generated setup.py
+
+    Poetry ignores MANIFEST.in on command: ::
+
+        build -f sdist.
+
+    So, 3rd-party code and build scripts are not included.
+
+    However, command: ::
+
+        python setup-generated.py sdist
+
+    uses MANIFEST.in and creates proper sdist archives.
+    Besides, the setup-generated.py script can be used for debugging of setup process.
+
+        Note: ::
+
+        This file is regenerated on every build, so, there's no reason to store it in Git.
+    """
+    my_dir = Path(__file__).parent
+    src = my_dir / "setup.py"
+    dst = my_dir / "setup-generated.py"
+    if src.exists():
+        shutil.copy(str(src), str(dst))
