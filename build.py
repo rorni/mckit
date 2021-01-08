@@ -22,11 +22,14 @@ class BinaryDistribution(Distribution):
 
 
 def get_shared_lib_name(name: str) -> str:
+    """Compute library name: this depends on OS and python version"""
     sys_name = platform.system()
     if sys_name == "Linux":
         if sys.platform.startswith("darwin"):
             return f"lib{name}.dylib"
         return f"lib{name}.so"
+    if sys_name == "Darwin":
+        return f"lib{name}.dylib"
     if sys_name == "Windows":
         return f"Release/{name}.dll"
     raise EnvironmentError(f"Unsupported system {sys_name}")
