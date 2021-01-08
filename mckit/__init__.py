@@ -23,7 +23,7 @@ def find_file(_file: str, *directories: Path) -> Path:
     for d in directories:
         path = d / _file
         if path.exists():
-            return path
+            return path.absolute()
     raise EnvironmentError(f"Cannot find {_file} in directories {directories}")
 
 
@@ -35,7 +35,9 @@ if platform.system() == "Windows":
     if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
         for _dir in dirs:
             os.add_dll_directory(_dir)
-    cdll.LoadLibrary(str(find_file("nlopt.dll", *dirs)))  # to guarantee dll loading
+    dll_path = str(find_file("nlopt.dll", *dirs))
+    print("---***", dll_path)
+    cdll.LoadLibrary(dll_path)  # to guarantee dll loading
 elif platform.system() == "Linux":
     if (
         os.environ.get("LD_LIBRARY_PATH") is None
