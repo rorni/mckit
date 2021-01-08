@@ -1,11 +1,11 @@
-import pytest
 import numpy as np
+import pytest
 
 from mckit.parser.mcnp_input_parser import mcnp_input_lexer, mcnp_input_parser
 from mckit.parser.mctal_parser import read_mctal
 from mckit.utils import filename_resolver
 
-file_resolver = filename_resolver()
+file_resolver = filename_resolver("tests")
 
 
 @pytest.mark.parametrize(
