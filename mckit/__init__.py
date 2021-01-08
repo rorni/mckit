@@ -8,6 +8,16 @@ from ctypes import cdll
 from pathlib import Path
 
 
+def get_shared_lib_name(name: str) -> str:
+    sys_name = platform.system()
+    if sys_name == "Linux":
+        return f"lib{name}.so.1"
+    if sys_name == "Darwin":
+        return f"lib{name}.dylib"
+    if sys_name == "Windows":
+        return f"{name}.dll"
+
+
 def find_file(_file: str, *directories: Path):
     """Find a file in directories"""
     for d in directories:
@@ -25,15 +35,13 @@ if platform.system() == "Windows":
     if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
         for _dir in dirs:
             os.add_dll_directory(_dir)
-    dll_path = find_file("nlopt.dll", *dirs)
-    nlopt_lib_path = os.path.join(dll_path, "nlopt.dll")
-    cdll.LoadLibrary(nlopt_lib_path)  # to guarantee dll loading
+    cdll.LoadLibrary(find_file("nlopt.dll", *dirs))  # to guarantee dll loading
 else:
     if (
         os.environ.get("LD_LIBRARY_PATH") is None
     ):  # a user can use other location form mkl library.
         # preload library
-        mkl_lib_path = Path(sys.prefix, "lib", "libmkl_rt.so.1")
+        mkl_lib_path = Path(sys.prefix, "lib", get_shared_lib_name("mkl_rt"))
         assert (
             mkl_lib_path.exists()
         ), f"The MKL library should be either available at {mkl_lib_path}, or with LD_LIBRARY_PATH"
