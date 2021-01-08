@@ -18,7 +18,7 @@ def get_shared_lib_name(name: str) -> str:
         return f"{name}.dll"
 
 
-def find_file(_file: str, *directories: Path):
+def find_file(_file: str, *directories: Path) -> Path:
     """Find a file in directories"""
     for d in directories:
         path = d / _file
@@ -35,8 +35,8 @@ if platform.system() == "Windows":
     if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
         for _dir in dirs:
             os.add_dll_directory(_dir)
-    cdll.LoadLibrary(find_file("nlopt.dll", *dirs))  # to guarantee dll loading
-else:
+    cdll.LoadLibrary(str(find_file("nlopt.dll", *dirs)))  # to guarantee dll loading
+elif platform.system() == "Linux":
     if (
         os.environ.get("LD_LIBRARY_PATH") is None
     ):  # a user can use other location form mkl library.

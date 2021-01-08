@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Optional
 
+import distutils.log as log
+import platform
 import shutil
 import sys
 
@@ -17,6 +19,17 @@ from setuptools.dist import Distribution
 class BinaryDistribution(Distribution):
     def is_pure(self):  # noqa
         return False
+
+
+def get_shared_lib_name(name: str) -> str:
+    sys_name = platform.system()
+    if sys_name == "Linux":
+        return f"lib{name}.so.1"
+    if sys_name == "Darwin":
+        return f"lib{name}.dylib"
+    if sys_name == "Windows":
+        return f"Release/{name}.dll"
+    raise EnvironmentError(f"Unsupported system {sys_name}")
 
 
 class MCKitBuilder(build_ext):
@@ -40,10 +53,10 @@ class MCKitBuilder(build_ext):
         assert extension.name == "mckit.geometry"
         ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
         nlopt_build_dir = build_nlopt(clean=False)
-        nlopt_lib = nlopt_build_dir / (
-            "Release/nlopt.dll" if SYSTEM_WINDOWS else "libnlopt.so.0"
-        )
+        nlopt_lib = nlopt_build_dir / get_shared_lib_name("nlopt")
+        log.info(f"---***  nlopt lib path: {nlopt_lib}")
         build_ext.build_extension(self, extension)
+        log.info(f"---***  copy nlopt lib to {ext_dir}")
         save_nlopt_lib_to_source(ext_dir, nlopt_lib)
 
 
@@ -89,14 +102,14 @@ def update_package_data(setup_kwargs: Dict[str, Any]) -> None:
     """ fix for poetry issue: it doesn't provide correct specification from `[tool.poetry].input` field"""
     package_data = [
         "data/isotopes.dat",
-        "nlopt.dll" if SYSTEM_WINDOWS else "libnlopt.so.0",
+        "nlopt.dll" if SYSTEM_WINDOWS else "libnlopt*",
     ]
     setup_kwargs["package_data"] = {"mckit": package_data}
 
 
 def save_nlopt_lib_to_source(mckit_package_path: Path, so: Path) -> None:
     if not so.exists():
-        raise FileNotFoundError(so)
+        raise FileNotFoundError(f"Cannot find shared library {so}")
     shutil.copy(str(so), str(mckit_package_path))
 
 
