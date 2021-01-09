@@ -11,7 +11,7 @@ from pathlib import Path
 def get_shared_lib_name(name: str) -> str:
     sys_name = platform.system()
     if sys_name == "Linux":
-        return f"lib{name}.so.1"
+        return f"lib{name}.so"
     if sys_name == "Darwin":
         return f"lib{name}.dylib"
     if sys_name == "Windows":
@@ -43,7 +43,7 @@ elif platform.system() == "Linux":
         os.environ.get("LD_LIBRARY_PATH") is None
     ):  # a user can use other location form mkl library.
         # preload library
-        mkl_lib_path = Path(sys.prefix, "lib", get_shared_lib_name("mkl_rt"))
+        mkl_lib_path = Path(sys.prefix, "lib", "libmkl_rt.so")
         assert (
             mkl_lib_path.exists()
         ), f"The MKL library should be either available at {mkl_lib_path}, or with LD_LIBRARY_PATH"

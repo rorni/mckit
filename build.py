@@ -27,7 +27,7 @@ def get_shared_lib_name(name: str) -> str:
     if sys_name == "Linux":
         if sys.platform.startswith("darwin"):
             return f"lib{name}.dylib"
-        return f"lib{name}.so"
+        return f"lib{name}.so.0"
     if sys_name == "Darwin":
         return f"lib{name}.dylib"
     if sys_name == "Windows":
@@ -55,7 +55,7 @@ class MCKitBuilder(build_ext):
     def build_extension(self, extension: Extension) -> None:
         assert extension.name == "mckit.geometry"
         ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
-        nlopt_build_dir = build_nlopt(clean=False)
+        nlopt_build_dir = build_nlopt(clean=True)
         nlopt_lib = nlopt_build_dir / get_shared_lib_name("nlopt")
         log.info(f"---***  nlopt lib path: {nlopt_lib}")
         build_ext.build_extension(self, extension)

@@ -2,11 +2,24 @@ name: MCKit Tests
 
 on:
   push:
-    branches: ["master", "devel"]
+    branches:
+      - "master"
+      - "devel"
+    paths:
+      - "**.py"
+      - "**.c"
+      - "**.h"
+      - "**.yml"
   pull_request:
-    branches: ["master", "devel"]
+    branches:
+      - "master"
+      - "devel"
 #    workflow_dispatch:
-
+    paths:
+      - "**.py"
+      - "**.c"
+      - "**.h"
+      - "**.yml"
 jobs:
   tests:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
