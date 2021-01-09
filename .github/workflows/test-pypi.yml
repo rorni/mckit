@@ -70,7 +70,7 @@ jobs:
     - name: Checkout submodules
       run: git submodule update --init --recursive --depth=1
     - run: poetry install --no-dev
-    - naem: Build wheel
+    - name: Build wheel
       run:  poetry build -f wheel
     - name: Build sdist
       run:  python setup-generated.py sdist --formats=gztar,xztar,zip
