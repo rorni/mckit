@@ -128,15 +128,16 @@ def save_generated_setup() -> None:
 
     Poetry ignores MANIFEST.in on command: ::
 
-        build -f sdist.
+        poetry build -f sdist.
 
-    So, 3rd-party code and build scripts are not included.
+    So, 3rd-party code and build scripts are not included. Besides, output format is just default one.
 
     However, command: ::
 
-        python setup-generated.py sdist
+        python setup-generated.py sdist --formats=gztar,xztar,zip
 
     uses MANIFEST.in and creates proper sdist archives.
+    This is used in Github Action "Release" (see .github/workflows/release.yml).
     Besides, the setup-generated.py script can be used for debugging of setup process.
 
         Note: ::
