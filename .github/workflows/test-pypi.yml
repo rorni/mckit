@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       !startsWith(github.event.head_commit.message, 'bump:') &&
-      !startsWith(github.event.head_commit.message, 'ci:') &&
       !contains(github.event.head_commit.message, '[skip_ci]')
     steps:
       - name: Checkout repository
@@ -31,7 +30,7 @@ jobs:
         run:  |
           set -e
           python -m ensurepip
-          python -m pip install -U pip
+          python -m pip install -U pip wheel
           pip install poetry==1.1.4
       - name: Run Safety test
         run: nox -s safety
@@ -42,16 +41,15 @@ jobs:
     runs-on: "${{ matrix.os }}"
     if: |
       !startsWith(github.event.head_commit.message, 'bump:') &&
-      !startsWith(github.event.head_commit.message, 'ci:') &&
       !contains(github.event.head_commit.message, '[skip_ci]')
     strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9']
-        exclude:
-          - os: windows-latest
-            python-version: 3.7   # py37 on Windows takes too much, and it wants nlopt.dll
       fail-fast: false
+      matrix:
+        os: [ubuntu-latest] # , macos-latest, windows-latest]
+        python-version: ['3.9'] #, '3.8', '3.7']
+#        exclude:
+#          - os: windows-latest
+#            python-version: 3.7   # py37 on Windows takes too much, and it wants nlopt.dll
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
@@ -62,7 +60,7 @@ jobs:
       run:  |
         set -e
         python -m ensurepip
-        python -m pip install -U pip
+        python -m pip install -U pip wheel
         pip install poetry==1.1.4
     - run: |
         set -e
@@ -72,15 +70,19 @@ jobs:
     - name: Checkout submodules
       run: git submodule update --init --recursive --depth=1
     - run: poetry install --no-dev
-    - run: poetry build
+    - naem: Build wheel
+      run:  poetry build -f wheel
+    - name: Build sdist
+      run:  python setup-generated.py sdist --formats=gztar,xztar,zip
+      if:   matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
     - name: GitHub Release wheels (deploy)
       if: (github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags'))
       uses: softprops/action-gh-release@v1
       with:
-        files: dist/*.whl
+        files: dist/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Publish to PyPI
+    - name: Publish to TestPyPI
       run: |
         poetry config repositories.testpypi https://test.pypi.org/legacy/
         poetry publish -r testpypi -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }}
