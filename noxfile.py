@@ -21,11 +21,11 @@ from nox.sessions import Session
 # TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
     "safety",
-    # "isort",
+    "isort",
     "black",
     # "lint",
     # "mypy",
-    # "xdoctest",
+    "xdoctest",
     "tests",
     # "codecov",
     # "docs",
@@ -148,13 +148,14 @@ def isort(session: Session) -> None:
         "tests/*.py",
         "benchmarks/*.py",
         "profiles/*.py",
-        "adhoc/*.py",
+        #        "adhoc/*.py",
     ]
     files_to_process: List[str] = sum(
         map(lambda p: glob(p, recursive=True), search_patterns), []
     )
     session.run(
         "isort",
+        "--check",
         "--diff",
         *files_to_process,
         external=True,
