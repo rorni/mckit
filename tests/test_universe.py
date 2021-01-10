@@ -3,6 +3,8 @@ from typing import Dict, List, Set, Union
 import tempfile
 import textwrap
 
+from copy import deepcopy
+
 import numpy as np
 import pytest
 
@@ -712,6 +714,8 @@ def test_name_clashes(
     rename: Dict[int, Dict[str, int]],
     stat: TStat,
 ):
+    rename = deepcopy(rename)
+    stat = deepcopy(stat)
     u: Universe = universe(case)
     universes_index: Dict[int, Universe] = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
@@ -794,6 +798,7 @@ def test_name_clashes_with_common_materials(
     common_mat: Set[Composition],
     stat: TStat,
 ):
+    stat = deepcopy(stat)
     u = universe(case)
     universes_idx = {x.name(): x for x in u.get_universes()}
     u.set_common_materials(common_mat)

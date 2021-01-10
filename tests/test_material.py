@@ -1,5 +1,7 @@
 from typing import Any, Dict
 
+from copy import deepcopy
+
 import pytest
 
 from mckit.material import Composition, Element, Material
@@ -1572,10 +1574,17 @@ class TestMaterial:
         ],
     )
     def test_creation_failure(self, data: Dict[str, Any]):
+        data = deepcopy(data)  # this fixes pytest strange behavior (see below)"
         if "composition" in data.keys():
-            data["composition"] = Composition(**data["composition"])
+            composition_params = data.pop("composition")
+            assert not isinstance(
+                composition_params, Composition
+            ), "Check some strange behavior on 'pytest test/*.py': arriving params are already Composition"
+            composition = Composition(**composition_params)
+        else:
+            composition = None
         with pytest.raises(ValueError):
-            Material(**data)
+            Material(**data, composition=composition)
 
     @pytest.mark.parametrize("case", cases)
     def test_creation(self, case):
