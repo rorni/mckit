@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import pytest
-from mckit.parser.common.utils import *
 import mckit.parser.common.utils as m
+import pytest
+
+from mckit.parser.common.utils import *
 
 
 @pytest.mark.parametrize(

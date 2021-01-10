@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, NoReturn, List
+from typing import Dict, List, NoReturn
+
 import pytest
 
 from mckit.utils.Index import Index

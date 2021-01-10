@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import pytest
 import mckit.parser.transformation_parser as trp
+import pytest
+
 from mckit.transformation import Transformation
 
 

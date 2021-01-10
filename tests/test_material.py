@@ -1,6 +1,8 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 import pytest
-from mckit.material import Element, Composition, Material
+
+from mckit.material import Composition, Element, Material
 
 
 class TestElement:

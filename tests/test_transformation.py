@@ -1,8 +1,8 @@
-import pytest
 import numpy as np
+import pytest
 
-from mckit.transformation import Transformation, IDENTITY_ROTATION
 from mckit.geometry import ORIGIN
+from mckit.transformation import IDENTITY_ROTATION, Transformation
 
 
 @pytest.mark.parametrize(

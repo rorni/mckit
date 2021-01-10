@@ -1,6 +1,7 @@
+from typing import Dict, List, Set, Union
+
 import tempfile
 import textwrap
-from typing import Dict, List, Set, Union
 
 import numpy as np
 import pytest

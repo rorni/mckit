@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import pytest
 import mckit.parser.material_parser as mp
+import pytest
+
 from mckit.material import Composition, Element
 
 

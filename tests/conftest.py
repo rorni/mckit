@@ -1,7 +1,6 @@
 # tests/conftest.py
 from _pytest.config import Config
 
-
 # TODO dvp: the following doesn't work, check why?
 
 # import os.path
