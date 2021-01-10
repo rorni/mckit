@@ -1,39 +1,39 @@
-import operator
-import sys
-from contextlib import contextmanager
-from collections import defaultdict
-from io import StringIO
-from functools import reduce
-from pathlib import Path
 from typing import (
     Any,
+    Callable,
     Dict,
     Iterable,
     List,
-    Set,
-    Union,
-    Tuple,
     Optional,
-    Callable,
+    Set,
+    Tuple,
+    Union,
     cast,
 )
 
+import operator
+import sys
+
+from collections import defaultdict
+from contextlib import contextmanager
+from functools import reduce
+from io import StringIO
+from pathlib import Path
+
 import numpy as np
-from attr import attrs, attrib
+
+from attr import attrib, attrs
 from click import progressbar
-
-from .body import Body, Shape
-from .card import Card
-
 from mckit.constants import MCNP_ENCODING
 from mckit.utils import filter_dict
+
+from .body import Body, Shape
 from .box import GLOBAL_BOX, Box
-from .surface import Surface
+from .card import Card
+from .material import Composition, Material
+from .surface import Plane, Surface
 from .transformation import Transformation
-from .material import Material, Composition
-from .surface import Plane
-from .utils import accept
-from .utils import on_unknown_acceptor
+from .utils import accept, on_unknown_acceptor
 
 __all__ = [
     "Universe",
@@ -45,7 +45,7 @@ __all__ = [
     "UniverseAnalyser",
 ]
 
-from .utils.Index import StatisticsCollector, IndexOfNamed
+from .utils.Index import IndexOfNamed, StatisticsCollector
 from .utils.named import Name
 
 

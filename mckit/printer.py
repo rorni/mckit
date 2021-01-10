@@ -1,9 +1,11 @@
 """Functions for printing."""
 from typing import Any, List, Optional, Text
+
 import warnings
 
-from mckit.utils import get_decades, significant_digits, prettify_float
 import mckit.constants as constants
+
+from mckit.utils import get_decades, prettify_float, significant_digits
 
 MCNP_FORMATS = {"importance": "{0:.3f}", "material_fraction": "{0:.6e}"}
 

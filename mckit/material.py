@@ -1,14 +1,11 @@
+from typing import Any, Dict, Iterable, Tuple, Union, cast
+
 import math
 import os
 import sys
+
 from functools import reduce
 from operator import xor
-from typing import Any
-from typing import cast
-from typing import Dict
-from typing import Iterable
-from typing import Tuple
-from typing import Union
 
 import numpy as np
 
