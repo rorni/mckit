@@ -143,9 +143,13 @@ lines_between_types = 1
 [tool.black]
 line-length = 88
 target-version = ['py38']
-include = '\.pyi?$'
+include = '''
+(
+    \.pyi?$
+)
+'''
 exclude = '''
-/(
+(
     \.eggs
   | \.git
   | \.hg
@@ -161,8 +165,9 @@ exclude = '''
   | data
   | htmlcov
   | mckit\.egg-info
+  | _tab.py$
   | notebooks
   | tutorial
   | wrk
-)/
+)
 '''

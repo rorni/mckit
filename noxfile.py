@@ -9,9 +9,9 @@ from typing import Any, Generator, List
 import os
 import platform
 import tempfile
-from glob import glob
 
 from contextlib import contextmanager
+from glob import glob
 from pathlib import Path
 
 import nox
@@ -21,6 +21,8 @@ from nox.sessions import Session
 # TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
     "safety",
+    # "isort",
+    "black",
     # "lint",
     # "mypy",
     # "xdoctest",
@@ -32,12 +34,9 @@ nox.options.sessions = (
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
 supported_pythons = "3.9 3.8 3.7".split()
-black_pythons = "3.9"  # TODO dvp: target-version in pyproject.toml is still py38, check on updates of black
-
-# mypy and flake8 only work with python 3.7: dependencies requirement
-# TODO dvp: check, when updates are available
-mypy_pythons = "3.7"
-lint_pythons = "3.7"
+black_pythons = "3.9"
+mypy_pythons = "3.9"
+lint_pythons = "3.9"
 
 on_windows = platform.system() == "Windows"
 
