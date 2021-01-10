@@ -6,7 +6,6 @@ import ply.yacc as yacc
 from mckit.constants import TIME_UNITS
 from mckit.material import Element
 
-
 TIME_ALIAS = {
     "s": TIME_UNITS["SECS"],
     "m": TIME_UNITS["MINS"],

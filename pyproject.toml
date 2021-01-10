@@ -134,6 +134,9 @@ multi_line_output = 3
 line_length = 88
 include_trailing_comma = true
 lines_between_types = 1
+skip = [ "setup-generated.py" ]
+skip_glob = [ "*-example.py" ]
+
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
 # It's the equivalent of r-strings in Python.  Multiline strings are treated as

@@ -1,8 +1,9 @@
-import sly
-from mckit.material import Composition, Element
-from mckit.parser.common.utils import drop_c_comments, extract_comments
 import mckit.parser.common.utils as cmn
+import sly
+
+from mckit.material import Composition, Element
 from mckit.parser.common.Lexer import Lexer as LexerBase
+from mckit.parser.common.utils import drop_c_comments, extract_comments
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection

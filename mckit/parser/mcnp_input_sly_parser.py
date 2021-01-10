@@ -2,48 +2,51 @@
 """
  Read and parse MCNP file text.
 """
-from attr import attrs, attrib
-from itertools import repeat
-from pathlib import Path
 from typing import (
-    Iterable,
-    Union,
-    TextIO,
-    Optional,
-    Generator,
-    Callable,
-    List,
-    Tuple,
-    NewType,
     Any,
+    Callable,
+    Generator,
+    Iterable,
+    List,
+    NewType,
+    Optional,
+    TextIO,
+    Tuple,
+    Union,
 )
 
+from itertools import repeat
+from pathlib import Path
+
+from attr import attrib, attrs
+from mckit.card import Card
+from mckit.constants import MCNP_ENCODING
+from mckit.parser.cell_parser import Body
+from mckit.parser.cell_parser import parse as parse_cell
+from mckit.parser.common import (
+    CellNotFoundError,
+    CellStrictIndex,
+    CompositionStrictIndex,
+    ParseError,
+    SurfaceStrictIndex,
+    TransformationStrictIndex,
+)
+from mckit.parser.material_parser import Composition
+from mckit.parser.material_parser import parse as parse_composition
+from mckit.parser.surface_parser import Surface
+from mckit.parser.surface_parser import parse as parse_surface
+from mckit.parser.transformation_parser import Transformation
+from mckit.parser.transformation_parser import parse as parse_transformation
+from mckit.universe import Universe, produce_universes
+from mckit.utils.Index import Index
+
+from .mcnp_section_parser import Card as TextCard
 from .mcnp_section_parser import (
-    parse_sections_text,
-    distribute_cards,
-    Card as TextCard,
     InputSections,
     Kind,
+    distribute_cards,
+    parse_sections_text,
 )
-from mckit.constants import MCNP_ENCODING
-from mckit.card import Card
-from mckit.universe import Universe, produce_universes
-from mckit.parser.common import (
-    CellStrictIndex,
-    SurfaceStrictIndex,
-    CompositionStrictIndex,
-    TransformationStrictIndex,
-    CellNotFoundError,
-)
-from mckit.parser.common import ParseError
-from mckit.parser.transformation_parser import (
-    parse as parse_transformation,
-    Transformation,
-)
-from mckit.parser.material_parser import parse as parse_composition, Composition
-from mckit.parser.surface_parser import parse as parse_surface, Surface
-from mckit.parser.cell_parser import parse as parse_cell, Body
-from mckit.utils.Index import Index
 
 T = NewType("T", Any)
 T1 = NewType("T1", Any)
