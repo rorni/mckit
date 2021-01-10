@@ -7,13 +7,16 @@
 материалов, трансформаций, sdef и прочие карты. Файлы соответственно: cells.txt, surfaces.txt,
 materials.txt, transformations.txt, sdef.txt, cards.txt
 """
-from mckit.utils.logging import logger
-from pathlib import Path
 from typing import Iterable, Union
 
+from pathlib import Path
+
 import mckit.parser.mcnp_section_parser as sp
-from .common import check_if_path_exists
+
+from mckit.utils.logging import logger
+
 from ...constants import MCNP_ENCODING
+from .common import check_if_path_exists
 
 OUTER_LINE = "=" * 40
 INNER_LINE = "-" * 40

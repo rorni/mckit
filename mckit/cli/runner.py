@@ -1,17 +1,21 @@
-import sys
-from contextlib import contextmanager
-from pathlib import Path
 from typing import List
 
-import click
-from click_loguru import ClickLoguru
+import sys
 
+from contextlib import contextmanager
+from pathlib import Path
+
+import click
 import mckit.version as meta
-from mckit.cli.commands import do_check
-from mckit.cli.commands import do_compose
-from mckit.cli.commands import do_decompose
-from mckit.cli.commands import do_split
-from mckit.cli.commands import do_transform
+
+from click_loguru import ClickLoguru
+from mckit.cli.commands import (
+    do_check,
+    do_compose,
+    do_decompose,
+    do_split,
+    do_transform,
+)
 from mckit.cli.commands.common import get_default_output_directory
 from mckit.utils import MCNP_ENCODING
 from mckit.utils.logging import logger
