@@ -14,7 +14,7 @@ from .printer import MCNP_FORMATS
 
 __all__ = ["AVOGADRO", "Element", "Composition", "Material"]
 
-AVOGADRO = 6.02214085774e23
+AVOGADRO = 6.0221408576e23
 
 _CHARGE_TO_NAME = {}
 _NAME_TO_CHARGE = {}
@@ -329,17 +329,17 @@ class Composition(Card):
         return iter(self._composition.keys())
 
     @staticmethod
-    def mixture(*compositions):
+    def mixture(*compositions: Tuple["Composition", float]) -> "Composition":
         """Makes mixture of the compositions with specific fractions.
 
         Parameters
         ----------
-        compositions : list
+        compositions :
             List of pairs composition, fraction.
 
         Returns
         -------
-        mix : Composition
+        mix :
             Mixture.
         """
         atomics = []
