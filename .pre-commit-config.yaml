@@ -3,6 +3,7 @@ repos:
     rev: v3.4.0
     hooks:
     -   id: trailing-whitespace
+        exclude:  data|.ipynb$
     -   id: end-of-file-fixer
         exclude:  data|.ipynb$
     -   id: check-yaml
