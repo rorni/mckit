@@ -45,7 +45,16 @@ def test_composition_lexer(text, expected_types, expected_values):
         1001.21c -1.0 $ eol comment
         """,
             Composition(
-                weight=[(Element(1001, lib="21c", comment="$ eol comment"), 1.0)],
+                weight=[
+                    (
+                        Element(
+                            1001,
+                            lib="21c",
+                            # comment="$ eol comment"
+                        ),
+                        1.0,
+                    )
+                ],
                 name=1000,
             ),
         ),
@@ -58,20 +67,20 @@ def test_composition_lexer(text, expected_types, expected_values):
             Composition(
                 weight=[(Element(1001, lib="21c"), 1.0)],
                 name=1000,
-                comment=["trailing comment1", "trailing comment2"],
+                # comment=["trailing comment1", "trailing comment2"],
             ),
         ),
         (
             """M1000
     1001.21c -1.0
-c bzzzzzz
+c something
         $ trailing comment1
         $ trailing comment2
         """,
             Composition(
                 weight=[(Element(1001, lib="21c"), 1.0)],
                 name=1000,
-                comment=["trailing comment1", "trailing comment2"],
+                # comment=["trailing comment1", "trailing comment2"],
             ),
         ),
         (
@@ -84,7 +93,7 @@ c bzzzzzz
             Composition(
                 weight=[(Element(1001, lib="21c"), 1.0)],
                 name=1000,
-                comment=["trailing comment1", "trailing comment2"],
+                # comment=["trailing comment1", "trailing comment2"],
                 GAS=1,
             ),
         ),
@@ -98,7 +107,7 @@ c bzzzzzz
         ),
     ],
 )
-def test_test_composition_parser(text, expected):
+def test_composition_parser(text, expected):
     result = mp.parse(text)
     assert isinstance(
         result, Composition

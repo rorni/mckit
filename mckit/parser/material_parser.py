@@ -3,7 +3,7 @@ import sly
 
 from mckit.material import Composition, Element
 from mckit.parser.common.Lexer import Lexer as LexerBase
-from mckit.parser.common.utils import drop_c_comments, extract_comments
+from mckit.parser.common.utils import drop_comments
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
@@ -36,10 +36,6 @@ class Lexer(LexerBase):
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
-    def __init__(self, comments, trailing_comments):
-        self.comments = comments
-        self.trailing_comments = trailing_comments
-
     def build_composition(self, name, fractions, options=None):
         atomic = []
         weight = []
@@ -54,9 +50,6 @@ class Parser(sly.Parser):
             options = {}
 
         options["name"] = name
-
-        if self.trailing_comments:
-            options["comment"] = self.trailing_comments
 
         return Composition(atomic=atomic, weight=weight, **options)
 
@@ -116,9 +109,8 @@ class Parser(sly.Parser):
 
 
 def parse(text):
-    text = drop_c_comments(text)
-    text, comments, trailing_comments = extract_comments(text)
+    text = drop_comments(text)
     lexer = Lexer()
-    parser = Parser(comments, trailing_comments)
+    parser = Parser()
     result = parser.parse(lexer.tokenize(text))
     return result
