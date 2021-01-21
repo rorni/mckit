@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
+import re
 
 import mckit.parser.common.utils as m
 import pytest
-
-from mckit.parser.common.utils import *
 
 
 @pytest.mark.parametrize(
@@ -12,7 +11,7 @@ from mckit.parser.common.utils import *
         ("a\nc\nb", "a\nb"),
         (
             """m1
- c bzzz
+ c some comment
         1001.21c -1.0
         """,
             """m1
@@ -60,7 +59,13 @@ RE_FLOAT = re.compile(m.FLOAT)
 
 @pytest.mark.parametrize(
     "text,expected",
-    [("1", "1"), (" 0.1", "0.1"), (".2\n", ".2"), ("\n -1e10a", "-1e10")],
+    [
+        ("1", "1"),
+        (" 0.1", "0.1"),
+        (".2\n", ".2"),
+        ("\n -1e10a", "-1e10"),
+        ("0.", "0."),
+    ],
 )
 def test_float_pattern(text, expected):
     match = RE_FLOAT.search(text)
@@ -95,7 +100,7 @@ def test_float_pattern(text, expected):
 def test_extract_comments(
     text, expected_new_text, expected_comments, expected_trailing_comment
 ):
-    actual_new_text, actual_comments, actual_trailing_comment = extract_comments(text)
+    actual_new_text, actual_comments, actual_trailing_comment = m.extract_comments(text)
     assert actual_new_text == expected_new_text
     assert actual_comments == expected_comments
     assert actual_trailing_comment == expected_trailing_comment

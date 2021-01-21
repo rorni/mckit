@@ -8,7 +8,8 @@ EOL_COMMENT = r"\$.*[^\n]*"
 RE_EOL_COMMENT = re.compile(EOL_COMMENT, re.MULTILINE)
 LINE = r"(?P<text>\s*[^ $][^$]*)?(?:\s*\$\s*(?P<comment>.*))?"  # text should contain at list one non space character
 RE_LINE = re.compile(LINE)
-FLOAT = r"[-+]?\d*\.?\d+(?:e[-+]?\d+)?"
+# FLOAT = r"[-+]?\d*\.?\d+(?:e[-+]?\d+)?"
+FLOAT = r"[+-]?((\d+\.?\d*)|(\.\d+))(?:[ed][-+]?\d+)?"
 INTEGER = r"\d+"
 RE_EMPTY_LINE = re.compile(r"\s*")
 

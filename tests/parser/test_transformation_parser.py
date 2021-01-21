@@ -48,7 +48,7 @@ def test_transformation_lexer(text, expected_types, expected_values):
                 translation=[0.0, 0.0, 0.0],
                 rotation=[3.62, 86.38, 90.0, 93.62, 3.62, 90.0, 90.0, 90.0, 0.0],
                 indegrees=True,
-                name=2,
+                name=1,
             ),
         ),
     ],
