@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import mckit.parser.transformation_parser as trp
 import pytest
 
@@ -40,6 +38,15 @@ def test_transformation_lexer(text, expected_types, expected_values):
             Transformation(
                 translation=[0.0, 0.0, 1.0],
                 rotation=[45, 45, 90, 135, 45, 90, 90, 90, 0],
+                indegrees=True,
+                name=2,
+            ),
+        ),
+        (
+            "*tr1 0. 0. 0. 3.62 86.38 90. 93.62 3.62 90. 90. 90. 0.",
+            Transformation(
+                translation=[0.0, 0.0, 0.0],
+                rotation=[3.62, 86.38, 90.0, 93.62, 3.62, 90.0, 90.0, 90.0, 0.0],
                 indegrees=True,
                 name=2,
             ),
