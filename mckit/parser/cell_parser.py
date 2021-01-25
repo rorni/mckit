@@ -1,16 +1,13 @@
 from typing import Optional
 
+import mckit.parser.common.utils as pu
 import sly
 
-import mckit.parser.common.utils as pu
-from mckit.body import Body
-from mckit.body import Shape
+from mckit.body import Body, Shape
 from mckit.material import Material
-from mckit.parser.common import CellStrictIndex
-from mckit.parser.common import CompositionStrictIndex
+from mckit.parser.common import CellStrictIndex, CompositionStrictIndex
 from mckit.parser.common import Lexer as LexerBase
-from mckit.parser.common import SurfaceStrictIndex
-from mckit.parser.common import TransformationStrictIndex
+from mckit.parser.common import SurfaceStrictIndex, TransformationStrictIndex
 from mckit.surface import Surface
 from mckit.transformation import Transformation
 from mckit.utils import filter_dict

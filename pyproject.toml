@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.5.9"
+version = "0.5.10-alpha.0"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -134,6 +134,9 @@ multi_line_output = 3
 line_length = 88
 include_trailing_comma = true
 lines_between_types = 1
+skip = [ "setup-generated.py" ]
+skip_glob = [ "*-example.py" ]
+
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
 # It's the equivalent of r-strings in Python.  Multiline strings are treated as
@@ -143,9 +146,13 @@ lines_between_types = 1
 [tool.black]
 line-length = 88
 target-version = ['py38']
-include = '\.pyi?$'
+include = '''
+(
+    \.pyi?$
+)
+'''
 exclude = '''
-/(
+(
     \.eggs
   | \.git
   | \.hg
@@ -161,8 +168,9 @@ exclude = '''
   | data
   | htmlcov
   | mckit\.egg-info
+  | _tab.py$
   | notebooks
   | tutorial
   | wrk
-)/
+)
 '''

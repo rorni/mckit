@@ -1,8 +1,7 @@
-import pytest
 import numpy as np
+import pytest
 
-from mckit.utils import significant_digits, get_decades
-
+from mckit.utils import get_decades, significant_digits
 
 # def run_digits_in_fraction(a: np.ndarray) -> None:
 #     map(digits_in_fraction_for_str, a)

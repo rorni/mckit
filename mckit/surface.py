@@ -1,46 +1,44 @@
 # -*- coding: utf-8 -*-
+from typing import Any, Callable, Dict, List, Optional, Sequence, Text, Tuple, Union
+
 from abc import abstractmethod
-from typing import Any, Dict, Text, Optional, List, Callable, Sequence, Tuple, Union
 
 import numpy as np
-from numpy import ndarray
 
 from mckit.box import GLOBAL_BOX
+from numpy import ndarray
+
 from . import constants
 from .card import Card
 from .constants import DROP_OPTIONS
 
 # fmt:off
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import (
-    Plane as _Plane,
-    Sphere as _Sphere,
-    Cone as _Cone,
-    Cylinder as _Cylinder,
-    Torus as _Torus,
-    GQuadratic as _GQuadratic,
-    RCC as _RCC,
-    BOX as _BOX,
-    ORIGIN,
-    EX,
-    EY,
-    EZ,
-)
-# fmt:on
-
+from .geometry import BOX as _BOX
+from .geometry import EX, EY, EZ, ORIGIN
+from .geometry import RCC as _RCC
+from .geometry import Cone as _Cone
+from .geometry import Cylinder as _Cylinder
+from .geometry import GQuadratic as _GQuadratic
+from .geometry import Plane as _Plane
+from .geometry import Sphere as _Sphere
+from .geometry import Torus as _Torus
 from .printer import add_float, pretty_float
 from .transformation import Transformation
 from .utils import (
-    filter_dict,
-    significant_digits,
-    make_hash,
-    significant_array,
-    round_array,
-    round_scalar,
     are_equal,
     deepcopy,
+    filter_dict,
+    make_hash,
+    round_array,
+    round_scalar,
+    significant_array,
+    significant_digits,
 )
-from .utils.tolerance import MaybeClose, tolerance_estimator, FLOAT_TOLERANCE
+from .utils.tolerance import FLOAT_TOLERANCE, MaybeClose, tolerance_estimator
+
+# fmt:on
+
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 __all__ = [

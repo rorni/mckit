@@ -1,7 +1,8 @@
 """
     The interfaces to facilitate adding new functionality to an hierarchy of classes (Visitor pattern).
 """
-from typing import Any, NoReturn, Callable, ContextManager
+from typing import Any, Callable, ContextManager, NoReturn
+
 from functools import reduce
 
 TVisitor = Callable[..., ContextManager]

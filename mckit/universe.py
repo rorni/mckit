@@ -1,39 +1,39 @@
-import operator
-import sys
-from contextlib import contextmanager
-from collections import defaultdict
-from io import StringIO
-from functools import reduce
-from pathlib import Path
 from typing import (
     Any,
+    Callable,
     Dict,
     Iterable,
     List,
-    Set,
-    Union,
-    Tuple,
     Optional,
-    Callable,
+    Set,
+    Tuple,
+    Union,
     cast,
 )
 
+import operator
+import sys
+
+from collections import defaultdict
+from contextlib import contextmanager
+from functools import reduce
+from io import StringIO
+from pathlib import Path
+
 import numpy as np
-from attr import attrs, attrib
+
+from attr import attrib, attrs
 from click import progressbar
-
-from .body import Body, Shape
-from .card import Card
-
 from mckit.constants import MCNP_ENCODING
 from mckit.utils import filter_dict
+
+from .body import Body, Shape
 from .box import GLOBAL_BOX, Box
-from .surface import Surface
+from .card import Card
+from .material import Composition, Material
+from .surface import Plane, Surface
 from .transformation import Transformation
-from .material import Material, Composition
-from .surface import Plane
-from .utils import accept
-from .utils import on_unknown_acceptor
+from .utils import accept, on_unknown_acceptor
 
 __all__ = [
     "Universe",
@@ -45,7 +45,7 @@ __all__ = [
     "UniverseAnalyser",
 ]
 
-from .utils.Index import StatisticsCollector, IndexOfNamed
+from .utils.Index import IndexOfNamed, StatisticsCollector
 from .utils.named import Name
 
 
@@ -275,7 +275,7 @@ class Universe:
             mat = new_cell.material()
             if mat:
                 new_comp = Universe._update_replace_dict(
-                    mat._composition, comp_replace, comp_names, name_rule, "Material"
+                    mat.composition, comp_replace, comp_names, name_rule, "Material"
                 )
                 new_cell.options["MAT"] = Material(
                     composition=new_comp, density=mat.density
@@ -385,7 +385,13 @@ class Universe:
             cells.append(Body(c.shape, **options))
         return Universe(cells)
 
-    def apply_fill(self, cell=None, universe=None, predicate=None, name_rule="new"):
+    def apply_fill(
+        self,
+        cell: Union[Body, int] = None,
+        universe: Union["Universe", int] = None,
+        predicate: Callable[[Body], bool] = None,
+        name_rule: str = "new",
+    ):
         """Applies fill operations to all or selected cells or universes.
 
         Modifies current universe.
@@ -622,8 +628,13 @@ class Universe:
         return new_stat
 
     def rename(
-        self, start_cell=None, start_surf=None, start_mat=None, start_tr=None, name=None
-    ):
+        self,
+        start_cell: int = None,
+        start_surf: int = None,
+        start_mat: int = None,
+        start_tr: int = None,
+        name: int = None,
+    ) -> None:
         """Renames all entities contained in the universe.
 
         All new names are sequential starting from the specified name. If name
@@ -631,17 +642,19 @@ class Universe:
 
         Parameters
         ----------
-        start_cell : int
+        start_cell :
             Starting name for cells. Default: None.
-        start_surf : int
+        start_surf :
             Starting name for surfaces. Default: None.
-        start_mat : int
+        start_mat :
             Starting name for materials. Default: None.
-        start_tr : int
+        start_tr :
             Starting name for transformations. Default: None.
-        name : int
+        name :
             Name for the universe. Default: None.
         """
+        # TODO dvp: implement transformations renaming
+        assert start_tr is None, "Transformation renaming is not implemented yet"
         if name:
             self._name = name
             for c in self:

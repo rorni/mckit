@@ -13,12 +13,13 @@ from datetime import datetime
 from pathlib import Path
 
 import tomlkit as tk
-from tomlkit.items import item
-from mckit.utils.logging import logger
 
 from mckit import Universe
+from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file
 from mckit.universe import collect_transformations
-from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
+from mckit.utils.logging import logger
+from tomlkit.items import item
+
 from .common import save_mcnp
 
 

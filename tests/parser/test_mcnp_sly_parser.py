@@ -39,6 +39,7 @@ def test_parser_basic_functionality(text: str, expected: TExpected):
     assert expected.surfaces == actual_surfaces
 
 
+# noinspection DuplicatedCode
 @pytest.mark.parametrize(
     "parse_file, expected",
     [

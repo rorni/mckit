@@ -1,6 +1,7 @@
+import re
+
 from collections import deque
 from itertools import product
-import re
 
 import numpy as np
 
