@@ -7,7 +7,7 @@ import mckit.constants as constants
 
 from mckit.utils import get_decades, prettify_float, significant_digits
 
-MCNP_FORMATS = {"importance": "{0:.3f}", "material_fraction": "{0:.6e}"}
+IMPORTANCE_FORMAT = "{0:.3f}"
 
 
 def print_card(
@@ -85,7 +85,7 @@ def print_option(option: str, value: Any) -> List[str]:
     name = option[:3]
     par = option[3:]
     if name == "IMP" and (par == "N" or par == "P" or par == "E"):
-        return ["IMP:{0}={1}".format(par, MCNP_FORMATS["importance"].format(value))]
+        return ["IMP:{0}={1}".format(par, IMPORTANCE_FORMAT.format(value))]
     elif option == "VOL":
         return ["VOL={0}".format(value)]
     elif option == "U":

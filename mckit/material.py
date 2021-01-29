@@ -10,12 +10,11 @@ from operator import xor
 import numpy as np
 
 from .card import Card
-from .printer import MCNP_FORMATS
 
 __all__ = ["AVOGADRO", "Element", "Composition", "Material"]
 
 AVOGADRO = 6.0221408576e23
-
+MATERIAL_FRACTION_FORMAT = "{0:.6e}"
 _CHARGE_TO_NAME = {}
 _NAME_TO_CHARGE = {}
 _NATURAL_ABUNDANCE = {}
@@ -179,7 +178,7 @@ class Composition(Card):
         for elem, frac in self._composition.items():
             words.append(elem.mcnp_repr())
             words.append("  ")
-            words.append(MCNP_FORMATS["material_fraction"].format(frac))
+            words.append(MATERIAL_FRACTION_FORMAT.format(frac))
             words.append("\n")
         return words
 
