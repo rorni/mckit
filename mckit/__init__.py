@@ -43,11 +43,16 @@ elif platform.system() == "Linux":
         os.environ.get("LD_LIBRARY_PATH") is None
     ):  # a user can use other location form mkl library.
         # preload library
+        suffixes = ".so .so.1 .so.0".split()
         mkl_lib_path = Path(sys.prefix, "lib", "libmkl_rt.so")
+        mkl_lib = None
+        for s in suffixes:
+            p = mkl_lib_path.with_suffix(s)
+            if p.exists():
+                mkl_Lib = cdll.LoadLibrary(str(p))
         assert (
-            mkl_lib_path.exists()
+            mkl_Lib is not None
         ), f"The MKL library should be either available at {mkl_lib_path}, or with LD_LIBRARY_PATH"
-        mkl_Lib = cdll.LoadLibrary(str(mkl_lib_path))
 
 
 from .body import Body, Shape
