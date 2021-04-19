@@ -213,7 +213,7 @@ def docs(session: Session) -> None:
         session.run("sphinx-build", "docs/source", "docs/_build")
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.9")
 def codecov(session: Session) -> None:
     """Upload coverage data."""
     session.run("poetry", "install", "--no-dev", external=True)
@@ -223,10 +223,9 @@ def codecov(session: Session) -> None:
         "pytest",
         "pytest-cov",
         "pytest-mock",
-        "coverage",
+        # "coverage",
         "codecov",
     )
-    # install_with_constraints(session, "coverage[toml]", "codecov")
     session.run("coverage", "xml", "--fail-under=0")
     session.run("codecov", *session.posargs)
 
