@@ -48,14 +48,14 @@ class MCKitBuilder(build_ext):
         if SYSTEM_WINDOWS:
             root_prefix = root_prefix / "Library"
         self.include_dirs.append(np.get_include())
-        check_directories(*self.include_dirs)
+        # check_directories(*self.include_dirs)
         library_dir = root_prefix / "lib"
         # TODO dvp: for mkl-2021.2.0 (and later?) in Linux and Mac
         #           add symbolic links to libraries having '1' in names in the directory
         #           to make linker happy
         self.library_dirs.append(str(library_dir))
         # self.library_dirs = insert_directories(self.library_dirs, str(library_dir))
-        check_directories(*self.library_dirs)
+        # check_directories(*self.library_dirs)
 
     def build_extension(self, extension: Extension) -> None:
         assert extension.name == "mckit.geometry"
