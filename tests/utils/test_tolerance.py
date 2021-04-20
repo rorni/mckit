@@ -9,7 +9,7 @@ def default_estimator():
     return tolerance_estimator()
 
 
-SOME_ARRAY = np.arange(3, dtype=np.float)
+SOME_ARRAY = np.arange(3, dtype=float)
 
 
 @pytest.mark.parametrize(

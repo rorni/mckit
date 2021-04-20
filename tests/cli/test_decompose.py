@@ -187,7 +187,7 @@ def test_anonymous_transformation(runner, disable_log):
             descriptor = tk.parse(fid.read())
             spec = descriptor["2"]["transform"]
             assert len(spec) == 3
-            spec1 = np.fromiter(map(float, spec), dtype=np.float)
+            spec1 = np.fromiter(map(float, spec), dtype=float)
             assert_array_equal(
                 spec1, [0.0, -1.0, 0.0], f"Fill descriptor {spec} is wrong"
             )
@@ -208,7 +208,7 @@ def test_named_transformation(runner, disable_log):
             transforms = descriptor["named_transformations"]
             assert "tr1" in transforms, "Should store transformation tr1"
             transform = transforms["tr1"]
-            transform_params = np.fromiter(map(float, transform), dtype=np.float)
+            transform_params = np.fromiter(map(float, transform), dtype=float)
             assert transform_params.size == 3, "Only translation is specified for tr1"
             assert_array_equal(
                 transform_params, [0, -1.0, 0]

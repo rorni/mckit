@@ -50,9 +50,9 @@ scipy = "^1.5.3"
 sly = "^0.4"
 tomlkit = "^0.7.0"
 tqdm = "^4.55.1"
-mkl-devel = "^2021.1.1"
-mkl = "^2021.1.1"
-mkl-include = "^2021.1.1"
+mkl-devel = "2021.1.1"  # TODO: dvp mkl-2021.2.0 is not linkable under Linux and Mac - the libraries have '1' in names
+mkl = "2021.1.1"
+mkl-include = "2021.1.1"
 python-dotenv = "^0.15.0"
 certifi = {version = "2020.6.20", python = "<3.8", platform = "Windows"}
 

@@ -10,7 +10,7 @@ from pprint import pprint
 
 from build_nlopt import build_nlopt
 from extension_geometry import geometry_extension
-from extension_utils import SYSTEM_WINDOWS
+from extension_utils import SYSTEM_WINDOWS, check_directories
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.dist import Distribution
@@ -48,15 +48,23 @@ class MCKitBuilder(build_ext):
         if SYSTEM_WINDOWS:
             root_prefix = root_prefix / "Library"
         self.include_dirs.append(np.get_include())
-        self.include_dirs.append(str(root_prefix / "include"))
+        check_directories(*self.include_dirs)
         library_dir = root_prefix / "lib"
+        # TODO dvp: for mkl-2021.2.0 (and later?) in Linux and Mac
+        #           add symbolic links to libraries having '1' in names in the directory
+        #           to make linker happy
         self.library_dirs.append(str(library_dir))
+        # self.library_dirs = insert_directories(self.library_dirs, str(library_dir))
+        check_directories(*self.library_dirs)
 
     def build_extension(self, extension: Extension) -> None:
         assert extension.name == "mckit.geometry"
         ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
         nlopt_build_dir = build_nlopt(clean=True)
         nlopt_lib = nlopt_build_dir / get_shared_lib_name("nlopt")
+        log.info(f"---***  builder.build_lib: {self.build_lib}")
+        log.info(f"---***  builder.include_dirs: {self.include_dirs}")
+        log.info(f"---***  builder.library_dirs: {self.library_dirs}")
         log.info(f"---***  nlopt lib path: {nlopt_lib}")
         build_ext.build_extension(self, extension)
         log.info(f"---***  copy nlopt lib to {ext_dir}")

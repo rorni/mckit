@@ -131,7 +131,7 @@ def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transforma
         named_transformations = {}
         for k, v in transformations.items():
             name = int(k[2:])
-            transform_params = np.fromiter(map(float, v), dtype=np.float)
+            transform_params = np.fromiter(map(float, v), dtype=float)
             translation = transform_params[:3]
             if transform_params.size == 9:
                 rotation = transform_params[3:]

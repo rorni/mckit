@@ -624,7 +624,7 @@ class Plane(Surface, _Plane):
     def __init__(
         self, normal: np.ndarray, offset: float, assume_normalized=False, **options: Any
     ):
-        v = np.asarray(normal, dtype=np.float)
+        v = np.asarray(normal, dtype=float)
         k = float(offset)
         if not assume_normalized:
             v, is_ort = internalize_ort(v)
@@ -750,7 +750,7 @@ class Sphere(Surface, _Sphere):
     def __init__(
         self, center: Union[Sequence[float], np.ndarray], radius: float, **options: Any
     ):
-        center = np.asarray(center, dtype=np.float)
+        center = np.asarray(center, dtype=float)
         radius = float(radius)
         Surface.__init__(self, **options)
         _Sphere.__init__(self, center, radius)
@@ -871,7 +871,7 @@ class Cylinder(Surface, _Cylinder):
     """
 
     def __init__(self, pt, axis, radius, assume_normalized=False, **options):
-        axis = np.asarray(axis, dtype=np.float)
+        axis = np.asarray(axis, dtype=float)
         if not assume_normalized:
             axis, is_ort = internalize_ort(axis)
             if not is_ort:
@@ -879,7 +879,7 @@ class Cylinder(Surface, _Cylinder):
         max_dir = np.argmax(np.abs(axis))
         if axis[max_dir] < 0:
             axis *= -1
-        pt = np.asarray(pt, dtype=np.float)
+        pt = np.asarray(pt, dtype=float)
         pt = pt - axis * np.dot(pt, axis)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
@@ -1035,7 +1035,7 @@ class Cone(Surface, _Cone):
         assume_normalized: bool = False,
         **options,
     ) -> None:
-        axis = np.asarray(axis, dtype=np.float)
+        axis = np.asarray(axis, dtype=float)
         if not assume_normalized:
             axis, is_ort = internalize_ort(axis)
             if not is_ort:
@@ -1044,7 +1044,7 @@ class Cone(Surface, _Cone):
         if axis[maxdir] < 0:
             axis *= -1
             sheet *= -1
-        apex = np.asarray(apex, dtype=np.float)
+        apex = np.asarray(apex, dtype=float)
         Surface.__init__(self, **options)
         _Cone.__init__(self, apex, axis, t2, sheet)
         self._hash = make_hash(self._t2, self._sheet, self._apex, self._axis)
@@ -1207,8 +1207,8 @@ class GQuadratic(Surface, _GQuadratic):
     """
 
     def __init__(self, m, v, k, factor=None, **options):
-        m = np.asarray(m, dtype=np.float)
-        v = np.asarray(v, dtype=np.float)
+        m = np.asarray(m, dtype=float)
+        v = np.asarray(v, dtype=float)
         if factor is None:
             eigenvalues = np.linalg.eigvalsh(m)
             factor = 1.0 / np.max(np.abs(eigenvalues))

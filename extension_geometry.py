@@ -2,8 +2,14 @@ import os
 
 from functools import partial
 
-from extension_utils import extra_compile_args
+from extension_utils import SYSTEM_WINDOWS, extra_compile_args
 from setuptools import Extension
+
+# See MKL linking options for various versions of MKL and OS:
+# https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
+#
+# Windows (oneMKL 2021, MS-C/C++,64bit, c-32bit, shared library, no cluster):
+# mkl_intel_lp64_dll.lib mkl_tbb_thread_dll.lib mkl_core_dll.lib tbb.lib
 
 _libraries = [
     "mkl_rt",

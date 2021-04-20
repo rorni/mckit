@@ -83,10 +83,15 @@ def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> Non
 @nox.session(python=supported_pythons, venv_backend="venv")
 def tests(session: Session) -> None:
     """Run the test suite."""
-    args = session.posargs or ["--cov", "-m", "not e2e"]
-    session.run("poetry", "install", "--no-dev", external=True)
-    install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
     path = Path(session.bin).parent
+    args = session.posargs or ["--cov", "-m", "not e2e"]
+    session.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        external=True,
+    )
+    install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
     if on_windows:
         session.bin_paths.insert(
             0, str(path / "Library/bin")
