@@ -48,6 +48,7 @@ class MCKitBuilder(build_ext):
         if SYSTEM_WINDOWS:
             root_prefix = root_prefix / "Library"
         self.include_dirs.append(np.get_include())
+        self.include_dirs.append(str(root_prefix / "include"))
         # check_directories(*self.include_dirs)
         library_dir = root_prefix / "lib"
         # TODO dvp: for mkl-2021.2.0 (and later?) in Linux and Mac
