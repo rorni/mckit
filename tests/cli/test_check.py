@@ -3,7 +3,6 @@ import pytest
 from mckit.cli.runner import mckit
 from mckit.utils.resource import filename_resolver
 
-
 data_filename_resolver = filename_resolver("tests")
 
 

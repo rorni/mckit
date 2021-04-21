@@ -1,16 +1,15 @@
 import numpy as np
-
 import pytest
 
 from mckit.utils import (
-    get_decades,
-    significant_digits,
+    FLOAT_TOLERANCE,
     are_equal,
     filter_dict,
+    get_decades,
     make_hash,
     prettify_float,
+    significant_digits,
 )
-from mckit.utils import FLOAT_TOLERANCE
 
 
 @pytest.mark.parametrize(

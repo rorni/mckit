@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import pytest
 
 from mckit.utils.resource import Path, filename_resolver, path_resolver

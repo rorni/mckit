@@ -1,11 +1,11 @@
-from io import StringIO
 from typing import List
 
-import pytest
+from io import StringIO
 
 import mckit.parser.mcnp_section_parser as sp
-from mckit.parser.mcnp_section_parser import Card
-from mckit.parser.mcnp_section_parser import Kind
+import pytest
+
+from mckit.parser.mcnp_section_parser import Card, Kind
 
 
 @pytest.mark.parametrize(

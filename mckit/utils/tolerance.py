@@ -1,12 +1,14 @@
-from abc import ABC, abstractmethod
+from typing import Any, Callable, Iterable, Optional, Union
+
 import itertools
 import math
-from typing import Any, Union, Iterable, Callable, Optional
+
+from abc import ABC, abstractmethod
 
 import numpy as np
-from numpy import ndarray
 
 from mckit.constants import FLOAT_TOLERANCE
+from numpy import ndarray
 
 
 class MaybeClose(ABC):

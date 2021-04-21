@@ -1,14 +1,15 @@
-import pytest
-import numpy as np
 from itertools import product
 
-from mckit.fmesh import RectMesh, CylMesh
-from mckit.transformation import Transformation
-from mckit.geometry import EX, EY, EZ
-from mckit.surface import create_surface
-from mckit.body import Body
-from mckit.material import Material
+import numpy as np
+import pytest
+
 from mckit import read_meshtal
+from mckit.body import Body
+from mckit.fmesh import CylMesh, RectMesh
+from mckit.geometry import EX, EY, EZ
+from mckit.material import Material
+from mckit.surface import create_surface
+from mckit.transformation import Transformation
 from mckit.utils.resource import filename_resolver
 
 transforms = [

@@ -1,11 +1,11 @@
 from typing import List, NamedTuple
+
 import pytest
 
-
-from mckit.parser.mcnp_input_sly_parser import from_file, from_text, ParseResult
+from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file, from_text
 from mckit.utils import filename_resolver
 
-file_resolver = filename_resolver()
+file_resolver = filename_resolver("tests.parser")
 
 
 class TExpected(NamedTuple):
@@ -39,6 +39,7 @@ def test_parser_basic_functionality(text: str, expected: TExpected):
     assert expected.surfaces == actual_surfaces
 
 
+# noinspection DuplicatedCode
 @pytest.mark.parametrize(
     "parse_file, expected",
     [
@@ -288,7 +289,7 @@ def test_mcnp_parser(parse_file, expected):
     parse_file = file_resolver(parse_file)
     result: ParseResult = from_file(parse_file)
     assert expected["title"] == result.sections.title
-    # TODO dvp: orgainize correct comparison of result with expected data
+    # TODO dvp: organize correct comparison of result with expected data
     # assert expected['cells'] == result.cells
     # assert expected['surfaces'] == result.surfaces
     # assert expected['data'] == result.data

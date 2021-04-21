@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
-from collections import deque
-from mckit.utils.logging import logger
-from pathlib import Path
-import re
 from typing import Union
+
+import re
+
+from collections import deque
+from pathlib import Path
 from warnings import warn
 
 import ply.lex as lex
 import ply.yacc as yacc
 
-from ..material import Element, Composition, Material
-from ..transformation import Transformation
-from ..surface import create_surface
+from mckit.utils.logging import logger
+
 from ..body import Body
-from ..universe import produce_universes, Universe
+from ..material import Composition, Element, Material
+from ..surface import create_surface
+from ..transformation import Transformation
+from ..universe import Universe, produce_universes
 
 warn(
     "The module 'mcnp_input_parser' is deprecated. Use mckit.parser.mcnp_input_sly_parser instead.",

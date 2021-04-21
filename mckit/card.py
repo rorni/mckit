@@ -1,12 +1,13 @@
 """Features, common for all cards"""
-from abc import ABC, abstractmethod
-from operator import xor
-from typing import Optional, Text, List
+from typing import List, Optional, Text
 
-from toolz import reduce
+from abc import ABC, abstractmethod
+from functools import reduce
+from operator import xor
+
+from mckit.utils.named import Name
 
 from .printer import print_card
-from mckit.utils.named import Name
 
 
 class Card(ABC):

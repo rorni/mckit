@@ -1,46 +1,44 @@
 # -*- coding: utf-8 -*-
+from typing import Any, Callable, Dict, List, Optional, Sequence, Text, Tuple, Union
+
 from abc import abstractmethod
-from typing import Any, Dict, Text, Optional, List, Callable, Sequence, Tuple, Union
 
 import numpy as np
-from numpy import ndarray
 
 from mckit.box import GLOBAL_BOX
+from numpy import ndarray
+
 from . import constants
 from .card import Card
 from .constants import DROP_OPTIONS
 
 # fmt:off
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import (
-    Plane as _Plane,
-    Sphere as _Sphere,
-    Cone as _Cone,
-    Cylinder as _Cylinder,
-    Torus as _Torus,
-    GQuadratic as _GQuadratic,
-    RCC as _RCC,
-    BOX as _BOX,
-    ORIGIN,
-    EX,
-    EY,
-    EZ,
-)
-# fmt:on
-
+from .geometry import BOX as _BOX
+from .geometry import EX, EY, EZ, ORIGIN
+from .geometry import RCC as _RCC
+from .geometry import Cone as _Cone
+from .geometry import Cylinder as _Cylinder
+from .geometry import GQuadratic as _GQuadratic
+from .geometry import Plane as _Plane
+from .geometry import Sphere as _Sphere
+from .geometry import Torus as _Torus
 from .printer import add_float, pretty_float
 from .transformation import Transformation
 from .utils import (
-    filter_dict,
-    significant_digits,
-    make_hash,
-    significant_array,
-    round_array,
-    round_scalar,
     are_equal,
     deepcopy,
+    filter_dict,
+    make_hash,
+    round_array,
+    round_scalar,
+    significant_array,
+    significant_digits,
 )
-from .utils.tolerance import MaybeClose, tolerance_estimator, FLOAT_TOLERANCE
+from .utils.tolerance import FLOAT_TOLERANCE, MaybeClose, tolerance_estimator
+
+# fmt:on
+
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 __all__ = [
@@ -626,7 +624,7 @@ class Plane(Surface, _Plane):
     def __init__(
         self, normal: np.ndarray, offset: float, assume_normalized=False, **options: Any
     ):
-        v = np.asarray(normal, dtype=np.float)
+        v = np.asarray(normal, dtype=float)
         k = float(offset)
         if not assume_normalized:
             v, is_ort = internalize_ort(v)
@@ -752,7 +750,7 @@ class Sphere(Surface, _Sphere):
     def __init__(
         self, center: Union[Sequence[float], np.ndarray], radius: float, **options: Any
     ):
-        center = np.asarray(center, dtype=np.float)
+        center = np.asarray(center, dtype=float)
         radius = float(radius)
         Surface.__init__(self, **options)
         _Sphere.__init__(self, center, radius)
@@ -873,7 +871,7 @@ class Cylinder(Surface, _Cylinder):
     """
 
     def __init__(self, pt, axis, radius, assume_normalized=False, **options):
-        axis = np.asarray(axis, dtype=np.float)
+        axis = np.asarray(axis, dtype=float)
         if not assume_normalized:
             axis, is_ort = internalize_ort(axis)
             if not is_ort:
@@ -881,7 +879,7 @@ class Cylinder(Surface, _Cylinder):
         max_dir = np.argmax(np.abs(axis))
         if axis[max_dir] < 0:
             axis *= -1
-        pt = np.asarray(pt, dtype=np.float)
+        pt = np.asarray(pt, dtype=float)
         pt = pt - axis * np.dot(pt, axis)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
@@ -1037,7 +1035,7 @@ class Cone(Surface, _Cone):
         assume_normalized: bool = False,
         **options,
     ) -> None:
-        axis = np.asarray(axis, dtype=np.float)
+        axis = np.asarray(axis, dtype=float)
         if not assume_normalized:
             axis, is_ort = internalize_ort(axis)
             if not is_ort:
@@ -1046,7 +1044,7 @@ class Cone(Surface, _Cone):
         if axis[maxdir] < 0:
             axis *= -1
             sheet *= -1
-        apex = np.asarray(apex, dtype=np.float)
+        apex = np.asarray(apex, dtype=float)
         Surface.__init__(self, **options)
         _Cone.__init__(self, apex, axis, t2, sheet)
         self._hash = make_hash(self._t2, self._sheet, self._apex, self._axis)
@@ -1209,8 +1207,8 @@ class GQuadratic(Surface, _GQuadratic):
     """
 
     def __init__(self, m, v, k, factor=None, **options):
-        m = np.asarray(m, dtype=np.float)
-        v = np.asarray(v, dtype=np.float)
+        m = np.asarray(m, dtype=float)
+        v = np.asarray(v, dtype=float)
         if factor is None:
             eigenvalues = np.linalg.eigvalsh(m)
             factor = 1.0 / np.max(np.abs(eigenvalues))

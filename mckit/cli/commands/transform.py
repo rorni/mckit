@@ -4,16 +4,14 @@ Apply transformation to a model.
 """
 from pathlib import Path
 
-from .common import save_mcnp
-from mckit.parser.mcnp_input_sly_parser import from_file
-from mckit.parser.mcnp_input_sly_parser import ParseResult
-from mckit.parser.mcnp_section_parser import clean_mcnp_cards
-from mckit.parser.mcnp_section_parser import split_to_cards
+from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file
+from mckit.parser.mcnp_section_parser import clean_mcnp_cards, split_to_cards
 from mckit.parser.transformation_parser import parse as parse_transformation
 from mckit.universe import Universe
-from mckit.utils.Index import IndexOfNamed
-from mckit.utils.Index import raise_on_duplicate_strategy
+from mckit.utils.Index import IndexOfNamed, raise_on_duplicate_strategy
 from mckit.utils.logging import logger
+
+from .common import save_mcnp
 
 
 def transform(

@@ -1,8 +1,9 @@
-import sly
-from mckit.transformation import Transformation
-from mckit.parser.common import Lexer as LexerBase
 import mckit.parser.common.utils as cmn
+import sly
+
+from mckit.parser.common import Lexer as LexerBase
 from mckit.parser.common.utils import drop_c_comments, extract_comments
+from mckit.transformation import Transformation
 
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection

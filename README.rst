@@ -1,24 +1,14 @@
-.. include:: preamble.rst
-
 .. image:: https://img.shields.io/badge/Maintained%3F-yes-green.svg
    :target: https://github.com/dvp2015/mckit/graphs/commit-activity
 
 .. image:: https://github.com/dvp2015/mckit/workflows/Tests/badge.svg
    :target: https://github.com/dvp2015/mckit/actions?workflow=Tests
 
-
 .. image:: https://codecov.io/gh/dvp2015/mckit/branch/devel/graph/badge.svg?token=05OFBQS3RX
    :target: https://codecov.io/gh/dvp2015/mckit
 
-
-.. |PyPI| image:: https://img.shields.io/pypi/v/mckit.svg
-   :target: https://pypi.org/project/mckit/
-
-.. |Read the Docs| image:: https://readthedocs.org/projects/mckit/badge/
-   :target: https://mckit.readthedocs.io/
-
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
+   :target: https://github.com/psf/black
 
 .. image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
     :target: https://pycqa.github.io/isort/
@@ -28,170 +18,116 @@
 
 
 
-MCKIT: MCNP model and results processing utilites
-=================================================
+MCKIT: MCNP model and results processing utilities
+==================================================
 
-Purpose
--------
+The mckit package provides a programming framework and command line tools to manipulate complex MCNP models.
+When a model is rather complex and its description occupies thousands of text lines it becomes hard to modify it and integrate several model manually.
+The package automates integration process.
 
-The package |mckit| provides library to work with
-MCNP models and results. The package also provides command line interface, which 
-allows compose and decompose a MCNP model over universes hierarchy, split a model
-to text portions and combine back.
+.. TODO The complete documentation is available in the following languages:
 
-.. tip::
+.. * `English documentation`_
+.. * `Russian documentation`_
 
-   To see actual list of available commands run::
+.. .. _English documentation: https://mckit.readthedocs.io/en/latest/
+.. .. _Russian documentation: https://mckit.readthedocs.io/ru/latest/
 
-       mckit --help
+.. contents:: Table of contents
 
-.. TODO dvp implement pre-commit hook to print the CLI help into file, format it for as reStructuredText and include here.
+Usage
+-----
 
-The library can be used for more complicated and specific tasks.
+Command line interface
+~~~~~~~~~~~~~~~~~~~~~~
 
-Install
--------
+.. code-block:: bash
 
-From source: ::
+    Usage: mckit [OPTIONS] COMMAND [ARGS]...
 
-    git clone git@github.com:rorni/mckit.git
-    cd mckit
+      Tools to process MCNP models and results
 
-    # set local python environment with `pyenv`, `venv` or `conda`
-    # pyenv virtualenv 3.9.1 mckit
-    # pyenv local mckit 3.9.1 3.8.5 3.7.9 3.6.12
-    # or
-    # conda create -n mckit python=3.9
-    # conda activate mckit
+    Options:
+      --override / --no-override
+      --version                   Show the version and exit.
+      -v, --verbose               Log debugging info to stderr.  [default: False]
+      -q, --quiet                 Suppress info to stderr.  [default: False]
+      --logfile / --no-logfile    Log to file.  [default: True]
+      --profile_mem               Profile peak memory use.  [default: False]
+      --help                      Show this message and exit.
 
-    # if you have `poetry` installed
-    poetry build
-    poetry install
-
-    # either (without poetry)
-    pip install .
-
-
-From wheel: ::
-
-    pip install <wheel>
+    Commands:
+      check      Read MCNP model(s) and show statistics and clashes.
+      compose    Merge universes and envelopes into MCNP model using merge...
+      concat     Concat text files.
+      decompose  Separate an MCNP model to envelopes and filling universes
+      split      Splits MCNP model to text portions (opposite to concat)
+      transform  Transform MCNP model(s) with one of specified transformation.
 
 
-From PyPI: ::
+Library
+~~~~~~~
 
-    To be implemented
+The library allows subtraction and merging models, renaming objects (cells, surfaces, compositions, universes),
+simplification of cell expressions (removing redundant surfaces), homogenization, computation of cell volumes and
+material masses, and more.
+
+.. code-block:: python
+
+    LOG.info("Loading c-model envelopes")
+    envelopes = load_model(str(CMODEL_ROOT / "c-model.universes/envelopes.i"))
+
+    cells_to_fill = [11, 14, 75]
+    cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
+
+    LOG.info("Attaching bounding boxes to c-model envelopes %s", cells_to_fill)
+    attach_bounding_boxes(
+        [envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunk_size=1
+    )
+    LOG.info("Backing up original envelopes")
+    envelopes_original = envelopes.copy()
+
+    antenna_envelop.rename(start_cell=200000, start_surf=200000)
+
+    LOG.info("Subtracting antenna envelop from c-model envelopes %s", cells_to_fill)
+    envelopes = subtract_model_from_model(
+        envelopes, antenna_envelop, cells_filter=lambda c: c in cells_to_fill
+    )
+    LOG.info("Adding antenna envelop to c-model envelopes")
+    envelopes.add_cells(antenna_envelop, name_rule="clash")
+    envelopes_path = "envelopes+antenna-envelop.i"
+    envelopes.save(envelopes_path)
+    LOG.info("The model of HFSR in envelopes is saved to %s", envelopes_path)
 
 
-Copyright
----------
-|mckit| is free software.
 
-The dependencies are declared in the package meta-information.
+Installation
+------------
+
+Installing from pypi:
+
+.. code-block:: bash
+
+    pip3 install mckit
+
+
+Installing from github.com:
+
+.. code-block:: bash
+
+    pip3 install git+https://github.com/MC-kit/mckit.git
+
+
+Versioning
+----------
+
+This software follows `Semantic Versioning`_
+
+.. _Semantic Versioning: http://semver.org/
 
 
 Contributors
 ------------
+
 * `Roman Rodionov <mailto:r.rodionov@iterrf.ru>`_
-* `Dmitry Portnov <mailto:dmitri_portnov@yahoo.com>`_
-
-
-Tutorial
---------
-See the notebook in ``tutorial`` folder.
-
-Documentation
---------------
-.. TODO add reference to readthedocs
-
-TODO
-~~~~
-.. TODO add nearest future plans.
-
-* translate documentation to English
-* implement generation of the documentation for `readthedocs`
-* create and link to the `readthedocs` account
-* add the `readthedocs` status icon at the document start.
-
-A Developer's Reading
-----------------------
-* `The Hitchhicker's guide to Python <https://docs.python-guide.org/>`_ 
-* `Claudio Cjolowicz "Hypermodern Python" <https://cjolowicz.github.io/posts/hypermodern-python-01-setup>`_
-* `Python development best practices 2019 <https://flynn.gg/blog/software-best-practices-python-2019/>`_
-* `Managing Multiple Python Versions With pyenv <https://realpython.com/intro-to-pyenv/>`_
-* `Poetry  <https://python-poetry.org/>`_
-* `Pytest <https://docs.pytest.org/en/stable/index.html>`_
-* `Linting <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
-* `Sphinx, Стандартный синтаксис разметки  reStructuredText, readthedocs <https://sphinx-ru.readthedocs.io/ru/latest/rst-markup.html>`_
-* `Python Packaging Guide <https://packaging.python.org>`_
-* `Stop using Anaconda <https://medium.com/swlh/stop-using-anaconda-for-your-data-science-projects-1fc29821c6f6>`_
-
-Resources
----------
-* `Budges for README.rst <https://github.com/Naereen/badges/blob/master/README.rst>`_
-* `Commit message format <https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit>`_
-* `Semantic Versioning <https://semver.org/>`_
-* `Typing <https://www.python.org/dev/peps/pep-0484/>`_
-* `Why pyproject.toml <https://www.python.org/dev/peps/pep-0518/>`_
-* `Git branching and tagging best practices <https://nvie.com/posts/a-successful-git-branching-model/>`_
-
-Check if we can apply these packaging tools
--------------------------------------------
-* `Packaging Tutorial: <https://python-packaging-tutorial.readthedocs.io/en/latest/binaries_dependencies.html>`_
-* `scikit-build <https://scikit-build.readthedocs.io/en/latest/index.html>`_
-* `Benjamin R. Jack, Hybrid Python/C++ packages, revisited <https://www.benjack.io/2018/02/02/python-cpp-revisited.html>`_
-
-Bugs
-----
-
-Please report new bugs via the `Github issue tracker <https://github.com/rorni/mckit/issues>`_.
-
-
-Development
------------
-
-For Linux we assume usage of pyenv/poetry toolchain.
-
-.. TODO explain details for activation of development environment
-.. TODO add MKL handling stuff.
-
-Commit Message Format
-~~~~~~~~~~~~~~~~~~~~~
-
-To provide proper change logs, apply this format for commit messages::
-
-    <type>: <short summary>
-      │       │
-      │       └─⫸ Summary in present tense. Not capitalized. No period at the end.
-      │
-      └─⫸ Commit Type: breaking|build|ci|doc|feature|bug|performance|refactoring|removal|style|test
-
-
-.. list-table:: Commit types description
-    :widths: 20 30
-    :header-rows: 1
-
-    * - Commit Type
-      - Description
-    * - breaking
-      - Breaking changes introducing API incompatibility
-    * - build
-      - Build System
-    * - ci
-      - Continuous Integration'
-    * - doc
-      - Documentation
-    * - feature
-      - Features change to satisfy tests
-    * - bug
-      - Fixes bug, no other changes in the code
-    * - performance
-      - Performance, benchmarks or profiling changes.
-    * - refactoring
-      - Refactoring code without changes in features and tests
-    * - removal
-      - Removing and deprecations in code or dependencies
-    * - style
-      - Code and documentation style improvements. No changes in tests and features.
-    * - test
-      - Changes in tests without adding features
-
+* `Dmitri Portnov <mailto:dmitri_portnov@yahoo.com>`_

@@ -1,5 +1,6 @@
 # This is the encoding swallowing non asccii (neither unicode) symbols happening in MCNP models code
 import os
+
 from pathlib import Path
 
 MCNP_ENCODING = "Cp1251"

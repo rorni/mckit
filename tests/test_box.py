@@ -1,11 +1,13 @@
-import pytest
 import io
 import pickle
+
 import numpy as np
+import pytest
+
+from mckit.box import Box
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import EX, EY, EZ
-from mckit.box import Box
 
 
 @pytest.fixture(scope="module")

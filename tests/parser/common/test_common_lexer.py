@@ -1,10 +1,11 @@
 import re
 
+import mckit.parser.common as cmn
 import pytest
 import sly
 
-import mckit.parser.common as cmn
-from mckit.parser.common.Lexer import Lexer as LexerBase, LexError
+from mckit.parser.common.Lexer import Lexer as LexerBase
+from mckit.parser.common.Lexer import LexError
 
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences

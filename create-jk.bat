@@ -18,7 +18,8 @@ echo Creating jupyter kernel for conda environment %mckit%
 :: tornado (in jupyter) doesn't work with newer version of pywin, check this on jupyter dependencies updates
 :: TODO dvp: check on dependencies updates
 :: The following sets version 228 on python39 (after pip or poetry it was 300)
-call conda install pywin32 -y
+:: call conda install pywin32 -y
+call conda install jupyterlab -y
 
 :: Create jupyter kernel pointing to the conda environment
 call python -m ipykernel install --user --name %mckit%

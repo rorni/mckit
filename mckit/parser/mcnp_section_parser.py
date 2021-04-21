@@ -1,15 +1,11 @@
+from typing import Generator, Iterable, List, Optional, TextIO, Tuple
+
 import re
 import sys
-from enum import IntEnum
-from typing import Generator
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import TextIO
-from typing import Tuple
 
-from attr import attrib
-from attr import attrs
+from enum import IntEnum
+
+from attr import attrib, attrs
 
 BLANK_LINE_PATTERN = re.compile(r"\n\s*\n", flags=re.MULTILINE)
 COMMENT_LINE_PATTERN = re.compile(r"^\s{,5}[cC]( .*)?\s*$")

@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Iterable, Optional
 
 from mckit.surface import EX, Plane, Surface
 from mckit.utils.Index import Index, NumberedItemNotFoundError

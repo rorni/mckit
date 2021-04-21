@@ -1,5 +1,7 @@
-from contextlib import contextmanager
 from typing import Any
+
+from contextlib import contextmanager
+
 from mckit.utils.accept import accept, on_unknown_acceptor
 
 

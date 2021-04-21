@@ -14,3 +14,5 @@
 #*.docx binary diff=word
 *.png binary
 #*.png diff=exif
+*.dll binary
+*.pyd binary

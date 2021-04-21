@@ -1,13 +1,13 @@
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
 
-from mckit.utils.resource import filename_resolver
-from mckit.cli.runner import mckit
+from click.testing import CliRunner
 from mckit.cli.commands.common import get_default_output_directory
+from mckit.cli.runner import mckit
 from mckit.parser.mcnp_section_parser import is_comment
 from mckit.utils.io import MCNP_ENCODING
+from mckit.utils.resource import filename_resolver
 
 
 @pytest.fixture

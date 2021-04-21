@@ -1,3 +1,0 @@
-export INCLUDE_PATH="$(make_path /c/ProgramData/Libs/NLOPT $INCLUDE_PATH)"
-export LIBRARY_PATH="$(make_path /c/ProgramData/Libs/NLOPT $LIBRARY_PATH)"
-

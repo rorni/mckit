@@ -1,24 +1,28 @@
 import typing as tp
-import os
-from copy import deepcopy
-from functools import reduce
-from itertools import product, groupby, permutations
-from multiprocessing import Pool
+
 from typing import Iterable, List, NewType, Optional, Set, Union
 
-import numpy as np
-from click import progressbar
+import os
+
+from copy import deepcopy
+from functools import reduce
+from itertools import groupby, permutations, product
+from multiprocessing import Pool
 
 import mckit.material as mm
+import numpy as np
+
+from click import progressbar
+
+from .box import GLOBAL_BOX, Box
+from .card import Card
+from .constants import MIN_BOX_VOLUME
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import Shape as _Shape
-from .box import GLOBAL_BOX, Box
-from .constants import MIN_BOX_VOLUME
-from .printer import print_card, CELL_OPTION_GROUPS, print_option
+from .printer import CELL_OPTION_GROUPS, print_card, print_option
 from .surface import Surface
 from .transformation import Transformation
-from .card import Card
 from .utils import filter_dict
 
 __all__ = ["Shape", "Body", "simplify", "GLOBAL_BOX", "Card", "TGeometry", "TGeometry"]

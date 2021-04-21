@@ -1,48 +1,50 @@
-"""Functions for printing."""
-from typing import Any, List, Optional, Text
+"""Functions for MCNP model text printing."""
+from typing import Any, List
+
 import warnings
 
-from mckit.utils import get_decades, significant_digits, prettify_float
 import mckit.constants as constants
 
-MCNP_FORMATS = {"importance": "{0:.3f}", "material_fraction": "{0:.6e}"}
+from mckit.utils import get_decades, prettify_float, significant_digits
+
+IMPORTANCE_FORMAT = "{0:.3f}"
 
 
 def print_card(
-    tokens: List[Text], offset: int = 8, maxcol: int = 80, sep: str = "\n"
-) -> Text:
+    tokens: List[str], offset: int = 8, max_column: int = 80, sep: str = "\n"
+) -> str:
     """Produce string in MCNP card format.
 
     Parameters
     ----------
-    tokens : list[str]
+    tokens :
         List of words to be printed.
-    offset : int
+    offset :
         The number of spaces to make continuation of line. Minimum 5.
-    maxcol : int
+    max_column :
         The maximum length of card line. Maximum 80.
-    sep : str
+    sep :
         Separator symbol. This symbol marks positions where newline character
-        should be inserted even if maxcol position not reached.
+        should be inserted even if max_column position not reached.
 
     Returns
     -------
-    text : str
-        Text string that describes the card.
+    text :
+        MCNP code of a card.
     """
     if offset < 5:
         offset = 5
         warnings.warn("offset must not be less than 5. offset is set to be 5.")
-    if maxcol > 80:
-        maxcol = 80
-        warnings.warn("maxcol must not be greater than 80. It is set to be 80.")
+    if max_column > 80:
+        max_column = 80
+        warnings.warn("max_column must not be greater than 80. It is set to be 80.")
 
     length = 0  # current length.
     words = []  # a list of individual words.
     line_sep = "\n" + " " * offset  # separator between lines.
     i = 0
     while i < len(tokens):
-        if length + len(tokens[i]) > maxcol or tokens[i] == sep:
+        if length + len(tokens[i]) > max_column or tokens[i] == sep:
             words.append(line_sep)
             length = offset
             while tokens[i] == sep or tokens[i].isspace():
@@ -56,19 +58,19 @@ def print_card(
     return "".join(words)
 
 
-def separate(tokens, sep=" "):
+def separate(tokens: List[str], sep: str = " ") -> List[str]:
     """Adds separation symbols between tokens.
 
     Parameters
     ----------
-    tokens : list[str]
+    tokens :
         A list of strings.
-    sep : str
+    sep :
         Separator to be inserted between tokens. Default: single space.
 
     Returns
     -------
-    sep_tokens : list
+    sep_tokens :
         List of separated tokens.
     """
     sep_tokens = []
@@ -83,7 +85,7 @@ def print_option(option: str, value: Any) -> List[str]:
     name = option[:3]
     par = option[3:]
     if name == "IMP" and (par == "N" or par == "P" or par == "E"):
-        return ["IMP:{0}={1}".format(par, MCNP_FORMATS["importance"].format(value))]
+        return ["IMP:{0}={1}".format(par, IMPORTANCE_FORMAT.format(value))]
     elif option == "VOL":
         return ["VOL={0}".format(value)]
     elif option == "U":
@@ -108,14 +110,14 @@ def print_option(option: str, value: Any) -> List[str]:
         raise ValueError("Incorrect option name: {0}".format(option))
 
 
-def pretty_float(value, frac_digits: Optional[int] = None) -> str:
+def pretty_float(value: float, frac_digits: int = None) -> str:
     """Pretty print of the float number.
 
     Parameters
     ----------
-    value : float
+    value :
         Value to be printed.
-    frac_digits : int
+    frac_digits :
         The number of digits after decimal point.
     """
     if frac_digits is None:
