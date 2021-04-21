@@ -10,10 +10,15 @@ from pprint import pprint
 
 from build_nlopt import build_nlopt
 from extension_geometry import geometry_extension
-from extension_utils import SYSTEM_WINDOWS, check_directories
+from extension_utils import SYSTEM_WINDOWS
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.dist import Distribution
+
+#
+# TODO dvp: check
+#      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
+#
 
 
 class BinaryDistribution(Distribution):
@@ -49,14 +54,11 @@ class MCKitBuilder(build_ext):
             root_prefix = root_prefix / "Library"
         self.include_dirs.append(np.get_include())
         self.include_dirs.append(str(root_prefix / "include"))
-        # check_directories(*self.include_dirs)
         library_dir = root_prefix / "lib"
         # TODO dvp: for mkl-2021.2.0 (and later?) in Linux and Mac
         #           add symbolic links to libraries having '1' in names in the directory
         #           to make linker happy
         self.library_dirs.append(str(library_dir))
-        # self.library_dirs = insert_directories(self.library_dirs, str(library_dir))
-        # check_directories(*self.library_dirs)
 
     def build_extension(self, extension: Extension) -> None:
         assert extension.name == "mckit.geometry"
