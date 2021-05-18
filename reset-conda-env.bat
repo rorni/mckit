@@ -5,7 +5,7 @@
 :: dvp, Dec 2020
 ::
 
-set mckit_version=5.1
+set mckit_version=5.11
 
 if "%1"=="--help" (
     echo.
@@ -25,12 +25,12 @@ if "%1"=="--help" (
 
 set mckit=%1
 shift
-if "%mckit%"=="" set mckit=mckit%mckit_version%
+if "%mckit%"=="" set mckit=mckit-%mckit_version%
 
 
 set install_tool=%1
 shift
-if "%install_tool%"=="" set install_tool=poetry
+if "%install_tool%"=="" set install_tool=pip
 
 if "%install_tool%"=="poetry" (
     call poetry --version > NUL
