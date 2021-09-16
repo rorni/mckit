@@ -1,6 +1,7 @@
 import pytest
-from mckit.utils.logging import logger
+
 from click.testing import CliRunner
+from mckit.utils.logging import logger
 
 
 @pytest.fixture

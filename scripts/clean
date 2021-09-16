@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+deldir() {
+    for d in "$@"; do
+        if [[ -e $d ]]; then
+            rm -frd $d
+        fi
+    done
+}
+
+deldir_recursively() {
+    for d in "$@"; do
+        find . -type d -name "$d" -exec rm -rf {} +
+    done
+}
+
+clean() {
+    if [[ "$#" -eq "0" ]]; then
+        deldir build dist .egg *.egg-info .nox
+        deldir_recursively  "__pycache__" ".benchmarks"
+        rm -f mckit/geometry*.so
+        rm -f setup.py
+    else
+        deldir "$@"
+    fi
+}
+
+is_sourced() {
+    [[ ${FUNCNAME[@]: -1} == "source" ]]
+}
+
+is_sourced || clean "$@"

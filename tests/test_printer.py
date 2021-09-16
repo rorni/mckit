@@ -1,6 +1,6 @@
 import pytest
 
-from mckit.printer import pretty_float, separate, print_card
+from mckit.printer import pretty_float, print_card, separate
 
 
 @pytest.mark.parametrize(

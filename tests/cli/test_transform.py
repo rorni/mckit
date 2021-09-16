@@ -6,7 +6,6 @@ from mckit.cli.runner import mckit
 from mckit.parser import from_file
 from mckit.utils.resource import filename_resolver
 
-
 data_filename_resolver = filename_resolver("tests.cli")
 
 
