@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from functools import reduce
+
 from .printer import print_card, separate
 
 
@@ -73,8 +75,12 @@ class Distribution:
             for v in self._values:
                 tokens.append(str(v.name))
         else:
+            if isinstance(self._values[0], list):
+                values = reduce(list.__add__, self._values)
+            else:
+                values = self._values
             tokens.append("L" if discrete else "H")
-            for v in self._values:
+            for v in values:
                 tokens.append(str(v))
 
         if isinstance(self._probs, Distribution):
