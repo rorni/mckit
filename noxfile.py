@@ -33,7 +33,7 @@ nox.options.sessions = (
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
-supported_pythons = "3.9 3.8 3.7".split()
+supported_pythons = "3.9 3.8".split()
 black_pythons = "3.9"
 mypy_pythons = "3.9"
 lint_pythons = "3.9"
