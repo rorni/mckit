@@ -67,6 +67,8 @@ call conda activate %mckit%
 :: 2) We need numpy to build nlopt, other packages are installed just for convenience
 :: pip install mkl-devel numpy scipy scikit-learn numexpr
 
+git submodule update --recursive --depth=1
+
 
 :: install mckit to the current environment
 if "%install_tool%"=="pip" (
