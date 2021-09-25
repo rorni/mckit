@@ -1,7 +1,7 @@
 """
 """
-import sys
 import os
+import sys
 
 # import matplotlib.pyplot as plt
 # import seaborn as sb
@@ -10,27 +10,27 @@ import os
 # import scipy as sp
 # import scipy.constants as sc
 import typing as tp
-from typing import NoReturn
-from multiprocessing import Pool
 
 # from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
-import toolz
-
-# from joblib import (
-#     Memory,
-#     # Parallel, delayed, wrap_non_picklable_objects, effective_n_jobs
-# )
+from functools import reduce
+from multiprocessing import Pool
+from typing import NoReturn
 
 import dotenv
 import numpy as np
 
 from mckit.utils import assert_all_paths_exist, get_root_dir
 
+# from joblib import (
+#     Memory,
+#     # Parallel, delayed, wrap_non_picklable_objects, effective_n_jobs
+# )
+
+
 sys.path.append("..")
 
 import mckit as mk
-
 from mckit.box import Box
 from mckit.utils.logging import logger as LOG
 
@@ -139,11 +139,9 @@ def subtract_model_from_cell(
     return new_cell
 
 
-def set_common_materials(*universes) -> tp.NoReturn:
-    universes_collection = toolz.reduce(
-        set.union, map(mk.Universe.get_universes, universes)
-    )
-    common_materials = toolz.reduce(
+def set_common_materials(*universes) -> None:
+    universes_collection = reduce(set.union, map(mk.Universe.get_universes, universes))
+    common_materials = reduce(
         set.union, map(mk.Universe.get_compositions, universes_collection)
     )
     for u in universes_collection:

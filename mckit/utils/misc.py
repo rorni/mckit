@@ -37,7 +37,7 @@ MAX_DIGITS = np.finfo(float).precision
 #             yield m * (ord(c) - ord0)
 #             m *= 0.1
 #
-#     rem = np.flip(np.fromiter(_iter(), np.float))
+#     rem = np.flip(np.fromiter(_iter(), float))
 #     n = np.searchsorted(rem, max_remainder)
 #     return rem.size - n
 

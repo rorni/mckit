@@ -2,26 +2,32 @@ import os
 
 from functools import partial
 
-from extension_utils import extra_compile_args  # , include_dirs, library_dirs
+from extension_utils import SYSTEM_WINDOWS, extra_compile_args
 from setuptools import Extension
 
-geometry_dependencies = [
+# See MKL linking options for various versions of MKL and OS:
+# https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
+#
+# Windows (oneMKL 2021, MS-C/C++,64bit, c-32bit, shared library, no cluster):
+# mkl_intel_lp64_dll.lib mkl_tbb_thread_dll.lib mkl_core_dll.lib tbb.lib
+
+_libraries = [
     "mkl_rt",
     "nlopt",
 ]
 
-geometry_sources = ["geometrymodule.c", "box.c", "surface.c", "shape.c", "rbtree.c"]
-geometry_sources_root = os.path.join("mckit", "src")
-geometry_sources = list(
-    map(partial(os.path.join, geometry_sources_root), geometry_sources)
+_sources_root = os.path.join("mckit", "src")
+_sources = list(
+    map(
+        partial(os.path.join, _sources_root),
+        ["geometrymodule.c", "box.c", "surface.c", "shape.c", "rbtree.c"],  # noqa
+    )
 )
 
 geometry_extension = Extension(
     "mckit.geometry",
-    sources=geometry_sources,
-    # include_dirs=include_dirs,
-    libraries=geometry_dependencies,
-    # library_dirs=library_dirs,
+    sources=_sources,
+    libraries=_libraries,
     extra_compile_args=extra_compile_args,
     language="c",
 )

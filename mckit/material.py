@@ -1,24 +1,20 @@
+from typing import Any, Dict, Iterable, Tuple, Union, cast
+
 import math
 import os
 import sys
+
 from functools import reduce
 from operator import xor
-from typing import Any
-from typing import cast
-from typing import Dict
-from typing import Iterable
-from typing import Tuple
-from typing import Union
 
 import numpy as np
 
 from .card import Card
-from .printer import MCNP_FORMATS
 
 __all__ = ["AVOGADRO", "Element", "Composition", "Material"]
 
-AVOGADRO = 6.02214085774e23
-
+AVOGADRO = 6.0221408576e23
+MATERIAL_FRACTION_FORMAT = "{0:.6e}"
 _CHARGE_TO_NAME = {}
 _NAME_TO_CHARGE = {}
 _NATURAL_ABUNDANCE = {}
@@ -80,26 +76,9 @@ class Composition(Card):
     """
 
     _tolerance = 1.0e-3
-    """Relative composition element concentration tolerance"""
+    """Relative composition element concentration equality tolerance"""
 
-    _object_count = 0
-    """The number of objects created."""
-
-    @classmethod
-    def set_tolerance(cls, value):
-        """Sets new tolerance."""
-        if cls._object_count > 0:
-            raise AttributeError(
-                "Composition instances already exist. Cannot set tolerance."
-            )
-        cls._tolerance = value
-
-    @classmethod
-    def get_tolerance(cls):
-        """Gets relative tolerance of Composition comparison."""
-        return cls._tolerance
-
-    # TODO dvp: is there specs using both atomic and weight definitions
+    # TODO dvp: are there specs using both atomic and weight definitions?
     def __init__(
         self, atomic: TFractions = None, weight: TFractions = None, **options: Any
     ):
@@ -110,36 +89,40 @@ class Composition(Card):
 
         if weight:
             for elem, frac in weight:
-                if isinstance(elem, Element):
-                    elem_w.append(elem)
-                else:
-                    elem_w.append(Element(elem))
+                if not isinstance(elem, Element):
+                    elem = Element(elem)
+                elem_w.append(elem)
                 frac_w.append(frac)
 
         elem_a = []
         frac_a = []
         if atomic:
             for elem, frac in atomic:
-                if isinstance(elem, Element):
-                    elem_a.append(elem)
-                else:
-                    elem_a.append(Element(elem))
+                if not isinstance(elem, Element):
+                    elem = Element(elem)
+                elem_a.append(elem)
                 frac_a.append(frac)
 
         if len(frac_w) + len(frac_a) > 0:
-            I_w = np.sum(frac_w)
-            I_a = np.sum(frac_a)
-            J_w = np.sum(np.divide(frac_w, [e.molar_mass for e in elem_w]))
-            J_a = np.sum(np.multiply(frac_a, [e.molar_mass for e in elem_a]))
+            total_frac_w = np.sum(frac_w)
+            total_frac_a = np.sum(frac_a)
+            atoms_in_weight_spec = np.sum(
+                np.divide(frac_w, [e.molar_mass for e in elem_w])
+            )
+            mass_in_atomic_spec = np.sum(
+                np.multiply(frac_a, [e.molar_mass for e in elem_a])
+            )
 
-            II_diff = I_a - I_w
-            sq_root = np.sqrt(II_diff ** 2 + 4 * J_w * J_a)
-            if II_diff <= 0:
-                self._mu = 0.5 * (sq_root - II_diff) / J_w
+            totals_diff = total_frac_a - total_frac_w
+            sq_root = np.sqrt(
+                totals_diff ** 2 + 4 * atoms_in_weight_spec * mass_in_atomic_spec
+            )
+            if totals_diff <= 0:
+                self._mu = 0.5 * (sq_root - totals_diff) / atoms_in_weight_spec
             else:
-                self._mu = 2 * J_a / (sq_root + II_diff)
+                self._mu = 2 * mass_in_atomic_spec / (sq_root + totals_diff)
 
-            norm_factor = self._mu * J_w + I_a
+            norm_factor = self._mu * atoms_in_weight_spec + total_frac_a
             for el, frac in zip(elem_w, frac_w):
                 if el not in self._composition.keys():
                     self._composition[el] = 0.0
@@ -151,15 +134,11 @@ class Composition(Card):
         else:
             raise ValueError("Incorrect set of parameters.")
         self._hash = reduce(xor, map(hash, self._composition.keys()))
-        self._object_count += 1
 
     def copy(self):
         return Composition(
             atomic=cast(TFractions, self._composition.items()), **self.options
         )
-
-    def __del__(self):
-        self._object_count -= 1
 
     def __eq__(self, other):
         if len(self._composition.keys()) != len(other._composition.keys()):
@@ -168,21 +147,41 @@ class Composition(Card):
             v2 = other._composition.get(k1, None)
             if v2 is None:
                 return False
-            if not math.isclose(v1, v2, rel_tol=self._tolerance):
+            # TODO dvp: this violates exact equality definition, define separate
+            #           'approx' object and method for that if exact equality is required
+            if not math.isclose(v1, v2, rel_tol=Composition._tolerance):
                 return False
         return True
+
+    #
+    # TODO dvp: see TODO above, implementation variant
+    #
+    # from dataclasses import dataclass
+    # @dataclass(eq=False, frozen=True)
+    # class Approx:
+    #      composition: "Composition"
+    #      rel_tol: float = 1e-3
+    #      abs_tol: float = 1e-12
+    #           ...
+    #      def __hash__(self):
+    #          return hash(self.composition)
+    #
+    #      def __eq__(self, other)
+    #          ...
+    # def approx(self, rel_tol=1e-3, abs_tol=1e-12):
+    #     return Approx(self, rel_tol=rel_tol, abs_tol=abs_tol)
 
     def __hash__(self):
         return reduce(
             xor, map(hash, self._composition.keys())
-        )  # TODO dvp: why self._hash is not used
+        )  # TODO dvp: check why self._hash is not used?
 
     def mcnp_words(self, pretty=False):
         words = ["M{0} ".format(self.name())]
         for elem, frac in self._composition.items():
             words.append(elem.mcnp_repr())
             words.append("  ")
-            words.append(MCNP_FORMATS["material_fraction"].format(frac))
+            words.append(MATERIAL_FRACTION_FORMAT.format(frac))
             words.append("\n")
         return words
 
@@ -192,17 +191,17 @@ class Composition(Card):
     def __iter__(self):
         return iter(self._composition.items())
 
-    def __contains__(self, item):
+    def __contains__(self, item: Union[str, "Element"]) -> bool:
         """Checks if the composition contains the item.
 
         Parameters
         ----------
-        item : str or Element
+        item :
             Isotope. It can be either isotope name or Element instance.
 
         Returns
         -------
-        result : bool
+        result :
             True if the composition contains the isotope, False otherwise.
         """
         if not isinstance(item, Element):
@@ -332,17 +331,17 @@ class Composition(Card):
         return iter(self._composition.keys())
 
     @staticmethod
-    def mixture(*compositions):
+    def mixture(*compositions: Tuple["Composition", float]) -> "Composition":
         """Makes mixture of the compositions with specific fractions.
 
         Parameters
         ----------
-        compositions : list
+        compositions :
             List of pairs composition, fraction.
 
         Returns
         -------
-        mix : Composition
+        mix :
             Mixture.
         """
         atomics = []
@@ -402,22 +401,6 @@ class Material:
 
     # Relative density tolerance. Relative difference in densities when materials
     _tolerance = 1.0e-3
-    # The number of created Material instances.
-    _object_count = 0
-
-    @classmethod
-    def set_tolerance(cls, value):
-        """Sets new tolerance."""
-        if cls._object_count > 0:
-            raise AttributeError(
-                "Material instances already exist. Cannot set tolerance."
-            )
-        cls._tolerance = value
-
-    @classmethod
-    def get_tolerance(cls):
-        """Gets relative tolerance of Composition comparison."""
-        return cls._tolerance
 
     def __init__(
         self,
@@ -443,10 +426,6 @@ class Material:
         else:
             self._n = density * AVOGADRO / self._composition.molar_mass
         self._options = options
-        self._object_count += 1
-
-    def __del__(self):
-        self._object_count -= 1
 
     def __eq__(self, other):
         if not math.isclose(self._n, other.concentration, rel_tol=self._tolerance):
@@ -563,25 +542,12 @@ class Element:
         A - the number of protons and neutrons. If A = 0, then natural abundance
         is used. Also it can be an atom_name optionally followed by '-' and A.
         '-' can be omitted. If there is no A, then A is assumed to be 0.
-    lib : str, optional
-        Name of library.
-    isomer : int
-        Isomer level. Default: 0 - ground state.
     comment : str, optional
         Optional comment to the element.
-
-    Properties
-    ----------
-    _charge : int
-        Charge number of the isotope.
-    _mass_number : int
-        Isotope's mass number.
-    molar_mass : float
-        Isotope's molar mass.
     lib : str
         Data library ID. Usually it is MCNP library, like '31b' for FENDL31b.
     isomer : int
-        Isomer level. Usually may appear in FISPACT output.
+        Isomer level. Default 0. Usually may appear in FISPACT output.
 
     Methods
     -------

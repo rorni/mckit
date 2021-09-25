@@ -1,13 +1,15 @@
 from typing import NamedTuple
 
+import mckit.utils.named as nm
 import pytest
 
-import mckit.utils.named as nm
-from mckit.utils.Index import ignore_equal_objects_strategy
-from mckit.utils.Index import IndexOfNamed
-from mckit.utils.Index import NumberedItemDuplicateError
-from mckit.utils.Index import raise_on_duplicate_strategy
-from mckit.utils.Index import StatisticsCollector
+from mckit.utils.Index import (
+    IndexOfNamed,
+    NumberedItemDuplicateError,
+    StatisticsCollector,
+    ignore_equal_objects_strategy,
+    raise_on_duplicate_strategy,
+)
 
 
 class Something(NamedTuple):

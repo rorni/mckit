@@ -1,12 +1,4 @@
-from .utils import *
-from .Lexer import Lexer
 from .cell_index import CellDummyIndex, CellNotFoundError, CellStrictIndex, DummyCell
-from .surface_index import (
-    SurfaceDummyIndex,
-    SurfaceNotFoundError,
-    SurfaceStrictIndex,
-    DummySurface,
-)
 from .composition_index import (
     CompositionDummyIndex,
     CompositionNotFoundError,
@@ -14,9 +6,17 @@ from .composition_index import (
     DummyComposition,
     DummyMaterial,
 )
+from .Lexer import Lexer
+from .surface_index import (
+    DummySurface,
+    SurfaceDummyIndex,
+    SurfaceNotFoundError,
+    SurfaceStrictIndex,
+)
 from .transformation_index import (
+    DummyTransformation,
     TransformationDummyIndex,
     TransformationNotFoundError,
     TransformationStrictIndex,
-    DummyTransformation,
 )
+from .utils import *

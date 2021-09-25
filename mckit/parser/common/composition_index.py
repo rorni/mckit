@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Iterable, Optional
 
 from mckit.material import Composition, Material
 from mckit.utils.Index import Index, NumberedItemNotFoundError

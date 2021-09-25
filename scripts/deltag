@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+deltag() {
+    tag=$1
+    shift
+    if [[ -z "$tag" ]] ; then
+        echo "Specify tag to delete"
+        return 1
+    fi
+    remote=${2:-origin}
+    echo "Deleting tag $tag from $remote"
+    set -e
+    git push --delete $remote refs/tags/$tag
+    git tag --delete $tag
+}
+
+deltag "$@"

@@ -2,15 +2,15 @@
 """
 Проверяет корректность модели и выдает статистику.
 """
-from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
-from mckit.utils.logging import logger
+from pathlib import Path
 
 from mckit import Universe
 from mckit.card import Card
-from mckit.parser.mcnp_input_sly_parser import from_file, ParseResult
+from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file
 from mckit.universe import collect_transformations
+from mckit.utils.logging import logger
 
 
 def check_duplicates(

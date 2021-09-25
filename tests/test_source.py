@@ -19,7 +19,11 @@ class TestDistribution:
 
     @pytest.mark.parametrize(
         "name, values, probs, var",
-        [(1, [1, 2, 3], [1, 2, 3], "X"), (2, [1, 2, 3, 4], [1, 2, 3], "Y")],
+        [
+            (1, [1, 2, 3], [1, 2, 3], "X"),
+            (2, [1, 2, 3, 4], [1, 2, 3], "Y"),
+            (3, [[0.1, 0.5, 0.4], [1, 0, 0]], [0.3, 0.7], "VEC"),
+        ],
     )
     def test_create(self, name, values, probs, var):
         d = Distribution(name, values, probs, variable=var)
@@ -70,6 +74,18 @@ class TestDistribution:
                 [Distribution(10, [1, 2], [1, 2]), Distribution(11, [1, 2], [2])],
                 Distribution(12, [1, 2], [1, 2]),
                 "DS5 S 10 11",
+            ),
+            (
+                4,
+                [[0.5, 0.3, -0.2], [-0.9, 0, 0.4]],
+                [0.3, 0.7],
+                "SI4 L 0.5 0.3 -0.2 -0.9 0 0.4\nSP4 D 0.3 0.7",
+            ),
+            (
+                5,
+                [[0, -1, 0], [0.5, 0, 0.3]],
+                Distribution(4, [5, 6], [7, 8]),
+                "DS5 L 0 -1 0 0.5 0 0.3",
             ),
         ],
     )

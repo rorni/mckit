@@ -19,6 +19,8 @@ def create_directory(path: Path, clean: bool = True) -> Path:
 
 def check_directories(*directories: str) -> None:
     for directory in directories:
+        if not isinstance(directory, str):
+            raise TypeError(f"The value {directory} is not a string")
         if not Path(directory).is_dir():
             raise EnvironmentError(f"The directory {directory} does not exist")
 
@@ -26,11 +28,9 @@ def check_directories(*directories: str) -> None:
 def insert_directories(
     destination: List[str], value: Union[str, List[str]]
 ) -> List[str]:
-    dirs = []
-    if isinstance(value, list):
-        dirs.extend(value)
-    elif value not in destination:
-        dirs.append(value)
+    dirs = value
+    if not isinstance(value, list):
+        dirs = [dirs]
     for old in destination:
         if old not in dirs:
             dirs.append(old)
