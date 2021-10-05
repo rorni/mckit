@@ -62,6 +62,13 @@ call conda env remove -n %mckit% -q -y
 call conda create -n %mckit% python=%python_version% -q -y
 call conda activate %mckit%
 
+git submodule update --recursive --depth=1
+:: 1) Conda downgrades mkl, so we use pip instead (ant it works fine for us)
+:: 2) We need numpy to build nlopt, other packages are installed just for convenience
+:: pip install mkl-devel numpy scipy scikit-learn numexpr
+
+
+:: install mckit to the current environment
 if "%install_tool%"=="pip" (
     pip install .
     pip install -r requirements-dev.txt
