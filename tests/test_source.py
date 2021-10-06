@@ -58,39 +58,40 @@ class TestDistribution:
         assert inner_names == expected_names
 
     @pytest.mark.parametrize(
-        "name, values, probs, expected",
+        "name, values, probs, discrete, expected",
         [
-            (1, [1, 2, 3], [4, 5, 6], "SI1 L 1 2 3\nSP1 D 4 5 6"),
-            (2, [1, 2, 3], [4, 5], "SI2 H 1 2 3\nSP2 D 0 4 5"),
-            (3, [1, 2, 3], Distribution(4, [4, 5, 6], [7, 8, 9]), "DS3 L 1 2 3"),
+            (1, [1, 2, 3], [4, 5, 6], True, "SI1 L 1 2 3\nSP1 D 4 5 6"),
+            (2, [1, 2, 3], [4, 5], False, "SI2 H 1 2 3\nSP2 D 0 4 5"),
+            (3, [1, 2, 3], Distribution(4, [4, 5, 6], [7, 8, 9]), True, "DS3 L 1 2 3"),
             (
                 4,
                 [Distribution(10, [1, 2], [1, 2]), Distribution(11, [1, 2], [2])],
-                [1, 2],
+                [1, 2], False, 
                 "SI4 S 10 11\nSP4 D 1 2",
             ),
             (
                 5,
                 [Distribution(10, [1, 2], [1, 2]), Distribution(11, [1, 2], [2])],
-                Distribution(12, [1, 2], [1, 2]),
+                Distribution(12, [1, 2], [1, 2]), False, 
                 "DS5 S 10 11",
             ),
             (
                 4,
                 [[0.5, 0.3, -0.2], [-0.9, 0, 0.4]],
-                [0.3, 0.7],
+                [0.3, 0.7], True,
                 "SI4 L 0.5 0.3 -0.2 -0.9 0 0.4\nSP4 D 0.3 0.7",
             ),
             (
                 5,
                 [[0, -1, 0], [0.5, 0, 0.3]],
-                Distribution(4, [5, 6], [7, 8]),
+                Distribution(4, [5, 6], [7, 8]), True,
                 "DS5 L 0 -1 0 0.5 0 0.3",
             ),
+            (6, [1, 2, 3], [4, 5, 6], False, "SI6 A 1 2 3\nSP6 4 5 6"),
         ],
     )
-    def test_mcnp_repr(self, name, values, probs, expected):
-        d = Distribution(name, values, probs)
+    def test_mcnp_repr(self, name, values, probs, discrete, expected):
+        d = Distribution(name, values, probs, is_discrete=discrete)
         assert d.mcnp_repr() == expected
 
     @pytest.mark.parametrize(
@@ -125,7 +126,7 @@ class TestSource:
     distrs = [
         Distribution(1, [1, 2], [1]),
         Distribution(2, [2, 3], [1]),
-        Distribution(3, [4, 5, 6], [1, 2, 3], "X"),
+        Distribution(3, [4, 5, 6], [1, 2, 3], "X", True),
     ]
 
     @pytest.mark.parametrize(
@@ -138,7 +139,7 @@ class TestSource:
                 "SDEF PAR=2 X=D1 Y=D3\nSI1 H 1 2\nSP1 D 0 1\nSI3 L 4 5 6\nSP3 D 1 2 3",
             ),
             (
-                {"PAR": 2, "X": distrs[2], "Y": Distribution(2, [1, 2, 3], distrs[2])},
+                {"PAR": 2, "X": distrs[2], "Y": Distribution(2, [1, 2, 3], distrs[2], is_discrete=True)},
                 "SDEF PAR=2 X=D3 Y=FX D2\nSI3 L 4 5 6\nSP3 D 1 2 3\nDS2 L 1 2 3",
             ),
             (
