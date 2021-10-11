@@ -44,7 +44,7 @@ jobs:
       - name: Install nox
         run: pip install nox==2021.6.12
       - name: Install poetry
-        run: pip install poetry==1.1.8
+        run: pip install poetry==1.1.11
       - name: Run Safety test
         run: nox -s safety
         if: matrix.python-version == '3.9'  && matrix.os == 'ubuntu-latest'
