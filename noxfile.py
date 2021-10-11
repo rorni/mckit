@@ -91,7 +91,9 @@ def tests(session: Session) -> None:
         "--no-dev",
         external=True,
     )
-    install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
+    install_with_constraints(
+        session, "pytest", "pytest-cov", "pytest-mock", "coverage[toml]"
+    )
     if on_windows:
         session.bin_paths.insert(
             0, str(path / "Library/bin")
