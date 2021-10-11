@@ -33,7 +33,7 @@ nox.options.sessions = (
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
-supported_pythons = "3.9 3.8".split()
+supported_pythons = "3.9 3.8".split()  # TODO dvp: add python 3.10
 black_pythons = "3.9"
 mypy_pythons = "3.9"
 lint_pythons = "3.9"
@@ -228,7 +228,6 @@ def codecov(session: Session) -> None:
         "pytest",
         "pytest-cov",
         "pytest-mock",
-        # "coverage",
         "codecov",
     )
     session.run("coverage", "xml", "--fail-under=0")
