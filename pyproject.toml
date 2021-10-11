@@ -110,6 +110,7 @@ source = ["mckit", "*/site-packages"]
 [tool.coverage.run]
 branch = true
 source = ["mckit"]
+omit = ["*_tab.py"]
 
 [tool.coverage.report]
 show_missing = true
@@ -122,6 +123,8 @@ exclude_lines = [
     "if 0:",
     "if __name__ == .__main__.:",
 ]
+ignore_errors = true
+sort = "Cover"
 # fail_under = 100  # So far, this is just a dream.
 
 [tool.poetry.urls]
