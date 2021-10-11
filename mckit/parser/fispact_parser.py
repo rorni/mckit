@@ -3,8 +3,16 @@ import re
 import ply.lex as lex
 import ply.yacc as yacc
 
-from mckit.constants import TIME_UNITS
 from mckit.material import Element
+
+# TODO dvp: the TIME_UNITS should be IntEnum and change 365*24 to (365*24+6)
+TIME_UNITS = {
+    "SECS": 1.0,
+    "MINS": 60.0,
+    "HOURS": 3600.0,
+    "DAYS": 3600.0 * 24,
+    "YEARS": 3600.0 * 24 * 365,
+}
 
 TIME_ALIAS = {
     "s": TIME_UNITS["SECS"],

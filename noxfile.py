@@ -33,7 +33,7 @@ nox.options.sessions = (
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
-supported_pythons = "3.9 3.8 3.7".split()
+supported_pythons = "3.9 3.8".split()  # TODO dvp: add python 3.10
 black_pythons = "3.9"
 mypy_pythons = "3.9"
 lint_pythons = "3.9"
@@ -91,7 +91,9 @@ def tests(session: Session) -> None:
         "--no-dev",
         external=True,
     )
-    install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
+    install_with_constraints(
+        session, "pytest", "pytest-cov", "pytest-mock", "coverage[toml]"
+    )
     if on_windows:
         session.bin_paths.insert(
             0, str(path / "Library/bin")
@@ -228,7 +230,6 @@ def codecov(session: Session) -> None:
         "pytest",
         "pytest-cov",
         "pytest-mock",
-        # "coverage",
         "codecov",
     )
     session.run("coverage", "xml", "--fail-under=0")

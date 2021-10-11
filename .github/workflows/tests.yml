@@ -31,10 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9']
-        exclude:
-          - os: windows-latest
-            python-version: 3.7   # py37 on Windows takes too much efforts, and it wants nlopt.dll
+        python-version: ['3.8', '3.9']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -45,9 +42,9 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
       - name: Install nox
-        run: pip install nox==2020.12.31
+        run: pip install nox==2021.6.12
       - name: Install poetry
-        run: pip install poetry==1.1.4
+        run: pip install poetry==1.1.11
       - name: Run Safety test
         run: nox -s safety
         if: matrix.python-version == '3.9'  && matrix.os == 'ubuntu-latest'
