@@ -54,7 +54,7 @@ jobs:
         python -m ensurepip
         python -m pip install -U pip
         pip install nox==2020.12.31
-        pip install poetry==1.1.4
+        pip install poetry==1.1.11
     - name: Checkout submodules
       run: git submodule update --init --recursive --depth=1
 #    - run: nox -s tests -p ${{ matrix.python-version }}
