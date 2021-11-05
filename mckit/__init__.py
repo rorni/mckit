@@ -41,18 +41,26 @@ if platform.system() == "Windows":
 elif platform.system() == "Linux":
     if (
         os.environ.get("LD_LIBRARY_PATH") is None
-    ):  # a user can use other location form mkl library.
-        # preload library
-        suffixes = ".so .so.1 .so.0".split()
-        mkl_lib_path = Path(sys.prefix, "lib", "libmkl_rt.so")
-        mkl_lib = None
-        for s in suffixes:
-            p = mkl_lib_path.with_suffix(s)
-            if p.exists():
-                mkl_Lib = cdll.LoadLibrary(str(p))
-        assert (
-            mkl_Lib is not None
-        ), f"The MKL library should be either available at {mkl_lib_path}, or with LD_LIBRARY_PATH"
+    ):  # a user can use other location for the MKL and nlopt libraries.
+
+        def preload_library(_lib_path):
+            suffixes = ".so .so.1 .so.0".split()
+            _lib = None
+            for s in suffixes:
+                p = _lib_path.with_suffix(s)
+                if p.exists():
+                    _lib = cdll.LoadLibrary(str(p))
+            return _lib
+
+        libs = list(
+            map(lambda x: Path(sys.prefix, "lib", f"{x}.so"), ["libmkl_rt", "libnlopt"])
+        )
+
+        for lib in libs:
+            loaded_lib = preload_library(lib)
+            assert (
+                loaded_lib is not None
+            ), f"The library should be either available at {lib}, or with LD_LIBRARY_PATH"
 
 
 from .body import Body, Shape
