@@ -22,6 +22,12 @@ def filename_resolver(package=None):
 
 def path_resolver(package=None):
 
+    # The package is to be found here, otherwise inspect will find this package
+    # instead of caller's package.
+    if package is None:
+        module = inspect.getmodule(inspect.stack()[1][0])
+        package = module.__name__
+
     resolver = filename_resolver(package)
 
     def func(resource):

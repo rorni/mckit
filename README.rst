@@ -17,7 +17,6 @@
    :target: https://github.com/dvp2015/mckit
 
 
-
 MCKIT: MCNP model and results processing utilities
 ==================================================
 

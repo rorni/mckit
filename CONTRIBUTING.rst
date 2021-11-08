@@ -5,12 +5,12 @@ Install
 
 From source: ::
 
-    git clone git@github.com:rorni/mckit.git
+    git clone git@github.com:MC-kit/mckit.git
     cd mckit
 
     # set local python environment with `pyenv`, `venv` or `conda`
-    # pyenv virtualenv 3.9.1 mckit
-    # pyenv local mckit 3.9.1 3.8.5 3.7.9 3.6.12
+    # pyenv virtualenv 3.9.7 mckit
+    # pyenv local mckit 3.9.7 3.8.12 3.7.12
     # or (conda is better for Windows)
     # conda create -n mckit python=3.9
     # conda activate mckit
@@ -34,7 +34,7 @@ From wheel: ::
 
 From PyPI: ::
 
-    pip install mckit
+    pip3 install mckit
 
 Tutorial
 --------
@@ -100,38 +100,41 @@ Commit Message Format
 
 To provide proper change logs, apply this format for commit messages::
 
-    <type>: <short summary>
+    <type>(<scope>)?: <short summary>
       │       │
       │       └─⫸ Summary in present tense. Not capitalized. No period at the end.
       │
-      └─⫸ Commit Type: breaking|build|ci|doc|feature|bug|performance|refactoring|removal|style|test
+      └─⫸ Commit Type: build|ci|docs|feature|fix|perf|refactor|removal|style|test|revert|bump
 
+    Body...
 
 .. list-table:: Commit types description
-    :widths: 20 30
+    :widths: 10 30
     :header-rows: 1
 
     * - Commit Type
       - Description
-    * - breaking
-      - Breaking changes introducing API incompatibility
     * - build
       - Build System
     * - ci
       - Continuous Integration'
-    * - doc
+    * - docs
       - Documentation
-    * - feature
+    * - feat
       - Features change to satisfy tests
-    * - bug
+    * - fix
       - Fixes bug, no other changes in the code
-    * - performance
+    * - perf
       - Performance, benchmarks or profiling changes.
-    * - refactoring
+    * - refactor
       - Refactoring code without changes in features and tests
     * - removal
       - Removing and deprecations in code or dependencies
+    * - revert
+      - Reverting changes
     * - style
       - Code and documentation style improvements. No changes in tests and features.
     * - test
       - Changes in tests without adding features
+    * - bump
+      - on version (and only version) change, skip CI tests on github actions

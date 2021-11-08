@@ -15,7 +15,7 @@ jobs:
     - name: Install nox
       run: pip install nox==2020.12.31
     - name: Install poetry
-      run: pip install poetry==1.1.4
+      run: pip install poetry==1.1.11
     - name: Checkout submodules
       run: git submodule update --init --recursive --depth=1
     - name: Run pytest, coverage and upload results to codecov
