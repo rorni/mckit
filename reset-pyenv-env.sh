@@ -5,7 +5,7 @@
 # dvp, Dec 2020
 #
 
-default_python_version=3.9.1
+default_python_version=3.9.7
 
 usage() {
   cat <<- EndOfMessage
@@ -52,7 +52,7 @@ reset_env() {
   pyenv local "$python_version"
   pyenv virtualenv-delete -f "$mckit"
   pyenv virtualenv "$python_version" "$mckit"
-  pyenv local "$mckit" "3.9.1" "3.8.6" "3.7.9" "3.6.12"
+  pyenv local "$mckit" "3.9.7" "3.8.12"
 
   # pip is obsolete almost always
   python -m pip install --upgrade pip
