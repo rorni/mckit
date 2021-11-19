@@ -146,17 +146,17 @@ function check_dirs() {
 }
 
 
-function filter_printenv() {
+filter_printenv() {
     local what=$*
     if [[ -z "$what" ]]; then
-        what="$(make_list '|^' \
+        what="$(join_strings '|^' \
             pyenv \
             poetry \
             mkl \
             mckit \
         )"
     fi
-    local exclude="$(make_list '|^' \
+    local exclude="$(join_strings '|^' \
         python \
         old_path \
         pwd \

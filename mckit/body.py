@@ -318,7 +318,7 @@ class Shape(_Shape):
                     return False
         return True
 
-    def intersection(self, *other):
+    def intersection(self, *other: Union["Shape", "Body"]) -> "Shape":
         """Gets intersection with other shape.
 
         Parameters
