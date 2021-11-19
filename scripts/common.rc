@@ -13,60 +13,126 @@ export PYTHON_EXECUTALBE="${PYTHON}"
 export PYTHON_INCLUDE_DIR=$(python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")
 export PYTHON_LIBRARY=$(python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
 
-#
-# Joins words separated with a given separator (first argument).
-#
-function make_list() {
-    local first="yes"
-    t=""
-    local separator=$1
-    shift
-    for p in $*
-    do
-            # echo "#1: p=$p" >> build_utils.test.log
-            array=($(echo "${p//$separator/ }"))
-            for pp in "${array[@]}"
-            do
-                # echo "#2: pp=$pp" >> build_utils.test.log
-                if [[ "$t" != "$pp" ]]         && \
-                    [[ "$t" == "${t#${pp}$separator}" ]] && \
-                    [[ "$t" == "${t%$separator${pp}}" ]] && \
-                    [[ "$t" == "${t/$separator${pp}$separator}" ]];  then
-                #  pp is not present in t
-                if [[ $first == "yes" ]]; then
-                    first="no"
-                else
-                    t="$t$separator"
+join_strings() {
+    if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+cat << 'END'
+Usage:
+
+   join_strings [options...] item1 item2 ...
+
+Options:
+    -h, --help              - print this help text
+    -u, --unique            - drop non unique items
+    -s, --separator <CHAR>  - use <CHAR> as item separator, default ':'
+
+Forms list of items with given separator from the given arguments optionally removing duplicates.
+Handles items with spaces.
+
+Example:
+v=$(join_strings -s "," -u 1 2 3,4,1 3 "a b" c)
+echo $v
+
+Output:
+1,2,3,4,a b,c
+END
+        return 0
+    fi
+    local separator=":"
+    local unique=""
+    while true; do
+        local arg="$1"
+        if [[ "-s" == "$arg" ]] || [[ "--separator" == "$arg" ]]; then
+            shift
+            separator="$1"
+            shift
+        elif [[ "-u" == "$arg" ]] || [[ "--unique" == "$arg" ]]; then
+            shift
+            unique="yes"
+        else
+            break
+        fi
+    done
+    res=""
+    # echo "Unique: $unique, separator: \"$separator\""
+    for arg in $@; do
+        IFS=$separator array=(${arg})
+        for inner_arg in ${array[@]}; do 
+            # Note: the right hand side of operator =~ is to be unquoted
+            if [[ -z "$unique" ]] || [[ ! "$res" =~ (^|$separator)$inner_arg($separtor|$) ]]; then
+                if [[ -n "$res" ]]; then
+                    res="${res}${separator}"
                 fi
-                t="${t}${pp}"
-                # echo "#3: t=$t" >> build_utils.test.log
+                res="${res}${inner_arg}"
             fi
         done
     done
-    echo "$t"
+    echo "${res}"
 }
 
+make_path() {
+    if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+cat << 'END'
+    Usage:
 
-#
-# Joins words separated with path separator.
-#
-function make_path() {
-    make_list ":" $*
+        make_path path1 path2 ...
+    
+        Forms PATH like text output from the given arguments removing duplicates.
+        Handles items with spaces.
+    
+    Example:
+        v=$(make_path 1 2 3:4:1 3 "a b")
+        echo $v
+
+    Output:
+        1:2:3:4:a b
+END
+        return 0
+    fi
+    join_strings -u $@
+}
+
+add_to_path() {
+    export PATH="$(make_path $PATH $@)"
+}
+
+prepend_path() {
+    export PATH="$(make_path $@ $PATH)"
 }
 
 
 #
 # Joins words separated with space.
 #
-function make_flags() {
-    make_list " " $*
+make_flags() {
+    join_strings " " $*
+}
+
+get_dir() {
+    curdir="$(pwd)"
+    local src="$1"
+    while [ -h "$src" ]; do # resolve $src until the file is no longer a symlink
+        DIR="$( cd -P "$( dirname "$src" )" >/dev/null 2>&1 && pwd )"
+        src="$(readlink "$src")"
+        # if $src was a relative symlink, we need to resolve it relative
+        # to the path where the symlink file was located
+        [[ $src != /* ]] && src="$DIR/$src" 
+    done
+    cd -P "$( dirname "$src" )" >/dev/null 2>&1 && pwd
+    cd "$curdir" > /dev/null 2>&1
+}
+
+mydir () {
+    get_dir "${BASH_SOURCE[0]}"
+}
+
+is_main() {
+    [[ "${FUNCNAME[-1]}" == "main" ]]
 }
 
 
 function get_absolute_path_name() {
     echo $(readlink -m "$1")
 }
-
 
 function check_dirs() {
     for d in $*
@@ -140,53 +206,3 @@ function poetry_python() {
     echo "$(poetry run which python)"
 }
 
-
-#
-# TODO dvp
-#
-# Git finds the most recent tag and adds suffixes corresponding to current branch.
-# If the current branch correspondes to the tag (as it should be for master),
-# then no suffixes are added.
-#
-# Make this match the poetry pattern
-# VERSION_PATTERN = re.compile(
-        # r"""
-        # ^
-        # v?
-        # (?:
-         # (?:(?P<epoch>[0-9]+)!)?                           # epoch
-         # (?P<release>[0-9]+(?:\.[0-9]+)*)                  # release segment
-         # (?P<pre>                                          # pre-release
-          # [-_.]?
-          # (?P<pre_l>(a|b|c|rc|alpha|beta|pre|preview))
-          # [-_.]?
-          # (?P<pre_n>[0-9]+)?
-         # )?
-         # (?P<post>                                         # post release
-          # (?:-(?P<post_n1>[0-9]+))
-          # |
-          # (?:
-           # [-_.]?
-           # (?P<post_l>post|rev|r)
-           # [-_.]?
-           # (?P<post_n2>[0-9]+)?
-          # )
-         # )?
-         # (?P<dev>                                          # dev release
-          # [-_.]?
-          # (?P<dev_l>dev)
-          # [-_.]?
-          # (?P<dev_n>[0-9]+)?
-         # )?
-         # )
-         # (?:\+(?P<local>[a-z0-9]+(?:[-_.][a-z0-9]+)*))?       # local version
-         # $
-         # """,
-         # re.IGNORECASE | re.VERBOSE,
-         # )
-# or apply poetry-dynamic-versioning plugin
-# function sync_toml_version_with_git() {
-    # local _mgv
-    # _mgv="$(git describe --always --long HEAD)"
-    # poetry version "${_mgv#v\.}"
-# }
