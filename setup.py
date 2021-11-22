@@ -82,7 +82,7 @@ extensions = [
 
 setup(
     name='mckit',
-    version='0.1.2',
+    version='0.1.3',
     packages=find_packages(),
     package_data={'mckit': ['data/isotopes.dat', 'libnlopt-0.dll']},
     url='https://gitlab.iterrf.ru/Rodionov/mckit',
