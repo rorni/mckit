@@ -268,26 +268,6 @@ class CylMesh:
         """
         raise NotImplementedError
 
-    def calculate_volumes(self, cells, with_mat_only=True, verbose=False, min_volume=1.e-3):
-        """Calculates volumes of cells.
-
-        Parameters
-        ----------
-        cells : list[Body]
-            List of cells.
-        verbose : bool
-            Verbose output during calculations.
-        min_volume : float
-            Minimum volume for cell volume calculations
-
-        Returns
-        -------
-        volumes : dict
-            Volumes of cells for every voxel. It is dictionary cell -> vol_matrix.
-            vol_matrix is SparseData instance - volume of cell for each voxel.
-        """
-        raise NotImplementedError
-
     def get_voxel(self, i, j, k):
         """Gets voxel.
 

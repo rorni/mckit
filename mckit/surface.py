@@ -188,6 +188,12 @@ class Surface(Card):
     def __eq__(self, other):
         return id(self) == id(other)
 
+    def __getstate__(self):
+        return self.options
+
+    def __setstate__(self, state):
+        self.options = state
+
     @abstractmethod
     def transform(self, tr):
         """Applies transformation to this surface.
@@ -295,6 +301,14 @@ class Plane(Surface, _Plane):
         words.append(pretty_float(-self._get_k(), self._k_digits))
         return print_card(words)
 
+    def __getstate__(self):
+        return self._v, self._k, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        v, k, options = state
+        _Plane.__init__(self, v, k)
+        Surface.__setstate__(self, options)
+
 
 class Sphere(Surface, _Sphere):
     """Sphere surface class.
@@ -334,6 +348,14 @@ class Sphere(Surface, _Sphere):
         for c in self._get_center():
             result ^= hash(c)
         return result
+
+    def __getstate__(self):
+        return self._center, self._radius, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        c, r, options = state
+        _Sphere.__init__(self, c, r)
+        Surface.__setstate__(self, options)
 
     def __eq__(self, other):
         if not isinstance(other, Sphere):
@@ -419,6 +441,14 @@ class Cylinder(Surface, _Cylinder):
         self._radius_digits = significant_digits(radius, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
+
+    def __getstate__(self):
+        return self._pt, self._axis, self._radius, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        pt, axis, radius, options = state
+        _Cylinder.__init__(self, pt, axis, radius)
+        Surface.__setstate__(self, options)
 
     def copy(self):
         instance = Cylinder.__new__(Cylinder, self._pt, self._axis, self._radius)
@@ -573,6 +603,14 @@ class Cone(Surface, _Cone):
         for a in self._get_axis():
             result ^= hash(a)
         return result
+
+    def __getstate__(self):
+        return self._apex, self._axis, self._t2, self._sheet, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        apex, axis, ta, sheet, options = state
+        _Cone.__init__(self, apex, axis, np.sqrt(ta), sheet)
+        Surface.__setstate__(self, options)
 
     def __eq__(self, other):
         if not isinstance(other, Cone):
@@ -736,6 +774,16 @@ class GQuadratic(Surface, _GQuadratic):
     def _get_k(self):
         return round_scalar(self._k, self._k_digits)
 
+    def __getstate__(self):
+        return self._m, self._v, self._k, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        m, v, k, options = state
+        L = np.linalg.eigvalsh(m)
+        factor = 1 / np.max(np.abs(L))
+        _GQuadratic.__init__(self, m, v, k, factor)
+        Surface.__setstate__(self, options)
+
     def transform(self, tr):
         return GQuadratic(self._m, self._v, self._k, transform=tr,
                           **self.options)
@@ -843,6 +891,14 @@ class Torus(Surface, _Torus):
 
     def _get_b(self):
         return round_scalar(self._b, self._b_digits)
+
+    def __getstate__(self):
+        return self._center, self._axis, self._R, self._a, self._b, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        center, axis, R, a, b, options = state
+        _Torus.__init__(self, center, axis, R, a, b)
+        Surface.__setstate__(self, options)
 
     def transform(self, tr):
         return Torus(self._center, self._axis, self._R, self._a, self._b,
