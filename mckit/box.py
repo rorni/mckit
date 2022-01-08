@@ -1,7 +1,9 @@
 import numpy as np
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import EX, EY, EZ, Box as _Box, GLOBAL_BOX as _GLOBAL_BOX
+from .geometry import EX, EY, EZ
+from .geometry import GLOBAL_BOX as _GLOBAL_BOX
+from .geometry import Box as _Box
 
 
 class Box(_Box):

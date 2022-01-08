@@ -1,13 +1,14 @@
 import inspect
-import pkg_resources as pkg
 
 from pathlib import Path
+
+import pkg_resources as pkg
 
 
 def filename_resolver(package=None):
     if package is None:
-        caller_package = inspect.getmodule(inspect.stack()[1][0]).__name__
-        package = caller_package
+        module = inspect.getmodule(inspect.stack()[1][0])
+        package = module.__name__
 
     resource_manager = pkg.ResourceManager()
 
@@ -20,6 +21,12 @@ def filename_resolver(package=None):
 
 
 def path_resolver(package=None):
+
+    # The package is to be found here, otherwise inspect will find this package
+    # instead of caller's package.
+    if package is None:
+        module = inspect.getmodule(inspect.stack()[1][0])
+        package = module.__name__
 
     resolver = filename_resolver(package)
 

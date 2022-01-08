@@ -1,24 +1,28 @@
 import typing as tp
-import os
-from copy import deepcopy
-from functools import reduce
-from itertools import product, groupby, permutations
-from multiprocessing import Pool
+
 from typing import Iterable, List, NewType, Optional, Set, Union
 
-import numpy as np
-from click import progressbar
+import os
+
+from copy import deepcopy
+from functools import reduce
+from itertools import groupby, permutations, product
+from multiprocessing import Pool
 
 import mckit.material as mm
+import numpy as np
+
+from click import progressbar
+
+from .box import GLOBAL_BOX, Box
+from .card import Card
+from .constants import MIN_BOX_VOLUME
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from .geometry import Shape as _Shape
-from .box import GLOBAL_BOX, Box
-from .constants import MIN_BOX_VOLUME
-from .printer import print_card, CELL_OPTION_GROUPS, print_option
+from .printer import CELL_OPTION_GROUPS, print_card, print_option
 from .surface import Surface
 from .transformation import Transformation
-from .card import Card
 from .utils import filter_dict
 
 __all__ = ["Shape", "Body", "simplify", "GLOBAL_BOX", "Card", "TGeometry", "TGeometry"]
@@ -156,7 +160,7 @@ class Shape(_Shape):
 
     @classmethod
     def _clean_args(cls, opc, *args):
-        """Performs cleaning of input arguments."""
+        """Clean input arguments."""
         args = [a.shape if isinstance(a, Body) else a for a in args]
         cls._verify_opc(opc, *args)
         if opc == "I" or opc == "U":
@@ -314,7 +318,7 @@ class Shape(_Shape):
                     return False
         return True
 
-    def intersection(self, *other):
+    def intersection(self, *other: Union["Shape", "Body"]) -> "Shape":
         """Gets intersection with other shape.
 
         Parameters
@@ -364,6 +368,17 @@ class Shape(_Shape):
                 a = a.apply_transformation()
                 # TODO dvp: check if call of apply_transformation() should be moved to caller site
                 #           it would be better to change only transformations instead of the surfaces
+            args.append(a)
+        return Shape(opc, *args)
+
+    def apply_transformation(self):
+        opc = self.opc
+        args = []
+        for a in self.args:
+            if hasattr(a, "apply_transformation"):
+                a = a.apply_transformation()
+            else:
+                pass
             args.append(a)
         return Shape(opc, *args)
 

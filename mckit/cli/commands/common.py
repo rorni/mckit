@@ -1,12 +1,12 @@
 import typing as tp
+
 from io import StringIO
 from pathlib import Path
 
 import click
 
 from mckit.constants import MCNP_ENCODING
-from mckit.universe import Universe
-from mckit.universe import UniverseAnalyser
+from mckit.universe import Universe, UniverseAnalyser
 from mckit.utils.logging import logger
 
 # This is the encoding swallowing non ascii (neither unicode) symbols happening in MCNP models code

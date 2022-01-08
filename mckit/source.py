@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
+from functools import reduce
+
 from .printer import print_card, separate
 
 
 class Distribution:
     """Represents a distribution of source variable.
 
-    If the len of probs equals to the len of values, then the distribution of
-    discrete variable is created. If len(probs) + 1 == len(values), then
+    If the len of probs equals to the len of values, then the distribution is 
+    either of discrete variable (if is_discrete flag is set) or probs sets
+    probability density values. If len(probs) + 1 == len(values), then
     values are bin boundaries for continuous distribution.
 
     Parameters
@@ -22,6 +25,8 @@ class Distribution:
         Probabilities need not be normalized.
     variable : str
         Source variable's name. Default: None.
+    is_discrete : bool
+        Indicate that the variable is discrete. Default: False.
 
     Methods
     -------
@@ -42,12 +47,21 @@ class Distribution:
         Name of source variable.
     """
 
-    def __init__(self, name, values, probs, variable=None):
+    def __init__(self, name, values, probs, variable=None, is_discrete=False):
         self._name = name
         self._var = variable
-        Distribution.is_discrete(values, len(probs))
+        Distribution.check_distr(values, len(probs), is_discrete)
+        self._is_discrete = is_discrete
         self._values = list(values)
-        self._probs = probs if isinstance(probs, Distribution) else list(probs)
+        if isinstance(probs, Distribution):
+            self._probs = probs
+        else:
+            self._probs = list(probs)
+        if isinstance(self._probs, list) and len(self._probs) == len(values) \
+        and not is_discrete and not isinstance(self._values[0], Distribution):
+            self._is_pdf = True
+        else:
+            self._is_pdf = False
 
     @property
     def name(self):
@@ -67,14 +81,24 @@ class Distribution:
     def mcnp_repr(self):
         """Returns a string representation of corresponding MCNP card."""
         tokens = []
-        discrete = Distribution.is_discrete(self._values, len(self._probs))
+        discrete = self._is_discrete
+        is_pdf = self._is_pdf
         if isinstance(self._values[0], Distribution):
             tokens.append("S")
             for v in self._values:
                 tokens.append(str(v.name))
         else:
-            tokens.append("L" if discrete else "H")
-            for v in self._values:
+            if isinstance(self._values[0], list):
+                values = reduce(list.__add__, self._values)
+            else:
+                values = self._values
+            if discrete:
+                tokens.append("L")
+            elif is_pdf:
+                tokens.append("A") 
+            else:
+                tokens.append("H")
+            for v in values:
                 tokens.append(str(v))
 
         if isinstance(self._probs, Distribution):
@@ -82,8 +106,10 @@ class Distribution:
             prob_tokens = None
         else:
             tokens.insert(0, "SI{0}".format(self._name))
-            prob_tokens = ["SP{0}".format(self._name), "D"]
-            if not discrete:
+            prob_tokens = ["SP{0}".format(self._name)]
+            if not is_pdf:
+                prob_tokens.append("D")
+            if len(self._values) == len(self._probs) + 1:
                 prob_tokens.append("0")
             for p in self._probs:
                 prob_tokens.append(str(p))
@@ -127,8 +153,8 @@ class Distribution:
             return None
 
     @staticmethod
-    def is_discrete(values, size):
-        """Checks if the distribution is discrete.
+    def check_distr(values, size, is_discrete):
+        """Checks if the distribution is correct.
 
         Parameters
         ----------
@@ -136,17 +162,12 @@ class Distribution:
             List of variable values.
         size : int
             The length of intensity matrix along variable dimension.
-
-        Returns
-        -------
-        result : bool
-            True if variable is discrete, i.e. len(values) == size.
+        is_discrete : bool
+            If True, the distribution is assumed to be discrete.
         """
-        if len(values) == size:
-            return True
-        elif len(values) == size + 1:
-            return False
-        else:
+        discr_or_pdf = len(values) == size
+        histogram = len(values) == size + 1 and not is_discrete
+        if not discr_or_pdf and not histogram:
             raise ValueError("Inconsistent size of values.")
 
 
@@ -203,7 +224,7 @@ def expand_matrix_distribution(intensities, *var_values, start_name=1):
     uniq_values = []
     exp_var_values = []
     for dim, values in zip(intensities.shape, var_values):
-        if Distribution.is_discrete(values, dim):
+        if Distribution.check_distr(values, dim):
             uniq_values.append(values)
         else:
             start_name, dists = create_bin_distributions(values, start_name)

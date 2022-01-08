@@ -3,19 +3,19 @@ import platform
 import numpy as np
 import pytest
 
-from mckit.transformation import Transformation
+from mckit.box import Box
 from mckit.surface import (
-    Plane,
-    GQuadratic,
-    Torus,
-    Sphere,
-    Cylinder,
-    Cone,
-    create_surface,
     BOX,
     RCC,
+    Cone,
+    Cylinder,
+    GQuadratic,
+    Plane,
+    Sphere,
+    Torus,
+    create_surface,
 )
-from mckit.box import Box
+from mckit.transformation import Transformation
 from tests import pass_through_pickle
 
 

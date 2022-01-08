@@ -6,13 +6,15 @@ To use it install plugin pytest-benchmark (https://pytest-benchmark.readthedocs.
     or
     pip install pytest-benchmark
 """
-import pytest
 from zipfile import ZipFile
-from mckit.utils.resource import path_resolver
+
+import pytest
+
+from mckit import Universe
 from mckit.constants import MCNP_ENCODING
 from mckit.parser.mcnp_input_parser import read_mcnp_text
-from mckit import Universe
 from mckit.parser.mcnp_input_sly_parser import ParseResult, from_text
+from mckit.utils.resource import path_resolver
 
 data_filename_resolver = path_resolver("benchmarks")
 with ZipFile(data_filename_resolver("data/4M.zip")) as data_archive:

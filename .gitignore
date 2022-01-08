@@ -95,6 +95,8 @@ poetry.toml
 
 
 dist/
-!/setup.py
 wrk/
-*.dll
+setup-generated.py
+poetry_setup_kwargs.txt
+
+!.github

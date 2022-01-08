@@ -1,5 +1,4 @@
-from typing import NewType
-from typing import cast
+from typing import NewType, cast
 
 Name = NewType("Name", int)
 """The card names are integer"""

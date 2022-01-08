@@ -1,7 +1,7 @@
 from io import StringIO
 
-from mckit.universe import UniverseAnalyser
 from mckit.parser import from_file
+from mckit.universe import UniverseAnalyser
 from mckit.utils import path_resolver
 
 cli_data = path_resolver("tests.cli")

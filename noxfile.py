@@ -9,9 +9,9 @@ from typing import Any, Generator, List
 import os
 import platform
 import tempfile
-from glob import glob
 
 from contextlib import contextmanager
+from glob import glob
 from pathlib import Path
 
 import nox
@@ -21,9 +21,11 @@ from nox.sessions import Session
 # TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
     "safety",
+    "isort",
+    "black",
     # "lint",
     # "mypy",
-    # "xdoctest",
+    "xdoctest",
     "tests",
     # "codecov",
     # "docs",
@@ -31,13 +33,10 @@ nox.options.sessions = (
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
-supported_pythons = "3.9 3.8 3.7".split()
-black_pythons = "3.9"  # TODO dvp: target-version in pyproject.toml is still py38, check on updates of black
-
-# mypy and flake8 only work with python 3.7: dependencies requirement
-# TODO dvp: check, when updates are available
-mypy_pythons = "3.7"
-lint_pythons = "3.7"
+supported_pythons = "3.9 3.8".split()  # TODO dvp: add python 3.10
+black_pythons = "3.9"
+mypy_pythons = "3.9"
+lint_pythons = "3.9"
 
 on_windows = platform.system() == "Windows"
 
@@ -84,10 +83,17 @@ def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> Non
 @nox.session(python=supported_pythons, venv_backend="venv")
 def tests(session: Session) -> None:
     """Run the test suite."""
-    args = session.posargs or ["--cov", "-m", "not e2e"]
-    session.run("poetry", "install", "--no-dev", external=True)
-    install_with_constraints(session, "pytest", "pytest-cov", "pytest-mock", "coverage")
     path = Path(session.bin).parent
+    args = session.posargs or ["--cov", "-m", "not e2e"]
+    session.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        external=True,
+    )
+    install_with_constraints(
+        session, "pytest", "pytest-cov", "pytest-mock", "coverage[toml]"
+    )
     if on_windows:
         session.bin_paths.insert(
             0, str(path / "Library/bin")
@@ -125,7 +131,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.8", venv_backend="venv")
+@nox.session(python="3.9")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     with collect_dev_requirements(session) as req_path:
@@ -149,13 +155,14 @@ def isort(session: Session) -> None:
         "tests/*.py",
         "benchmarks/*.py",
         "profiles/*.py",
-        "adhoc/*.py",
+        #        "adhoc/*.py",
     ]
     files_to_process: List[str] = sum(
         map(lambda p: glob(p, recursive=True), search_patterns), []
     )
     session.run(
         "isort",
+        "--check",
         "--diff",
         *files_to_process,
         external=True,
@@ -213,7 +220,7 @@ def docs(session: Session) -> None:
         session.run("sphinx-build", "docs/source", "docs/_build")
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.9")
 def codecov(session: Session) -> None:
     """Upload coverage data."""
     session.run("poetry", "install", "--no-dev", external=True)
@@ -223,10 +230,8 @@ def codecov(session: Session) -> None:
         "pytest",
         "pytest-cov",
         "pytest-mock",
-        "coverage",
         "codecov",
     )
-    # install_with_constraints(session, "coverage[toml]", "codecov")
     session.run("coverage", "xml", "--fail-under=0")
     session.run("codecov", *session.posargs)
 
@@ -235,3 +240,4 @@ def codecov(session: Session) -> None:
 def test_nox(session: Session) -> None:
     path = Path(session.bin)
     print("bin", path.parent)
+    session.run("pip", "install", ".")

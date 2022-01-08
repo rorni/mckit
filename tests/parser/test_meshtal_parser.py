@@ -1,5 +1,4 @@
 import numpy as np
-
 import pytest
 
 from mckit.parser.meshtal_parser import meshtal_lexer, meshtal_parser

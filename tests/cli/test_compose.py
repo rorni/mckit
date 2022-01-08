@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from mckit.cli.runner import mckit
 import pytest
 
+from mckit.cli.runner import mckit
 from mckit.parser import from_file
 from mckit.universe import collect_transformations
 from mckit.utils.resource import filename_resolver

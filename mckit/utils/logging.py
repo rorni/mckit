@@ -6,10 +6,9 @@ See https://github.com/Delgan/loguru
 """
 import logging
 
-from loguru import (
+from loguru import (  # TODO dvp: make loguru optional when mckit is used as library
     logger,
-)  # TODO dvp: make loguru optional when mckit is used as library
-
+)
 
 # class PropagateHandler(logging.Handler):
 #     """Send events from loguru to standard logging"""

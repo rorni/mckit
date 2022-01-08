@@ -1,6 +1,7 @@
-import pytest
 import numpy as np
-from mckit.utils import significant_digits, round_scalar, significant_array, round_array
+import pytest
+
+from mckit.utils import round_array, round_scalar, significant_array, significant_digits
 
 
 @pytest.mark.parametrize("res", [None, 1.0e-2, 1.0e-4, 1.0e-6, 1.0e-8])

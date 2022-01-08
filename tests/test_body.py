@@ -1,15 +1,13 @@
-import pickle
 import typing as tp
 
 import numpy as np
 import pytest
 
-from mckit.body import Shape, Body
+from mckit.body import Body, Shape
 from mckit.box import Box
 from mckit.material import Material
 from mckit.surface import create_surface
 from mckit.transformation import Transformation
-
 from tests import pass_through_pickle
 
 
