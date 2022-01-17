@@ -110,7 +110,7 @@ check_environment() {
 }
 
 main() {
-  echo "Running: $*"
+  echo "Running: $0 $*"
   get_args "$@" && reset_env && check_environment
 }
 
