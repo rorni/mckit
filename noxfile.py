@@ -33,10 +33,10 @@ nox.options.sessions = (
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
-supported_pythons = "3.9 3.8".split()  # TODO dvp: add python 3.10
-black_pythons = "3.9"
-mypy_pythons = "3.9"
-lint_pythons = "3.9"
+supported_pythons = "3.9 3.8 3.10".split()
+black_pythons = "3.10"
+mypy_pythons = "3.10"
+lint_pythons = "3.10"
 
 on_windows = platform.system() == "Windows"
 
@@ -123,7 +123,7 @@ def lint(session: Session) -> None:
     session.run("flake8", *args)
 
 
-@nox.session(python=black_pythons)  # TODO dvp: this doesn't work with 3.8 so far
+@nox.session(python=black_pythons)
 def black(session: Session) -> None:
     """Run black code formatter."""
     args = session.posargs or locations
@@ -131,7 +131,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.9")
+@nox.session(python="3.10")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     with collect_dev_requirements(session) as req_path:
@@ -144,7 +144,7 @@ def safety(session: Session) -> None:
 #  Uncomment when proper imports or noorder directive is applied in sensitive files.
 #  Always test after reorganizing ill projects.
 #
-@nox.session(python="3.9")
+@nox.session(python="3.10")
 def isort(session: Session) -> None:
     """Organize imports"""
 
@@ -220,7 +220,7 @@ def docs(session: Session) -> None:
         session.run("sphinx-build", "docs/source", "docs/_build")
 
 
-@nox.session(python="3.9")
+@nox.session(python="3.10")
 def codecov(session: Session) -> None:
     """Upload coverage data."""
     session.run("poetry", "install", "--no-dev", external=True)
@@ -236,7 +236,7 @@ def codecov(session: Session) -> None:
     session.run("codecov", *session.posargs)
 
 
-@nox.session(python="3.9", venv_backend="venv")
+@nox.session(python="3.10", venv_backend="venv")
 def test_nox(session: Session) -> None:
     path = Path(session.bin)
     print("bin", path.parent)
