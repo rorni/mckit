@@ -35,7 +35,13 @@ classifiers = [
 
 
 [tool.poetry.dependencies]
+<<<<<<< HEAD
 python = "^3.8,<3.11"   # TODO dvp: increase upper version bound along with scipy updates
+||||||| 72c6116
+python = "^3.8"
+=======
+python = "^3.8,<3.11"  # TODO dvp: move upper bound along with scipy updates
+>>>>>>> update-deps-1
 DateTime = "^4.3"
 Pygments = "^2.7.2"
 atomicwrites = "^1.4.0"
@@ -44,8 +50,16 @@ click = "^8.0.1"
 click-loguru = "^1.3.7"
 colorama = "^0.4.4"
 importlib-metadata = {version = "^2.0.0", python = "<3.8"}
+<<<<<<< HEAD
 numpy = "^1.19.4"
 scipy = "^1.7.3"
+||||||| 72c6116
+numpy = "^1.19.4"
+scipy = "^1.5.3"
+=======
+numpy = "^1.22.1"
+scipy = "^1.7.3"
+>>>>>>> update-deps-1
 sly = "^0.4"
 tomlkit = "^0.7.0"
 tqdm = "^4.55.1"
@@ -147,6 +161,7 @@ multi_line_output = 3
 line_length = 88
 include_trailing_comma = true
 lines_between_types = 1
+<<<<<<< HEAD
 # skip = [ "setup-generated.py", "setup-bak.py" ]
 skip_gitignore = true
 extend_skip_glob = [
@@ -155,6 +170,13 @@ extend_skip_glob = [
     "build-example.py",
     "setup-bak.py"
 ]
+||||||| 72c6116
+skip = [ "setup-generated.py" ]
+skip_glob = [ "*-example.py" ]
+=======
+skip = [ "setup-generated.py", "setup-bak.py" ]
+skip_glob = [ "*-example.py" ]
+>>>>>>> update-deps-1
 
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.

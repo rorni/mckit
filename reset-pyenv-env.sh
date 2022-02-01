@@ -36,7 +36,7 @@ get_args() {
   shift
 
   poetry "--version"
-  if [[ ! $?  ]]; then
+  if [[ 0 != $?  ]]; then
       echo "ERROR: Poetry is not available"
       return 1
   fi
