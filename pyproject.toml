@@ -54,7 +54,10 @@ mkl = "2021.1.1"
 mkl-include = "2021.1.1"
 python-dotenv = "^0.19.0"
 ply = "^3.11"
-tbb = "^2021.5.1"        # TODO: dvp tbb-2021.5.0 doesn't have Linux wheels on PyPI
+tbb = "2021.4.0"        
+    # TODO: dvp tbb-2021.5.0 doesn't have Linux wheels on PyPI
+    #           tbb-2201.5.1 doesn't have MacOS wheels on PyPI
+    #           to be continued
 
 [tool.poetry.dev-dependencies]
 Pygments = "^2.7.2"
