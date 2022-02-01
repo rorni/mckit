@@ -131,7 +131,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.10")
+@nox.session(python="3.9")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     args = session.posargs or ["--ignore", "44715"]
@@ -147,7 +147,6 @@ def safety(session: Session) -> None:
     with collect_dev_requirements(session) as req_path:
         install_with_constraints(session, "safety")
         session.run("safety", "check", f"--file={req_path}", "--full-report", *args)
-
 
 
 #  This dangerous on ill complex project: may cause cyclic dependency
