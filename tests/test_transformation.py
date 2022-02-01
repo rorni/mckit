@@ -275,10 +275,10 @@ def test_plane_transformation(transforms, norm, point):
 def test_gq_transformation(transforms, point, radius):
     m1 = IDENTITY_ROTATION
     v1 = -2 * point
-    k1 = np.linalg.norm(point) ** 2 - radius ** 2
+    k1 = np.linalg.norm(point) ** 2 - radius**2
     m, v, k = transforms.apply2gq(m1, v1, k1)
     v_ref = -2 * transforms.apply2point(point)
-    k_ref = np.linalg.norm(-0.5 * v_ref) ** 2 - radius ** 2
+    k_ref = np.linalg.norm(-0.5 * v_ref) ** 2 - radius**2
     np.testing.assert_array_almost_equal(m, m1)
     np.testing.assert_array_almost_equal(v, v_ref)
     np.testing.assert_array_almost_equal(k, k_ref)
