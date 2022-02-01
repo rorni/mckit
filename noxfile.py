@@ -4,18 +4,15 @@
 
     See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
-from typing import Any, Generator, List
-
 import os
 import platform
 import tempfile
-
 from contextlib import contextmanager
 from glob import glob
 from pathlib import Path
+from typing import Any, Generator, List
 
 import nox
-
 from nox.sessions import Session
 
 # TODO dvp: uncomment when code and docs are more mature
@@ -33,22 +30,10 @@ nox.options.sessions = (
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
-<<<<<<< HEAD
 supported_pythons = "3.9 3.8 3.10".split()
 black_pythons = "3.10"
 mypy_pythons = "3.10"
 lint_pythons = "3.10"
-||||||| 72c6116
-supported_pythons = "3.9 3.8".split()  # TODO dvp: add python 3.10
-black_pythons = "3.9"
-mypy_pythons = "3.9"
-lint_pythons = "3.9"
-=======
-supported_pythons = "3.9 3.8 3.10".split()  # TODO dvp: add python 3.10
-black_pythons = "3.10"
-mypy_pythons = "3.10"
-lint_pythons = "3.10"
->>>>>>> update-deps-1
 
 on_windows = platform.system() == "Windows"
 
@@ -77,7 +62,7 @@ def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> Non
     Install packages constrained by Poetry's lock file.
 
     This function is a wrapper for nox.sessions.Session.install. It
-    invokes pip to install packages inside of the session's virtualenv.
+    invokes pip to install packages inside the session's virtualenv.
     Additionally, pip is passed a constraints file generated from
     Poetry's lock file, to ensure that the packages are pinned to the
     versions specified in poetry.lock. This allows you to manage the
@@ -146,7 +131,6 @@ def black(session: Session) -> None:
 @nox.session(python="3.10")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
-<<<<<<< HEAD
     args = session.posargs or ["--ignore", "44715"]
     # TODO dvp: remove the 'ignore' option above on numpy updating to
     #      1.22.2 and above
@@ -159,19 +143,6 @@ def safety(session: Session) -> None:
     #      repetitively creating sort arrays.
     #      https://github.com/numpy/numpy/issues/19038
 
-||||||| 72c6116
-=======
-    args = session.posargs or ["--ignore", "44715"]
-    # TODO dvp: remove this 'ignore' on updating of numpy to 1.22.2
-    #           there's a security issue with numpy 1.22.1
-    # The safety reports:
-    # All versions of Numpy are affected by CVE-2021-41495:
-    # A null Pointer Dereference vulnerability exists in numpy.sort,
-    # in the PyArray_DescrNew function due to missing return-value validation,
-    # which allows attackers to conduct DoS attacks by repetitively creating sort arrays.
-    # https://github.com/numpy/numpy/issues/19038
-
->>>>>>> update-deps-1
     with collect_dev_requirements(session) as req_path:
         install_with_constraints(session, "safety")
         session.run("safety", "check", f"--file={req_path}", "--full-report", *args)

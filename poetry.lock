@@ -1325,16 +1325,8 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
 lock-version = "1.1"
-<<<<<<< HEAD
 python-versions = "^3.8,<3.11"   # TODO dvp: increase upper version bound along with scipy updates
-content-hash = "6c1a6ca5c3bcef8355f94cca5067909737de45177430c2b2226aa748c27db4dd"
-||||||| 72c6116
-python-versions = "^3.8"
-content-hash = "c0398fdd3e45c1e3cf490bdce38db1785f860fd6c3b874c5555e068a2cc71637"
-=======
-python-versions = "^3.8,<3.11"  # TODO dvp: move upper bound along with scipy updates
-content-hash = "6ae10ab51375923af0e945f9c89128352594b9632381c293efda2ac0edb2e782"
->>>>>>> update-deps-1
+content-hash = "67d9302be4cf95f34a6e725db8fd4e54e2fd78a7e7d059c64b8138bec25595d6"
 
 [metadata.files]
 alabaster = [
