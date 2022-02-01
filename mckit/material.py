@@ -115,7 +115,7 @@ class Composition(Card):
 
             totals_diff = total_frac_a - total_frac_w
             sq_root = np.sqrt(
-                totals_diff ** 2 + 4 * atoms_in_weight_spec * mass_in_atomic_spec
+                totals_diff**2 + 4 * atoms_in_weight_spec * mass_in_atomic_spec
             )
             if totals_diff <= 0:
                 self._mu = 0.5 * (sq_root - totals_diff) / atoms_in_weight_spec

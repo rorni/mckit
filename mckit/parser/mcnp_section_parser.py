@@ -135,8 +135,8 @@ class Card(object):
             i = 0
             if name[0] == "*":
                 i = 1
-            if name[i] in "tT" and name[i + 1] in "rR" and name[i + 2:].isdigit():
-                return int(name[i + 2:])
+            if name[i] in "tT" and name[i + 1] in "rR" and name[i + 2 :].isdigit():
+                return int(name[i + 2 :])
         raise NotImplementedError(f"Cannot define number for {self.kind} card '{name}'")
 
 
