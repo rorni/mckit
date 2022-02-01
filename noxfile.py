@@ -4,15 +4,18 @@
 
     See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
+from typing import Any, Generator, List
+
 import os
 import platform
 import tempfile
+
 from contextlib import contextmanager
 from glob import glob
 from pathlib import Path
-from typing import Any, Generator, List
 
 import nox
+
 from nox.sessions import Session
 
 # TODO dvp: uncomment when code and docs are more mature
