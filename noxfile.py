@@ -147,24 +147,23 @@ def safety(session: Session) -> None:
 @nox.session(python="3.10")
 def isort(session: Session) -> None:
     """Organize imports"""
-
     install_with_constraints(session, "isort")
     search_patterns = [
-        "*.py",
-        "mckit/*.py",
-        "tests/*.py",
-        "benchmarks/*.py",
-        "profiles/*.py",
-        #        "adhoc/*.py",
+        ".",
+        "mckit",
+        "tests",
+        "benchmarks",
+        "profiles",
     ]
     files_to_process: List[str] = sum(
         map(lambda p: glob(p, recursive=True), search_patterns), []
     )
+    args = session.posargs or files_to_process
     session.run(
         "isort",
         "--check",
         "--diff",
-        *files_to_process,
+        *args,
         external=True,
     )
 

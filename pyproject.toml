@@ -147,8 +147,14 @@ multi_line_output = 3
 line_length = 88
 include_trailing_comma = true
 lines_between_types = 1
-skip = [ "setup-generated.py" ]
-skip_glob = [ "*-example.py" ]
+# skip = [ "setup-generated.py", "setup-bak.py" ]
+skip_gitignore = true
+extend_skip_glob = [
+    "adhoc/*", "scripts/*", "3rd-party/*",
+    "setup-*.py",
+    "build-example.py",
+    "setup-bak.py"
+]
 
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
