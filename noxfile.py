@@ -131,12 +131,23 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.9")
+@nox.session(python="3.10")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
+    args = session.posargs or ["--ignore", "44715"]
+    # TODO dvp: remove this 'ignore' on updating of numpy to 1.22.2
+    #           there's a security issue with numpy 1.22.1
+    # The safety reports:
+    # All versions of Numpy are affected by CVE-2021-41495:
+    # A null Pointer Dereference vulnerability exists in numpy.sort,
+    # in the PyArray_DescrNew function due to missing return-value validation,
+    # which allows attackers to conduct DoS attacks by repetitively creating sort arrays.
+    # https://github.com/numpy/numpy/issues/19038
+
     with collect_dev_requirements(session) as req_path:
         install_with_constraints(session, "safety")
-        session.run("safety", "check", f"--file={req_path}", "--full-report")
+        session.run("safety", "check", f"--file={req_path}", "--full-report", *args)
+
 
 
 #  This dangerous on ill complex project: may cause cyclic dependency
