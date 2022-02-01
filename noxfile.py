@@ -33,10 +33,10 @@ nox.options.sessions = (
 
 locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
 
-supported_pythons = "3.9 3.8".split()  # TODO dvp: add python 3.10
-black_pythons = "3.9"
-mypy_pythons = "3.9"
-lint_pythons = "3.9"
+supported_pythons = "3.9 3.8 3.10".split()  # TODO dvp: add python 3.10
+black_pythons = "3.10"
+mypy_pythons = "3.10"
+lint_pythons = "3.10"
 
 on_windows = platform.system() == "Windows"
 
@@ -131,7 +131,7 @@ def black(session: Session) -> None:
     session.run("black", *args)
 
 
-@nox.session(python="3.9")
+@nox.session(python="3.10")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     args = session.posargs or ["--ignore", "44715"]
@@ -154,7 +154,7 @@ def safety(session: Session) -> None:
 #  Uncomment when proper imports or noorder directive is applied in sensitive files.
 #  Always test after reorganizing ill projects.
 #
-@nox.session(python="3.9")
+@nox.session(python="3.10")
 def isort(session: Session) -> None:
     """Organize imports"""
 
@@ -201,6 +201,7 @@ def xdoctest(session: Session) -> None:
     session.run("python", "-m", "xdoctest", *args)
 
 
+# TODO dvp: readthedocs limit python version to 3.8, check later. See .readthedocs.yaml
 @nox.session(python="3.8")
 def docs(session: Session) -> None:
     """Build the documentation."""
@@ -246,7 +247,7 @@ def codecov(session: Session) -> None:
     session.run("codecov", *session.posargs)
 
 
-@nox.session(python="3.9", venv_backend="venv")
+@nox.session(python="3.10", venv_backend="venv")
 def test_nox(session: Session) -> None:
     path = Path(session.bin)
     print("bin", path.parent)
