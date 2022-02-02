@@ -8,7 +8,6 @@ from pathlib import Path
 import click
 import mckit.version as meta
 
-from click_loguru import ClickLoguru
 from mckit.cli.commands import (
     do_check,
     do_compose,
@@ -17,8 +16,8 @@ from mckit.cli.commands import (
     do_transform,
 )
 from mckit.cli.commands.common import get_default_output_directory
+from mckit.cli.logging import init_logger, logger
 from mckit.utils import MCNP_ENCODING
-from mckit.utils.logging import logger
 
 NAME = meta.__title__
 VERSION = meta.__version__
@@ -26,42 +25,18 @@ LOG_FILE_RETENTION = 3
 NO_LEVEL_BELOW = 30
 
 
-def stderr_log_format_func(msgdict):
-    """Do level-sensitive formatting.
-
-    Just a copy from click-loguru so far."""
-
-    if msgdict["level"].no < NO_LEVEL_BELOW:
-        return "<level>{message}</level>\n"
-    return "<level>{level}</level>: <level>{message}</level>\n"
-
-
-click_loguru = ClickLoguru(
-    NAME,
-    VERSION,
-    stderr_format_func=stderr_log_format_func,
-    retention=LOG_FILE_RETENTION,
-    log_dir_parent=".logs",
-    timer_log_level="info",
-)
-
 context = {}
 
 
-@click_loguru.logging_options
 @click.group(help=meta.__summary__)
-@click_loguru.init_logger()
-@click_loguru.stash_subcommand()
 @click.option("--override/--no-override", default=False)
+@click.option("--verbose/--no-verbose", default=False, help="Log everything")
+@click.option("--quiet/--no-quiet", default=False, help="Log only WARNINGS and above")
+@click.option("--logfile", default=None, help="File to log to")
 @click.version_option(VERSION, prog_name=NAME)
-@logger.catch(reraise=True)
-def mckit(
-    verbose: bool, quiet: bool, logfile: bool, profile_mem: bool, override: bool
-) -> None:
-    if quiet:
-        logger.level("WARNING")
-    if verbose:
-        logger.level("TRACE")
+def mckit(verbose: bool, quiet: bool, logfile: str, override: bool) -> None:
+    # """MCKIT command line utility."""
+    init_logger(logfile, quiet, verbose)
     logger.info("Running {}", NAME)
     logger.debug("Working dir {}", Path(".").absolute())
     #
@@ -160,7 +135,6 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
 
 # noinspection PyCompatibility
 @mckit.command()
-@click_loguru.init_logger()
 @click.option(
     "--output",
     "-o",
@@ -201,7 +175,6 @@ def concat(output, parts_encoding, output_encoding, parts):
 
 # noinspection PyCompatibility
 @mckit.command()
-@click_loguru.init_logger()
 @click.argument(
     "sources", metavar="<source>", type=click.Path(exists=True), nargs=-1, required=True
 )
@@ -213,7 +186,6 @@ def check(sources: List[click.Path]) -> None:
 
 # noinspection PyCompatibility
 @mckit.command()
-@click_loguru.init_logger()
 @click.option(
     "--transformation",
     "-t",
@@ -244,7 +216,7 @@ def transform(
     transformations: click.Path,
     source: click.Path,
 ) -> None:
-    """Transform MCNP model(s) with one of specified transformatio."""
+    """Transform MCNP model(s) with one of specified transformation."""
     do_transform(
         Path(output),
         transformation,

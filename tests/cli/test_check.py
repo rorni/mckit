@@ -27,7 +27,9 @@ def test_not_existing_mcnp_file(runner, disable_log):
 )
 def test_good_path(runner, disable_log, source, expected):
     source = data_filename_resolver(source)
-    result = runner.invoke(mckit, args=["-q", "check", source], catch_exceptions=False)
+    result = runner.invoke(
+        mckit, args=["--quiet", "check", source], catch_exceptions=False
+    )
     assert result.exit_code == 0, "Should success"
     for e in expected.split(";"):
         assert e in result.output

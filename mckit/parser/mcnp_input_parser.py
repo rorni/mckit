@@ -10,7 +10,7 @@ from warnings import warn
 import ply.lex as lex
 import ply.yacc as yacc
 
-from mckit.utils.logging import logger
+from loguru import logger
 
 from ..body import Body
 from ..material import Composition, Element, Material

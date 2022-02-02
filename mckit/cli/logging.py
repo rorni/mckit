@@ -6,9 +6,7 @@ See https://github.com/Delgan/loguru
 """
 import logging
 
-from loguru import (  # TODO dvp: make loguru optional when mckit is used as library
-    logger,
-)
+from loguru import logger
 
 # class PropagateHandler(logging.Handler):
 #     """Send events from loguru to standard logging"""
@@ -41,6 +39,15 @@ class InterceptHandler(logging.Handler):
 
 
 log = logging.getLogger()
-# log.setLevel(0)
 log.addHandler(InterceptHandler())
-# logging.basicConfig(handlers=[InterceptHandler()], level=0, style='{')
+
+
+def init_logger(logfile, quiet, verbose):
+    if quiet:
+        logger.level("WARNING")
+    elif verbose:
+        logger.level("TRACE")
+    else:
+        logger.level("INFO")
+    if logfile:
+        logger.add(logfile, rotation="100 MB")

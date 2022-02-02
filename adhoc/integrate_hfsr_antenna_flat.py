@@ -1,8 +1,5 @@
 """
 """
-import os
-import sys
-
 # import matplotlib.pyplot as plt
 # import seaborn as sb
 # import pandas as pd
@@ -11,11 +8,15 @@ import sys
 # import scipy.constants as sc
 import typing as tp
 
+from typing import NoReturn
+
+import os
+import sys
+
 # from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
 from functools import reduce
 from multiprocessing import Pool
-from typing import NoReturn
 
 import dotenv
 import numpy as np
@@ -31,8 +32,9 @@ from mckit.utils import assert_all_paths_exist, get_root_dir
 sys.path.append("..")
 
 import mckit as mk
+
 from mckit.box import Box
-from mckit.utils.logging import logger as LOG
+from mckit.cli.logging import logger as LOG
 
 
 def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:

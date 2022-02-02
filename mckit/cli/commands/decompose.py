@@ -15,9 +15,9 @@ from pathlib import Path
 import tomlkit as tk
 
 from mckit import Universe
+from mckit.cli.logging import logger
 from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file
 from mckit.universe import collect_transformations
-from mckit.utils.logging import logger
 from tomlkit.items import item
 
 from .common import save_mcnp
