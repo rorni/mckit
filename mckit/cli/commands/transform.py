@@ -16,11 +16,13 @@ from .common import save_mcnp
 
 def transform(
     output: Path,
-    transformation: str,
+    transformation: int,
     transformations: Path,
     source: Path,
     override: bool,
 ) -> None:
+    logger.info("Running mckit transform")
+    logger.debug("Working dir {}", Path(".").absolute())
     logger.info("Transforming model from {s}", s=source)
     if output.exists() and not override:
         raise FileExistsError(
@@ -28,8 +30,7 @@ def transform(
         )
     parse_result: ParseResult = from_file(source)
     src: Universe = parse_result.universe
-    trans = int(transformation)
-    logger.debug("Loading transformations from {}", transformations)
+    logger.debug("Loading transformations {} from {}", transformation, transformations)
     transformations_text = transformations.read_text()
     transformations_list = list(
         map(
@@ -41,8 +42,11 @@ def transform(
         transformations_list,
         on_duplicate=raise_on_duplicate_strategy,
     )
-    if trans not in transformations_index:
-        raise ValueError(f"Transformation {trans} is not found in {transformations}")
-    the_transformation = transformations_index[trans]
+    if transformation not in transformations_index:
+        raise ValueError(
+            f"Transformation {transformation} is not found in {transformations}"
+        )
+    the_transformation = transformations_index[transformation]
     dst = src.transform(the_transformation)
     save_mcnp(dst, output, override)
+    logger.success("Transformed model is saved to {}", output)

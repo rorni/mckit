@@ -4,7 +4,12 @@ Intercept log messages from the used libraries and pass them to `loguru`.
 See https://github.com/Delgan/loguru
 
 """
+from typing import Final
+
 import logging
+import sys
+
+from os import environ
 
 from loguru import logger
 
@@ -42,12 +47,30 @@ log = logging.getLogger()
 log.addHandler(InterceptHandler())
 
 
-def init_logger(logfile, quiet, verbose):
+MCKIT_CONSOLE_LOG_FORMAT: Final[str] = environ.get(
+    "MCKIT_CONSOLE_LOG_FORMAT",
+    default="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+    "<level>{level: <8}</level> | "
+    "<level>{message}</level>",
+)
+
+
+def init_logger(
+    logfile, quiet, verbose, *, stderr_format: str = MCKIT_CONSOLE_LOG_FORMAT
+):
+    stderr_level: str = "INFO"
     if quiet:
-        logger.level("WARNING")
+        stderr_level = "WARNING"
     elif verbose:
-        logger.level("TRACE")
-    else:
-        logger.level("INFO")
+        stderr_level = "TRACE"
+    logger.remove()
+    if stderr_format:
+        logger.add(
+            sys.stderr,
+            format=stderr_format,
+            level=stderr_level,
+            backtrace=False,
+            diagnose=False,
+        )
     if logfile:
-        logger.add(logfile, rotation="100 MB")
+        logger.add(logfile, rotation="100 MB", level="TRACE")

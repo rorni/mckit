@@ -37,8 +37,6 @@ context = {}
 def mckit(verbose: bool, quiet: bool, logfile: str, override: bool) -> None:
     # """MCKIT command line utility."""
     init_logger(logfile, quiet, verbose)
-    logger.info("Running {}", NAME)
-    logger.debug("Working dir {}", Path(".").absolute())
     #
     # TODO dvp: add customized logger configuring from a configuration toml-file.
     # ensure that ctx.obj exists and is a dict (in case `cli()` is called
@@ -63,7 +61,6 @@ def mckit(verbose: bool, quiet: bool, logfile: str, override: bool) -> None:
 )
 def decompose(output, fill_descriptor, source):
     """Separate an MCNP model to envelopes and filling universes"""
-    logger.info(f"Processing {source}")
     return do_decompose(output, fill_descriptor, source, context["OVERRIDE"])
 
 
@@ -107,6 +104,8 @@ def split(output, source, separators):
     else:
         output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
+    logger.info("Running mckit split")
+    logger.debug("Working dir {}", Path(".").absolute())
     logger.info(
         'Splitting "{source}" to directory "{output}"', source=source, output=output
     )
@@ -191,7 +190,7 @@ def check(sources: List[click.Path]) -> None:
     "-t",
     type=click.INT,
     required=True,
-    help="Transformation in MCNP format",
+    help="Number of transformation to apply",
 )
 @click.option(
     "--output",
@@ -205,14 +204,14 @@ def check(sources: List[click.Path]) -> None:
     "-i",
     default="transformations.txt",
     type=click.Path(exists=True),
-    help="Output file",
+    help="Transformations specification file (default: transformations.txt)",
 )
 @click.argument(
     "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
 )
 def transform(
     output: click.STRING,
-    transformation: click.STRING,
+    transformation: int,
     transformations: click.Path,
     source: click.Path,
 ) -> None:
