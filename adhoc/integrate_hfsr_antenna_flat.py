@@ -21,7 +21,7 @@ from multiprocessing import Pool
 import dotenv
 import numpy as np
 
-from mckit.utils import assert_all_paths_exist, get_root_dir
+from mckit.utils import check_if_all_paths_exist, get_root_dir
 
 # from joblib import (
 #     Memory,
@@ -48,7 +48,7 @@ HFSR_ROOT = get_root_dir("HFSR_ROOT", "~/dev/mcnp/hfsr")
 CMODEL_ROOT = get_root_dir("CMODEL_ROOT", "~/dev/mcnp/c-model")
 LOG.info("HFSR_ROOT=%s", HFSR_ROOT)
 LOG.info("CMODEL_ROOT=%s", CMODEL_ROOT)
-assert_all_paths_exist(HFSR_ROOT, CMODEL_ROOT)
+check_if_all_paths_exist(HFSR_ROOT, CMODEL_ROOT)
 universes_dir = CMODEL_ROOT / "simple_cubes.universes"
 # assert universes_dir.is_dir()
 NJOBS = os.cpu_count()
