@@ -7,8 +7,6 @@ from pathlib import Path
 
 SYSTEM_WINDOWS = platform.system() == "Windows"
 
-extra_compile_args = ["/O2"] if SYSTEM_WINDOWS else ["-O3", "-w"]
-
 
 def create_directory(path: Path, clean: bool = True) -> Path:
     if clean and path.exists():

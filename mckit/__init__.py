@@ -34,7 +34,7 @@ if platform.system() == "Windows":
     ]
     if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
         for _dir in dirs:
-            os.add_dll_directory(_dir)
+            os.add_dll_directory(str(_dir))
     dll_path = str(find_file("nlopt.dll", *dirs))
     print("---***", dll_path)
     cdll.LoadLibrary(dll_path)  # to guarantee dll loading
@@ -44,13 +44,12 @@ elif platform.system() == "Linux":
     ):  # a user can use other location for the MKL and nlopt libraries.
 
         def preload_library(_lib_path):
-            suffixes = ".so .so.1 .so.0".split()
-            _lib = None
+            suffixes = ".so.2 .so.1 .so.0 .so".split()
             for s in suffixes:
                 p = _lib_path.with_suffix(s)
                 if p.exists():
-                    _lib = cdll.LoadLibrary(str(p))
-            return _lib
+                    return cdll.LoadLibrary(str(p))
+            return None
 
         libs = list(
             map(lambda x: Path(sys.prefix, "lib", f"{x}.so"), ["libmkl_rt", "libnlopt"])
@@ -63,15 +62,23 @@ elif platform.system() == "Linux":
             ), f"The library should be either available at {lib}, or with LD_LIBRARY_PATH"
 
 
-from .body import Body, Shape
-from .fmesh import FMesh
-from .material import AVOGADRO, Composition, Element, Material
-from .parser.mctal_parser import read_mctal
-from .parser.meshtal_parser import read_meshtal
-from .surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface
-from .transformation import Transformation
-from .universe import Universe
-from .version import (
+from .body import Body, Shape  # noqa
+from .fmesh import FMesh  # noqa
+from .material import AVOGADRO, Composition, Element, Material  # noqa
+from .parser.mctal_parser import read_mctal  # noqa
+from .parser.meshtal_parser import read_meshtal  # noqa
+from .surface import (  # noqa
+    Cone,
+    Cylinder,
+    GQuadratic,
+    Plane,
+    Sphere,
+    Torus,
+    create_surface,
+)
+from .transformation import Transformation  # noqa
+from .universe import Universe  # noqa
+from .version import (  # noqa
     __author__,
     __copyright__,
     __license__,
