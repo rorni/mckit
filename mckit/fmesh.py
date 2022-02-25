@@ -41,7 +41,7 @@ class RectMesh:
         if transform is not None:
             self.transform(
                 transform
-            )  # TODO dvp: it's  wrong to apply transformation immediately
+            )  # TODO dvp: it's  wrong to apply transormaiton immideately
 
     def __eq__(self, other):
         return self is other
