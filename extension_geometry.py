@@ -1,10 +1,8 @@
 from typing import List
 
-import sys
-
 from pathlib import Path
 
-from extension_utils import SYSTEM_WINDOWS
+from extension_utils import SYSTEM_WINDOWS, get_library_dir
 from setuptools import Extension
 
 # See MKL linking options for various versions of MKL and OS:
@@ -46,26 +44,22 @@ def _init() -> Extension:
         # -L${MKLROOT}/lib/intel64 -Wl, --no-as-needed -lmkl_intel_ilp64 -lmkl_tbb_thread - lmkl_core -lpthread -lm -ldl
         # Compiler options:
         # -DMKL_ILP64 -m64 -I"${MKLROOT}/include"
-        lib_dir = Path(sys.prefix, sys.platlibdir)
-        if not lib_dir.is_dir():
-            raise EnvironmentError(f"{lib_dir} is not a valid directory")
-        mkl_libs = [
-            "mkl_intel_ilp64",
-            "mkl_tbb_thread",
-            "mkl_core",
-        ]  # - this is recommended
-        # mkl_libs = ["mkl_rt"]  # - this works
+        lib_dir = get_library_dir(check=True)
+        # mkl_libs = [
+        #     "mkl_intel_ilp64",
+        #     "mkl_tbb_thread",
+        #     "mkl_core",
+        # ]  # - this is recommended
+        mkl_libs = ["mkl_rt"]  # - this works
         extra_compile_args = [
             "-O3",
             "-Wall",
             "-m64",
         ]
-        define_macros = [("MKL_ILP64", None)]
-        extra_link_args = ["-Wl,--no-as-needed", "--verbose"] + _make_full_names(
-            lib_dir, mkl_libs
-        )
+        extra_link_args = ["-Wl,--no-as-needed"] + _make_full_names(lib_dir, mkl_libs)
         _libraries = ["nlopt", "pthread", "m", "dl"]
 
+    define_macros = [("MKL_ILP64", None)]
     return Extension(
         "mckit.geometry",
         sources=list(map(str, Path("mckit", "src").glob("*.c"))),
