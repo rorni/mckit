@@ -26,17 +26,17 @@ class BinaryDistribution(Distribution):
         return False
 
 
-def get_shared_lib_name(name: str) -> str:
+def get_nlopt_lib_name() -> str:
     """Compute library name: this depends on OS and python version"""
     sys_name = platform.system()
     if sys_name == "Linux":
         if sys.platform.startswith("darwin"):
-            return f"lib{name}.dylib"
-        return f"lib{name}.so.0"
+            return f"libnlopt.dylib"
+        return f"libnlopt.so.0"
     if sys_name == "Darwin":
-        return f"lib{name}.dylib"
+        return f"libnlopt.dylib"
     if sys_name == "Windows":
-        return f"Release/{name}.dll"
+        return f"Release/nlopt.dll"
     raise EnvironmentError(f"Unsupported system {sys_name}")
 
 
@@ -55,16 +55,13 @@ class MCKitBuilder(build_ext):
         self.include_dirs.append(np.get_include())
         self.include_dirs.append(str(root_prefix / "include"))
         library_dir = root_prefix / "lib"
-        # TODO dvp: for mkl-2021.2.0 (and later?) in Linux and Mac
-        #           add symbolic links to libraries having '1' in names in the directory
-        #           to make linker happy
         self.library_dirs.append(str(library_dir))
 
     def build_extension(self, extension: Extension) -> None:
-        assert extension.name == "mckit.geometry"
+        # assert extension.name == "mckit.geometry"
         ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
         nlopt_build_dir = build_nlopt(clean=True)
-        nlopt_lib = nlopt_build_dir / get_shared_lib_name("nlopt")
+        nlopt_lib = nlopt_build_dir / get_nlopt_lib_name()
         log.info(f"---***  builder.build_lib: {self.build_lib}")
         log.info(f"---***  builder.include_dirs: {self.include_dirs}")
         log.info(f"---***  builder.library_dirs: {self.library_dirs}")
@@ -113,7 +110,7 @@ def update_setup_requires(setup_kwargs: Dict[str, Any]) -> None:
 
 
 def update_package_data(setup_kwargs: Dict[str, Any]) -> None:
-    """ fix for poetry issue: it doesn't provide correct specification from `[tool.poetry].input` field"""
+    """fix for poetry issue: it doesn't provide correct specification from `[tool.poetry].input` field"""
     package_data = [
         "data/isotopes.dat",
         "nlopt.dll" if SYSTEM_WINDOWS else "libnlopt*",
