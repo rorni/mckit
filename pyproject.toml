@@ -48,7 +48,10 @@ scipy = "^1.7.3"
 sly = "^0.4"
 tomlkit = "^0.7.0"
 tqdm = "^4.55.1"
-mkl-devel = "^2022.0.2"
+mkl-devel = [
+    {version="^2022.0.2", markers="sys_platform != 'darvin'"},
+    {version="2021.1.1", markers="sys_platform == 'darvin'"}  # TODO dvp: MKL fails to provide recent wheels for MacOS
+]
 python-dotenv = "^0.19.0"
 ply = "^3.11"
 loguru = "^0.6.0"
