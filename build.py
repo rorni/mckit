@@ -9,8 +9,8 @@ from pathlib import Path
 from pprint import pprint
 
 from build_nlopt import build_nlopt
-from extension_geometry import geometry_extension
-from extension_utils import SYSTEM_WINDOWS
+from extension_geometry import SYSTEM_WINDOWS, geometry_extension
+from extension_utils import get_library_dir
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.dist import Distribution
@@ -42,20 +42,17 @@ def get_nlopt_lib_name() -> str:
 
 class MCKitBuilder(build_ext):
     def __init__(self, dist: Distribution, **kwargs) -> None:
-        build_ext.__init__(self, dist, **kwargs)
+        build_ext.__init__(self, dist, **kwargs)  # noqa
 
     def finalize_options(self):
         build_ext.finalize_options(self)
         # Late import to use numpy installed on isolated build
         import numpy as np
 
-        root_prefix = Path(sys.prefix)
-        if SYSTEM_WINDOWS:
-            root_prefix = root_prefix / "Library"
-        self.include_dirs.append(np.get_include())
-        self.include_dirs.append(str(root_prefix / "include"))
-        library_dir = root_prefix / "lib"
+        library_dir = get_library_dir()
         self.library_dirs.append(str(library_dir))
+        self.include_dirs.append(np.get_include())
+        self.include_dirs.append(str(library_dir.parent / "include"))
 
     def build_extension(self, extension: Extension) -> None:
         # assert extension.name == "mckit.geometry"
@@ -145,7 +142,7 @@ def save_generated_setup() -> None:
         python setup-generated.py sdist --formats=gztar,xztar,zip
 
     uses MANIFEST.in and creates proper sdist archives.
-    This is used in Github Action "Release" (see .github/workflows/release.yml).
+    This is used in GitHub Action "Release" (see `.github/workflows/release.yml`).
     Besides, the setup-generated.py script can be used for debugging of setup process.
 
         Note: ::
