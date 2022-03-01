@@ -46,7 +46,7 @@ importlib-metadata = {version = "^2.0.0", python = "<3.8"}
 numpy = "^1.22.1"
 scipy = "^1.7.3"
 sly = "^0.4"
-tomlkit = "^0.10.0"
+tomlkit = "^0.7.0"
 tqdm = "^4.55.1"
 mkl-devel = "^2022.0.2"
 python-dotenv = "^0.19.0"
@@ -88,6 +88,7 @@ rstcheck = "^3.3.1"
 isort = "^5.7.0"
 yappi = "^1.3.2"
 coverage = {version = "^6.3", extras = ["toml"]}
+nox-poetry = "^0.9.0"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
