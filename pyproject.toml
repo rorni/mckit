@@ -49,8 +49,11 @@ sly = "^0.4"
 tomlkit = "^0.7.0"
 tqdm = "^4.55.1"
 mkl-devel = [
-    {version="^2022.0.2", markers="platform_system != 'Darvin'"},
-    {version="2021.1.1", markers="platform_system == 'Darvin'"}  # TODO dvp: MKL fails to provide recent wheels for MacOS
+    {version="^2022.0.2", markers="sys_platform != 'darvin'"},
+    # TODO dvp: MKL fails to provide recent wheels for MacOS,
+    #           check PyPI on MKL updates, if wheels are available,
+    #           and, if yes, remove this restriction
+    {version="2021.1.1", markers="sys_platform == 'darvin'"}
 ]
 python-dotenv = "^0.19.0"
 ply = "^3.11"
@@ -99,9 +102,9 @@ requires = [
     "poetry-core>=1.0.7",
     "setuptools>=58.1.0",
     "wheel",
-    "cmake",
-    "mkl-devel",
-    "numpy",
+#    "cmake",
+#    "mkl-devel",
+#    "numpy",
 ]
 
 [tool.poetry.scripts]
