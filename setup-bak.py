@@ -3,9 +3,10 @@ import os.path as path
 import sys
 
 import numpy as np
+
 from setuptools import Extension, find_packages, setup
-from setuptools.dist import Distribution
 from setuptools.command.test import test as TestCommand
+from setuptools.dist import Distribution
 
 # See recomendations in https://docs.pytest.org/en/latest/goodpractices.html
 # noinspection PyAttributeOutsideInit

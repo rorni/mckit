@@ -1,39 +1,49 @@
-# noxfile.py
-"""
-    Nox sessions.
+"""Nox sessions.
 
-    See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
+See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-03-linting>`_
 """
-from typing import Any, Generator, List
+from typing import List
 
-import os
 import platform
-import tempfile
+import shutil
+import sys
 
-from contextlib import contextmanager
 from glob import glob
 from pathlib import Path
+from textwrap import dedent
 
 import nox
 
-from nox.sessions import Session
+try:
+    from nox_poetry import Session, session  # mypy: ignore
+except ImportError:
+    message = f"""\
+    Nox failed to import the 'nox-poetry' package.
+
+    Please install it using the following command:
+
+    {sys.executable} -m pip install nox-poetry"""
+    raise SystemExit(dedent(message)) from None
 
 # TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
     "safety",
     "isort",
     "black",
+    "pre-commit",
+    # TODO dvp: enable default runs with  lint and mypy when code matures and
+    #           if these checks are not already enabled in pre-commit
     # "lint",
     # "mypy",
     "xdoctest",
     "tests",
-    # "codecov",
-    # "docs",
+    "docs-build",
 )
 
-locations = "mckit", "tests", "noxfile.py", "docs/source/conf.py"
+package = "mckit"
+locations = [package, "tests", "noxfile.py", "docs/source/conf.py"]
 
-supported_pythons = "3.9 3.8 3.10".split()
+supported_pythons = ["3.8", "3.9", "3.10"]
 black_pythons = "3.10"
 mypy_pythons = "3.10"
 lint_pythons = "3.10"
@@ -41,215 +51,297 @@ lint_pythons = "3.10"
 on_windows = platform.system() == "Windows"
 
 
-@contextmanager
-def collect_dev_requirements(session: Session) -> Generator[str, None, None]:
-    req_path = os.path.join(tempfile.gettempdir(), os.urandom(24).hex())
-    try:
-        session.run(
-            "poetry",
-            "export",
-            "--dev",
-            "--without-hashes",
-            "--format=requirements.txt",
-            f"--output={req_path}",
-            external=True,
+def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
+    """Activate virtualenv in hooks installed by pre-commit.
+
+    This function patches git hooks installed by pre-commit to activate the
+    session's virtual environment. This allows pre-commit to locate hooks in
+    that environment when invoked from git.
+
+    Args:
+        s: The Session object.
+    """
+    assert s.bin is not None  # noqa: S101
+
+    virtualenv = s.env.get("VIRTUAL_ENV")
+    if virtualenv is None:
+        return
+
+    hook_dir = Path(".git") / "hooks"
+    if not hook_dir.is_dir():
+        return
+
+    for hook in hook_dir.iterdir():
+        if hook.name.endswith(".sample") or not hook.is_file():
+            continue
+
+        text = hook.read_text()
+        bin_dir = repr(s.bin)[1:-1]  # strip quotes
+        if not (
+            Path("A") == Path("a")
+            and bin_dir.lower() in text.lower()
+            or bin_dir in text
+        ):
+            continue
+
+        lines = text.splitlines()
+        if not (lines[0].startswith("#!") and "python" in lines[0].lower()):
+            continue
+
+        header = dedent(
+            f"""\
+            import os
+            os.environ["VIRTUAL_ENV"] = {virtualenv!r}
+            os.environ["PATH"] = os.pathsep.join((
+                {s.bin!r},
+                os.environ.get("PATH", ""),
+            ))
+            """
         )
-        yield req_path
-    finally:
-        os.unlink(req_path)
+
+        lines.insert(1, header)
+        hook.write_text("\n".join(lines))
 
 
-# see https://stackoverflow.com/questions/59768651/how-to-use-nox-with-poetry
-def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
-    """
-    Install packages constrained by Poetry's lock file.
-
-    This function is a wrapper for nox.sessions.Session.install. It
-    invokes pip to install packages inside the session's virtualenv.
-    Additionally, pip is passed a constraints file generated from
-    Poetry's lock file, to ensure that the packages are pinned to the
-    versions specified in poetry.lock. This allows you to manage the
-    packages as Poetry development dependencies.
-
-    Arguments:
-        session: The Session object.
-        args: Command-line arguments for pip.
-        kwargs: Additional keyword arguments for Session.install.
-    """
-    with collect_dev_requirements(session) as req_path:
-        session.install(f"--constraint={req_path}", *args, **kwargs)
-
-
-@nox.session(python=supported_pythons, venv_backend="venv")
-def tests(session: Session) -> None:
-    """Run the test suite."""
-    path = Path(session.bin).parent
-    args = session.posargs or ["--cov", "-m", "not e2e"]
-    session.run(
-        "poetry",
-        "install",
-        "--no-dev",
-        external=True,
-    )
-    install_with_constraints(
-        session, "pytest", "pytest-cov", "pytest-mock", "coverage[toml]"
-    )
-    if on_windows:
-        session.bin_paths.insert(
-            0, str(path / "Library/bin")
-        )  # here all the DLLs should be installed
-    session.log(f"Session path: {session.bin_paths}")
-    session.run("pytest", env={"LD_LIBRARY_PATH": str(path / "lib")}, *args)
-    if "--cov" in args:
-        session.run("coverage", "report", "--show-missing", "--skip-covered")
-        session.run("coverage", "html")
-
-
-@nox.session(python=lint_pythons)
-def lint(session: Session) -> None:
-    """Lint using flake8."""
-    args = session.posargs or locations
-    install_with_constraints(
-        session,
+@session(name="pre-commit", python="3.10")
+def precommit(s: Session) -> None:
+    """Lint using pre-commit."""
+    args = s.posargs or ["run", "--all-files", "--show-diff-on-failure"]
+    s.install(
+        "black",
+        "darglint",
         "flake8",
         "flake8-annotations",
         "flake8-bandit",
         "flake8-black",
         "flake8-bugbear",
         "flake8-docstrings",
-        "flake8-import-order",
-        "darglint",
+        "flake8-rst-docstrings",
+        "pep8-naming",
+        "pre-commit",
+        "pre-commit-hooks",
+        "isort",
+        "mypy",
+        "types-setuptools",
     )
-    session.run("flake8", *args)
+    s.run("pre-commit", *args)
+    if args and args[0] == "install":
+        activate_virtualenv_in_precommit_hooks(s)
 
 
-@nox.session(python=black_pythons)
-def black(session: Session) -> None:
-    """Run black code formatter."""
-    args = session.posargs or locations
-    install_with_constraints(session, "black")
-    session.run("black", *args)
-
-
-@nox.session(python="3.10")
-def safety(session: Session) -> None:
+@session(python="3.10")
+def safety(s: Session) -> None:
     """Scan dependencies for insecure packages."""
-    args = session.posargs or ["--ignore", "44715"]
+    args = s.posargs or ["--ignore", "44715"]
     # TODO dvp: remove the 'ignore' option above on numpy updating to
-    #      1.22.3 and above
+    #      1.22.1 and above
     #      safety reports:
-    #      -> numpy, installed 1.22.2, affected >0, id 44715
+    #      -> numpy, installed 1.22.1, affected >0, id 44715
     #      All versions of Numpy are affected by CVE-2021-41495:
     #      A null Pointer Dereference vulnerability exists in numpy.sort,
     #      in the PyArray_DescrNew function due to missing return-value validation,
     #      which allows attackers to conduct DoS attacks by
     #      repetitively creating sort arrays.
     #      https://github.com/numpy/numpy/issues/19038
+    #      numpy-1.22.2 - still does not work
 
-    with collect_dev_requirements(session) as req_path:
-        install_with_constraints(session, "safety")
-        session.run("safety", "check", f"--file={req_path}", "--full-report", *args)
+    requirements = s.poetry.export_requirements()
+    s.install("safety")
+    s.run("safety", "check", "--full-report", f"--file={requirements}", *args)
 
 
-#  This dangerous on ill complex project: may cause cyclic dependency
-#  on partial imports ( from ... import).
-#  Uncomment when proper imports or noorder directive is applied in sensitive files.
-#  Always test after reorganizing ill projects.
-#
-@nox.session(python="3.10")
-def isort(session: Session) -> None:
-    """Organize imports"""
-    install_with_constraints(session, "isort")
+@session(python=supported_pythons)
+def tests(s: Session) -> None:
+    """Run the test suite."""
+    s.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        external=True,
+    )
+    s.install("coverage[toml]", "pytest", "pygments")
+    try:
+        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
+    finally:
+        if s.interactive:
+            s.notify("coverage", posargs=[])
+
+
+@session
+def coverage(s: Session) -> None:
+    """Produce the coverage report.
+
+    To obtain html report run
+        nox -rs coverage -- html
+    """
+    args = s.posargs or ["report"]
+
+    s.install("coverage[toml]")
+
+    if not s.posargs and any(Path().glob(".coverage.*")):
+        s.run("coverage", "combine")
+
+    s.run("coverage", *args)
+
+
+@session(python=supported_pythons)
+def typeguard(s: Session) -> None:
+    """Runtime type checking using Typeguard."""
+    s.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        external=True,
+    )
+    s.install("pytest", "typeguard", "pygments")
+    s.run("pytest", f"--typeguard-packages={package}", *s.posargs)
+
+
+@session(python="3.10")
+def isort(s: Session) -> None:
+    """Organize imports."""
+    s.install("isort")
     search_patterns = [
-        ".",
-        "mckit",
-        "tests",
-        "benchmarks",
-        "profiles",
+        # "*.py",
+        "mckit/*.py",
+        "tests/*.py",
+        "benchmarks/*.py",
+        "profiles/*.py",
+        #        "adhoc/*.py",
     ]
+    # exclude = ["setup-generated.py", "setup-bak.py", "setup"]
+    #
+    # def skip(path: str) -> bool:
+    #     return not ("example" in path or path.startswith("setup") or path in exclude)
+
+    # files_to_process: List[str] = filter(
+    #     skip, sum(map(lambda p: glob(p, recursive=True), search_patterns), [])
+    # )
     files_to_process: List[str] = sum(
         map(lambda p: glob(p, recursive=True), search_patterns), []
     )
-    args = session.posargs or files_to_process
-    session.run(
+
+    s.run(
         "isort",
         "--check",
         "--diff",
-        *args,
+        *files_to_process,
         external=True,
     )
 
 
-@nox.session(python=mypy_pythons)
-def mypy(session: Session) -> None:
-    """Type-check using mypy."""
-    args = session.posargs or locations
-    install_with_constraints(session, "mypy")
-    session.run(
-        "mypy",
-        # "--config",
-        # "mypy.ini",  # TODO dvp: compute path to ini-file from test environment: maybe search upward.
-        *args,
+@session(python=black_pythons)
+def black(s: Session) -> None:
+    """Run black code formatter."""
+    args = s.posargs or locations
+    s.install("black")
+    s.run("black", *args)
+
+
+@session(python=lint_pythons)
+def lint(s: Session) -> None:
+    """Lint using flake8."""
+    args = s.posargs or locations
+    s.install(
+        "flake8",
+        "flake8-annotations",
+        "flake8-bandit",
+        "flake8-black",
+        "flake8-bugbear",
+        "flake8-docstrings",
+        "flake8-rst-docstrings",
+        "flake8-import-order",
+        "darglint",
     )
+    s.run("flake8", *args)
 
 
-@nox.session(python=supported_pythons)
-def xdoctest(session: Session) -> None:
+@session(python=mypy_pythons)
+def mypy(s: Session) -> None:
+    """Type-check using mypy."""
+    args = s.posargs or ["src", "tests", "docs/source/conf.py"]
+    s.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        external=True,
+    )
+    s.install("mypy", "pytest", "types-setuptools")
+    s.run("mypy", *args)
+    if not s.posargs:
+        s.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
+
+
+@session(python=supported_pythons)
+def xdoctest(s: Session) -> None:
     """Run examples with xdoctest."""
-    args = session.posargs or ["mckit"]
-    session.run("poetry", "install", "--no-dev", external=True)
-    install_with_constraints(session, "xdoctest")
-    session.run("python", "-m", "xdoctest", *args)
+    args = s.posargs or ["all"]
+    s.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        external=True,
+    )
+    s.install("xdoctest[colors]")
+    s.run("python", "-m", "xdoctest", package, *args)
 
 
 # TODO dvp: readthedocs limit python version to 3.8, check later. See .readthedocs.yaml
-@nox.session(python="3.8")
-def docs(session: Session) -> None:
+@session(name="docs-build", python="3.8")
+def docs_build(s: Session) -> None:
     """Build the documentation."""
-    session.run("poetry", "install", "--no-dev", external=True)
-    install_with_constraints(
-        session,
+    args = s.posargs or ["docs/source", "docs/_build"]
+    s.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        external=True,
+    )
+    s.install(
+        "sphinx",
+        "sphinx-click",
+        "sphinx-rtd-theme",
+        # "sphinxcontrib-htmlhelp",
+        # "sphinxcontrib-jsmath",
+        "sphinxcontrib-napoleon",
+        # "sphinxcontrib-qthelp",
+        "sphinx-autodoc-typehints",
+        # "sphinx_autorun",
+        "numpydoc",
+    )
+
+    build_dir = Path("docs", "_build")
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
+
+    s.run("sphinx-build", *args)
+
+
+@session(python="3.10")
+def docs(s: Session) -> None:
+    """Build and serve the documentation with live reloading on file changes."""
+    args = s.posargs or ["--open-browser", "docs/source", "docs/_build"]
+    s.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        external=True,
+    )
+    s.install(
         "sphinx",
         "sphinx-autobuild",
-        "numpydoc",
-        "sphinxcontrib-htmlhelp",
-        "sphinxcontrib-jsmath",
-        "sphinxcontrib-napoleon",
-        "sphinxcontrib-qthelp",
-        "sphinx-autodoc-typehints",
-        "sphinx_autorun",
+        "sphinx-click",
         "sphinx-rtd-theme",
+        # "sphinxcontrib-htmlhelp",
+        # "sphinxcontrib-jsmath",
+        # "sphinxcontrib-napoleon",
+        # "sphinxcontrib-qthelp",
+        # "sphinx-autodoc-typehints",
+        # "sphinx_autorun",
     )
-    if session.interactive:
-        session.run(
-            "sphinx-autobuild",
-            "--port=0",
-            "--open-browser",
-            "docs/source",
-            "docs/_build/html",
-        )
-    else:
-        session.run("sphinx-build", "docs/source", "docs/_build")
 
+    build_dir = Path("docs", "_build")
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
 
-@nox.session(python="3.10")
-def codecov(session: Session) -> None:
-    """Upload coverage data."""
-    session.run("poetry", "install", "--no-dev", external=True)
-    install_with_constraints(
-        session,
-        "coverage[toml]",
-        "pytest",
-        "pytest-cov",
-        "pytest-mock",
-        "codecov",
-    )
-    session.run("coverage", "xml", "--fail-under=0")
-    session.run("codecov", *session.posargs)
-
-
-@nox.session(python="3.10", venv_backend="venv")
-def test_nox(session: Session) -> None:
-    path = Path(session.bin)
-    print("bin", path.parent)
-    session.run("pip", "install", ".")
+    s.run("sphinx-autobuild", *args)

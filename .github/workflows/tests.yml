@@ -48,8 +48,8 @@ jobs:
         run: pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
       - name: Install poetry
         run: pip install --constraint=.github/workflows/constraints.txt poetry
-      - name: Show poetry markers
-        run: python scripts/check_markers.py
+#      - name: Show poetry markers
+#        run: python scripts/check_markers.py
       - name: Run nox tests
         run: nox  --no-color --python ${{ matrix.python-version }}
       - name: Upload coverage data

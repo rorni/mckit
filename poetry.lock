@@ -427,14 +427,6 @@ python-versions = "*"
 
 [[package]]
 name = "intel-openmp"
-version = "2021.4.0"
-description = "Intel OpenMP* Runtime Library"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
-name = "intel-openmp"
 version = "2022.0.2"
 description = "Intel® OpenMP* Runtime Library"
 category = "main"
@@ -514,18 +506,6 @@ python-versions = "*"
 
 [[package]]
 name = "mkl"
-version = "2021.1.1"
-description = "Intel® oneAPI Math Kernel Library"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-intel-openmp = ">=2021.0.0,<2022.0.0"
-tbb = ">=2021.0.0,<2022.0.0"
-
-[[package]]
-name = "mkl"
 version = "2022.0.2"
 description = "Intel® oneAPI Math Kernel Library"
 category = "main"
@@ -538,18 +518,6 @@ tbb = ">=2021.0.0,<2022.0.0"
 
 [[package]]
 name = "mkl-devel"
-version = "2021.1.1"
-description = "Intel® oneAPI Math Kernel Library"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-mkl = "2021.1.1"
-mkl-include = "2021.1.1"
-
-[[package]]
-name = "mkl-devel"
 version = "2022.0.2"
 description = "Intel® oneAPI Math Kernel Library"
 category = "main"
@@ -559,14 +527,6 @@ python-versions = "*"
 [package.dependencies]
 mkl = "2022.0.2"
 mkl-include = "2022.0.2"
-
-[[package]]
-name = "mkl-include"
-version = "2021.1.1"
-description = "Intel® oneAPI Math Kernel Library"
-category = "main"
-optional = false
-python-versions = "*"
 
 [[package]]
 name = "mkl-include"
@@ -1072,6 +1032,19 @@ python-versions = "*"
 Sphinx = ">=0.6"
 
 [[package]]
+name = "sphinx-click"
+version = "3.1.0"
+description = "Sphinx extension that automatically documents click applications"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+click = ">=7.0"
+docutils = "*"
+sphinx = ">=2.0"
+
+[[package]]
 name = "sphinx-rtd-theme"
 version = "1.0.0"
 description = "Read the Docs theme for Sphinx"
@@ -1295,6 +1268,8 @@ optional = false
 python-versions = "*"
 
 [package.dependencies]
+colorama = {version = "*", optional = true, markers = "platform_system == \"Windows\" and extra == \"colors\""}
+Pygments = {version = "*", optional = true, markers = "extra == \"colors\""}
 six = "*"
 
 [package.extras]
@@ -1343,7 +1318,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.11"   # TODO dvp: increase upper version bound along with scipy updates
-content-hash = "7b1cb046cb092e8e44c71115f0b982c39b295672c997aef9fb8902d2afb2d555"
+content-hash = "a73787c2843784920222e544ed68c2c60fdc962c119e6befbafe4679b2e5b879"
 
 [metadata.files]
 alabaster = [
@@ -1569,11 +1544,6 @@ iniconfig = [
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 intel-openmp = [
-    {file = "intel_openmp-2021.4.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:41c01e266a7fdb631a7609191709322da2bbf24b252ba763f125dd651bcc7675"},
-    {file = "intel_openmp-2021.4.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:3b921236a38384e2016f0f3d65af6732cf2c12918087128a9163225451e776f2"},
-    {file = "intel_openmp-2021.4.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:e2240ab8d01472fed04f3544a878cda5da16c26232b7ea1b59132dbfb48b186e"},
-    {file = "intel_openmp-2021.4.0-py2.py3-none-win32.whl", hash = "sha256:6e863d8fd3d7e8ef389d52cf97a50fe2afe1a19247e8c0d168ce021546f96fc9"},
-    {file = "intel_openmp-2021.4.0-py2.py3-none-win_amd64.whl", hash = "sha256:eef4c8bcc8acefd7f5cd3b9384dbf73d59e2c99fc56545712ded913f43c4a94f"},
     {file = "intel_openmp-2022.0.2-py2.py3-none-manylinux1_i686.whl", hash = "sha256:4297da43d469c744164ee8989c88fb203f240a1fca778c028d2125dbf74007a1"},
     {file = "intel_openmp-2022.0.2-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:78ea3d8ec9e3d244dcb17df909740432547159166b41e46bb5bff28068b184c4"},
     {file = "intel_openmp-2022.0.2-py2.py3-none-win32.whl", hash = "sha256:f1afb839382f50367b08fef557debd81a8e95edd15a7f233074515858eabfdbd"},
@@ -1641,33 +1611,18 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 mkl = [
-    {file = "mkl-2021.1.1-py2.py3-none-macosx_10_15_x86_64.whl", hash = "sha256:c9282273cc32e14658fb63f45cd4ab40607c982e4667017d258c18f2c6d7f114"},
-    {file = "mkl-2021.1.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:dcdf88f0bf542eb1a9be94c45eca2ec9b752c6edc54e0cf28d4dc23117b69e3c"},
-    {file = "mkl-2021.1.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:9b59d5a78e9d4c9da6c8ef053549c0a44966b8fc318c0f4886c11e3ffed6f769"},
-    {file = "mkl-2021.1.1-py2.py3-none-win32.whl", hash = "sha256:317a065868f16f6991ac7156d87bbe877b47d49177eecf1b5d199f7dd1949574"},
-    {file = "mkl-2021.1.1-py2.py3-none-win_amd64.whl", hash = "sha256:62ae1b8750e45fa55b297603239ea36d6ddf17e9ede283abd35144bc8f01f5f7"},
     {file = "mkl-2022.0.2-py2.py3-none-manylinux1_i686.whl", hash = "sha256:0d400f3818ec67d9643dec0faf738271b28532f2ff25edc15002c951b2aed442"},
     {file = "mkl-2022.0.2-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:c5c79d9287cdcfb650986e3123fdb81e9dc110af90c7eef38afafc11b4224678"},
     {file = "mkl-2022.0.2-py2.py3-none-win32.whl", hash = "sha256:37f47a202ac68d1da217b31573ae0534db3542327d1807a56b54158f3e6bb41f"},
     {file = "mkl-2022.0.2-py2.py3-none-win_amd64.whl", hash = "sha256:07fa7c2dfab146d1411ccd6e3e2fa6e3ab9efa8186706e0421c7d49d7986efe0"},
 ]
 mkl-devel = [
-    {file = "mkl_devel-2021.1.1-py2.py3-none-macosx_10_15_x86_64.whl", hash = "sha256:e1132e5a2346cf8c0bcd2fea8ce3e6ce97898f9984182dc9300aa689d6da3bc4"},
-    {file = "mkl_devel-2021.1.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:c560afba57a817bba38879adf064e61abc686e450727286f232142593aeda62a"},
-    {file = "mkl_devel-2021.1.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:021e71cbf34b463948813ffab511b4ede92e1fb6068d2bba8cfa7ab29f027210"},
-    {file = "mkl_devel-2021.1.1-py2.py3-none-win32.whl", hash = "sha256:5a09cf0096e9dc00ef96f46ea68b95ff090cae5f91048536e9e53568ec798258"},
-    {file = "mkl_devel-2021.1.1-py2.py3-none-win_amd64.whl", hash = "sha256:1620376122c90087615854b2a000947d0c7abe25dad5e5c402080c30562c0fd2"},
     {file = "mkl_devel-2022.0.2-py2.py3-none-manylinux1_i686.whl", hash = "sha256:1e5c4e30cd02b7aa84f778fbf6d260a46432fed96c5c2b49a7ff4e58e5cbc918"},
     {file = "mkl_devel-2022.0.2-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:bec339487d465614b7d7bea6917fa35e21acbd8be01befc30ce9854e0c4ac7d0"},
     {file = "mkl_devel-2022.0.2-py2.py3-none-win32.whl", hash = "sha256:22fcec2a1d7716085db34c05019edddfbb6f94095808fb5c799a540a2f92e360"},
     {file = "mkl_devel-2022.0.2-py2.py3-none-win_amd64.whl", hash = "sha256:377ac0ad512f930bed58f5081fe7b2bb9eed89864b2ba25334dd406b4f61145e"},
 ]
 mkl-include = [
-    {file = "mkl_include-2021.1.1-py2.py3-none-macosx_10_15_x86_64.whl", hash = "sha256:23d8b4d08b2aae18f0034edc706350dcad6cf8ff0a97cbdbbb74747bfe01edd6"},
-    {file = "mkl_include-2021.1.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:5f017620b10ed9e95f449f6f0f7d2eb088faff4500b48feb11d7c44ef702dab6"},
-    {file = "mkl_include-2021.1.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:865c884473b0a76da201fe972e68c3b2591e6580753485548acc32169db3ffe7"},
-    {file = "mkl_include-2021.1.1-py2.py3-none-win32.whl", hash = "sha256:0aa68a31abb434608010672f6936bc21f27f5850c819c2d2c7bbfaefb4266fbf"},
-    {file = "mkl_include-2021.1.1-py2.py3-none-win_amd64.whl", hash = "sha256:6473abced30da9c6b14e5ef7d55e0f4c575d28ff2651d9551f91a8acf4be275c"},
     {file = "mkl_include-2022.0.2-py2.py3-none-manylinux1_i686.whl", hash = "sha256:13564fee9c2161b3f316e8fef5b215aeaa5e0b6d66197ef6b7df8b6943e6c791"},
     {file = "mkl_include-2022.0.2-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:8dd257c37ca0093f221cd875cc8b4024b6b7c5f54ebacfb117b56c1406078043"},
     {file = "mkl_include-2022.0.2-py2.py3-none-win32.whl", hash = "sha256:e689f13c90672d1201e683a7fdad1d18a02e9ac50a3c5d1b23f7806597ae7613"},
@@ -1920,6 +1875,10 @@ sphinx-autodoc-typehints = [
 sphinx-autorun = [
     {file = "sphinx-autorun-1.1.1.tar.gz", hash = "sha256:61a39b604487c6dbfd601b3814443bb554532617abd39563e8d603c01ccc711a"},
     {file = "sphinx_autorun-1.1.1-py3-none-any.whl", hash = "sha256:3a2869641e89f693a4cae1a461a8bf1b2492e34e0f1f86f372eb849842c6f258"},
+]
+sphinx-click = [
+    {file = "sphinx-click-3.1.0.tar.gz", hash = "sha256:36dbf271b1d2600fb05bd598ddeed0b6b6acf35beaf8bc9d507ba7716b232b0e"},
+    {file = "sphinx_click-3.1.0-py3-none-any.whl", hash = "sha256:8fb0b048a577d346d741782e44d041d7e908922858273d99746f305870116121"},
 ]
 sphinx-rtd-theme = [
     {file = "sphinx_rtd_theme-1.0.0-py2.py3-none-any.whl", hash = "sha256:4d35a56f4508cfee4c4fb604373ede6feae2a306731d533f409ef5c3496fdbd8"},

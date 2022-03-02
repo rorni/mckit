@@ -56,7 +56,7 @@ END
     # echo "Unique: $unique, separator: \"$separator\""
     for arg in $@; do
         IFS=$separator array=(${arg})
-        for inner_arg in ${array[@]}; do 
+        for inner_arg in ${array[@]}; do
             # Note: the right hand side of operator =~ is to be unquoted
             if [[ -z "$unique" ]] || [[ ! "$res" =~ (^|$separator)$inner_arg($separtor|$) ]]; then
                 if [[ -n "$res" ]]; then
@@ -75,10 +75,10 @@ cat << 'END'
     Usage:
 
         make_path path1 path2 ...
-    
+
         Forms PATH like text output from the given arguments removing duplicates.
         Handles items with spaces.
-    
+
     Example:
         v=$(make_path 1 2 3:4:1 3 "a b")
         echo $v
@@ -115,7 +115,7 @@ get_dir() {
         src="$(readlink "$src")"
         # if $src was a relative symlink, we need to resolve it relative
         # to the path where the symlink file was located
-        [[ $src != /* ]] && src="$DIR/$src" 
+        [[ $src != /* ]] && src="$DIR/$src"
     done
     cd -P "$( dirname "$src" )" >/dev/null 2>&1 && pwd
     cd "$curdir" > /dev/null 2>&1
@@ -205,4 +205,3 @@ function poetry_prefix(){
 function poetry_python() {
     echo "$(poetry run which python)"
 }
-

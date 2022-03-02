@@ -2,16 +2,19 @@
 See: https://gist.github.com/dmontagu/b91d5fd5319ae6fe004ecd28771d985e
 Adapted from https://github.com/pybind/cmake_example
 """
+from typing import Any, Dict
+
 import os
 import platform
 import re
 import subprocess
 import sys
 import sysconfig
+
 from distutils.version import LooseVersion
-from typing import Any, Dict
 
 import Cython.Build
+
 from numpy import get_include as get_numpy_include
 from setuptools.command.build_ext import build_ext
 from setuptools.extension import Extension
@@ -66,7 +69,7 @@ class ExtensionBuilder(build_ext):
             cmake_args += [
                 "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
             ]
-            if sys.maxsize > 2 ** 32:
+            if sys.maxsize > 2**32:
                 cmake_args += ["-A", "x64"]
             build_args += ["--", "/m"]
         else:

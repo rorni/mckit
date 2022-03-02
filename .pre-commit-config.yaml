@@ -8,11 +8,21 @@ repos:
         exclude:  data|.ipynb$
     -   id: check-yaml
     -   id: check-added-large-files
--   repo: https://github.com/psf/black
-    rev: 21.9b0
+# TODO dvp: return rstcheck, fix docs files for that
+#-   repo: https://github.com/myint/rstcheck
+#    rev: 3f92957
+#    hooks:
+#    -   id: rstcheck
+-   repo: local
     hooks:
+    -   id: isort
+        name: isort
+        exclude: dev|\.idea|\.cache
+        entry: poetry run isort
+        language: system
+        types: [python]
     -   id: black
--   repo: https://github.com/myint/rstcheck
-    rev: 3f92957
-    hooks:
-    -   id: rstcheck
+        name: black
+        entry: poetry run black
+        language: system
+        types: [python]

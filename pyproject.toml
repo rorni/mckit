@@ -64,7 +64,7 @@ loguru = "^0.6.0"
 Pygments = "^2.7.2"
 Sphinx = "^4.2.0"
 black = "^22.1.0"
-codecov = "^2.1.10"
+codecov = "^2.1.12"
 darglint = "^1.5.5"
 flake8 = "^4.0.1"
 flake8-annotations = "^2.4.1"
@@ -78,15 +78,16 @@ nox = "^2022.1.7"
 numpydoc = "^1.1.0"
 pre-commit = "^2.17.0"
 pytest = "^7.0.1"
-pytest-benchmark = "^3.2.3"
+pytest-benchmark = "^3.4.1"
 pytest-cov = "^3.0.0"
 pytest-mock = "^3.7.0"
-safety = "^1.10.1"
+safety = "^1.10.3"
 sphinx-autodoc-typehints = "^1.16.0"
 sphinx-autorun = "^1.1.1"
+sphinx-click = "^3.0.2"
 sphinx-rtd-theme = "^1.0.0"
 sphinxcontrib-napoleon = "^0.7"
-xdoctest = "^0.15.0"
+xdoctest = {extras = ["colors"], version = "^0.15.10"}
 wheel = "^0.35.1"
 sphinx-autobuild = "^2021.3.14"
 cmake = "^3.22.2"
@@ -110,29 +111,6 @@ requires = [
 [tool.poetry.scripts]
 mckit = "mckit.cli.runner:mckit"
 
-[tool.coverage.paths]
-source = ["mckit", "*/site-packages"]
-
-[tool.coverage.run]
-branch = true
-source = ["mckit"]
-omit = ["*_tab.py"]
-
-[tool.coverage.report]
-show_missing = true
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self\\.debug",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-]
-ignore_errors = true
-sort = "Cover"
-# fail_under = 100  # So far, this is just a dream.
-
 [tool.poetry.urls]
 "Repository" = "https://github.com/rorni/mckit"
 "Bug Tracker" = "https://github.com/rorni/mckit/issues"
@@ -152,12 +130,9 @@ line_length = 88
 include_trailing_comma = true
 lines_between_types = 1
 skip_gitignore = true
-extend_skip_glob = [
-    "adhoc/*", "scripts/*", "3rd-party/*",
-    "setup-*.py",
-    "build-example.py",
-    "setup-bak.py"
-]
+skip = ["setup-generated.py", "setup.py"]
+skip_glob = ["setup*.py", "*-example.py"]
+
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
 # It's the equivalent of r-strings in Python.  Multiline strings are treated as
@@ -178,7 +153,7 @@ exclude = '''
   | \.git
   | \.hg
   | \.mypy_cache
-  | \.tox
+  | \.pytest_cache
   | \.nox
   | \.venv
   | _build
@@ -188,10 +163,92 @@ exclude = '''
   | 3rd-party
   | data
   | htmlcov
+  | \.egg-info
   | mckit\.egg-info
-  | _tab.py$
+  | _tab\.py$
   | notebooks
   | tutorial
   | wrk
 )
 '''
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+norecursedirs = ".* build dist *.egg-info data"
+python_functions = "test_*  profile_*"
+addopts = "-ra -q --tb=short --doctest-modules --strict-markers --ignore setup.py --failed-first"
+doctest_optionflags = "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ALLOW_UNICODE ALLOW_BYTES"
+testpaths = ["tests"]
+markers = [
+    "slow: too slow tests"
+]
+# xfail tests that pass should fail the test suite
+xfail_strict = true
+
+
+
+
+
+# [tool.coverage]
+[tool.coverage.paths]
+source = ["mckit", ".nox/*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["mckit"]
+omit = ["*_tab.py"]
+
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+#fail_under = 80  # TODO dvp: increase limit to 100 with code maturing
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self.debug",
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+]
+ignore_errors = true
+sort = "Cover"
+
+
+# MyPy config
+# See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
+[tool.mypy]
+python_version = 3.9
+# strict = true     # TODO dvp: uncomment this to get strict control
+follow_imports = "skip"
+# namespace_packages = true
+warn_return_any = true
+warn_unused_configs = true
+show_error_codes = true
+show_error_context = true
+error_summary = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = true
+files = "mckit/**/*.py"
+
+
+[[tool.mypy.overrides]]
+module = [
+    "nox",
+    "nox_poetry",
+    "pandas",
+    "pytest",
+    "click",
+    "click.testing",
+    "loguru",
+    "numpy.testing",
+    "multipledispatch",
+]
+ignore_missing_imports = true

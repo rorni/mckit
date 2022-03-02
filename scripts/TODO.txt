@@ -47,4 +47,3 @@ function sync_toml_version_with_git() {
     _mgv="$(git describe --always --long HEAD)"
     poetry version "${_mgv#v\.}"
 }
-
