@@ -37,7 +37,7 @@ nox.options.sessions = (
     # "mypy",
     "xdoctest",
     "tests",
-    "docs-build",
+    # "docs-build",
 )
 
 package = "mckit"
@@ -286,8 +286,7 @@ def xdoctest(s: Session) -> None:
     s.run("python", "-m", "xdoctest", package, *args)
 
 
-# TODO dvp: readthedocs limit python version to 3.8, check later. See .readthedocs.yaml
-@session(name="docs-build", python="3.8")
+@session(name="docs-build", python="3.10")
 def docs_build(s: Session) -> None:
     """Build the documentation."""
     args = s.posargs or ["docs/source", "docs/_build"]
