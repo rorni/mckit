@@ -27,7 +27,9 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "Operating System :: OS Independent",
+    "Operating System :: Posix :: Linux",   # TODO dvp: track MKL on PyPI, if it's still constrained to Linux
+    "Operating System :: Windows",
+#    "Operating System :: OS Independent",  # TODO dvp: see above, return this if possible and check GH actions
     "Programming Language :: C",
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Physics",
@@ -48,13 +50,12 @@ scipy = "^1.7.3"
 sly = "^0.4"
 tomlkit = "^0.7.0"
 tqdm = "^4.55.1"
-mkl-devel = [
-    {version="^2022.0.2", markers="sys_platform != 'darvin'"},
-    # TODO dvp: MKL fails to provide recent wheels for MacOS,
-    #           check PyPI on MKL updates, if wheels are available,
-    #           and, if yes, remove this restriction
-    {version="2021.1.1", markers="sys_platform == 'darvin'"}
-]
+mkl-devel = "^2022.0.2"
+# TODO dvp: markers don't help to work with MacOS
+#mkl-devel = [
+#    {version = "2021.1.1", markers = "sys_platform == 'darvin'"},
+#    {version = "^2022.0.2", markers = "sys_platform != 'darvin'"},
+#]
 python-dotenv = "^0.19.0"
 ply = "^3.11"
 loguru = "^0.6.0"
@@ -62,7 +63,6 @@ loguru = "^0.6.0"
 [tool.poetry.dev-dependencies]
 Pygments = "^2.7.2"
 Sphinx = "^4.2.0"
-#black = {version = "*", allow-prereleases = true}
 black = "^22.1.0"
 codecov = "^2.1.10"
 darglint = "^1.5.5"
