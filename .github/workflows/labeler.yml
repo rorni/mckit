@@ -1,4 +1,4 @@
-name: Labeler
+name: Create Repository Labels
 
 on:
   push:
@@ -6,15 +6,29 @@ on:
       - main
       - master
       - devel
+    paths:
+      - .github/labels.yaml
+      - .github/workflows/repo-labels.yaml
+  pull_request:
+    branches:
+      - trunk
+    paths:
+      - .github/labels.yaml
+      - .github/workflows/labeler.yml
+  schedule:
+    - cron: "0 0 * * TUE"
 
 jobs:
-  labeler:
+  labels:
+    name: Sycnchronize repository labels
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v2
 
-      - name: Run Labeler
-        uses: crazy-max/ghaction-github-labeler@v3.1.1
+      - name: Sync GitHub Issue Labels
+        uses: crazy-max/ghaction-github-labeler@v3
         with:
+          github-token: ${{ secrets.MCKIT_GITHUB_TOKEN }}
           skip-delete: true
+          dry-run: ${{ github.ref != 'refs/heads/master' }}
