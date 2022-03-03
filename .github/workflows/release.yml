@@ -50,6 +50,10 @@ jobs:
           version=$(poetry version --short) &&
           poetry version $version.dev.$(date +%s)
 
+      - name: Install dependencies before build
+        run: |
+          poetry install --no-dev
+
       - name: Build package
         run: |
           poetry build --ansi
