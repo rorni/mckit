@@ -4,11 +4,14 @@ Intercept log messages from the used libraries and pass them to `loguru`.
 See https://github.com/Delgan/loguru
 
 """
-import logging
+from typing import Final
 
-from loguru import (  # TODO dvp: make loguru optional when mckit is used as library
-    logger,
-)
+import logging
+import sys
+
+from os import environ
+
+from loguru import logger
 
 # class PropagateHandler(logging.Handler):
 #     """Send events from loguru to standard logging"""
@@ -41,6 +44,33 @@ class InterceptHandler(logging.Handler):
 
 
 log = logging.getLogger()
-# log.setLevel(0)
 log.addHandler(InterceptHandler())
-# logging.basicConfig(handlers=[InterceptHandler()], level=0, style='{')
+
+
+MCKIT_CONSOLE_LOG_FORMAT: Final[str] = environ.get(
+    "MCKIT_CONSOLE_LOG_FORMAT",
+    default="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+    "<level>{level: <8}</level> | "
+    "<level>{message}</level>",
+)
+
+
+def init_logger(
+    logfile, quiet, verbose, *, stderr_format: str = MCKIT_CONSOLE_LOG_FORMAT
+):
+    stderr_level: str = "INFO"
+    if quiet:
+        stderr_level = "WARNING"
+    elif verbose:
+        stderr_level = "TRACE"
+    logger.remove()
+    if stderr_format:
+        logger.add(
+            sys.stderr,
+            format=stderr_format,
+            level=stderr_level,
+            backtrace=False,
+            diagnose=False,
+        )
+    if logfile:
+        logger.add(logfile, rotation="100 MB", level="TRACE")

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import mckit.parser.mcnp_section_parser as sp
 
-from mckit.utils.logging import logger
+from mckit.cli.logging import logger
 
 from ...constants import MCNP_ENCODING
 from .common import check_if_path_exists

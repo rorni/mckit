@@ -2,8 +2,8 @@ from io import StringIO
 
 import pytest
 
+from mckit.cli.logging import logger
 from mckit.cli.runner import VERSION, mckit, meta
-from mckit.utils.logging import logger
 
 
 def test_version_command(runner):

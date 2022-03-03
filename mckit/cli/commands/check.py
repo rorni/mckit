@@ -8,9 +8,9 @@ from pathlib import Path
 
 from mckit import Universe
 from mckit.card import Card
+from mckit.cli.logging import logger
 from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file
 from mckit.universe import collect_transformations
-from mckit.utils.logging import logger
 
 
 def check_duplicates(

@@ -2,12 +2,26 @@ from typing import List, Union
 
 import platform
 import shutil
+import sys
 
 from pathlib import Path
 
 SYSTEM_WINDOWS = platform.system() == "Windows"
 
-extra_compile_args = ["/O2"] if SYSTEM_WINDOWS else ["-O3", "-w"]
+
+def get_library_dir(check: bool = False) -> Path:
+    root_prefix = Path(sys.prefix)
+
+    if SYSTEM_WINDOWS:
+        root_prefix = root_prefix / "Library"
+
+    library_dir = root_prefix / "lib"
+
+    if check:
+        if not library_dir.is_dir():
+            raise EnvironmentError(f"{library_dir} is not a valid directory")
+
+    return library_dir
 
 
 def create_directory(path: Path, clean: bool = True) -> Path:

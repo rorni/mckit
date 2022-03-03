@@ -8,7 +8,7 @@ from .printer import print_card, separate
 class Distribution:
     """Represents a distribution of source variable.
 
-    If the len of probs equals to the len of values, then the distribution is 
+    If the len of probs equals to the len of values, then the distribution is
     either of discrete variable (if is_discrete flag is set) or probs sets
     probability density values. If len(probs) + 1 == len(values), then
     values are bin boundaries for continuous distribution.
@@ -57,8 +57,12 @@ class Distribution:
             self._probs = probs
         else:
             self._probs = list(probs)
-        if isinstance(self._probs, list) and len(self._probs) == len(values) \
-        and not is_discrete and not isinstance(self._values[0], Distribution):
+        if (
+            isinstance(self._probs, list)
+            and len(self._probs) == len(values)
+            and not is_discrete
+            and not isinstance(self._values[0], Distribution)
+        ):
             self._is_pdf = True
         else:
             self._is_pdf = False
@@ -95,7 +99,7 @@ class Distribution:
             if discrete:
                 tokens.append("L")
             elif is_pdf:
-                tokens.append("A") 
+                tokens.append("A")
             else:
                 tokens.append("H")
             for v in values:

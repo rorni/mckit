@@ -1,7 +1,5 @@
 import typing as tp
 
-import pickle
-
 import numpy as np
 import pytest
 

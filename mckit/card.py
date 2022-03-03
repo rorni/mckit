@@ -70,6 +70,11 @@ class Card(ABC):
     def drop_original(self) -> None:
         del self.options["original"]
 
+    def add_comment(self, *comment: str) -> None:
+        comm = self.options.get("comment", [])
+        comm.extend(comment)
+        self.options["comment"] = comm
+
     def __str__(
         self,
     ):  # TODO dvp: option `name` is printed twice, should be explicit property of this class instance

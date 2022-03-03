@@ -66,25 +66,29 @@ class TestDistribution:
             (
                 4,
                 [Distribution(10, [1, 2], [1, 2]), Distribution(11, [1, 2], [2])],
-                [1, 2], False, 
+                [1, 2],
+                False,
                 "SI4 S 10 11\nSP4 D 1 2",
             ),
             (
                 5,
                 [Distribution(10, [1, 2], [1, 2]), Distribution(11, [1, 2], [2])],
-                Distribution(12, [1, 2], [1, 2]), False, 
+                Distribution(12, [1, 2], [1, 2]),
+                False,
                 "DS5 S 10 11",
             ),
             (
                 4,
                 [[0.5, 0.3, -0.2], [-0.9, 0, 0.4]],
-                [0.3, 0.7], True,
+                [0.3, 0.7],
+                True,
                 "SI4 L 0.5 0.3 -0.2 -0.9 0 0.4\nSP4 D 0.3 0.7",
             ),
             (
                 5,
                 [[0, -1, 0], [0.5, 0, 0.3]],
-                Distribution(4, [5, 6], [7, 8]), True,
+                Distribution(4, [5, 6], [7, 8]),
+                True,
                 "DS5 L 0 -1 0 0.5 0 0.3",
             ),
             (6, [1, 2, 3], [4, 5, 6], False, "SI6 A 1 2 3\nSP6 4 5 6"),
@@ -139,7 +143,11 @@ class TestSource:
                 "SDEF PAR=2 X=D1 Y=D3\nSI1 H 1 2\nSP1 D 0 1\nSI3 L 4 5 6\nSP3 D 1 2 3",
             ),
             (
-                {"PAR": 2, "X": distrs[2], "Y": Distribution(2, [1, 2, 3], distrs[2], is_discrete=True)},
+                {
+                    "PAR": 2,
+                    "X": distrs[2],
+                    "Y": Distribution(2, [1, 2, 3], distrs[2], is_discrete=True),
+                },
                 "SDEF PAR=2 X=D3 Y=FX D2\nSI3 L 4 5 6\nSP3 D 1 2 3\nDS2 L 1 2 3",
             ),
             (

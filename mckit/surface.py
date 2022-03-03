@@ -108,7 +108,7 @@ def create_surface(kind, *params: Any, **options: Any) -> "Surface":
         A, B, C, D, E, F, G, x0, y0, z0 = params
         m = np.diag([A, B, C])
         v = 2 * np.array([D - A * x0, E - B * y0, F - C * z0])
-        k = A * x0 ** 2 + B * y0 ** 2 + C * z0 ** 2 - 2 * (D * x0 + E * y0 + F * z0) + G
+        k = A * x0**2 + B * y0**2 + C * z0**2 - 2 * (D * x0 + E * y0 + F * z0) + G
         return GQuadratic(m, v, k, **options)
     # -------- Sphere ------------------
     elif kind[0] == "S":
@@ -992,14 +992,14 @@ class Cylinder(Surface, _Cylinder):
             nx, ny, nz = axis
             m = np.array(
                 [
-                    [1 - nx ** 2, -nx * ny, -nx * nz],
-                    [-nx * ny, 1 - ny ** 2, -ny * nz],
-                    [-nx * nz, -ny * nz, 1 - nz ** 2],
+                    [1 - nx**2, -nx * ny, -nx * nz],
+                    [-nx * ny, 1 - ny**2, -ny * nz],
+                    [-nx * nz, -ny * nz, 1 - nz**2],
                 ],
                 dtype=float,
             )
             v = np.zeros(3)
-            k = -self._radius ** 2
+            k = -self._radius**2
             m, v, k = Transformation(translation=self._pt).apply2gq(m, v, k)
             return GQuadratic(m, v, k, **self.options).mcnp_repr(pretty)
         add_float(words, self._radius, pretty)
@@ -1172,9 +1172,9 @@ class Cone(Surface, _Cone):
             a = 1 + self._t2
             m = np.array(
                 [
-                    [1 - a * nx ** 2, -a * nx * ny, -a * nx * nz],
-                    [-a * nx * ny, 1 - a * ny ** 2, -a * ny * nz],
-                    [-a * nx * nz, -a * ny * nz, 1 - a * nz ** 2],
+                    [1 - a * nx**2, -a * nx * ny, -a * nx * nz],
+                    [-a * nx * ny, 1 - a * ny**2, -a * ny * nz],
+                    [-a * nx * nz, -a * ny * nz, 1 - a * nz**2],
                 ]
             )
             v = np.zeros(3)

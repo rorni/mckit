@@ -113,6 +113,32 @@ class Card(object):
     def __str__(self) -> str:
         return self.text
 
+    @property
+    def name(self) -> str:
+        assert not self.is_comment, "Comment cannot have name"
+        return self.text.split(maxsplit=2)[0]
+
+    @property
+    def number(self) -> int:
+        name = self.name
+        if self.is_cell:
+            return int(name)
+        if self.is_surface:
+            if name.isdigit():
+                return int(name)
+            else:
+                assert name[0] in "%*", "Expected reflecting, white surface"
+                return int(name[1:])
+        if self.is_material:
+            return int(name[1:])
+        if self.is_transformation:
+            i = 0
+            if name[0] == "*":
+                i = 1
+            if name[i] in "tT" and name[i + 1] in "rR" and name[i + 2 :].isdigit():
+                return int(name[i + 2 :])
+        raise NotImplementedError(f"Cannot define number for {self.kind} card '{name}'")
+
 
 @attrs
 class InputSections(object):

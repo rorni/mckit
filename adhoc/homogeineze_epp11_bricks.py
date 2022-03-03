@@ -1,10 +1,11 @@
-import sys
 import typing as tp
+
+import sys
+
 from pathlib import Path
 
-import numpy as np
-
 import mckit as mk
+import numpy as np
 
 universes_to_process = [97, 98, 99]
 

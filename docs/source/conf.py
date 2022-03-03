@@ -47,7 +47,7 @@ extensions = [
     "sphinxcontrib.napoleon",
     "sphinxcontrib.qthelp",
     # "sphinx_autodoc_typehints",
-    "sphinx_autorun",
+    # "sphinx_autorun",
     "sphinx_rtd_theme",
 ]
 

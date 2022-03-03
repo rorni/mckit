@@ -9,14 +9,15 @@ than number of GA envelopes. The complexity is not reduced significantly using b
 
 """
 import typing as tp
+
 from functools import reduce
 from glob import glob
 from pathlib import Path
 
 import click
-from tqdm import tqdm
-
 import mckit as mk
+
+from tqdm import tqdm
 
 working_dir = Path.cwd()
 print("Working dir: ", working_dir)
