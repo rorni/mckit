@@ -8,9 +8,13 @@ on:
       - "main"
     paths:
       - "**.py"
+      - "**.c"
+      - "**.h"
       - "**.yaml"
       - "**.yml"
       - "**.toml"
+      - "!adhoc/**"
+      - "!scripts/**"
   pull_request:
     branches:
       - "master"
@@ -18,9 +22,13 @@ on:
       - "main"
     paths:
       - "**.py"
+      - "**.c"
+      - "**.h"
       - "**.yaml"
       - "**.yml"
       - "**.toml"
+      - "!adhoc/**"
+      - "!scripts/**"
 jobs:
   tests:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
