@@ -7,27 +7,39 @@ on:
       - master
 
 jobs:
+
   qa:
     name: "Code quality check: last attempt before release"
     runs-on: ubuntu-latest
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+
+      - uses: actions/setup-python@v2
         with:
           python-version: '3.10'
           architecture: x64
+
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
+
       - name: Install nox
         run: pip install --constraint=.github/workflows/constraints.txt nox
+
       - name: Install poetry
         run: |
           python -m ensurepip
           python -m pip install -U pip
-          pip install poetry==1.1.11
+          pip install --constraint=.github/workflows/constraints.txt poetry
+
+      - name: Install self
+        run: |
+          poetry install
+
       - name: Run default QA
         run: nox
+
   release:
     name: Release
     needs: qa
@@ -49,7 +61,7 @@ jobs:
           pip install --constraint=.github/workflows/constraints.txt pip
           pip --version
 
-      - name: Install Poetry
+      - name: Install poetry
         run: |
           pip install --constraint=.github/workflows/constraints.txt poetry
           poetry --version
@@ -66,35 +78,35 @@ jobs:
         with:
           version-command: echo "${$(poetry version --short)%-*}"
 
-      - name: Bump version for developmental release
-        if: "! steps.check-version.outputs.tag"
-        run: |
-          poetry version patch &&
-          version=$(poetry version --short) &&
-          poetry version $version.dev.$(date +%s)
+#      - name: Bump version for developmental release
+#        if: "! steps.check-version.outputs.tag"
+#        run: |
+#          poetry version patch &&
+#          version=$(poetry version --short) &&
+#          poetry version $version.dev.$(date +%s)
 
-      - name: Install dependencies before build
-        run: |
-          poetry install --no-dev
+#      - name: Install dependencies before build
+#        run: |
+#          poetry install --no-dev
+#
+#      - name: Build package
+#        run: |
+#          poetry build --ansi
 
-      - name: Build package
-        run: |
-          poetry build --ansi
-
-      - name: Publish package on PyPI
-        if: steps.check-version.outputs.tag
-        uses: pypa/gh-action-pypi-publish@v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
-
-      - name: Publish package on TestPyPI
-        if: "! steps.check-version.outputs.tag"
-        uses: pypa/gh-action-pypi-publish@v1
-        with:
-          user: __token__
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+#      - name: Publish package on PyPI
+#        if: steps.check-version.outputs.tag
+#        uses: pypa/gh-action-pypi-publish@v1
+#        with:
+#          user: __token__
+#          password: ${{ secrets.PYPI_TOKEN }}
+#
+#      - name: Publish package on TestPyPI
+#        if: "! steps.check-version.outputs.tag"
+#        uses: pypa/gh-action-pypi-publish@v1
+#        with:
+#          user: __token__
+#          password: ${{ secrets.TEST_PYPI_TOKEN }}
+#          repository_url: https://test.pypi.org/legacy/
 
       - name: Publish the release notes
         uses: release-drafter/release-drafter@v5
