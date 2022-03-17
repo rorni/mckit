@@ -259,7 +259,7 @@ def lint(s: Session) -> None:
 @session(python=mypy_pythons)
 def mypy(s: Session) -> None:
     """Type-check using mypy."""
-    args = s.posargs or ["src", "tests", "docs/source/conf.py"]
+    args = s.posargs or ["mckit", "tests", "docs/source/conf.py"]
     s.run(
         "poetry",
         "install",
