@@ -43,7 +43,7 @@ jobs:
   release:
     name: Release
     needs: qa
-    runs-on: ${{ matix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out the repository
