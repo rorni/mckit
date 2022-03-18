@@ -31,7 +31,10 @@ def _make_full_names(lib_dir: Path, mkl_libs: List[str]) -> List[str]:
     lib_paths = list(map(lambda _p: lib_dir / f"lib{_p}.{suffix}", mkl_libs))
     # TODO dvp: just debugging on github
     print("--- lib dir:", lib_dir)
-    print("--- existing libs:", list(Path(lib_dir).glob("*")))
+    print(
+        "--- existing libs:",
+        list(filter(lambda x: ".dylib" in x, Path(lib_dir).glob("**"))),
+    )
     for p in lib_paths:
         if not p.exists():
             raise EnvironmentError(f"{p} is not a valid path to an MKL library.")
