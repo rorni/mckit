@@ -34,7 +34,7 @@ def _make_full_names(lib_dir: Path, mkl_libs: List[str]) -> List[str]:
         print("--- lib dir:", lib_dir)
         print(
             "--- existing libs:",
-            list(Path(lib_dir).glob("**/.dylib*")),
+            list(Path(lib_dir).glob("**/*.dylib*")),
         )
     for p in lib_paths:
         if not p.exists():
