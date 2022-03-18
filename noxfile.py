@@ -35,7 +35,7 @@ nox.options.sessions = (
     #           if these checks are not already enabled in pre-commit
     # "lint",
     # "mypy",
-    "xdoctest",
+    # "xdoctest",
     "tests",
     # "docs-build",
 )
