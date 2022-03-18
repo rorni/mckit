@@ -41,7 +41,8 @@ jobs:
       matrix:
 #       TODO dvp: return macos when recent MKL for macos is available
 #        os: [ubuntu-latest, windows-latest]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+#        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest]  # TODO - return the above
         python-version: ['3.8', '3.9', '3.10']
     steps:
       - name: Checkout repository
