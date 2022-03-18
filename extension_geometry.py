@@ -1,5 +1,7 @@
 from typing import List
 
+import sys
+
 from pathlib import Path
 
 from extension_utils import SYSTEM_WINDOWS, get_library_dir
@@ -20,7 +22,13 @@ def _make_full_names(lib_dir: Path, mkl_libs: List[str]) -> List[str]:
     on Linux MKL requires full path to the library.
     """
     # TODO dvp: implement logic for other possible suffixes in future MKL versions
-    lib_paths = list(map(lambda p: lib_dir / f"lib{p}.so.2", mkl_libs))
+    if sys.platform == "linux":
+        suffix = "so.2"
+    elif sys.platform == "darwin":
+        suffix = "2.dylib"
+    else:
+        raise EnvironmentError(f"Unknown platform {sys.platform}")
+    lib_paths = list(map(lambda p: lib_dir / f"lib{p}.{suffix}", mkl_libs))
     for p in lib_paths:
         if not p.exists():
             raise EnvironmentError(f"{p} is not a valid path to an MKL library.")
