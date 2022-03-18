@@ -30,29 +30,30 @@ def _init() -> None:
         print("---***", dll_path)
         cdll.LoadLibrary(dll_path)  # to guarantee dll loading
     elif system == "Linux":
-        if (
-            os.environ.get("LD_LIBRARY_PATH") is None
-        ):  # a user can use other location for the MKL and nlopt libraries.
-
-            libs = list(
-                map(
-                    lambda x: Path(sys.prefix, "lib", x),
-                    ["libmkl_rt", "libnlopt"],
-                )
+        libs = list(
+            map(
+                lambda x: Path(sys.prefix, "lib", x),
+                ["libmkl_rt", "libnlopt"],
             )
+        )
 
-            if sys.platform == "linux":
-                suffixes = ".so.2 .so.1 .so.0 .so".split()
-            elif sys.platform == "darwin":
-                suffixes = ".2.dylib .1.dylib .0.dylib .dylib".split()
-            else:
-                raise EnvironmentError(f"Unknown platform: {sys.platform}")
+        if sys.platform == "linux":
+            # a user can use other location for the MKL and nlopt libraries.
+            if os.environ.get("LD_LIBRARY_PATH") is not None:
+                return
+            suffixes = ".so.2 .so.1 .so.0 .so".split()
+        elif sys.platform == "darwin":
+            if os.environ.get("DYLD_LIBRARY_PATH") is not None:
+                return
+            suffixes = ".2.dylib .1.dylib .0.dylib .dylib".split()
+        else:
+            raise EnvironmentError(f"Unknown platform: {sys.platform}")
 
-            for lib in libs:
-                loaded_lib = _preload_library(lib, suffixes)
-                assert (
-                    loaded_lib is not None
-                ), f"The library {lib} should be either available at {Path(sys.prefix, 'lib')}, or with LD_LIBRARY_PATH"
+        for lib in libs:
+            loaded_lib = _preload_library(lib, suffixes)
+            assert (
+                loaded_lib is not None
+            ), f"The library {lib} should be either available at {Path(sys.prefix, 'lib')}, or with LD_LIBRARY_PATH"
     else:
         raise EnvironmentError(f"Unknown system: {system}")
 
