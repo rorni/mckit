@@ -34,7 +34,6 @@ jobs:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     if: |
-      !startsWith(github.event.head_commit.message, 'bump:') &&
       !contains(github.event.head_commit.message, '[skip_ci]')
     strategy:
       fail-fast: false
@@ -45,6 +44,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-python@v1
         with:
