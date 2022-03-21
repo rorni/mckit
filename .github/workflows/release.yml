@@ -15,6 +15,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
 
       - uses: actions/setup-python@v2
         with:
@@ -33,9 +35,11 @@ jobs:
       - name: Install nox and nox-poetry
         run: pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
 
-      - name: Install self
-        run: poetry install
-
+#      - name: Install self
+#        run: |
+#          poetry build
+#          poetry install
+#
       - name: Run tests
         run: nox  -s tests --no-color --python 3.10
 
@@ -48,7 +52,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
         with:
-          fetch-depth: 2
+          fetch-depth: 2    # need previous revision to define tag
 
       - name: Set up Python
         uses: actions/setup-python@v2
