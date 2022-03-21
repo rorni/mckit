@@ -29,3 +29,27 @@ def check_if_path_exists(p: Path) -> Path:
 
 def check_if_all_paths_exist(*paths: Path) -> Generator[Path, None, None]:
     yield from map(check_if_path_exists, paths)
+
+
+class FindFileInDirectoriesError(EnvironmentError):
+    def __init__(self, _file, directories):
+        super().__init__(f"Cannot find {_file} in directories {directories}")
+        self.file = _file
+        self.directories = directories
+
+
+def find_file_in_directories(_file: str, *directories: Path) -> Path:
+    """Find a file in directories
+
+    Args:
+        _file: a file to find
+        directories: list of directories to search the file in
+
+    Raises:
+        FindFileInDirectoriesError: if the `_file` is not found in the specified `directories`
+    """
+    for d in directories:
+        path = d / _file
+        if path.exists():
+            return path.absolute()
+    raise FindFileInDirectoriesError(_file, directories)

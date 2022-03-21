@@ -1,5 +1,7 @@
 from typing import List
 
+import sys
+
 from pathlib import Path
 
 from extension_utils import SYSTEM_WINDOWS, get_library_dir
@@ -20,7 +22,20 @@ def _make_full_names(lib_dir: Path, mkl_libs: List[str]) -> List[str]:
     on Linux MKL requires full path to the library.
     """
     # TODO dvp: implement logic for other possible suffixes in future MKL versions
-    lib_paths = list(map(lambda p: lib_dir / f"lib{p}.so.2", mkl_libs))
+    if sys.platform == "linux":
+        suffix = "so.2"
+    elif sys.platform == "darwin":
+        suffix = "2.dylib"
+    else:
+        raise EnvironmentError(f"Unknown platform {sys.platform}")
+    lib_paths = list(map(lambda _p: lib_dir / f"lib{_p}.{suffix}", mkl_libs))
+    # TODO dvp: just debugging on github
+    # if sys.platform == "darwin":
+    #     print("--- lib dir:", lib_dir)
+    #     print(
+    #         "--- existing libs:",
+    #         list(Path(lib_dir).glob("**/*.dylib*")),
+    #     )
     for p in lib_paths:
         if not p.exists():
             raise EnvironmentError(f"{p} is not a valid path to an MKL library.")
@@ -56,7 +71,9 @@ def _init() -> Extension:
             "-Wall",
             "-m64",
         ]
-        extra_link_args = ["-Wl,--no-as-needed"] + _make_full_names(lib_dir, mkl_libs)
+        # TODO dvp: recommended "--no-as-needed" is not available on MacOS, decide if it is necessary
+        # extra_link_args = ["-Wl,--no-as-needed"] + _make_full_names(lib_dir, mkl_libs)
+        extra_link_args = _make_full_names(lib_dir, mkl_libs)
         _libraries = ["nlopt", "pthread", "m", "dl"]
 
     define_macros = [("MKL_ILP64", None)]
