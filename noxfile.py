@@ -132,7 +132,8 @@ def precommit(s: Session) -> None:
 @session(python="3.10")
 def safety(s: Session) -> None:
     """Scan dependencies for insecure packages."""
-    args = s.posargs or ["--ignore", "44715"]
+    # args = s.posargs or ["--ignore", "44715"]
+    args = s.posargs
     # TODO dvp: remove the 'ignore' option above on numpy updating to
     #      1.22.1 and above
     #      safety reports:

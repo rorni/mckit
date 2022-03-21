@@ -35,11 +35,11 @@ jobs:
       - name: Install nox and nox-poetry
         run: pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
 
-#      - name: Install self
-#        run: |
-#          poetry build
-#          poetry install
-#
+      - name: Install self
+        run: |
+          poetry install
+          poetry build
+
       - name: Run tests
         run: nox  -s tests --no-color --python 3.10
 
