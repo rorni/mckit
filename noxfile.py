@@ -28,14 +28,14 @@ except ImportError:
 # TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
     "safety",
-    "isort",
-    "black",
+    # "isort",   isort and black are included to precommit
+    # "black",
     "pre-commit",
     # TODO dvp: enable default runs with  lint and mypy when code matures and
     #           if these checks are not already enabled in pre-commit
     # "lint",
     # "mypy",
-    "xdoctest",
+    # "xdoctest",  # TODO dvp: uncomment when doctests appear in the code (check with: xdoctest -c list mckit)
     "tests",
     # "docs-build",
 )
@@ -286,7 +286,7 @@ def xdoctest(s: Session) -> None:
     s.run("python", "-m", "xdoctest", package, *args)
 
 
-@session(name="docs-build", python="3.10")
+@session(name="docs-build", python="3.9")
 def docs_build(s: Session) -> None:
     """Build the documentation."""
     args = s.posargs or ["docs/source", "docs/_build"]
