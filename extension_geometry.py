@@ -71,7 +71,9 @@ def _init() -> Extension:
             "-Wall",
             "-m64",
         ]
-        extra_link_args = ["-Wl,--no-as-needed"] + _make_full_names(lib_dir, mkl_libs)
+        # TODO dvp: recommended "--no-as-needed" is not available on MacOS, decide if it is necessary
+        # extra_link_args = ["-Wl,--no-as-needed"] + _make_full_names(lib_dir, mkl_libs)
+        extra_link_args = _make_full_names(lib_dir, mkl_libs)
         _libraries = ["nlopt", "pthread", "m", "dl"]
 
     define_macros = [("MKL_ILP64", None)]
