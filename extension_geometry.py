@@ -29,13 +29,13 @@ def _make_full_names(lib_dir: Path, mkl_libs: List[str]) -> List[str]:
     else:
         raise EnvironmentError(f"Unknown platform {sys.platform}")
     lib_paths = list(map(lambda _p: lib_dir / f"lib{_p}.{suffix}", mkl_libs))
-    if sys.platform == "darwin":
-        # TODO dvp: just debugging on github
-        print("--- lib dir:", lib_dir)
-        print(
-            "--- existing libs:",
-            list(Path(lib_dir).glob("**/*.dylib*")),
-        )
+    # TODO dvp: just debugging on github
+    # if sys.platform == "darwin":
+    #     print("--- lib dir:", lib_dir)
+    #     print(
+    #         "--- existing libs:",
+    #         list(Path(lib_dir).glob("**/*.dylib*")),
+    #     )
     for p in lib_paths:
         if not p.exists():
             raise EnvironmentError(f"{p} is not a valid path to an MKL library.")
