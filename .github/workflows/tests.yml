@@ -63,6 +63,9 @@ jobs:
         with:
           name: coverage-data
           path: ".coverage.*"
+      - name: Build documentations
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
+        run:  nox -s docs-build --no-color --python ${{ matrix.python-version }}
       - name: Upload documentation
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
         uses: actions/upload-artifact@v2.2.4
