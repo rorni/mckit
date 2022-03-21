@@ -132,19 +132,8 @@ def precommit(s: Session) -> None:
 @session(python="3.10")
 def safety(s: Session) -> None:
     """Scan dependencies for insecure packages."""
-    args = s.posargs or ["--ignore", "44715"]
-    # TODO dvp: remove the 'ignore' option above on numpy updating to
-    #      1.22.1 and above
-    #      safety reports:
-    #      -> numpy, installed 1.22.1, affected >0, id 44715
-    #      All versions of Numpy are affected by CVE-2021-41495:
-    #      A null Pointer Dereference vulnerability exists in numpy.sort,
-    #      in the PyArray_DescrNew function due to missing return-value validation,
-    #      which allows attackers to conduct DoS attacks by
-    #      repetitively creating sort arrays.
-    #      https://github.com/numpy/numpy/issues/19038
-    #      numpy-1.22.2 - still does not work
-
+    # args = s.posargs or ["--ignore", "44715"]  - was used because of old numpy issues, no issues now
+    args = s.posargs
     requirements = s.poetry.export_requirements()
     s.install("safety")
     s.run("safety", "check", "--full-report", f"--file={requirements}", *args)
