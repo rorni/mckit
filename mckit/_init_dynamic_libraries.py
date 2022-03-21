@@ -19,17 +19,8 @@ def _preload_library(_lib_path, suffixes):
 def _init() -> None:
     system = platform.system()
     if system == "Windows":
-        dirs = [
-            Path(__file__).parent,
-            Path(sys.prefix, "Library", "bin"),
-        ]
-        dll_path = str(find_file_in_directories("nlopt.dll", *dirs))
-        if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
-            for _dir in dirs:
-                os.add_dll_directory(str(_dir))  # type: ignore
-        print("---***", dll_path)
-        cdll.LoadLibrary(dll_path)  # to guarantee dll loading
-    elif system == "Linux":
+        _init_for_windows()
+    else:
         libs = list(
             map(
                 lambda x: Path(sys.prefix, "lib", x),
@@ -54,8 +45,19 @@ def _init() -> None:
             assert (
                 loaded_lib is not None
             ), f"The library {lib} should be either available at {Path(sys.prefix, 'lib')}, or with LD_LIBRARY_PATH"
-    else:
-        raise EnvironmentError(f"Unknown system: {system}")
+
+
+def _init_for_windows():
+    dirs = [
+        Path(__file__).parent,
+        Path(sys.prefix, "Library", "bin"),
+    ]
+    dll_path = str(find_file_in_directories("nlopt.dll", *dirs))
+    if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
+        for _dir in dirs:
+            os.add_dll_directory(str(_dir))
+    print("---***", dll_path)
+    cdll.LoadLibrary(dll_path)  # to guarantee dll loading
 
 
 _init()
