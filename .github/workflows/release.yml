@@ -24,18 +24,17 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
 
-      - name: Install nox
-        run: pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
-
       - name: Install poetry
         run: |
           python -m ensurepip
           python -m pip install -U pip
           pip install --constraint=.github/workflows/constraints.txt poetry
 
+      - name: Install nox and nox-poetry
+        run: pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
+
       - name: Install self
-        run: |
-          poetry install
+        run: poetry install
 
       - name: Run tests
         run: nox  -s tests --no-color --python 3.10
