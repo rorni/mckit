@@ -50,16 +50,11 @@ jobs:
           pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
 
-#      - name: Install self
-#        run: |
-#          poetry install
-#          poetry build
-
       - name: Run nox tests
         run: nox --no-color --python ${{ env.PYTHON_VERSION }}
 
   release:
-    needs: qa
+    needs: release-tests
     runs-on: ubuntu-latest
 
     steps:
@@ -68,22 +63,22 @@ jobs:
         with:
           fetch-depth: 2    # need previous revision to define tag
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Upgrade pip
-        run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
-          pip --version
-
-      - name: Install poetry
-        run: |
-          pip install --constraint=.github/workflows/constraints.txt poetry
-          poetry --version
-          poetry check
-          poetry version
+#      - name: Set up Python
+#        uses: actions/setup-python@v1
+#        with:
+#          python-version: ${{ env.PYTHON_VERSION }}
+#
+#      - name: Upgrade pip
+#        run: |
+#          pip install --constraint=.github/workflows/constraints.txt pip
+#          pip --version
+#
+#      - name: Install poetry
+#        run: |
+#          pip install --constraint=.github/workflows/constraints.txt poetry
+#          poetry --version
+#          poetry check
+#          poetry version
 
       - name: Check if there is a parent commit
         id: check-parent-commit
