@@ -27,9 +27,9 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "Operating System :: Posix :: Linux",   # TODO dvp: track MKL on PyPI, if it's still constrained to Linux
+    "Operating System :: Posix :: Linux",
     "Operating System :: Windows",
-#    "Operating System :: OS Independent",  # TODO dvp: see above, return this if possible and check GH actions
+    "Operating System :: MacOS",
     "Programming Language :: C",
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Physics",
