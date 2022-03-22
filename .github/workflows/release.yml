@@ -24,31 +24,30 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v2
+      - name: Checkout submodules
+        run: git submodule update --init --recursive --depth=1
+
+      - uses: actions/setup-python@v1
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: x64
 
 
-      - name: Checkout submodules
-        run: git submodule update --init --recursive --depth=1
-
-      - name: Use frozen pip, pipx and wheel version
+      - name: Use frozen pip version
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip pipx wheel
+          pip install --constraint=.github/workflows/constraints.txt pip
           pip --version
 
       - name: Install poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pip install --constraint=.github/workflows/constraints.txt poetry
           poetry --version
           poetry check
           poetry version
 
       - name: Install Nox
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+          pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
 
 #      - name: Install self
