@@ -12,6 +12,7 @@ def _preload_library(_lib_path, suffixes):
     for s in suffixes:
         p = _lib_path.with_suffix(s)
         if p.exists():
+            print("***--- found library: ", p.absolute())
             return cdll.LoadLibrary(str(p))
     return None
 

@@ -32,7 +32,7 @@ def get_nlopt_lib_name() -> str:
     if sys_name == "Linux":
         if sys.platform.startswith("darwin"):
             return f"libnlopt.dylib"
-        return f"libnlopt.so.0"
+        return f"libnlopt.so"
     if sys_name == "Darwin":
         return f"libnlopt.dylib"
     if sys_name == "Windows":
@@ -95,12 +95,12 @@ def update_setup_requires(setup_kwargs: Dict[str, Any]) -> None:
         setup_requires is None
     ), "Poetry has created setup_requires! Check the setup-generated.py"
     setup_requires = [
-        "poetry-core>=1.0.0",
-        "setuptools>=43.0",
+        "poetry-core>=1.0.7",
+        "setuptools>=58.1",
         "wheel",
-        "cmake>=3.18.4",
-        "numpy>=1.13",
-        "mkl-devel",
+        # "cmake>=3.18.4",
+        # "numpy>=1.13",
+        # "mkl-devel",
     ]
     setup_kwargs["setup_requires"] = setup_requires
     save_generated_setup()

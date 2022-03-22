@@ -52,7 +52,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
-      - name: Upgrade pip
+      - name: Use frozen pip version
         run: |
           pip install --constraint=.github/workflows/constraints.txt pip
           pip --version
