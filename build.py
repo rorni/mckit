@@ -32,7 +32,7 @@ def get_nlopt_lib_name() -> str:
     if sys_name == "Linux":
         if sys.platform.startswith("darwin"):
             return f"libnlopt.dylib"
-        return f"libnlopt.so"
+        return f"libnlopt.so.0"
     if sys_name == "Darwin":
         return f"libnlopt.dylib"
     if sys_name == "Windows":

@@ -1,5 +1,7 @@
-# flake8: noqa F401, E402
-import mckit._init_dynamic_libraries
+import mckit._init_dynamic_libraries as init_lib
+
+init_lib.init()
+
 
 from .body import Body, Shape  # noqa
 from .fmesh import FMesh  # noqa

@@ -29,6 +29,11 @@ on:
       - "**.toml"
       - "!adhoc/**"
       - "!scripts/**"
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   tests:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
@@ -47,6 +52,10 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Checkout submodules
+        run: git submodule update --init --recursive --depth=1
+
+      # TODO(ci) dvp: check v2 - libnlopt not found...
       - uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
@@ -57,14 +66,17 @@ jobs:
           pip install --constraint=.github/workflows/constraints.txt pip
           pip --version
 
-      - name: Checkout submodules
-        run: git submodule update --init --recursive --depth=1
-
       - name: Install poetry
-        run: pip install --constraint=.github/workflows/constraints.txt poetry
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt poetry
+          poetry --version
+          poetry check
+          poetry version
 
       - name: Install nox and nox-poetry
-        run: pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
+          nox --version
 
       - name: Run nox tests
         run: nox  --no-color --python ${{ matrix.python-version }}
@@ -98,20 +110,19 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Upgrade pip
+      - name: Use frozen pip version
         run: |
           pip install --constraint=.github/workflows/constraints.txt pip
           pip --version
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pip install --constraint=.github/workflows/constraints.txt poetry
           poetry --version
 
       - name: Install Nox
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+          pip  install --constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
 
       - name: Download coverage data

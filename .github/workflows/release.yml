@@ -1,15 +1,21 @@
 name: Release
 
+env:
+  PYTHON_VERSION: '3.9'
+
 on:
   push:
     branches:
       - main
       - master
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
 
-  qa:
-    name: "Code quality check: last attempt before release"
+  release-tests:
     runs-on: ubuntu-latest
     steps:
 
@@ -18,25 +24,31 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v2
+      - name: Checkout submodules
+        run: git submodule update --init --recursive --depth=1
+
+      - uses: actions/setup-python@v1
         with:
-          python-version: '3.10'
+          python-version: ${{ env.PYTHON_VERSION }}
           architecture: x64
+
 
       - name: Use frozen pip version
         run: |
           pip install --constraint=.github/workflows/constraints.txt pip
           pip --version
 
-
-      - name: Checkout submodules
-        run: git submodule update --init --recursive --depth=1
-
       - name: Install poetry
-        run: pip install --constraint=.github/workflows/constraints.txt poetry
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt poetry
+          poetry --version
+          poetry check
+          poetry version
 
-      - name: Install nox and nox-poetry
-        run: pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
+      - name: Install Nox
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
+          nox --version
 
 #      - name: Install self
 #        run: |
@@ -44,10 +56,9 @@ jobs:
 #          poetry build
 
       - name: Run nox tests
-        run: nox --no-color --python 3.10
+        run: nox --no-color --python ${{ env.PYTHON_VERSION }}
 
   release:
-    name: Release
     needs: qa
     runs-on: ubuntu-latest
 
@@ -60,7 +71,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Upgrade pip
         run: |
@@ -71,6 +82,8 @@ jobs:
         run: |
           pip install --constraint=.github/workflows/constraints.txt poetry
           poetry --version
+          poetry check
+          poetry version
 
       - name: Check if there is a parent commit
         id: check-parent-commit
