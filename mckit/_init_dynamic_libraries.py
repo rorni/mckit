@@ -9,6 +9,7 @@ from mckit.utils.io import find_file_in_directories
 
 
 def _preload_library(_lib_path, suffixes):
+    print("***--- search for library: ", _lib_path)
     for s in suffixes:
         p = _lib_path.with_suffix(s)
         if p.exists():
@@ -17,7 +18,7 @@ def _preload_library(_lib_path, suffixes):
     return None
 
 
-def _init() -> None:
+def init() -> None:
     system = platform.system()
     if system == "Windows":
         _init_for_windows()
@@ -61,4 +62,4 @@ def _init_for_windows():
     cdll.LoadLibrary(dll_path)  # to guarantee dll loading
 
 
-_init()
+# _init()

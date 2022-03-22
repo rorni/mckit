@@ -29,6 +29,11 @@ on:
       - "**.toml"
       - "!adhoc/**"
       - "!scripts/**"
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   tests:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
@@ -47,21 +52,25 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
+
+      - name: Checkout submodules
+        run: git submodule update --init --recursive --depth=1
 
       - name: Use frozen pip version
         run: |
           pip install --constraint=.github/workflows/constraints.txt pip
           pip --version
 
-      - name: Checkout submodules
-        run: git submodule update --init --recursive --depth=1
-
       - name: Install poetry
-        run: pip install --constraint=.github/workflows/constraints.txt poetry
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt poetry
+          poetry --version
+          poetry check
+          poetry version
 
       - name: Install nox and nox-poetry
         run: pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
@@ -98,9 +107,9 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Upgrade pip
+      - name: Use frozen pip, pipx and wheel version
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=.github/workflows/constraints.txt pip pipx wheel
           pip --version
 
       - name: Install Poetry
