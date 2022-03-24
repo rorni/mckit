@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.6.9"
+version = "0.6.10"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -27,12 +27,12 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "Operating System :: Posix :: Linux",
-    "Operating System :: Windows",
+    "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
     "Programming Language :: C",
     "Programming Language :: Python",
-    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering",
 ]
 
 

@@ -18,15 +18,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-# TODO dvp: return MacOS support when MKL does, see issue on github
         os: [ubuntu-latest, macos-latest, windows-latest]
-#        os: [ubuntu-latest, windows-latest]
         python-version: ['3.8', '3.9', '3.10']
     steps:
       - name: Check out the repository
         uses: actions/checkout@v2
         with:
-          fetch-depth: 2
+          fetch-depth: 1
 
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
