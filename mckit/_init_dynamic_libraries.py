@@ -1,11 +1,34 @@
 import os
-import platform
 import sys
 
 from ctypes import cdll
+from enum import IntEnum
 from pathlib import Path
 
-from mckit.utils.io import find_file_in_directories
+
+class Platform(IntEnum):
+    linux = 0
+    darwin = 1
+    windows = 2
+
+    @classmethod
+    def define(cls) -> "Platform":
+        platform = sys.platform
+        if platform == "win32":
+            platform = "windows"
+        return cls[platform]
+
+
+PLATFORM = Platform.define()
+
+if PLATFORM is Platform.linux:
+    SUFFIXES = ".so.2 .so.1 .so.0 .so".split()
+    LD_LIBRARY_PATH = "LD_LIBRARY_PATH"
+elif PLATFORM is Platform.darwin:
+    SUFFIXES = ".2.dylib .1.dylib .0.dylib .dylib".split()
+    LD_LIBRARY_PATH = "DYLD_LIBRARY_PATH"
+else:
+    SUFFIXES = []
 
 
 def _preload_library(_lib_path, suffixes):
@@ -19,47 +42,33 @@ def _preload_library(_lib_path, suffixes):
 
 
 def init() -> None:
-    system = platform.system()
-    if system == "Windows":
-        _init_for_windows()
+    if os.environ.get(LD_LIBRARY_PATH) is not None:
+        return
+    load_mkl()
+    load_nlopt()
+
+
+def load_nlopt():
+    if PLATFORM is Platform.windows:
+        dll_path = Path(__file__).parent / "nlopt.dll"
+        cdll.LoadLibrary(str(dll_path))
     else:
-        libs = list(
-            map(
-                lambda x: Path(sys.prefix, "lib", x),
-                ["libmkl_rt", "libnlopt"],
-            )
-        )
-
-        if sys.platform == "linux":
-            # a user can use other location for the MKL and nlopt libraries.
-            if os.environ.get("LD_LIBRARY_PATH") is not None:
-                return
-            suffixes = ".so.2 .so.1 .so.0 .so".split()
-        elif sys.platform == "darwin":
-            if os.environ.get("DYLD_LIBRARY_PATH") is not None:
-                return
-            suffixes = ".2.dylib .1.dylib .0.dylib .dylib".split()
-        else:
-            raise EnvironmentError(f"Unknown platform: {sys.platform}")
-
-        for lib in libs:
-            loaded_lib = _preload_library(lib, suffixes)
-            assert (
-                loaded_lib is not None
-            ), f"The library {lib} should be either available at {Path(sys.prefix, 'lib')}, or with LD_LIBRARY_PATH"
+        lib_path = Path(__file__).parent / "libnlopt"
+        lib = _preload_library(lib_path, SUFFIXES)
+        assert (
+            lib is not None
+        ), f"The library {lib_path} should be either available or accessible with LD_LIBRARY_PATH"
 
 
-def _init_for_windows():
-    dirs = [
-        Path(__file__).parent,
-        Path(sys.prefix, "Library", "bin"),
-    ]
-    dll_path = str(find_file_in_directories("nlopt.dll", *dirs))
-    if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
-        for _dir in dirs:
-            os.add_dll_directory(str(_dir))
-    print("---***", dll_path)
-    cdll.LoadLibrary(dll_path)  # to guarantee dll loading
+def load_mkl():
+    if PLATFORM is Platform.windows:
+        pass
+    else:
+        lib_path = Path(sys.prefix, "lib", "libmkl_rt")
+        lib = _preload_library(lib_path, SUFFIXES)
+        assert (
+            lib is not None
+        ), f"The library {lib_path} should be either available or accessible with LD_LIBRARY_PATH"
 
 
 # _init()

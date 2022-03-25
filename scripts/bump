@@ -1,17 +1,19 @@
 #!/bin/bash
-o
+
 usage() {
-cat <<EOM
+cat << 'EOM'
+
 Helper to bump and commit the project version
 
 Usage:
-   bump <version>
-or
-   bump --help"
+    bump <version>
+    or
+    bump --help"
 
-The new version should ideally be a valid semver string or a valid bump rule:
-patch, minor, major, prepatch, preminor, premajor, prerelease.
+See also poetry help:
+
 EOM
+    poetry version --help
 }
 
 main() {
