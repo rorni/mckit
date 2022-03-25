@@ -48,7 +48,7 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
@@ -82,7 +82,7 @@ jobs:
         run: nox  --no-color --python ${{ matrix.python-version }}
 
       - name: Upload coverage data
-        uses: "actions/upload-artifact@v2.2.4"
+        uses: "actions/upload-artifact@v3"
         with:
           name: coverage-data
           path: ".coverage.*"
@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload documentation
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3
         with:
           name: docs
           path: docs/_build
@@ -103,7 +103,7 @@ jobs:
     needs: tests
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v1
@@ -126,7 +126,7 @@ jobs:
           nox --version
 
       - name: Download coverage data
-        uses: actions/download-artifact@v2.0.10
+        uses: actions/download-artifact@v3
         with:
           name: coverage-data
 
