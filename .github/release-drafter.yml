@@ -63,5 +63,6 @@ template: |
 
   $CHANGES
 
-  ## Contrbutors
+  ## Contributors
+
   $CONTRIBUTORS
