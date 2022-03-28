@@ -1,74 +1,93 @@
+from typing import List, Optional
+
 import os
 import sys
 
 from ctypes import cdll
 from enum import IntEnum
+from logging import getLogger
 from pathlib import Path
+
+_LOG = getLogger(__name__)
 
 
 class Platform(IntEnum):
-    linux = 0
-    darwin = 1
-    windows = 2
+    windows = 0
+    linux = 1
+    darwin = 2
 
     @classmethod
     def define(cls) -> "Platform":
-        platform = sys.platform
-        if platform == "win32":
-            platform = "windows"
-        return cls[platform]
+        platform_name = sys.platform
+        if platform_name == "win32":
+            platform_name = "windows"
+        return cls[platform_name]
+
+    def library_base_name(self, lib_name: str) -> str:
+        if self is Platform.windows:
+            return lib_name
+        return "lib" + lib_name
+
+    def suffixes(self) -> List[str]:
+        if self is Platform.windows:
+            return [".dll"]
+
+        if PLATFORM is Platform.linux:
+            return ".so.2 .so.1 .so.0 .so".split()
+
+        if PLATFORM is Platform.darwin:
+            return ".2.dylib .1.dylib .0.dylib .dylib".split()
+
+    def library_directories(self) -> List[Path]:
+
+        # if a library is built and installed to python environment
+        if self is Platform.windows:
+            lib_dirs = [Path(sys.prefix, "Library", "lib")]
+        else:
+            lib_dirs = [Path(sys.prefix, "lib")]
+
+        # if a prebuilt library is installed with pip from mckit wheel
+        lib_dirs.append(Path(__file__).parent)
+
+        return lib_dirs
+
+    def ld_library_path_variable(self) -> Optional[str]:
+
+        if self is Platform.linux:
+            return "LD_LIBRARY_PATH"
+
+        if self is Platform.darwin:
+            return "DYLD_LIBRARY_PATH"
+
+        return None
+
+    def preload_library(self, lib_name: str) -> None:
+        for d in self.library_directories():
+            for s in self.suffixes():
+                p = Path(d, self.library_base_name(lib_name)).with_suffix(s)
+                if p.exists():
+                    cdll.LoadLibrary(str(p))
+                    _LOG.info("Found library: {}", p.absolute())
+                    return
+        return None
+
+    def init(self) -> None:
+
+        if self is not Platform.windows:
+            variable = self.ld_library_path_variable()
+            if os.environ.get(variable) is not None:
+                _LOG.info(
+                    "Using library load path from environment variable {}", variable
+                )
+                return
+
+        for lib_name in ["mkl_rt", "nlopt"]:
+            self.preload_library(lib_name)
 
 
 PLATFORM = Platform.define()
 
-if PLATFORM is Platform.linux:
-    SUFFIXES = ".so.2 .so.1 .so.0 .so".split()
-    LD_LIBRARY_PATH = "LD_LIBRARY_PATH"
-elif PLATFORM is Platform.darwin:
-    SUFFIXES = ".2.dylib .1.dylib .0.dylib .dylib".split()
-    LD_LIBRARY_PATH = "DYLD_LIBRARY_PATH"
-else:
-    SUFFIXES = []
 
-
-def _preload_library(_lib_path, suffixes):
-    print("***--- search for library: ", _lib_path)
-    for s in suffixes:
-        p = _lib_path.with_suffix(s)
-        if p.exists():
-            print("***--- found library: ", p.absolute())
-            return cdll.LoadLibrary(str(p))
-    return None
-
-
-def init() -> None:
-    if os.environ.get(LD_LIBRARY_PATH) is not None:
-        return
-    load_mkl()
-    load_nlopt()
-
-
-def load_nlopt():
-    if PLATFORM is Platform.windows:
-        dll_path = Path(__file__).parent / "nlopt.dll"
-        cdll.LoadLibrary(str(dll_path))
-    else:
-        lib_path = Path(__file__).parent / "libnlopt"
-        lib = _preload_library(lib_path, SUFFIXES)
-        assert (
-            lib is not None
-        ), f"The library {lib_path} should be either available or accessible with LD_LIBRARY_PATH"
-
-
-def load_mkl():
-    if PLATFORM is Platform.windows:
-        pass
-    else:
-        lib_path = Path(sys.prefix, "lib", "libmkl_rt")
-        lib = _preload_library(lib_path, SUFFIXES)
-        assert (
-            lib is not None
-        ), f"The library {lib_path} should be either available or accessible with LD_LIBRARY_PATH"
-
-
-# _init()
+def init():
+    _LOG.debug("Working on platform {}", PLATFORM.name)
+    PLATFORM.init()
