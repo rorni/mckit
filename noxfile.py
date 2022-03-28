@@ -261,6 +261,36 @@ def mypy(s: Session) -> None:
         s.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
 
 
+# @session(python=supported_pythons)
+# def wheels(s: Session) -> None:
+#     """Build wheels and install from wheels."""
+#     s.run(
+#         "poetry",
+#         "install",
+#         "--no-dev",
+#         "--no-root",
+#         external=True,
+#     )
+#     s.run(
+#         "poetry",
+#         "build",
+#         "--format",
+#         "wheel",
+#         external=True,
+#     )
+#     wheels_paths = Path(s._runner.envdir, "dist").glob("*.whl")
+#     ... what if multiple wheels present in reused directory?
+#     s.log()
+#     s.run(
+#         "python",
+#         "-m",
+#         "pip",
+#         "install",
+#         wheels_paths[0],
+#         external=True,
+#     )
+
+
 @session(python=supported_pythons)
 def xdoctest(s: Session) -> None:
     """Run examples with xdoctest."""
