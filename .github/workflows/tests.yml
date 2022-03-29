@@ -72,14 +72,20 @@ jobs:
           poetry --version
           poetry check
           poetry version
+          poetn env info
+
+      - name: Install self
+        run: |
+          poetry install --no-dev
+
+      - name: Build the wheel
+        run: |
+          poetry build --format wheel
 
       - name: Install nox and nox-poetry
         run: |
           pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
-
-      - name: Build
-        run: poetry build --format wheel
 
       - name: Run nox tests
         run: nox  --no-color --python ${{ matrix.python-version }}
