@@ -264,6 +264,7 @@ def mypy(s: Session) -> None:
 @session(python=supported_pythons)
 def wheels(s: Session) -> None:
     """Build wheels and install from wheels."""
+    s.skip("Not implemented yet (invalid wheel?)")  # TODO dvp: fix this session
     s.run(
         "poetry",
         "install",
@@ -271,7 +272,7 @@ def wheels(s: Session) -> None:
         "--no-root",
         external=True,
     )
-    dist_dir = Path("dist")  # noqa
+    dist_dir = Path("dist")
     if dist_dir.exists():
         shutil.rmtree(str(dist_dir))
     s.run(
@@ -287,12 +288,10 @@ def wheels(s: Session) -> None:
     wheel_path = next(dist_dir.glob("*.whl")).absolute()
     s.log(f"Installing mckit from wheel {wheel_path}")
     s.run(
-        "python",
-        "-m",
         "pip",
         "install",
         str(wheel_path),
-        external=True,
+        "--verbose",
     )
     s.run(
         "mckit",

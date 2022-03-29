@@ -4,8 +4,8 @@ version = "0.6.13"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
-homepage = "https://github.com/rorni/mckit"
-repository = "https://github.com/rorni/mckit"
+homepage = "https://github.com/MC-kit/mckit"
+repository = "https://github.com/MC-kit/mckit"
 documentation = "https://mckit.readthedocs.io"
 license = "GPL3"
 keywords = ["mckit", "MCNP"]
@@ -113,18 +113,15 @@ build-backend = "poetry.core.masonry.api"
 requires = [
     "poetry-core>=1.0.7",
     "setuptools>=58.1.0",
-    "wheel",
-#    "cmake",
-#    "mkl-devel",
-#    "numpy",
+#    "wheel",
 ]
 
 [tool.poetry.scripts]
 mckit = "mckit.cli.runner:mckit"
 
 [tool.poetry.urls]
-"Repository" = "https://github.com/rorni/mckit"
-"Bug Tracker" = "https://github.com/rorni/mckit/issues"
+"Repository" = "https://github.com/MC-kit/mckit"
+"Bug Tracker" = "https://github.com/MC-kit/mckit/issues"
 # "Documentation" TODO
 
 
