@@ -73,7 +73,11 @@ class Platform(IntEnum):
 
     def init(self) -> None:
 
-        if self is not Platform.windows:
+        if self is Platform.windows:
+            if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
+                for _dir in self.library_directories():
+                    os.add_dll_directory(str(_dir))
+        else:
             variable = self.ld_library_path_variable()
             if os.environ.get(variable) is not None:
                 _LOG.info(
