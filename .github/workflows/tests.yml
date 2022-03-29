@@ -43,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2019]  # TODO dvp: check if windows-2022 is able to build
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.8', '3.9', '3.10']
     steps:
 
@@ -55,7 +55,7 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
 
-      # TODO(ci) dvp: check v2 - libnlopt not found...
+      # TODO(ci) dvp: check v3 - libnlopt not found...
       - uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
@@ -77,6 +77,9 @@ jobs:
         run: |
           pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
+
+      - name: Build
+        run: poetry build --format wheel
 
       - name: Run nox tests
         run: nox  --no-color --python ${{ matrix.python-version }}
@@ -103,10 +106,10 @@ jobs:
     needs: tests
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v1
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
         with:
           python-version: '3.10'
 
