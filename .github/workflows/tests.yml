@@ -72,7 +72,7 @@ jobs:
           poetry --version
           poetry check
           poetry version
-          poetn env info
+          poetry env info
 
       - name: Install self
         run: |
