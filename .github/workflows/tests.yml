@@ -56,7 +56,7 @@ jobs:
         run: git submodule update --init --recursive --depth=1
 
       # TODO(ci) dvp: check v3 - libnlopt not found...
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
