@@ -8,6 +8,7 @@ import platform
 import shutil
 import sys
 
+from enum import IntEnum
 from glob import glob
 from pathlib import Path
 from textwrap import dedent
@@ -24,6 +25,23 @@ except ImportError:
 
     {sys.executable} -m pip install nox-poetry"""
     raise SystemExit(dedent(message)) from None
+
+
+class Platform(IntEnum):
+    windows = 0
+    linux = 1
+    darwin = 2
+
+    @classmethod
+    def define(cls) -> "Platform":
+        platform_name = sys.platform
+        if platform_name == "win32":
+            platform_name = "windows"
+        return cls[platform_name]
+
+
+PLATFORM = Platform.define()
+ON_WINDOWS = PLATFORM is Platform.windows
 
 # TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
@@ -139,18 +157,51 @@ def safety(s: Session) -> None:
     s.run("safety", "check", "--full-report", f"--file={requirements}", *args)
 
 
+# @nox.session(python=supported_pythons, venv_backend="venv")
+# def tests(session: Session) -> None:
+#     """Run the test suite."""
+#     path = Path(session.bin).parent
+#     args = session.posargs or ["--cov", "-m", "not e2e"]
+#     session.run(
+#         "poetry",
+#         "install",
+#         "--no-dev",
+#         external=True,
+#     )
+#     install_with_constraints(
+#         session, "pytest", "pytest-cov", "pytest-mock", "coverage[toml]"
+#     )
+#     if on_windows:
+#         session.bin_paths.insert(
+#             0, str(path / "Library/bin")
+#         )  # here all the DLLs should be installed
+#     session.log(f"Session path: {session.bin_paths}")
+#     session.run("pytest", env={"LD_LIBRARY_PATH": str(path / "lib")}, *args)
+#     if "--cov" in args:
+#         session.run("coverage", "report", "--show-missing", "--skip-covered")
+#         session.run("coverage", "html")
+
+
 @session(python=supported_pythons)
 def tests(s: Session) -> None:
     """Run the test suite."""
+    env_path = Path(s.bin).parent
+    args = s.posargs or ["--cov"]
     s.run(
         "poetry",
         "install",
         "--no-dev",
         external=True,
     )
-    s.install("coverage[toml]", "pytest", "pygments")
+    s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
+    if ON_WINDOWS:
+        s.bin_paths.insert(
+            0, str(env_path / "Library/bin")
+        )  # here all the DLLs should be installed
+        s.log(f"Session path: {s.bin_paths}")
     try:
-        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
+        s.run("pytest", *args)
+        # s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
         if s.interactive:
             s.notify("coverage", posargs=[])
