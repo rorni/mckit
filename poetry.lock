@@ -267,14 +267,15 @@ pyflakes = ">=2.4.0,<2.5.0"
 
 [[package]]
 name = "flake8-annotations"
-version = "2.7.0"
+version = "2.8.0"
 description = "Flake8 Type Annotation Checks"
 category = "dev"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-flake8 = ">=3.7,<5.0"
+attrs = ">=21.4,<22.0"
+flake8 = ">=3.7"
 
 [[package]]
 name = "flake8-bandit"
@@ -465,11 +466,11 @@ plugins = ["setuptools"]
 
 [[package]]
 name = "jinja2"
-version = "3.1.1"
+version = "3.0.3"
 description = "A very fast and expressive template engine."
 category = "dev"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.6"
 
 [package.dependencies]
 MarkupSafe = ">=2.0"
@@ -691,14 +692,14 @@ python-versions = ">=3.8"
 
 [[package]]
 name = "numpydoc"
-version = "1.2"
+version = "1.2.1"
 description = "Sphinx extension to support docstrings in Numpy format"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-Jinja2 = ">=2.10"
+Jinja2 = ">=2.10,<3.1"
 sphinx = ">=1.8"
 
 [package.extras]
@@ -1586,8 +1587,8 @@ flake8 = [
     {file = "flake8-4.0.1.tar.gz", hash = "sha256:806e034dda44114815e23c16ef92f95c91e4c71100ff52813adf7132a6ad870d"},
 ]
 flake8-annotations = [
-    {file = "flake8-annotations-2.7.0.tar.gz", hash = "sha256:52e53c05b0c06cac1c2dec192ea2c36e85081238add3bd99421d56f574b9479b"},
-    {file = "flake8_annotations-2.7.0-py3-none-any.whl", hash = "sha256:3edfbbfb58e404868834fe6ec3eaf49c139f64f0701259f707d043185545151e"},
+    {file = "flake8-annotations-2.8.0.tar.gz", hash = "sha256:a2765c6043098aab0a3f519b871b33586c7fba7037686404b920cf8100cc1cdc"},
+    {file = "flake8_annotations-2.8.0-py3-none-any.whl", hash = "sha256:880f9bb0677b82655f9021112d64513e03caefd2e0d786ab4a59ddb5b262caa9"},
 ]
 flake8-bandit = [
     {file = "flake8_bandit-3.0.0-py2.py3-none-any.whl", hash = "sha256:61b617f4f7cdaa0e2b1e6bf7b68afb2b619a227bb3e3ae00dd36c213bd17900a"},
@@ -1657,8 +1658,8 @@ isort = [
     {file = "isort-5.10.1.tar.gz", hash = "sha256:e8443a5e7a020e9d7f97f1d7d9cd17c88bcb3bc7e218bf9cf5095fe550be2951"},
 ]
 jinja2 = [
-    {file = "Jinja2-3.1.1-py3-none-any.whl", hash = "sha256:539835f51a74a69f41b848a9645dbdc35b4f20a3b601e2d9a7e22947b15ff119"},
-    {file = "Jinja2-3.1.1.tar.gz", hash = "sha256:640bed4bb501cbd17194b3cace1dc2126f5b619cf068a726b98192a0fde74ae9"},
+    {file = "Jinja2-3.0.3-py3-none-any.whl", hash = "sha256:077ce6014f7b40d03b47d1f1ca4b0fc8328a692bd284016f806ed0eaca390ad8"},
+    {file = "Jinja2-3.0.3.tar.gz", hash = "sha256:611bb273cd68f3b993fabdc4064fc858c5b47a973cb5aa7999ec1ba405c87cd7"},
 ]
 livereload = [
     {file = "livereload-2.6.3.tar.gz", hash = "sha256:776f2f865e59fde56490a56bcc6773b6917366bce0c267c60ee8aaf1a0959869"},
@@ -1810,8 +1811,8 @@ numpy = [
     {file = "numpy-1.22.3.zip", hash = "sha256:dbc7601a3b7472d559dc7b933b18b4b66f9aa7452c120e87dfb33d02008c8a18"},
 ]
 numpydoc = [
-    {file = "numpydoc-1.2-py3-none-any.whl", hash = "sha256:3ecbb9feae080031714b63128912988ebdfd4c582a085d25b8d9f7ac23c2d9ef"},
-    {file = "numpydoc-1.2.tar.gz", hash = "sha256:0cec233740c6b125913005d16e8a9996e060528afcb8b7cad3f2706629dfd6f7"},
+    {file = "numpydoc-1.2.1-py3-none-any.whl", hash = "sha256:2d317df5fd9404a5199bb993c1b6627436b2804582d2775bf9ccf3c5912ebe99"},
+    {file = "numpydoc-1.2.1.tar.gz", hash = "sha256:7ce826ed0d54c3fdc9097992a8d73a4d459dc468611351c68e444fec44a45af6"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
