@@ -186,7 +186,6 @@ def safety(s: Session) -> None:
 def tests(s: Session) -> None:
     """Run the test suite."""
     env_path = Path(s.bin).parent
-    args = s.posargs or ["--cov"]
     s.run(
         "poetry",
         "install",
@@ -199,9 +198,15 @@ def tests(s: Session) -> None:
             0, str(env_path / "Library/bin")
         )  # here all the DLLs should be installed
         s.log(f"Session path: {s.bin_paths}")
+        s.run(
+            "poetry",
+            "build",
+            "--format",
+            "wheel",
+            external=True,
+        )
     try:
-        s.run("pytest", *args)
-        # s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
+        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
         if s.interactive:
             s.notify("coverage", posargs=[])
