@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-upstream_url="git@github.com:rorni/mckit.git"
+upstream_url="git@github.com:MC-kit/mckit.git"
 
 git remote add upstream $upstream_url
 git fetch --all
