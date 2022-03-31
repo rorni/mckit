@@ -206,7 +206,15 @@ def tests(s: Session) -> None:
             external=True,
         )
     try:
-        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
+        s.run(
+            "coverage",
+            "run",
+            "--parallel",
+            "-m",
+            "pytest",
+            *s.posargs,
+            env={"LD_LIBRARY_PATH": str(env_path / "lib")},
+        )
     finally:
         if s.interactive:
             s.notify("coverage", posargs=[])
