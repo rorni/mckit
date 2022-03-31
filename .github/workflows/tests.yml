@@ -43,7 +43,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # TODO dvp: return window-latest on resolving https://github.com/actions/virtual-environments/issues/5141
+        os: [ubuntu-latest, macos-latest, windows-2019]
         python-version: ['3.8', '3.9', '3.10']
     steps:
 
@@ -55,9 +56,9 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
 
-      # TODO(ci) dvp: check v2 - libnlopt not found...
+      # TODO(ci) dvp: check v2 - libnlopt not found on linux...
       # TODO(ci) dvp: check v3 - libnlopt not found on linux and geometry not found on windows, macos - works fine
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -75,14 +76,6 @@ jobs:
           poetry version
           poetry env info
 
-#      - name: Install self
-#        run: |
-#          poetry install --no-dev
-#
-#      - name: Build the wheel
-#        run: |
-#          poetry build --format wheel
-
       - name: Install nox and nox-poetry
         run: |
           pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
@@ -97,16 +90,16 @@ jobs:
           name: coverage-data
           path: ".coverage.*"
 
-      - name: Build documentations
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
-        run:  nox -s docs-build --no-color --python ${{ matrix.python-version }}
-
-      - name: Upload documentation
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
-        uses: actions/upload-artifact@v3
-        with:
-          name: docs
-          path: docs/_build
+#      - name: Build documentations
+#        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+#        run:  nox -s docs-build --no-color --python ${{ matrix.python-version }}
+#
+#      - name: Upload documentation
+#        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: docs
+#          path: docs/_build
 
   coverage:
     runs-on: ubuntu-latest
