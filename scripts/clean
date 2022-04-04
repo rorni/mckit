@@ -17,6 +17,7 @@ deldir_recursively() {
 clean() {
     if [[ "$#" -eq "0" ]]; then
         deldir build dist .egg *.egg-info .nox
+        deldir 3rd-party/nlopt/build
         deldir_recursively  "__pycache__" ".benchmarks"
         rm -f mckit/geometry*.so
         rm -f setup.py
