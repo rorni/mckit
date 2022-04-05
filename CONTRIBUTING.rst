@@ -65,6 +65,7 @@ A Developer's Reading
 * `Sphinx, Стандартный синтаксис разметки  reStructuredText, readthedocs <https://sphinx-ru.readthedocs.io/ru/latest/rst-markup.html>`_
 * `Python Packaging Guide <https://packaging.python.org>`_
 * `Stop using Anaconda <https://medium.com/swlh/stop-using-anaconda-for-your-data-science-projects-1fc29821c6f6>`_
+* `Stop using setup.py <https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html>`_
 
 Resources
 ---------
