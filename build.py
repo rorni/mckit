@@ -4,7 +4,6 @@ import distutils.log as log
 import shutil
 
 from pathlib import Path
-
 from pprint import pprint
 
 from build_nlopt import build_nlopt
