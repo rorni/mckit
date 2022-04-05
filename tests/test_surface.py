@@ -3201,7 +3201,10 @@ class TestRCC:
             ([-2, 0, 0], [4, 0, 0], 0.5, 0),
             ([-2, 0, 0], [4, 0, 0], 3, -1),
             pytest.param(
-                ([-0.75, 0, 0], [1.5, 0, 0], 0.75, 0),
+                [-0.75, 0, 0],
+                [1.5, 0, 0],
+                0.75,
+                0,
                 marks=pytest.mark.skipif(
                     sys.platform == "darwin", reason="Fails on MacOS"
                 ),
