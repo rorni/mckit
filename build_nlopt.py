@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from subprocess import check_call
 
-from extension_utils import SYSTEM_WINDOWS, create_directory  # , python_inc, site
+from extension_utils import WIN, create_directory  # , python_inc, site
 
 
 def execute_command(
@@ -32,7 +32,7 @@ def build_nlopt(
 
     if install_prefix is None:
         install_prefix = sys.prefix
-        if SYSTEM_WINDOWS:
+        if WIN:
             install_prefix = os.path.join(install_prefix, "Library")
 
     cmd = [
@@ -59,7 +59,7 @@ def build_nlopt(
             "--config",
             "Release",
             "--",
-            "-m" if SYSTEM_WINDOWS else "-j2",
+            "-m" if WIN else "-j2",
         ],
         cwd=build_dir,
     )

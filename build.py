@@ -9,7 +9,7 @@ from pathlib import Path
 from pprint import pprint
 
 from build_nlopt import build_nlopt
-from extension_geometry import SYSTEM_WINDOWS, geometry_extension
+from extension_geometry import WIN, GeometryExtension
 from extension_utils import get_library_dir
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
@@ -76,6 +76,10 @@ def build(setup_kwargs: Dict[str, Any]) -> None:
     """
     update_package_data(setup_kwargs)
     update_setup_requires(setup_kwargs)
+    geometry_extension = GeometryExtension()
+    log.info("---*** Defined geometry extension:")
+    log.info(str(geometry_extension))
+    log.info("---***")
     setup_kwargs.update(
         {
             "ext_modules": [geometry_extension],
@@ -110,7 +114,7 @@ def update_package_data(setup_kwargs: Dict[str, Any]) -> None:
     """fix for poetry issue: it doesn't provide correct specification from `[tool.poetry].input` field"""
     package_data = [
         "data/isotopes.dat",
-        "nlopt.dll" if SYSTEM_WINDOWS else "libnlopt*",
+        "nlopt.dll" if WIN else "libnlopt*",
     ]
     setup_kwargs["package_data"] = {"mckit": package_data}
 
