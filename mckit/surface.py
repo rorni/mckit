@@ -59,6 +59,9 @@ __all__ = [
 ]
 
 
+VectorLike = Union[np.ndarray, List[float]]
+
+
 # noinspection PyPep8Naming
 def create_surface(kind, *params: Any, **options: Any) -> "Surface":
     """Creates new surface.
@@ -622,7 +625,7 @@ class Plane(Surface, _Plane):
     """
 
     def __init__(
-        self, normal: np.ndarray, offset: float, assume_normalized=False, **options: Any
+        self, normal: VectorLike, offset: float, assume_normalized=False, **options: Any
     ):
         v = np.asarray(normal, dtype=float)
         k = float(offset)
@@ -1028,8 +1031,8 @@ class Cone(Surface, _Cone):
 
     def __init__(
         self,
-        apex: ndarray,
-        axis: ndarray,
+        apex: VectorLike,
+        axis: VectorLike,
         t2: float,
         sheet: int = 0,
         assume_normalized: bool = False,

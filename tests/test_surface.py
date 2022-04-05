@@ -1,5 +1,3 @@
-import platform
-
 import numpy as np
 import pytest
 
@@ -3195,11 +3193,6 @@ class TestRCC:
         result = surf.test_points(point)
         np.testing.assert_array_equal(result, expected)
 
-    # TODO dvp: see below
-
-    @pytest.mark.xfail(
-        reason="these tests fail sometimes in pytest, both in py8 and py7, but works fine in PyCharm"
-    )
     @pytest.mark.parametrize(
         "center, axis, rad, ans",
         [

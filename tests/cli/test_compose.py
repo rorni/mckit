@@ -99,12 +99,7 @@ def test_anonymous_transforms(runner, disable_log, source, output, expected):
     [
         "cubes_with_fill_named_transforms",
         "two_cubes_with_the_same_filler",
-        pytest.param(
-            "shared_surface",
-            marks=pytest.mark.xfail(
-                reason="Handling entities shared between universes is not implemented yet."
-            ),
-        ),
+        "shared_surface",
     ],
 )
 def test_compose(runner, disable_log, universes):
