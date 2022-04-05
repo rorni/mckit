@@ -194,15 +194,13 @@ def tests(s: Session) -> None:
     )
     s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
     if ON_WINDOWS:
-        s.bin_paths.insert(
-            0, str(env_path / "Library/bin")
-        )  # here all the DLLs should be installed
+        # s.bin_paths.insert(
+        #     0, str(env_path / "Library/bin")
+        # )  # here all the DLLs should be installed
         s.log(f"Session path: {s.bin_paths}")
         s.run(
             "poetry",
-            "build",
-            "--format",
-            "wheel",
+            "install",
             external=True,
         )
     try:

@@ -60,7 +60,7 @@ class GeometryExtension(_Extension):
             ]
         else:
             cflags = [
-                "-fvisibility=hidden",
+                # "-fvisibility=hidden",
                 "-O3",
                 "-Wall",
                 "-m64",
