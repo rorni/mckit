@@ -181,11 +181,13 @@ def safety(s: Session) -> None:
 #         session.run("coverage", "report", "--show-missing", "--skip-covered")
 #         session.run("coverage", "html")
 
+# def _find_geometry_dll(s: Session, *paths: Path):
+#     for p in paths:
+
 
 @session(python=supported_pythons)
 def tests(s: Session) -> None:
     """Run the test suite."""
-    env_path = Path(s.bin).parent
     s.run(
         "poetry",
         "install",
@@ -194,15 +196,18 @@ def tests(s: Session) -> None:
     )
     s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
     if ON_WINDOWS:
+        env_path = Path(s.bin).parent
+        dlls = list(map(Path.absolute, env_path.glob("**/geometry*")))
+        if dlls:
+            s.log(f"Geometry DLL found:\n{dlls}")
+        else:
+            s.warn(f"Geometry DLL is not found in env {env_path}")
+        paths_to_add = [env_path / "Library/bin", Path(__file__) / "mckit"]
+        s.bin_paths[:0] = list(map(str, paths_to_add))
         # s.bin_paths.insert(
         #     0, str(env_path / "Library/bin")
         # )  # here all the DLLs should be installed
         s.log(f"Session path: {s.bin_paths}")
-        s.run(
-            "poetry",
-            "install",
-            external=True,
-        )
     try:
         s.run(
             "coverage",
@@ -211,7 +216,7 @@ def tests(s: Session) -> None:
             "-m",
             "pytest",
             *s.posargs,
-            env={"LD_LIBRARY_PATH": str(env_path / "lib")},
+            # env={"LD_LIBRARY_PATH": str(env_path / "lib")},
         )
     finally:
         if s.interactive:
