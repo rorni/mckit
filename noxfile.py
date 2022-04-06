@@ -4,11 +4,10 @@ See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-0
 """
 from typing import List
 
-import platform
 import shutil
 import sys
+import sysconfig
 
-from enum import IntEnum
 from glob import glob
 from pathlib import Path
 from textwrap import dedent
@@ -26,22 +25,10 @@ except ImportError:
     {sys.executable} -m pip install nox-poetry"""
     raise SystemExit(dedent(message)) from None
 
+DIR = Path(__file__).parent.absolute()
+WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform()
+MACOS = sys.platform.startswith("darwin")
 
-class Platform(IntEnum):
-    windows = 0
-    linux = 1
-    darwin = 2
-
-    @classmethod
-    def define(cls) -> "Platform":
-        platform_name = sys.platform
-        if platform_name == "win32":
-            platform_name = "windows"
-        return cls[platform_name]
-
-
-PLATFORM = Platform.define()
-ON_WINDOWS = PLATFORM is Platform.windows
 
 # TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
@@ -65,8 +52,6 @@ supported_pythons = ["3.8", "3.9", "3.10"]
 black_pythons = "3.10"
 mypy_pythons = "3.10"
 lint_pythons = "3.10"
-
-on_windows = platform.system() == "Windows"
 
 
 def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
@@ -195,29 +180,20 @@ def tests(s: Session) -> None:
         external=True,
     )
     s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
-    if ON_WINDOWS:
-        env_path = Path(s.bin).parent
-        dlls = list(map(Path.absolute, env_path.glob("**/geometry*")))
+    env = dict()
+    if WIN:
+        dlls = list(DIR.glob("**/*geometry*"))
         if dlls:
-            s.log(f"Geometry DLL found:\n{dlls}")
+            s.warn(f"Found geometry files: {dlls}")
         else:
-            s.warn(f"Geometry DLL is not found in env {env_path}")
-        paths_to_add = [env_path / "Library/bin", Path(__file__) / "mckit"]
-        s.bin_paths[:0] = list(map(str, paths_to_add))
-        # s.bin_paths.insert(
-        #     0, str(env_path / "Library/bin")
-        # )  # here all the DLLs should be installed
-        s.log(f"Session path: {s.bin_paths}")
+            s.warn("Geometry files not found")
+        old_path = s.env.get("PATH")
+        path = str(DIR / "mckit")
+        if old_path:
+            path = ";".join(path, old_path)
+        s.env["PATH"] = path
     try:
-        s.run(
-            "coverage",
-            "run",
-            "--parallel",
-            "-m",
-            "pytest",
-            *s.posargs,
-            # env={"LD_LIBRARY_PATH": str(env_path / "lib")},
-        )
+        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs, env=env)
     finally:
         if s.interactive:
             s.notify("coverage", posargs=[])
