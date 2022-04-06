@@ -191,7 +191,7 @@ markers = [
     "slow: too slow tests"
 ]
 # xfail tests that pass should fail the test suite
-# xfail_strict = true
+xfail_strict = true
 
 
 
