@@ -81,7 +81,7 @@ jobs:
 
       - name: Install nox and nox-poetry
         run: |
-          pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
+          pip install --constraint=.github/constraints.txt nox nox-poetry
           nox --version
 
       - name: Run nox tests
@@ -118,17 +118,17 @@ jobs:
 
       - name: Use frozen pip version
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=.github/constraints.txt pip
           pip --version
 
       - name: Install Poetry
         run: |
-          pip install --constraint=.github/workflows/constraints.txt poetry
+          pip install --constraint=.github/constraints.txt poetry
           poetry --version
 
       - name: Install Nox
         run: |
-          pip  install --constraint=.github/workflows/constraints.txt nox nox-poetry
+          pip  install --constraint=.github/constraints.txt nox nox-poetry
           nox --version
 
       - name: Download coverage data
