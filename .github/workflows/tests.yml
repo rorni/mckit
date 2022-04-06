@@ -14,7 +14,7 @@ on:
       - "**.yml"
       - "**.toml"
       - "!adhoc/**"
-      - "!scripts/**"
+      - "!tools/**"
   pull_request:
     branches:
       - "master"
@@ -28,7 +28,7 @@ on:
       - "**.yml"
       - "**.toml"
       - "!adhoc/**"
-      - "!scripts/**"
+      - "!tools/**"
 
 #defaults:
 #  run:
@@ -42,8 +42,7 @@ jobs:
   tests:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
-    if: |
-      !contains(github.event.head_commit.message, '[skip_ci]')
+#    if: !contains(github.event.head_commit.message, '[skip_ci]')
     strategy:
       fail-fast: false
       matrix:
@@ -69,12 +68,12 @@ jobs:
 
       - name: Use frozen pip version
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=.github/constraints.txt pip
           pip --version
 
       - name: Install poetry
         run: |
-          pip install --constraint=.github/workflows/constraints.txt poetry
+          pip install --constraint=.github/constraints.txt poetry
           poetry --version
           poetry check
           poetry version
