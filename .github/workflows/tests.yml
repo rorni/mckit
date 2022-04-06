@@ -80,6 +80,7 @@ jobs:
           poetry check
           poetry version
           poetry env info
+          poetry show
 
       - name: Install nox and nox-poetry
         run: |
