@@ -87,7 +87,7 @@ jobs:
           nox --version
 
       - name: Run nox tests
-        run: nox  --no-color --python ${{ matrix.python-version }}
+        run: nox  --python ${{ matrix.python-version }}
 
       - name: Upload coverage data
         uses: "actions/upload-artifact@v3"
