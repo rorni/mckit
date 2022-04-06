@@ -190,7 +190,7 @@ def tests(s: Session) -> None:
         old_path = s.env.get("PATH")
         path = str(DIR / "mckit")
         if old_path:
-            path = ";".join(path, old_path)
+            path = ";".join([path, old_path])
         s.env["PATH"] = path
     try:
         s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs, env=env)

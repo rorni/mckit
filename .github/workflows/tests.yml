@@ -47,8 +47,10 @@ jobs:
       fail-fast: false
       matrix:
         # TODO dvp: return window-latest on resolving https://github.com/actions/virtual-environments/issues/5141
-        os: [ubuntu-latest, macos-latest, windows-2019]
-        python-version: ['3.8', '3.9', '3.10']
+#        os: [ubuntu-latest, macos-latest, windows-2019]
+#        python-version: ['3.8', '3.9', '3.10']
+        os: [windows-2019]
+        python-version: ['3.10']
     steps:
 
       - name: Checkout repository
