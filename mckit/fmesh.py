@@ -3,7 +3,8 @@
 import numpy as np
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import EX, EY, EZ, Box
+from mckit.geometry import EX, EY, EZ, Box
+
 from .transformation import Transformation
 from .utils import mids
 

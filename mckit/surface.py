@@ -6,23 +6,23 @@ from abc import abstractmethod
 import numpy as np
 
 from mckit.box import GLOBAL_BOX
+
+# fmt:off
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+from mckit.geometry import BOX as _BOX
+from mckit.geometry import EX, EY, EZ, ORIGIN
+from mckit.geometry import RCC as _RCC
+from mckit.geometry import Cone as _Cone
+from mckit.geometry import Cylinder as _Cylinder
+from mckit.geometry import GQuadratic as _GQuadratic
+from mckit.geometry import Plane as _Plane
+from mckit.geometry import Sphere as _Sphere
+from mckit.geometry import Torus as _Torus
 from numpy import ndarray
 
 from . import constants
 from .card import Card
 from .constants import DROP_OPTIONS
-
-# fmt:off
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import BOX as _BOX
-from .geometry import EX, EY, EZ, ORIGIN
-from .geometry import RCC as _RCC
-from .geometry import Cone as _Cone
-from .geometry import Cylinder as _Cylinder
-from .geometry import GQuadratic as _GQuadratic
-from .geometry import Plane as _Plane
-from .geometry import Sphere as _Sphere
-from .geometry import Torus as _Torus
 from .printer import add_float, pretty_float
 from .transformation import Transformation
 from .utils import (

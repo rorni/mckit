@@ -14,12 +14,12 @@ import numpy as np
 
 from click import progressbar
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+from mckit.geometry import Shape as _Shape
+
 from .box import GLOBAL_BOX, Box
 from .card import Card
 from .constants import MIN_BOX_VOLUME
-
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import Shape as _Shape
 from .printer import CELL_OPTION_GROUPS, print_card, print_option
 from .surface import Surface
 from .transformation import Transformation
@@ -159,7 +159,7 @@ class Shape(_Shape):
         return words
 
     @classmethod
-    def _clean_args(cls, opc, *args):
+    def _clean_args(cls, opc, *args):  # TODO dvp: change to staticmethod or external
         """Clean input arguments."""
         args = [a.shape if isinstance(a, Body) else a for a in args]
         cls._verify_opc(opc, *args)
