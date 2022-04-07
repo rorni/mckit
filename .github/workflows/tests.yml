@@ -85,7 +85,7 @@ jobs:
       - name: Install nox and nox-poetry
         run: |
           pip install --constraint=.github/constraints.txt nox nox-poetry
-          nox --version
+#          nox --version
 
       - name: Run nox tests
         run: nox --python ${{ matrix.python-version }}

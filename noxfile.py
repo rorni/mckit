@@ -180,20 +180,22 @@ def tests(s: Session) -> None:
         external=True,
     )
     s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
-    env = dict()
+    # env = dict()
     if WIN:
-        dlls = list(DIR.glob("**/*geometry*"))
-        if dlls:
-            s.warn(f"Found geometry files: {dlls}")
-        else:
-            s.warn("Geometry files not found")
-        old_path = s.env.get("PATH")
-        path = str(DIR / "mckit")
-        if old_path:
-            path = ";".join([path, old_path])
-        s.env["PATH"] = path
+        # dlls = list(DIR.glob("**/*geometry*"))
+        # if dlls:
+        #     s.warn(f"Found geometry files: {dlls}")
+        # else:
+        #     s.warn("Geometry files not found")
+        # old_path = s.env.get("PATH")
+        # path = str(DIR / "mckit")
+        # if old_path:
+        #     path = ";".join([path, old_path])
+        # s.env["PATH"] = path
+        s.run("pip", "list")
     try:
-        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs, env=env)
+        # s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs, env=env)
+        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
         if s.interactive:
             s.notify("coverage", posargs=[])
