@@ -182,11 +182,13 @@ def tests(s: Session) -> None:
     s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
     # env = dict()
     if WIN:
-        # dlls = list(DIR.glob("**/*geometry*"))
-        # if dlls:
-        #     s.warn(f"Found geometry files: {dlls}")
-        # else:
-        #     s.warn("Geometry files not found")
+        dlls = list(DIR.glob("**/*geometry*.pyd"))
+        if dlls:
+            s.warn(f"Found geometry files:")
+            for dll in dlls:
+                s.warn(dll)
+        else:
+            s.warn("Geometry files not found")
         # old_path = s.env.get("PATH")
         # path = str(DIR / "mckit")
         # if old_path:

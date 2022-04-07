@@ -18,7 +18,6 @@ from mckit.geometry import GQuadratic as _GQuadratic
 from mckit.geometry import Plane as _Plane
 from mckit.geometry import Sphere as _Sphere
 from mckit.geometry import Torus as _Torus
-from numpy import ndarray
 
 from . import constants
 from .card import Card
