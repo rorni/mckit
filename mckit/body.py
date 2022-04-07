@@ -603,7 +603,7 @@ class Body(Card):
     geometry : list or Shape
         Geometry expression. It is either a list of Surface instances and
         operations (reverse Polish notation is used) or Shape object.
-    options : dict
+    options :
         A set of cell's options.
 
     Methods
@@ -620,7 +620,7 @@ class Body(Card):
         Returns a union of this cell with the other.
     """
 
-    def __init__(self, geometry: TGeometry, **options: tp.Any) -> None:
+    def __init__(self, geometry: TGeometry, **options) -> None:
         if isinstance(geometry, list):
             geometry = Shape.from_polish_notation(geometry)
         elif isinstance(geometry, Body):
