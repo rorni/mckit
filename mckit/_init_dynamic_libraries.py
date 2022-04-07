@@ -46,7 +46,7 @@ def init():
         if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
             for _dir in LIBRARY_DIRECTORIES:
                 os.add_dll_directory(str(_dir))
-            geometry_path = (DIR / "mckit").glob("geometry*.pyd")[0]
+            geometry_path = next((DIR / "mckit").glob("geometry*.pyd"))
             cdll.LoadLibrary(str(geometry_path))
             print("Found library: {}".format(geometry_path.absolute()))
     else:
