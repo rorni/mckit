@@ -36,7 +36,7 @@ class Shape(_Shape):
 
     Parameters
     ----------
-    opc : str
+    opc :
         Operation code. Denotes operation to be applied. Possible values:
         'I' - for intersection;
         'U' - for union;
@@ -44,7 +44,7 @@ class Shape(_Shape):
         'S' - (same) no operation;
         'E' - empty set - no space occupied;
         'R' - whole space.
-    args : list of Shape or Surface
+    args :
         Geometry elements. It can be either Shape or Surface instances. But
         no arguments must be specified for 'E' or 'R' opc. Only one argument
         must present for 'C' or 'S' opc values.
@@ -73,7 +73,7 @@ class Shape(_Shape):
     complement()
         Gets complement shape.
     union(*other)
-        Creates an union of the shape with the others.
+        Creates a union of the shape with the others.
     intersection(*other)
         Creates an intersection of the shape with the others.
     transform(tr)
@@ -99,7 +99,7 @@ class Shape(_Shape):
         "C": ~hash("S"),
     }
 
-    def __init__(self, opc, *args):
+    def __init__(self, opc: str, *args: Union["Shape", "Surface"]):
         opc, args = Shape._clean_args(opc, *args)
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
@@ -615,9 +615,9 @@ class Body(Card):
     simplify(box, split_disjoint, min_volume)
         Simplifies cell description.
     transform(tr)
-        Applies transformation tr to this cell.
+        Applies transformation 'tr' to this cell.
     union(other)
-        Returns an union of this cell with the other.
+        Returns a union of this cell with the other.
     """
 
     def __init__(self, geometry: TGeometry, **options: tp.Any) -> None:
@@ -722,7 +722,7 @@ class Body(Card):
         return Body(geometry, **options)
 
     def union(self, other):
-        """Gets an union if this cell with the other.
+        """Gets a union if this cell with the other.
 
         The resulting cell inherits all options of this one (the caller).
 
@@ -795,8 +795,8 @@ class Body(Card):
     def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
         """Fills this cell by filling universe.
 
-        If this cell doesn't contain fill options and universe does not
-        specified, the cell itself is returned as list of length 1. Otherwise
+        If this cell doesn't contain fill options and universe is not
+        specified, the cell itself is returned as list of length 1. Otherwise:
         a list of cells from filling universe bounded by cell being filled is
         returned.
 
@@ -892,7 +892,7 @@ def simplify(
 
     cells:
         iterable over cells to simplify
-    box : Box
+    box :
         Box, from which simplification process starts. Default: GLOBAL_BOX.
     min_volume : float
         Minimal volume of the box, when splitting process terminates.
@@ -922,7 +922,7 @@ class Simplifier(object):
 
 
 def simplify_mp(
-    cells: Iterable[Body], box: Box = GLOBAL_BOX, min_volume: float = 1.0, chunksize=1
+    cells: Iterable[Body], box: Box = GLOBAL_BOX, min_volume: float = 1.0, chunk_size=1
 ) -> tp.Generator:
     """Simplifies the cells in multiprocessing mode.
 
@@ -935,12 +935,12 @@ def simplify_mp(
         Box, from which simplification process starts. Default: GLOBAL_BOX.
     min_volume : float
         Minimal volume of the box, when splitting process terminates.
-    chunksize: size of chunks to pass to child processes
+    chunk_size: size of chunks to pass to child processes
     """
     cpus = os.cpu_count()
     with Pool(processes=cpus) as pool:
         yield from pool.imap(
-            Simplifier(box=box, min_volume=min_volume), cells, chunksize=chunksize
+            Simplifier(box=box, min_volume=min_volume), cells, chunksize=chunk_size
         )
 
 
@@ -948,7 +948,7 @@ def simplify_mpp(
     cells: Iterable[Body],
     box: Box = GLOBAL_BOX,
     min_volume: float = 1.0,
-    chunksize: int = 1,
+    chunk_size: int = 1,
 ) -> tp.Generator:
     """Simplifies the cells in multiprocessing mode with progress bar.
 
@@ -961,14 +961,14 @@ def simplify_mpp(
         Box, from which simplification process starts. Default: GLOBAL_BOX.
     min_volume : float
         Minimal volume of the box, when splitting process terminates.
-    chunksize: size of chunks to pass to child processes
+    chunk_size: size of chunks to pass to child processes
     """
 
     def fmt_fun(x):
         return "Simplifying cell #{0}".format(x.name() if x else x)
 
     with progressbar(
-        simplify_mp(cells, box, min_volume, chunksize), item_show_func=fmt_fun
+        simplify_mp(cells, box, min_volume, chunk_size), item_show_func=fmt_fun
     ) as pb:
         for c in pb:
             yield c
