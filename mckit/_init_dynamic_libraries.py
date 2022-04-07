@@ -8,7 +8,7 @@ from pathlib import Path
 
 _LOG = getLogger(__name__)
 
-
+DIR = Path(__file__).parent
 WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform()
 MACOS = sys.platform.startswith("darwin")
 
@@ -28,7 +28,7 @@ SUFFIXES = (
 
 LIBRARY_DIRECTORIES = (
     [Path(sys.prefix, "Library", "lib")] if WIN else [Path(sys.prefix, "lib")]
-) + [Path(__file__).parent]
+) + [DIR]
 
 
 def preload_library(_lib_name: str) -> None:
@@ -46,6 +46,9 @@ def init():
         if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
             for _dir in LIBRARY_DIRECTORIES:
                 os.add_dll_directory(str(_dir))
+            geometry_path = (DIR / "mckit").glob("geometry*.pyd")[0]
+            cdll.LoadLibrary(str(geometry_path))
+            print("Found library: {}".format(geometry_path.absolute()))
     else:
         ld_library_path_variable = "DYLD_LIBRARY_PATH" if MACOS else "LD_LIBRARY_PATH"
         if os.environ.get(ld_library_path_variable) is not None:
