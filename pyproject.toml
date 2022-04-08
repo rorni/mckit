@@ -50,8 +50,6 @@ scipy = "^1.7.3"
 sly = "^0.4"
 tomlkit = "^0.7.0"
 tqdm = "^4.55.1"
-#mkl-devel = "2021.3.0"
-# Because the MKL is supported ugly on PyPI use different versions for different OS:
 mkl-devel = [
     {version = "2022.0.0", markers = "sys_platform == 'darwin'"},
     {version = "2022.0.2", markers = "sys_platform == 'linux'"},
@@ -70,7 +68,6 @@ tbb = [
 python-dotenv = "^0.20.0"
 ply = "^3.11"
 loguru = "^0.6.0"
-# msvc-runtime = {version = "^14.29.30133", platform = "win32"}
 
 [tool.poetry.dev-dependencies]
 Pygments = "^2.7.2"
@@ -114,7 +111,6 @@ build-backend = "poetry.core.masonry.api"
 requires = [
     "poetry-core>=1.0.7",
     "setuptools>=58.1.0",
-#    "wheel",
 ]
 
 [tool.poetry.scripts]
@@ -233,7 +229,7 @@ sort = "Cover"
 # MyPy config
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
 [tool.mypy]
-python_version = 3.9
+python_version = 3.10
 # strict = true     # TODO dvp: uncomment this to get strict control
 follow_imports = "skip"
 # namespace_packages = true
@@ -259,5 +255,6 @@ module = [
     "loguru",
     "numpy.testing",
     "multipledispatch",
+    "pkg_resources",
 ]
 ignore_missing_imports = true
