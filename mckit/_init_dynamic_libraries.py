@@ -35,17 +35,8 @@ else:  # Linux
 def iterate_suffixes_with_version(max_version: int = 2) -> Generator["str", None, None]:
     while max_version >= 0:
         yield combine_version_and_suffix(max_version, SUFFIX)
-        --max_version
+        max_version -= 1
     yield SUFFIX
-
-
-# SUFFIXES = (
-#     [".dll"]
-#     if WIN
-#     else ".2.dylib .1.dylib .0.dylib .dylib".split()
-#     if MACOS
-#     else ".so.2 .so.1 .so.0 .so".split()
-# )
 
 
 SHARED_LIBRARY_DIRECTORIES: List[Path] = []

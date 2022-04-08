@@ -70,7 +70,7 @@ tbb = [
 python-dotenv = "^0.20.0"
 ply = "^3.11"
 loguru = "^0.6.0"
-msvc-runtime = {version = "^14.29.30133", platform = "win32"}
+# msvc-runtime = {version = "^14.29.30133", platform = "win32"}
 
 [tool.poetry.dev-dependencies]
 Pygments = "^2.7.2"

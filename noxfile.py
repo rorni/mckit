@@ -142,34 +142,6 @@ def safety(s: Session) -> None:
     s.run("safety", "check", "--full-report", f"--file={requirements}", *args)
 
 
-# @nox.session(python=supported_pythons, venv_backend="venv")
-# def tests(session: Session) -> None:
-#     """Run the test suite."""
-#     path = Path(session.bin).parent
-#     args = session.posargs or ["--cov", "-m", "not e2e"]
-#     session.run(
-#         "poetry",
-#         "install",
-#         "--no-dev",
-#         external=True,
-#     )
-#     install_with_constraints(
-#         session, "pytest", "pytest-cov", "pytest-mock", "coverage[toml]"
-#     )
-#     if on_windows:
-#         session.bin_paths.insert(
-#             0, str(path / "Library/bin")
-#         )  # here all the DLLs should be installed
-#     session.log(f"Session path: {session.bin_paths}")
-#     session.run("pytest", env={"LD_LIBRARY_PATH": str(path / "lib")}, *args)
-#     if "--cov" in args:
-#         session.run("coverage", "report", "--show-missing", "--skip-covered")
-#         session.run("coverage", "html")
-
-# def _find_geometry_dll(s: Session, *paths: Path):
-#     for p in paths:
-
-
 @session(python=supported_pythons)
 def tests(s: Session) -> None:
     """Run the test suite."""
@@ -180,18 +152,16 @@ def tests(s: Session) -> None:
         external=True,
     )
     s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
-    # env = dict()
-    if WIN:
-        dlls = list(DIR.glob("**/*geometry*.pyd"))
-        if dlls:
-            s.warn(f"Found geometry files:")
-            for dll in dlls:
-                s.warn(dll)
-        else:
-            s.warn("Geometry files not found")
-        s.run("pip", "list")
+    # if WIN:
+    #     dlls = list(DIR.glob("**/*geometry*.pyd"))
+    #     if dlls:
+    #         s.warn(f"Found geometry files:")
+    #         for dll in dlls:
+    #             s.warn(dll)
+    #     else:
+    #         s.warn("Geometry files not found")
+    #     s.run("pip", "list")
     try:
-        # s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs, env=env)
         s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
         if s.interactive:
@@ -233,32 +203,15 @@ def isort(s: Session) -> None:
     """Organize imports."""
     s.install("isort")
     search_patterns = [
-        # "*.py",
         "mckit/*.py",
         "tests/*.py",
         "benchmarks/*.py",
         "profiles/*.py",
-        #        "adhoc/*.py",
     ]
-    # exclude = ["setup-generated.py", "setup-bak.py", "setup"]
-    #
-    # def skip(path: str) -> bool:
-    #     return not ("example" in path or path.startswith("setup") or path in exclude)
-
-    # files_to_process: List[str] = filter(
-    #     skip, sum(map(lambda p: glob(p, recursive=True), search_patterns), [])
-    # )
     files_to_process: List[str] = sum(
         map(lambda p: glob(p, recursive=True), search_patterns), []
     )
-
-    s.run(
-        "isort",
-        "--check",
-        "--diff",
-        *files_to_process,
-        external=True,
-    )
+    s.run("isort", "--check", "--diff", *files_to_process, external=True)
 
 
 @session(python=black_pythons)
@@ -306,7 +259,9 @@ def mypy(s: Session) -> None:
 @session(python=supported_pythons)
 def wheels(s: Session) -> None:
     """Build wheels and install from wheels."""
-    s.skip("Not implemented yet (invalid wheel?)")  # TODO dvp: fix this session
+    s.skip(
+        "Not implemented yet (invalid wheel?)"
+    )  # TODO dvp: fix this session, check on poetry update
     s.run(
         "poetry",
         "install",

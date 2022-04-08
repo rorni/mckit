@@ -618,14 +618,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "msvc-runtime"
-version = "14.29.30133"
-description = "Install the Microsoft™ Visual C++™ runtime DLLs to the sys.prefix and Scripts directories"
-category = "main"
-optional = false
-python-versions = ">=3.5"
-
-[[package]]
 name = "mypy"
 version = "0.942"
 description = "Optional static typing for Python"
@@ -1425,7 +1417,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.11"   # TODO dvp: increase upper version bound along with scipy updates
-content-hash = "74995986c68f1b24d7ff8d2c81a9ff2dcb2ad0248d2afa3ed55676a731eb4b00"
+content-hash = "c1466a853c8ae8189caf06e3d4c8eba1890d38629b2ae584330f250cc54c9659"
 
 [metadata.files]
 alabaster = [
@@ -1755,19 +1747,6 @@ mkl-include = [
     {file = "mkl_include-2022.0.2-py2.py3-none-win_amd64.whl", hash = "sha256:57397b269bc03dac0511666f84db8a19a44b39749eecd866355071b8acb52169"},
     {file = "mkl_include-2022.0.3-py2.py3-none-win32.whl", hash = "sha256:24b133cd16fcfa6b6bc6ee2399b1036bfba9883a9dc10633bee6a6cfef8f1aa9"},
     {file = "mkl_include-2022.0.3-py2.py3-none-win_amd64.whl", hash = "sha256:04cfa83ad8f0f35cf1a86e1a401b71c6795fcf372ab23a50706cbd1560e4e68c"},
-]
-msvc-runtime = [
-    {file = "msvc_runtime-14.29.30133-cp310-cp310-win32.whl", hash = "sha256:7ae1bd586ef91c9de182e3d982db10907a94d89f8192cb4e571c8dbb8e42fee9"},
-    {file = "msvc_runtime-14.29.30133-cp310-cp310-win_amd64.whl", hash = "sha256:1f1be3e62b94f824a695b5091de56a4e22cc682ba398e066ab4314a5bf43a696"},
-    {file = "msvc_runtime-14.29.30133-cp36-cp36m-win32.whl", hash = "sha256:d29579c08baf337cc371a94453551f9444a0b651ba8c3bb09a9edc24090b6aa7"},
-    {file = "msvc_runtime-14.29.30133-cp36-cp36m-win_amd64.whl", hash = "sha256:f733bae5c88e66f170140f72990c148a2d3eb49b9bfa2bae347b6fdb48ca2dbf"},
-    {file = "msvc_runtime-14.29.30133-cp37-cp37m-win32.whl", hash = "sha256:a3cb91c1d57c1b2b200be0f3a2196b5b56ece4fe7a703a3187f2c07e0667a411"},
-    {file = "msvc_runtime-14.29.30133-cp37-cp37m-win_amd64.whl", hash = "sha256:53f368f7066b5f06bc88179ad0a103ffd13fa3498ec34e3593901612ff3ebc48"},
-    {file = "msvc_runtime-14.29.30133-cp38-cp38-win32.whl", hash = "sha256:55e663b37752465edaa0b36c517e1b4b743cb3c86758fc963e0f42899548b4ef"},
-    {file = "msvc_runtime-14.29.30133-cp38-cp38-win_amd64.whl", hash = "sha256:dcdd43e2fa3098193318f7edaec3af95d72f12d5527d0a00cb2ebf2b7263b1a8"},
-    {file = "msvc_runtime-14.29.30133-cp39-cp39-win32.whl", hash = "sha256:d486d45d466598d52bb53fe663e60676109dede8105dea09a7c9b2a5b9e80a57"},
-    {file = "msvc_runtime-14.29.30133-cp39-cp39-win_amd64.whl", hash = "sha256:957b1f1353d2e682f7b496cce8d55dd836f397c984aa52a64c9378cd04debb22"},
-    {file = "msvc_runtime-14.29.30133-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:7db639d54f097ff526362d61c05e55d26477a3b14d54bfbe1336102991b41d89"},
 ]
 mypy = [
     {file = "mypy-0.942-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:5bf44840fb43ac4074636fd47ee476d73f0039f4f54e86d7265077dc199be24d"},
