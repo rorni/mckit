@@ -24,7 +24,7 @@ SUFFIX = ".dll" if WIN else ".dylib" if MACOS else ".so"
 if WIN or MACOS:
 
     def combine_version_and_suffix(version: int, suffix: str) -> str:
-        return f"{version}.{suffix}"  # .2.dll or .2.dylib
+        return f".{version}{suffix}"  # .2.dll or .2.dylib
 
 else:  # Linux
 
