@@ -17,8 +17,8 @@ if [[ $? ]]; then
     echo "  - Open or create notebook"
     echo "  - Select kernel $mckit"
     echo "  - check if 'import mckit' in the notebook works"
-	echo
-	echo "To remove a kernel use jupyter comands:"
-	echo "  jupyter kernelspec list"
-	echo "  jupyter kernelspec remove <kernels...>"
+    echo
+    echo "To remove a kernel use jupyter comands:"
+    echo "  jupyter kernelspec list"
+    echo "  jupyter kernelspec remove <kernels...>"
 fi

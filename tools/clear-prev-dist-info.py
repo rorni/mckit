@@ -11,7 +11,7 @@ from typing import Optional, TypeVar
 
 import shutil
 import site
-import subprocess  # noqa
+import subprocess
 
 from pathlib import Path
 
@@ -78,7 +78,7 @@ def clear_previous_distributions_info() -> None:
 def run_poetry_install() -> None:
     """Refresh installation of the package."""
     print("Running `poetry install`.")
-    subprocess.run(["poetry", "install"])  # noqa
+    subprocess.run(["poetry", "install"])
 
 
 if __name__ == "__main__":

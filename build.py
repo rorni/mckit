@@ -22,7 +22,7 @@ DIR = Path(__file__).parent
 
 
 class BinaryDistribution(Distribution):
-    def is_pure(self):  # noqa
+    def is_pure(self):
         return False
 
 
@@ -37,7 +37,7 @@ def get_nlopt_lib_name() -> str:
 
 class MCKitBuilder(build_ext):
     def __init__(self, dist: Distribution, **kwargs) -> None:
-        build_ext.__init__(self, dist, **kwargs)  # noqa
+        build_ext.__init__(self, dist, **kwargs)
 
     def finalize_options(self):
         build_ext.finalize_options(self)

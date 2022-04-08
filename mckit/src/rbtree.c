@@ -123,16 +123,16 @@ void * rbtree_pop(RBTree * rbt, const void * key)
     // find successor for element being deleted.
     RBNode * rmin = delete_rmin (node, &rbt->root);
     //printf("successor for deletion %d\n", *((int *) rmin->key));
-	if (rmin == NULL) { // if there is no successor, remove element itself.
+    if (rmin == NULL) { // if there is no successor, remove element itself.
         RBNode * r = node_del_balance (node);
-	    if (r != NULL)  rbt->root = r;
+        if (r != NULL)  rbt->root = r;
 
-	    RBNode * p = node->parent;
-	    if (p == NULL)  rbt->root = NULL; // if element being deleted is root.
-	    else if (p->left == node)  p->left = NULL; // otherwise delete element
-	    else p->right = NULL;         // from successor parent's children list.
+        RBNode * p = node->parent;
+        if (p == NULL)  rbt->root = NULL; // if element being deleted is root.
+        else if (p->left == node)  p->left = NULL; // otherwise delete element
+        else p->right = NULL;         // from successor parent's children list.
 
-	} else {                     // if the successor exists,
+    } else {                     // if the successor exists,
         if (node != rbt->root) {
             if (is_left(node)) node->parent->left = rmin;
             else node->parent->right = rmin;
@@ -143,7 +143,7 @@ void * rbtree_pop(RBTree * rbt, const void * key)
         rmin->right = node->right;
         if (rmin->left != NULL) rmin->left->parent = rmin;
         if (rmin->right != NULL) rmin->right->parent = rmin;
-	}
+    }
     result = (void*) node->key;
     free(node);
     rbt->len--;
