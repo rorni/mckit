@@ -7,12 +7,12 @@ cat << 'EOF'
 
     Usage:
 
-    gdh  
+    gdh
         show diff HEAD^1 HEAD
-    
-    gdh <number>   
+
+    gdh <number>
         show diff HEAD^<number> HEAD
-    
+
     gdh <number1> <number2>
         show diff HEAD^<number1> HEAD^<number2>
 
