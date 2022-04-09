@@ -14,7 +14,7 @@ on:
       - "**.yml"
       - "**.toml"
       - "!adhoc/**"
-      - "!scripts/**"
+      - "!tools/**"
   pull_request:
     branches:
       - "master"
@@ -28,11 +28,15 @@ on:
       - "**.yml"
       - "**.toml"
       - "!adhoc/**"
-      - "!scripts/**"
+      - "!tools/**"
 
-defaults:
-  run:
-    shell: bash
+#defaults:
+#  run:
+#    shell: bash
+
+concurrency:
+  group: ci-tests-${{ github.ref }}-1
+  cancel-in-progress: true
 
 jobs:
   tests:
@@ -43,100 +47,86 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # TODO dvp: return window-latest on resolving https://github.com/actions/virtual-environments/issues/5141
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.8', '3.9', '3.10']
     steps:
-
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
-
       - name: Checkout submodules
-        run: git submodule update --init --recursive --depth=1
-
-      # TODO(ci) dvp: check v2 - libnlopt not found...
-      - uses: actions/setup-python@v1
+        run: |
+          git submodule update --init --recursive --depth=1
+      # TODO(ci) dvp: check v2 - libnlopt not found on linux...
+      # TODO(ci) dvp: check v3 - libnlopt not found on linux and geometry not found on windows, macos - works fine
+      - uses: actions/setup-python@v3.1.1
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-
       - name: Use frozen pip version
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=.github/constraints.txt pip virtualenv
           pip --version
-
       - name: Install poetry
         run: |
-          pip install --constraint=.github/workflows/constraints.txt poetry
+          pip install --constraint=.github/constraints.txt poetry
           poetry --version
-          poetry check
-          poetry version
-
       - name: Install nox and nox-poetry
         run: |
-          pip install --constraint=.github/workflows/constraints.txt nox nox-poetry
+          pip install --constraint=.github/constraints.txt nox nox-poetry
           nox --version
-
       - name: Run nox tests
-        run: nox  --no-color --python ${{ matrix.python-version }}
-
+        run: |
+          nox --python ${{ matrix.python-version }}
       - name: Upload coverage data
-        uses: "actions/upload-artifact@v2.2.4"
+        uses: "actions/upload-artifact@v3"
         with:
           name: coverage-data
           path: ".coverage.*"
 
-      - name: Build documentations
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
-        run:  nox -s docs-build --no-color --python ${{ matrix.python-version }}
-
-      - name: Upload documentation
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
-        uses: actions/upload-artifact@v2.2.4
-        with:
-          name: docs
-          path: docs/_build
+#      - name: Build documentations
+#        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+#        run:  nox -s docs-build --no-color --python ${{ matrix.python-version }}
+#
+#      - name: Upload documentation
+#        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: docs
+#          path: docs/_build
 
   coverage:
     runs-on: ubuntu-latest
     needs: tests
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2.4.0
-
+        uses: actions/checkout@v1
       - name: Set up Python 3.10
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3.1.1
         with:
           python-version: '3.10'
-
       - name: Use frozen pip version
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=.github/constraints.txt pip
           pip --version
-
       - name: Install Poetry
         run: |
-          pip install --constraint=.github/workflows/constraints.txt poetry
+          pip install --constraint=.github/constraints.txt poetry
           poetry --version
-
       - name: Install Nox
         run: |
-          pip  install --constraint=.github/workflows/constraints.txt nox nox-poetry
+          pip  install --constraint=.github/constraints.txt nox nox-poetry
           nox --version
-
       - name: Download coverage data
-        uses: actions/download-artifact@v2.0.10
+        uses: actions/download-artifact@v3
         with:
           name: coverage-data
-
       - name: Combine coverage data and display human readable report
         run: |
-          nox --no-color --session=coverage
-
+          nox --session=coverage
       - name: Create coverage report
         run: |
-          nox --no-color --session=coverage -- xml
-
+          nox --session=coverage -- xml
       - name: Upload coverage report
         uses: codecov/codecov-action@v2.1.0

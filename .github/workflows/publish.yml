@@ -7,10 +7,9 @@ on:
     branches:
       - main
       - master
-#on:
-#  push:
-#    tags:
-#      - 'v*.*.*'
+  push:
+    tags:
+      - 'v*'
 
 
 jobs:
@@ -22,7 +21,7 @@ jobs:
         python-version: ['3.8', '3.9', '3.10']
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
@@ -30,19 +29,19 @@ jobs:
         run: git submodule update --init --recursive --depth=1
 
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3.1.1
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
       - name: Upgrade pip
         run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
+          pip install --constraint=.github/constraints.txt pip
           pip --version
 
       - name: Install poetry
         run: |
-          pip install --constraint=.github/workflows/constraints.txt poetry
+          pip install --constraint=.github/constraints.txt poetry
           poetry --version
           poetry version
 

@@ -3,7 +3,7 @@
 deldir() {
     for d in "$@"; do
         if [[ -e $d ]]; then
-            rm -frd $d
+            rm -fr "$d"
         fi
     done
 }
@@ -16,7 +16,8 @@ deldir_recursively() {
 
 clean() {
     if [[ "$#" -eq "0" ]]; then
-        deldir build dist .egg *.egg-info .nox
+        deldir build dist .egg ./*.egg-info .nox
+        deldir 3rd-party/nlopt/build
         deldir_recursively  "__pycache__" ".benchmarks"
         rm -f mckit/geometry*.so
         rm -f setup.py
@@ -26,7 +27,7 @@ clean() {
 }
 
 is_sourced() {
-    [[ ${FUNCNAME[@]: -1} == "source" ]]
+    [[ ${FUNCNAME[*]: -1} == "source" ]]
 }
 
 is_sourced || clean "$@"

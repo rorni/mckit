@@ -10,20 +10,20 @@ from mckit.utils.resource import filename_resolver
 data_filename_resolver = filename_resolver("tests.cli")
 
 
-def test_help_compose(runner, disable_log):
+def test_help_compose(runner):
     result = runner.invoke(mckit, args=["compose", "--help"], catch_exceptions=False)
     assert result.exit_code == 0, result.output
     assert "Usage: mckit compose" in result.output
 
 
-def test_when_there_is_no_args(runner, disable_log):
+def test_when_there_is_no_args(runner):
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=["compose"], catch_exceptions=False)
         assert result.exit_code != 0, "Should fail when no arguments provided"
         assert "Usage:" in result.output
 
 
-def test_not_existing_envelopes_file(runner, disable_log):
+def test_not_existing_envelopes_file(runner):
     result = runner.invoke(
         mckit, args=["compose", "not-existing.imcnp"], catch_exceptions=False
     )
@@ -31,7 +31,7 @@ def test_not_existing_envelopes_file(runner, disable_log):
     assert "Path 'not-existing.imcnp' does not exist" in result.output
 
 
-def test_when_output_is_not_specified(runner, disable_log):
+def test_when_output_is_not_specified(runner):
     source = data_filename_resolver("data/simple_cubes.mcnp")
     result = runner.invoke(mckit, args=["compose", str(source)], catch_exceptions=False)
     assert result.exit_code > 0
@@ -48,9 +48,7 @@ def test_when_output_is_not_specified(runner, disable_log):
         )
     ],
 )
-def test_when_fill_descriptor_is_not_specified(
-    runner, disable_log, source, output, expected
-):
+def test_when_fill_descriptor_is_not_specified(runner, source, output, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem() as test_folder:
         result = runner.invoke(
@@ -77,7 +75,7 @@ def test_when_fill_descriptor_is_not_specified(
         )
     ],
 )
-def test_anonymous_transforms(runner, disable_log, source, output, expected):
+def test_anonymous_transforms(runner, source, output, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem() as test_folder:
         result = runner.invoke(
@@ -99,15 +97,10 @@ def test_anonymous_transforms(runner, disable_log, source, output, expected):
     [
         "cubes_with_fill_named_transforms",
         "two_cubes_with_the_same_filler",
-        pytest.param(
-            "shared_surface",
-            marks=pytest.mark.xfail(
-                reason="Handling entities shared between universes is not implemented yet."
-            ),
-        ),
+        "shared_surface",
     ],
 )
-def test_compose(runner, disable_log, universes):
+def test_compose(runner, universes):
     source = f"data/{universes}.universes/envelopes.i"
     output = f"{universes}.i"
     expected = f"data/{universes}.mcnp"

@@ -1,65 +1,90 @@
+from typing import Generator, List
+
 import os
-import platform
 import sys
+import sysconfig
 
 from ctypes import cdll
+from logging import getLogger
 from pathlib import Path
 
-from mckit.utils.io import find_file_in_directories
+_LOG = getLogger(__name__)
+
+HERE = Path(__file__).parent.absolute()
+WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform()
+MACOS = sys.platform.startswith("darwin")
 
 
-def _preload_library(_lib_path, suffixes):
-    print("***--- search for library: ", _lib_path)
-    for s in suffixes:
-        p = _lib_path.with_suffix(s)
-        if p.exists():
-            print("***--- found library: ", p.absolute())
-            return cdll.LoadLibrary(str(p))
-    return None
+def library_base_name(_lib_name: str) -> str:
+    return _lib_name if WIN else "lib" + _lib_name
 
 
-def init() -> None:
-    system = platform.system()
-    if system == "Windows":
-        _init_for_windows()
-    else:
-        libs = list(
-            map(
-                lambda x: Path(sys.prefix, "lib", x),
-                ["libmkl_rt", "libnlopt"],
-            )
-        )
+SUFFIX = ".dll" if WIN else ".dylib" if MACOS else ".so"
 
-        if sys.platform == "linux":
-            # a user can use other location for the MKL and nlopt libraries.
-            if os.environ.get("LD_LIBRARY_PATH") is not None:
+if WIN or MACOS:
+
+    def combine_version_and_suffix(version: int, suffix: str) -> str:
+        return f".{version}{suffix}"  # .2.dll or .2.dylib
+
+else:  # Linux
+
+    def combine_version_and_suffix(version: int, suffix: str) -> str:
+        return f"{suffix}.{version}"  # .so.2
+
+
+def iterate_suffixes_with_version(max_version: int = 2) -> Generator["str", None, None]:
+    while max_version >= 0:
+        yield combine_version_and_suffix(max_version, SUFFIX)
+        max_version -= 1
+    yield SUFFIX
+
+
+SHARED_LIBRARY_DIRECTORIES: List[Path] = []
+
+if WIN:
+    SHARED_LIBRARY_DIRECTORIES.append(Path(sys.prefix, "Library", "bin"))
+else:
+    ld_library_path = os.environ.get(
+        "DYLD_LIBRARY_PATH" if MACOS else "LD_LIBRARY_PATH"
+    )
+    if ld_library_path:
+        SHARED_LIBRARY_DIRECTORIES.extend(map(Path, ld_library_path.split(":")))
+    SHARED_LIBRARY_DIRECTORIES.append(Path(sys.prefix, "lib"))
+
+SHARED_LIBRARY_DIRECTORIES.append(HERE)
+
+
+def preload_library(lib_name: str, max_version: int = 2) -> None:
+    for d in SHARED_LIBRARY_DIRECTORIES:
+        for s in iterate_suffixes_with_version(max_version):
+            p = Path(d, library_base_name(lib_name)).with_suffix(s)
+            if p.exists():
+                cdll.LoadLibrary(str(p))
+                _LOG.info("Found library: {}", p.absolute())
                 return
-            suffixes = ".so.2 .so.1 .so.0 .so".split()
-        elif sys.platform == "darwin":
-            if os.environ.get("DYLD_LIBRARY_PATH") is not None:
-                return
-            suffixes = ".2.dylib .1.dylib .0.dylib .dylib".split()
-        else:
-            raise EnvironmentError(f"Unknown platform: {sys.platform}")
-
-        for lib in libs:
-            loaded_lib = _preload_library(lib, suffixes)
-            assert (
-                loaded_lib is not None
-            ), f"The library {lib} should be either available at {Path(sys.prefix, 'lib')}, or with LD_LIBRARY_PATH"
+    raise EnvironmentError(f"Cannot preload library {lib_name}")
 
 
-def _init_for_windows():
-    dirs = [
-        Path(__file__).parent,
-        Path(sys.prefix, "Library", "bin"),
-    ]
-    dll_path = str(find_file_in_directories("nlopt.dll", *dirs))
-    if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
-        for _dir in dirs:
-            os.add_dll_directory(str(_dir))
-    print("---***", dll_path)
-    cdll.LoadLibrary(dll_path)  # to guarantee dll loading
+def init():
+    if WIN:
+        if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
+            for _dir in SHARED_LIBRARY_DIRECTORIES:
+                os.add_dll_directory(str(_dir))
+    preload_library("mkl_rt", max_version=2)
+    preload_library("nlopt", max_version=0)
 
 
-# _init()
+init()
+
+import mckit.geometry as geometry  # noqa
+
+from mckit.body import Body, Shape  # noqa
+from mckit.surface import (  # noqa
+    Cone,
+    Cylinder,
+    GQuadratic,
+    Plane,
+    Sphere,
+    Torus,
+    create_surface,
+)

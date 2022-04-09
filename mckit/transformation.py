@@ -4,10 +4,10 @@ from typing import Any
 
 import numpy as np
 
-from .card import Card
-
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from .geometry import ORIGIN
+from mckit.geometry import ORIGIN
+
+from .card import Card
 from .utils import make_hash
 from .utils.tolerance import EstimatorType, MaybeClose, tolerance_estimator
 

@@ -4,7 +4,7 @@ select = C,E,F,W
 max-complexity = 10
 max-line-length = 88
 ignore =
-    # E203: Whitespace before ‘:'
+    # E203: Whitespace before ':'
     E203,
     # E501: Line too long
     E501,

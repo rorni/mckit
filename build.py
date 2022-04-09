@@ -1,19 +1,19 @@
 from typing import Any, Dict, List, Optional
 
 import distutils.log as log
-import platform
 import shutil
-import sys
 
 from pathlib import Path
 from pprint import pprint
 
 from build_nlopt import build_nlopt
-from extension_geometry import SYSTEM_WINDOWS, geometry_extension
-from extension_utils import get_library_dir
+from extension_geometry import WIN, GeometryExtension
+from extension_utils import MACOS, WIN, get_library_dir
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.dist import Distribution
+
+DIR = Path(__file__).parent
 
 #
 # TODO dvp: check
@@ -22,27 +22,22 @@ from setuptools.dist import Distribution
 
 
 class BinaryDistribution(Distribution):
-    def is_pure(self):  # noqa
+    def is_pure(self):
         return False
 
 
 def get_nlopt_lib_name() -> str:
     """Compute library name: this depends on OS and python version"""
-    sys_name = platform.system()
-    if sys_name == "Linux":
-        if sys.platform.startswith("darwin"):
-            return f"libnlopt.dylib"
-        return f"libnlopt.so.0"
-    if sys_name == "Darwin":
+    if MACOS:
         return f"libnlopt.dylib"
-    if sys_name == "Windows":
+    if WIN:
         return f"Release/nlopt.dll"
-    raise EnvironmentError(f"Unsupported system {sys_name}")
+    return f"libnlopt.so"
 
 
 class MCKitBuilder(build_ext):
     def __init__(self, dist: Distribution, **kwargs) -> None:
-        build_ext.__init__(self, dist, **kwargs)  # noqa
+        build_ext.__init__(self, dist, **kwargs)
 
     def finalize_options(self):
         build_ext.finalize_options(self)
@@ -56,16 +51,23 @@ class MCKitBuilder(build_ext):
 
     def build_extension(self, extension: Extension) -> None:
         # assert extension.name == "mckit.geometry"
-        ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
         nlopt_build_dir = build_nlopt(clean=True)
         nlopt_lib = nlopt_build_dir / get_nlopt_lib_name()
         log.info(f"---***  builder.build_lib: {self.build_lib}")
         log.info(f"---***  builder.include_dirs: {self.include_dirs}")
         log.info(f"---***  builder.library_dirs: {self.library_dirs}")
         log.info(f"---***  nlopt lib path: {nlopt_lib}")
-        build_ext.build_extension(self, extension)
+        ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
         log.info(f"---***  copy nlopt lib to {ext_dir}")
-        save_nlopt_lib_to_source(ext_dir, nlopt_lib)
+        if ext_dir.exists():
+            save_library(ext_dir, nlopt_lib)
+        save_library(DIR / "mckit", nlopt_lib)
+        log.info("---*** Defined geometry extension:")
+        log.info(str(extension))
+        log.info("---***")
+        build_ext.build_extension(self, extension)
+        log.info("---*** Search geometry")
+        log.info(DIR.glob("**/*geometry*"))
 
 
 def build(setup_kwargs: Dict[str, Any]) -> None:
@@ -76,6 +78,7 @@ def build(setup_kwargs: Dict[str, Any]) -> None:
     """
     update_package_data(setup_kwargs)
     update_setup_requires(setup_kwargs)
+    geometry_extension = GeometryExtension()
     setup_kwargs.update(
         {
             "ext_modules": [geometry_extension],
@@ -110,15 +113,15 @@ def update_package_data(setup_kwargs: Dict[str, Any]) -> None:
     """fix for poetry issue: it doesn't provide correct specification from `[tool.poetry].input` field"""
     package_data = [
         "data/isotopes.dat",
-        "nlopt.dll" if SYSTEM_WINDOWS else "libnlopt*",
+        "nlopt.dll" if WIN else "libnlopt*",
     ]
     setup_kwargs["package_data"] = {"mckit": package_data}
 
 
-def save_nlopt_lib_to_source(mckit_package_path: Path, so: Path) -> None:
+def save_library(destination: Path, so: Path) -> None:
     if not so.exists():
         raise FileNotFoundError(f"Cannot find shared library {so}")
-    shutil.copy(str(so), str(mckit_package_path))
+    shutil.copy(str(so), str(destination))
 
 
 def save_setup_kwargs(setup_kwargs: Dict[str, Any]) -> None:

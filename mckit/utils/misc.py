@@ -111,7 +111,7 @@ def significant_array(
     array: ndarray, reltol: float = FLOAT_TOLERANCE, resolution: float = None
 ) -> ndarray:
     """The minimum number of significant digits to provide the desired relative and absolute tolerances."""
-    result = np.empty_like(array, dtype=int)
+    result: ndarray = np.empty_like(array, dtype=int)
     for index in zip(*map(np.ravel, np.indices(array.shape))):
         result[index] = significant_digits(array[index], reltol, resolution)
     return result
@@ -154,7 +154,7 @@ def round_array(array: ndarray, digits_array: ndarray = None) -> ndarray:
     """
     if digits_array is None:
         digits_array = significant_array(array, FLOAT_TOLERANCE, FLOAT_TOLERANCE)
-    result = np.empty_like(array)
+    result: ndarray = np.empty_like(array)
     for index in zip(*map(np.ravel, np.indices(array.shape))):
         result[index] = round_scalar(array[index], digits_array[index])
     return result
@@ -166,16 +166,16 @@ def are_equal(a, b) -> bool:
 
 
 @are_equal.register
-def _(a: str, b) -> bool:  # nomypy
+def _(a: str, b: str) -> bool:
     return a is b or a == b
 
 
-@are_equal.register  # type: ignore
-def _(a: ndarray, b) -> bool:
+@are_equal.register
+def _(a: ndarray, b: ndarray) -> bool:
     return np.array_equal(a, b)
 
 
-@are_equal.register  # type: ignore
+@are_equal.register
 def _(a: collections.abc.Iterable, b) -> bool:
     if not issubclass(type(b), collections.abc.Iterable):
         return False
@@ -192,12 +192,12 @@ def is_in(where, x) -> bool:
     return x is where or x == where
 
 
-@is_in.register  # type: ignore
+@is_in.register
 def _(where: str, x) -> bool:
     return x is where or x == where
 
 
-@is_in.register  # type: ignore
+@is_in.register
 def _(where: tuple, x) -> bool:
     for i in where:
         if is_in(i, x):
@@ -205,12 +205,12 @@ def _(where: tuple, x) -> bool:
     return False
 
 
-@is_in.register  # type: ignore
+@is_in.register
 def _(where: collections.abc.Callable, x) -> bool:
-    return where(x)
+    return where(x)  # type: ignore
 
 
-@is_in.register  # type: ignore
+@is_in.register
 def _(where: collections.abc.Container, x) -> bool:
     return x in where
 
@@ -236,22 +236,22 @@ def make_hashable(x):
     raise TypeError(f"Don't know how to make {type(x).__name__} objects hashable")
 
 
-@make_hashable.register  # type: ignore
+@make_hashable.register
 def _(x: collections.abc.Hashable):
     return x
 
 
-@make_hashable.register  # type: ignore
+@make_hashable.register
 def _(x: str):
     return x
 
 
-@make_hashable.register  # type: ignore
+@make_hashable.register
 def _(x: collections.abc.Mapping) -> Tuple:
     return tuple(map(lambda i: (i[0], make_hashable(i[1])), x.items()))
 
 
-@make_hashable.register  # type: ignore
+@make_hashable.register
 def _(x: collections.abc.Iterable) -> Tuple:
     return tuple(map(make_hashable, x))
 
@@ -267,7 +267,8 @@ def is_sorted(a: np.ndarray) -> bool:
 
 
 def mids(a: np.ndarray) -> np.ndarray:
-    return 0.5 * (a[1:] + a[:-1])
+    result: ndarray = 0.5 * (a[1:] + a[:-1])
+    return result
 
 
 def prettify_float(x: float, fmt: str = "{:.13g}") -> str:

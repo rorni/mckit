@@ -1,4 +1,4 @@
-import platform
+import sys
 
 import numpy as np
 import pytest
@@ -3195,17 +3195,31 @@ class TestRCC:
         result = surf.test_points(point)
         np.testing.assert_array_equal(result, expected)
 
-    # TODO dvp: see below
-
-    @pytest.mark.xfail(
-        reason="these tests fail sometimes in pytest, both in py8 and py7, but works fine in PyCharm"
-    )
     @pytest.mark.parametrize(
         "center, axis, rad, ans",
         [
-            ([-2, 0, 0], [4, 0, 0], 0.5, 0),
+            pytest.param(
+                [-2, 0, 0],
+                [4, 0, 0],
+                0.5,
+                0,
+                marks=pytest.mark.skipif(
+                    sys.platform == "darwin", reason="Fails on MacOS"
+                ),
+            ),
             ([-2, 0, 0], [4, 0, 0], 3, -1),
-            ([-0.75, 0, 0], [1.5, 0, 0], 0.75, 0),
+            pytest.param(
+                [-0.75, 0, 0],
+                [1.5, 0, 0],
+                0.75,
+                0,
+                marks=pytest.mark.skipif(
+                    sys.platform == "darwin"
+                    or sys.platform == "linux"
+                    and sys.version[:3] == "3.8",
+                    reason="Fails on MacOS and occasionally on Linux under python 3.8",
+                ),
+            ),
             ([-2, 6, 0], [4, 0, 0], 3, +1),
         ],
     )

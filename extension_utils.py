@@ -1,18 +1,19 @@
 from typing import List, Union
 
-import platform
 import shutil
 import sys
+import sysconfig
 
 from pathlib import Path
 
-SYSTEM_WINDOWS = platform.system() == "Windows"
+WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform()
+MACOS = sys.platform.startswith("darwin")
 
 
 def get_library_dir(check: bool = False) -> Path:
     root_prefix = Path(sys.prefix)
 
-    if SYSTEM_WINDOWS:
+    if WIN:
         root_prefix = root_prefix / "Library"
 
     library_dir = root_prefix / "lib"

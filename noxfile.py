@@ -4,9 +4,9 @@ See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-0
 """
 from typing import List
 
-import platform
 import shutil
 import sys
+import sysconfig
 
 from glob import glob
 from pathlib import Path
@@ -24,6 +24,11 @@ except ImportError:
 
     {sys.executable} -m pip install nox-poetry"""
     raise SystemExit(dedent(message)) from None
+
+DIR = Path(__file__).parent.absolute()
+WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform()
+MACOS = sys.platform.startswith("darwin")
+
 
 # TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
@@ -48,8 +53,6 @@ black_pythons = "3.10"
 mypy_pythons = "3.10"
 lint_pythons = "3.10"
 
-on_windows = platform.system() == "Windows"
-
 
 def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
     """Activate virtualenv in hooks installed by pre-commit.
@@ -61,7 +64,7 @@ def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
     Args:
         s: The Session object.
     """
-    assert s.bin is not None  # noqa: S101
+    assert s.bin is not None
 
     virtualenv = s.env.get("VIRTUAL_ENV")
     if virtualenv is None:
@@ -148,7 +151,16 @@ def tests(s: Session) -> None:
         "--no-dev",
         external=True,
     )
-    s.install("coverage[toml]", "pytest", "pygments")
+    s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
+    # if WIN:
+    #     dlls = list(DIR.glob("**/*geometry*.pyd"))
+    #     if dlls:
+    #         s.warn(f"Found geometry files:")
+    #         for dll in dlls:
+    #             s.warn(dll)
+    #     else:
+    #         s.warn("Geometry files not found")
+    #     s.run("pip", "list")
     try:
         s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
@@ -191,32 +203,15 @@ def isort(s: Session) -> None:
     """Organize imports."""
     s.install("isort")
     search_patterns = [
-        # "*.py",
         "mckit/*.py",
         "tests/*.py",
         "benchmarks/*.py",
         "profiles/*.py",
-        #        "adhoc/*.py",
     ]
-    # exclude = ["setup-generated.py", "setup-bak.py", "setup"]
-    #
-    # def skip(path: str) -> bool:
-    #     return not ("example" in path or path.startswith("setup") or path in exclude)
-
-    # files_to_process: List[str] = filter(
-    #     skip, sum(map(lambda p: glob(p, recursive=True), search_patterns), [])
-    # )
     files_to_process: List[str] = sum(
         map(lambda p: glob(p, recursive=True), search_patterns), []
     )
-
-    s.run(
-        "isort",
-        "--check",
-        "--diff",
-        *files_to_process,
-        external=True,
-    )
+    s.run("isort", "--check", "--diff", *files_to_process, external=True)
 
 
 @session(python=black_pythons)
@@ -259,6 +254,47 @@ def mypy(s: Session) -> None:
     s.run("mypy", *args)
     if not s.posargs:
         s.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
+
+
+@session(python=supported_pythons)
+def wheels(s: Session) -> None:
+    """Build wheels and install from wheels."""
+    s.skip(
+        "Not implemented yet (invalid wheel?)"
+    )  # TODO dvp: fix this session, check on poetry update
+    s.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        "--no-root",
+        external=True,
+    )
+    dist_dir = Path("dist")
+    if dist_dir.exists():
+        shutil.rmtree(str(dist_dir))
+    s.run(
+        "poetry",
+        "build",
+        "--format",
+        "wheel",
+        external=True,
+    )
+    if not dist_dir.exists():
+        s.error("'dist' directory is not created on poetry build")
+        return
+    wheel_path = next(dist_dir.glob("*.whl")).absolute()
+    s.log(f"Installing mckit from wheel {wheel_path}")
+    s.run(
+        "pip",
+        "install",
+        str(wheel_path),
+        "--verbose",
+    )
+    s.run(
+        "mckit",
+        "--version",
+        external=True,
+    )
 
 
 @session(python=supported_pythons)

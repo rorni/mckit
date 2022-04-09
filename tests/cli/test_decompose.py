@@ -27,20 +27,20 @@ def test_input_files_reading(path, expected_cells):
     assert len(universe) == expected_cells, f"Failed to read from file {path}"
 
 
-def test_help_decompose(runner, disable_log):
+def test_help_decompose(runner):
     result = runner.invoke(mckit, args=["decompose", "--help"], catch_exceptions=False)
     assert result.exit_code == 0, result.output
     assert "Usage: mckit decompose" in result.output
 
 
-def test_when_there_is_no_args(runner, disable_log):
+def test_when_there_is_no_args(runner):
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=["decompose"], catch_exceptions=False)
         assert result.exit_code != 0, "Should fail when no arguments provided"
         assert "Usage:" in result.output
 
 
-def test_not_existing_mcnp_file(runner, disable_log):
+def test_not_existing_mcnp_file(runner):
     result = runner.invoke(
         mckit, args=["decompose", "not-existing.imcnp"], catch_exceptions=False
     )
@@ -51,7 +51,7 @@ def test_not_existing_mcnp_file(runner, disable_log):
 @pytest.mark.parametrize(
     "source, expected", [("parser_test_data/parser1.txt", "envelopes.i")]
 )
-def test_when_there_are_no_universes(runner, disable_log, source, expected):
+def test_when_there_are_no_universes(runner, source, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem():
         result = runner.invoke(
@@ -66,7 +66,7 @@ def test_when_there_are_no_universes(runner, disable_log, source, expected):
 @pytest.mark.parametrize(
     "source,expected", [("cli/data/simple_cubes.mcnp", "envelopes.i u1.i u2.i".split())]
 )
-def test_when_only_source_is_specified(runner, disable_log, source, expected):
+def test_when_only_source_is_specified(runner, source, expected):
     source: Path = data_filename_resolver(source)
     with runner.isolated_filesystem():
         result = runner.invoke(
@@ -90,7 +90,7 @@ def test_when_only_source_is_specified(runner, disable_log, source, expected):
     "source,output,expected",
     [("cli/data/simple_cubes.mcnp", "split-1", "envelopes.i u1.i u2.i".split())],
 )
-def test_when_output_is_specified(runner, disable_log, source, output, expected):
+def test_when_output_is_specified(runner, source, output, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem():
         output = Path(output)
@@ -114,7 +114,7 @@ def test_when_output_is_specified(runner, disable_log, source, output, expected)
             )
 
 
-def test_when_output_file_exists_and_override_is_not_specified(runner, disable_log):
+def test_when_output_file_exists_and_override_is_not_specified(runner):
     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
     with runner.isolated_filesystem() as prefix:
         output = Path(prefix) / "simple_cubes.universes/envelopes.i"
@@ -128,7 +128,7 @@ def test_when_output_file_exists_and_override_is_not_specified(runner, disable_l
         ), "Should fail when output file exists and --override is not specified"
 
 
-def test_when_output_file_exists_and_override_is_specified(runner, disable_log):
+def test_when_output_file_exists_and_override_is_specified(runner):
     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
     with runner.isolated_filesystem() as prefix:
         output = Path(prefix) / "simple_cubes./envelopes.i"
@@ -142,7 +142,7 @@ def test_when_output_file_exists_and_override_is_specified(runner, disable_log):
         ), "Should success when output file exists and --override is specified"
 
 
-def test_fill_descriptor(runner, disable_log):
+def test_fill_descriptor(runner):
     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
     with runner.isolated_filesystem() as prefix:
         output = Path(prefix) / "simple_cubes.universes/fill-descriptor.toml"
@@ -162,7 +162,7 @@ def test_fill_descriptor(runner, disable_log):
             assert "u1.i" == fill_descriptor["2"]["file"]
 
 
-def test_fill_descriptor_when_fill_descriptor_file_is_specified(runner, disable_log):
+def test_fill_descriptor_when_fill_descriptor_file_is_specified(runner):
     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
     with runner.isolated_filesystem() as prefix:
         fill_descriptor_path = Path(prefix) / "fill-descriptor-special.toml"
@@ -175,7 +175,7 @@ def test_fill_descriptor_when_fill_descriptor_file_is_specified(runner, disable_
         assert fill_descriptor_path.exists()
 
 
-def test_anonymous_transformation(runner, disable_log):
+def test_anonymous_transformation(runner):
     source = data_filename_resolver("cli/data/cubes_with_fill_transforms.mcnp")
     with runner.isolated_filesystem() as prefix:
         output = Path(prefix) / "cubes_with_fill_transforms.universes"
@@ -193,7 +193,7 @@ def test_anonymous_transformation(runner, disable_log):
             )
 
 
-def test_named_transformation(runner, disable_log):
+def test_named_transformation(runner):
     source = data_filename_resolver("cli/data/cubes_with_fill_named_transforms.mcnp")
     with runner.isolated_filesystem() as prefix:
         output = Path(prefix) / "cubes_with_fill_named_transforms.universes"

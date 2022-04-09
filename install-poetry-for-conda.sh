@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # See https://github.com/python-poetry/poetry/issues/105
 # https://github.com/biotite-dev/biotite/issues/214

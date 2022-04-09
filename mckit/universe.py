@@ -469,7 +469,7 @@ class Universe:
             boxes.append(c.shape.bounding_box(tol=tol, box=box))
         all_corners = np.empty((8 * len(boxes), 3))
         for i, b in enumerate(boxes):
-            all_corners[i * 8 : (i + 1) * 8, :] = b.corners  # noqa
+            all_corners[i * 8 : (i + 1) * 8, :] = b.corners
         min_pt = np.min(all_corners, axis=0)
         max_pt = np.max(all_corners, axis=0)
         center = 0.5 * (min_pt + max_pt)
