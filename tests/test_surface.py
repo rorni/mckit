@@ -3213,11 +3213,8 @@ class TestRCC:
                 [1.5, 0, 0],
                 0.75,
                 0,
-                marks=pytest.mark.skipif(
-                    sys.platform == "darwin"
-                    or sys.platform == "linux"
-                    and sys.version[:3] == "3.8",
-                    reason="Fails on MacOS and occasionally on Linux under python 3.8",
+                marks=pytest.mark.skip(
+                    reason="Fails on MacOS and occasionally on Linux and Windows",
                 ),
             ),
             ([-2, 6, 0], [4, 0, 0], 3, +1),
