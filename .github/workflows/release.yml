@@ -64,22 +64,20 @@ jobs:
         with:
           fetch-depth: 2    # need previous revision to define tag
 
-#      - name: Set up Python
-#        uses: actions/setup-python@v3.1.1
-#        with:
-#          python-version: ${{ env.PYTHON_VERSION }}
-#
-#      - name: Upgrade pip
-#        run: |
-#          pip install --constraint=.github/constraints.txt pip
-#          pip --version
-#
-#      - name: Install poetry
-#        run: |
-#          pip install --constraint=.github/constraints.txt poetry
-#          poetry --version
-#          poetry check
-#          poetry version
+      - name: Set up Python
+        uses: actions/setup-python@v3.1.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Fix pip version
+        run: |
+          pip install --constraint=.github/constraints.txt pip
+          pip --version
+
+      - name: Install poetry
+        run: |
+          pip install --constraint=.github/constraints.txt poetry
+          poetry --version
 
       - name: Check if there is a parent commit
         id: check-parent-commit
