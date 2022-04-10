@@ -69,12 +69,12 @@ repos:
 #  - id: fix-smartquotes
 
 # Autoremoves unused imports
-#- repo: https://github.com/hadialqattan/pycln
-#  rev: "v1.2.5"
-#  hooks:
-#  - id: pycln
-#    additional_dependencies: [click<8.1]  # Unpin when typer updates
-#    stages: [manual]
+- repo: https://github.com/hadialqattan/pycln
+  rev: "v1.2.5"
+  hooks:
+  - id: pycln
+    additional_dependencies: [click<8.1]  # TODO Unpin when typer updates
+    stages: [manual]
 
 # Checking for common mistakes
 #- repo: https://github.com/pre-commit/pygrep-hooks
@@ -89,13 +89,13 @@ repos:
 #  - id: rst-inline-touching-normal
 
 # Automatically remove noqa that are not used
-#- repo: https://github.com/asottile/yesqa
-#  rev: "v1.3.0"
-#  hooks:
-#  - id: yesqa
-#    additional_dependencies: &flake8_dependencies
-#      - flake8-bugbear
-#      - pep8-naming
+- repo: https://github.com/asottile/yesqa
+  rev: "v1.3.0"
+  hooks:
+  - id: yesqa
+    additional_dependencies: &flake8_dependencies
+    - flake8-bugbear
+    - pep8-naming
 
 # Flake8 also supports pre-commit natively (same author)
 #- repo: https://github.com/PyCQA/flake8
@@ -131,13 +131,13 @@ repos:
 #    additional_dependencies: [nox, rich]
 
 # Checks the manifest for missing files (native support)
-- repo: https://github.com/mgedmin/check-manifest
-  rev: "0.48"
-  hooks:
-  - id: check-manifest
-    # This is a slow hook, so only run this if --hook-stage manual is passed
-    stages: [manual]
-    additional_dependencies: [cmake, ninja]
+#- repo: https://github.com/mgedmin/check-manifest
+#  rev: "0.48"
+#  hooks:
+#  - id: check-manifest
+#    # This is a slow hook, so only run this if --hook-stage manual is passed
+#    stages: [manual]
+#    additional_dependencies: [cmake, ninja]
 
 # Check for spelling
 #- repo: https://github.com/codespell-project/codespell

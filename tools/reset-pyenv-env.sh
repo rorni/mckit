@@ -35,7 +35,6 @@ get_args() {
   mckit="${1:-mckit}"
   shift
 
-  poetry "--version" || echo "ERROR: Poetry is not available" &&  return 1
 
   python_version=${1:-$default_python_version}
   shift
@@ -46,16 +45,19 @@ get_args() {
 reset_env() {
   unset LD_PRELOAD
   pyenv local "$python_version"
-  pyenv virtualenv-delete -f "$mckit"
+  pyenv virtualenv-delete -f "$mckit" > /dev/nul
   pyenv virtualenv "$python_version" "$mckit"
-  pyenv local "$mckit" "3.9.10" "3.8.12"
+  pyenv local "$mckit" "3.9.12" "3.8.12"
 
   # pip is obsolete almost always
   python -m pip install --upgrade pip
 
 #  source ./setenv.rc  reset
 
-  poetry install  &&  mckit --version || echo "ERROR: failed to install mckit" && return 1
+  poetry config --local virtualenvs.create false
+  poetry install  && \
+  pyenv rehash && \
+  mckit --version || echo "ERROR: failed to install mckit" && return 1
 
   echo
   echo "SUCCESS: mckit has been installed"

@@ -22,8 +22,8 @@ install_poetry() {
         # This installs the latest poetry for current user global scope.
         # See https://python-poetry.org/docs/#installation#
         #
-        curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-        ln -s "$HOME/.poetry/bin/poetry" "$HOME/bin/poetry"
+        curl -sSL https://install.python-poetry.org | python3 -
+        ln -s "$HOME/.poetry/bin/poetry" "$HOME/.local/bin/poetry"
     fi
 }
 
