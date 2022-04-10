@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-deldir() {
+delete_directory() {
     for d in "$@"; do
         if [[ -e $d ]]; then
             rm -fr "$d"
@@ -8,7 +8,7 @@ deldir() {
     done
 }
 
-deldir_recursively() {
+delete_directory_recursively() {
     for d in "$@"; do
         find . -type d -name "$d" -exec rm -rf {} +
     done
@@ -16,13 +16,13 @@ deldir_recursively() {
 
 clean() {
     if [[ "$#" -eq "0" ]]; then
-        deldir build dist .egg ./*.egg-info .nox
-        deldir 3rd-party/nlopt/build
-        deldir_recursively  "__pycache__" ".benchmarks"
+        delete_directory build dist .egg ./*.egg-info .nox
+        delete_directory 3rd-party/nlopt/build
+        delete_directory_recursively  "__pycache__" ".benchmarks"
         rm -f mckit/geometry*.so
         rm -f setup.py
     else
-        deldir "$@"
+        delete_directory "$@"
     fi
 }
 

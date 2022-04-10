@@ -152,6 +152,7 @@ repos:
   rev: "v0.8.0.4"
   hooks:
   - id: shellcheck
+    stages: [manual]
 
 # Disallow some common capitalization mistakes
 #- repo: local
