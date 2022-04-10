@@ -148,10 +148,10 @@ repos:
 #    args: ["-L", "nd,ot,thist"]
 
 # Check for common shell mistakes
-#- repo: https://github.com/shellcheck-py/shellcheck-py
-#  rev: "v0.8.0.4"
-#  hooks:
-#  - id: shellcheck
+- repo: https://github.com/shellcheck-py/shellcheck-py
+  rev: "v0.8.0.4"
+  hooks:
+  - id: shellcheck
 
 # Disallow some common capitalization mistakes
 #- repo: local
