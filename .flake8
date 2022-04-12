@@ -1,0 +1,35 @@
+[flake8]
+select=ANN,B,B9,BLK,C,D,DAR,E,F,I,S,W
+max-complexity=10
+max-line-length=88
+ignore=
+    # ANN101 Missing type annotation for self in method
+    ANN101
+    # ANN102 Missing type annotation for cls in classmethod
+    ANN102
+    # E203: Whitespace before ‘:'
+    E203,
+    # E501: Line too long
+    E501,
+    # W503: Line break before binary operator: for compatibility with black settings
+    W503
+    # import is controlled by isort
+    I100
+    I202
+exclude=
+    .git,
+    __pycache__,
+    docs/source/conf.py,
+    adhoc,
+    wrk,
+    build,
+    dist,
+per-file-ignores =
+    noxfile.py:ANN,DAR101
+    tests/*:S101,ANN,DAR100,D100,D103,DAR101,DAR103
+ignore-decorators=click,pytest
+docstring-convention = google
+rst-roles = class,const,func,meth,mod,ref
+rst-directives = deprecated
+
+# vim: set ts=4 sw=0 tw=79 ss=0 ft=ini et ai :
