@@ -40,7 +40,7 @@ nox.options.sessions = (
     #           if these checks are not already enabled in pre-commit
     # "lint",
     # "mypy",
-    # "xdoctest",  # TODO dvp: uncomment when doctests appear in the code (check with: xdoctest -c list mckit)
+    # "xdoctest",  # TODO dvp: uncomment when doctests appear in the code (check with: xdoctest -c list <your package>)
     "tests",
     # "docs-build",
 )
@@ -203,7 +203,7 @@ def isort(s: Session) -> None:
     """Organize imports."""
     s.install("isort")
     search_patterns = [
-        "mckit/*.py",
+        f"{package}/*.py",
         "tests/*.py",
         "benchmarks/*.py",
         "profiles/*.py",
@@ -243,7 +243,7 @@ def lint(s: Session) -> None:
 @session(python=mypy_pythons)
 def mypy(s: Session) -> None:
     """Type-check using mypy."""
-    args = s.posargs or ["mckit", "tests", "docs/source/conf.py"]
+    args = s.posargs or [package, "tests", "docs/source/conf.py"]
     s.run(
         "poetry",
         "install",
@@ -283,7 +283,7 @@ def wheels(s: Session) -> None:
         s.error("'dist' directory is not created on poetry build")
         return
     wheel_path = next(dist_dir.glob("*.whl")).absolute()
-    s.log(f"Installing mckit from wheel {wheel_path}")
+    s.log(f"Installing {package} from wheel {wheel_path}")
     s.run(
         "pip",
         "install",
@@ -291,7 +291,7 @@ def wheels(s: Session) -> None:
         "--verbose",
     )
     s.run(
-        "mckit",
+        f"{package}",
         "--version",
         external=True,
     )

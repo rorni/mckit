@@ -3,16 +3,16 @@
 :: Jupyter kernel setup
 ::
 ::
-:: dvp, Dec 2020
+:: dvp, Apr 2022
 ::
 
-set mckit=%1
+set package=%1
 
-if "%mckit%"=="" (
-    set mckit=mckit
+if "%package%"=="" (
+    set package=mckit
 )
 
-echo Creating jupyter kernel for conda environment %mckit%
+echo Creating jupyter kernel for conda environment %package%
 
 :: Fix pywin32 version for tornado
 :: tornado (in jupyter) doesn't work with newer version of pywin, check this on jupyter dependencies updates
@@ -22,16 +22,16 @@ echo Creating jupyter kernel for conda environment %mckit%
 call conda install jupyterlab -y
 
 :: Create jupyter kernel pointing to the conda environment
-call python -m ipykernel install --user --name %mckit%
+call python -m ipykernel install --user --name %package%
 if errorlevel 1 (
-    echo ERROR: something wrong with installing Jupyter kernel for %mckit% environment
+    echo ERROR: something wrong with installing Jupyter kernel for %package% environment
     set errorlevel=1
 ) else (
-    echo To use %mckit% environment in jupyter
+    echo To use %package% environment in jupyter
     echo   - Run 'jupyter lab'
     echo   - Open or create notebook
-    echo   - Select kernel %mckit%
-    echo   - check if 'import mckit' in the notebook works
+    echo   - Select kernel %package%
+    echo   - check if import %package% in the notebook works
     echo.
     echo To remove a kernel use jupyter comands:
     echo   jupyter kernelspec list
