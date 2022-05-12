@@ -24,7 +24,7 @@ exclude = [
 # Select from PyPI classifiers: https://pypi.org/classifiers/
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Environment ::  Console",
+    "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Operating System :: POSIX :: Linux",
