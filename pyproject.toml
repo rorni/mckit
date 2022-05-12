@@ -50,21 +50,7 @@ scipy = "^1.7.3"
 sly = "^0.4"
 tomlkit = "^0.7.0"
 tqdm = "^4.55.1"
-mkl-devel = [
-    {version = "2022.0.0", markers = "sys_platform == 'darwin'"},
-    {version = "2022.0.2", markers = "sys_platform == 'linux'"},
-    {version = "2022.0.3", markers = "sys_platform == 'win32'"}
-]
-intel-openmp = [
-    {version = "2022.0.0", markers = "sys_platform == 'darwin'"},
-    {version = "2022.0.2", markers = "sys_platform == 'linux'"},
-    {version = "2022.0.3", markers = "sys_platform == 'win32'"}
-]
-tbb = [
-    {version = "2021.5.0", markers = "sys_platform == 'darwin'"},
-    {version = "2021.5.1", markers = "sys_platform == 'linux'"},
-    {version = "2021.5.2", markers = "sys_platform == 'win32'"}
-]
+mkl-devel = "^2022.1.0"
 python-dotenv = "^0.20.0"
 ply = "^3.11"
 loguru = "^0.6.0"
