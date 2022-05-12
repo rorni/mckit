@@ -21,7 +21,7 @@ main() {
     if [[ "$version" == "--help" ]]; then
         usage
     else
-        poetry version $version && git commit -m "bump: version $(poetry version)" pyproject.toml
+        poetry version "$version" && git commit -m "bump: version $(poetry version)" pyproject.toml
     fi
 }
 

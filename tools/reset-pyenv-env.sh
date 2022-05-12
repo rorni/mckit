@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # Prepare pyenv environment for mckit development on Linux.
 #
-# dvp, Dec 2020
+# dvp, Apr 2022
 #
 
-default_python_version=3.9.9
+default_python_version=3.10.4
 
 usage() {
   cat <<- EndOfMessage
@@ -35,39 +35,29 @@ get_args() {
   mckit="${1:-mckit}"
   shift
 
-  poetry "--version"
-  if [[ 0 != $?  ]]; then
-      echo "ERROR: Poetry is not available"
-      return 1
-  fi
 
   python_version=${1:-$default_python_version}
   shift
 
-  echo "Installing PyEnv environment $mckit"
+  echo "Installing PyEnv environment $mckit with python $python_version"
 }
 
 reset_env() {
   unset LD_PRELOAD
   pyenv local "$python_version"
-  pyenv virtualenv-delete -f "$mckit"
+  pyenv virtualenv-delete -f "$mckit" > /dev/nul
   pyenv virtualenv "$python_version" "$mckit"
-  pyenv local "$mckit" "3.8.12"
+  pyenv local "$mckit" "3.9.12" "3.8.12"
 
   # pip is obsolete almost always
   python -m pip install --upgrade pip
 
-  # Fix LD_LIBRARY_PATH and so on
-  source ./setenv.rc  reset
+#  source ./setenv.rc  reset
 
-  poetry install
-#  poetry install --extra
-
-  mckit --version
-  if [[ 0 != $? ]]; then
-      echo "ERROR: failed to install mckit"
-      return 1
-  fi
+  poetry config --local virtualenvs.create false
+  poetry install  && \
+  pyenv rehash && \
+  mckit --version || echo "ERROR: failed to install mckit" && return 1
 
   echo
   echo "SUCCESS: mckit has been installed"
@@ -75,24 +65,13 @@ reset_env() {
 }
 
 check_environment() {
-  poetry run pytest -m "not slow"
-  if [[ 0 == $? ]]; then
-      echo
-      echo "SUCCESS: pytest is passed OK"
-      echo
-  else
-      echo "ERROR: failed to run tests"
-      return 1
-  fi
+  poetry run pytest -m "not slow" &&  echo "SUCCESS: pytest is passed OK"
 
   poetry run nox --list
   poetry run nox -s safety
-  poetry run nox -s tests -p 3.9 -- -m "not slow" --cov
+  poetry run nox -s tests -p "$python_version" -- -m "not slow" --cov
 
-  ./create-jk.sh "$mckit"
-  if [[ 0 != $? ]]; then
-      return 1
-  fi
+  tools/create-jk.sh "$mckit" || echo "ERROR: failed to create Jupyter Kernel for $mckit environment" &&  return 1
 
   echo
   echo SUCCESS!

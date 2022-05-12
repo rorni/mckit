@@ -6,8 +6,8 @@
 #
 
 export MCKIT_ROOT="$(pwd)"
-. $MCKIT_ROOT/scripts/common.rc
-export PATH="$(make_path $MCKIT_ROOT/scripts $PATH)"
+. $MCKIT_ROOT/tools/common.rc
+export PATH="$(make_path $MCKIT_ROOT/tools $PATH)"
 
 mckit_load_environment() {
     if [[ -n "$MCKIT_BUILD_CFG" ]]; then
@@ -18,7 +18,7 @@ mckit_load_environment() {
     if [[ -r ./.local.env ]]; then
         local env="./.local.env"
     else
-        local env="scripts/$(hostname).rc"
+        local env="tools/$(hostname).rc"
     fi
     if [[ -r  "$env" ]]; then
         echo "Sourcing environment from $env"

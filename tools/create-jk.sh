@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # Jupyter kernel setup
 #
 #
-# dvp, Dec 2020
+# dvp, Apr 2022
 #
 
 mckit=${1:-mckit}
@@ -18,7 +18,7 @@ if [[ $? ]]; then
     echo "  - Select kernel $mckit"
     echo "  - check if 'import mckit' in the notebook works"
     echo
-    echo "To remove a kernel use jupyter comands:"
+    echo "To remove a kernel use jupyter commands:"
     echo "  jupyter kernelspec list"
     echo "  jupyter kernelspec remove <kernels...>"
 fi
