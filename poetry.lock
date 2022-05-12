@@ -417,7 +417,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 name = "importlib-metadata"
 version = "4.11.3"
 description = "Read metadata from Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -901,14 +901,20 @@ use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
 name = "rstcheck"
-version = "3.5.0"
+version = "5.0.0"
 description = "Checks syntax of reStructuredText and code blocks nested within it"
 category = "dev"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-docutils = ">=0.7"
+docutils = ">=0.7,<0.19"
+types-docutils = ">=0.18,<0.19"
+typing-extensions = ">=4.1,<5"
+
+[package.extras]
+sphinx = ["sphinx (>=4,<5)"]
+testing = ["pytest (>=6)", "pytest-xdist[psutil] (>=2.5)", "pytest-randomly (>=3)"]
 
 [[package]]
 name = "safety"
@@ -1224,6 +1230,14 @@ slack = ["slack-sdk"]
 telegram = ["requests"]
 
 [[package]]
+name = "types-docutils"
+version = "0.18.3"
+description = "Typing stubs for docutils"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "4.2.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -1308,7 +1322,7 @@ test = ["gevent (>=20.6.2)"]
 name = "zipp"
 version = "3.8.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -1331,8 +1345,8 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.8,<3.11"   # TODO dvp: increase upper version bound along with scipy updates
-content-hash = "955169a02f22faf6eb3ad90322c8270a06ead6188d9fb9895628486e9672bb18"
+python-versions = "^3.8,<3.11"
+content-hash = "d4c1f63e899d51197d35525a08dba266c2f3a08966ff3a48695424d6abdd36c3"
 
 [metadata.files]
 alabaster = [
@@ -1841,8 +1855,8 @@ requests = [
     {file = "requests-2.27.1.tar.gz", hash = "sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"},
 ]
 rstcheck = [
-    {file = "rstcheck-3.5.0-py3-none-any.whl", hash = "sha256:30c36768c4bd617a85ab93c31facaf410582e53803fde624845eb00c1430070c"},
-    {file = "rstcheck-3.5.0.tar.gz", hash = "sha256:d4b035300b7d898403544f38c3a4980171ce85f487d25e188347bbafb6ee58c0"},
+    {file = "rstcheck-5.0.0-py3-none-any.whl", hash = "sha256:8fba7f864e3fc09e3a6eac640a809cac89838f72eb1845ef21b37b13f71e7421"},
+    {file = "rstcheck-5.0.0.tar.gz", hash = "sha256:c0c4e44ebb630a7f1ff61d8fc26adc7d49c16fcd4ba85e3ea5542b864cf982e4"},
 ]
 safety = [
     {file = "safety-1.10.3-py2.py3-none-any.whl", hash = "sha256:5f802ad5df5614f9622d8d71fedec2757099705c2356f862847c58c6dfe13e84"},
@@ -2009,6 +2023,10 @@ tornado = [
 tqdm = [
     {file = "tqdm-4.64.0-py2.py3-none-any.whl", hash = "sha256:74a2cdefe14d11442cedf3ba4e21a3b84ff9a2dbdc6cfae2c34addb2a14a5ea6"},
     {file = "tqdm-4.64.0.tar.gz", hash = "sha256:40be55d30e200777a307a7585aee69e4eabb46b4ec6a4b4a5f2d9f11e7d5408d"},
+]
+types-docutils = [
+    {file = "types-docutils-0.18.3.tar.gz", hash = "sha256:a0ef831dc20635f350fa9cff591231c31d27e75771e59fd6c979b6c0c7e03292"},
+    {file = "types_docutils-0.18.3-py3-none-any.whl", hash = "sha256:b54b6fd599914093a5aab08dbf1cba96eb107cdeb4210bbe4ccd233fe3a71d9b"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.2.0-py3-none-any.whl", hash = "sha256:6657594ee297170d19f67d55c05852a874e7eb634f4f753dbd667855e07c1708"},
