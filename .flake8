@@ -15,6 +15,7 @@ ignore=
     W503
     # import is controlled by isort
     I100
+    I201
     I202
 exclude=
     .git,
