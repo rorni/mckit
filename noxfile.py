@@ -46,9 +46,8 @@ nox.options.sessions = (
 )
 
 package = "mckit"
-locations = [package, "tests", "noxfile.py", "docs/source/conf.py"]
-
-supported_pythons = ["3.8", "3.9", "3.10"]
+locations = package, "tests", "noxfile.py", "docs/source/conf.py"
+supported_pythons = "3.8", "3.9", "3.10"
 black_pythons = "3.10"
 mypy_pythons = "3.10"
 lint_pythons = "3.10"
@@ -64,7 +63,6 @@ def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
     Args:
         s: The Session object.
     """
-    assert s.bin is not None
 
     virtualenv = s.env.get("VIRTUAL_ENV")
     if virtualenv is None:
@@ -152,15 +150,6 @@ def tests(s: Session) -> None:
         external=True,
     )
     s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
-    # if WIN:
-    #     dlls = list(DIR.glob("**/*geometry*.pyd"))
-    #     if dlls:
-    #         s.warn(f"Found geometry files:")
-    #         for dll in dlls:
-    #             s.warn(dll)
-    #     else:
-    #         s.warn("Geometry files not found")
-    #     s.run("pip", "list")
     try:
         s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
