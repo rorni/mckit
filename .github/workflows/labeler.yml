@@ -8,10 +8,10 @@ on:
       - devel
     paths:
       - .github/labels.yaml
-      - .github/workflows/repo-labels.yaml
+      - .github/workflows/labeler.yaml
   pull_request:
     branches:
-      - trunk
+      - master
     paths:
       - .github/labels.yaml
       - .github/workflows/labeler.yml
