@@ -7,10 +7,14 @@ ignore=
     ANN101
     # ANN102 Missing type annotation for cls in classmethod
     ANN102
+    # C812 Missing trailing comma: black compatibility
+    C812
+    # Missing docstring in __init__
+    D107
     # E203: Whitespace before ‘:'
-    E203,
+    E203
     # E501: Line too long
-    E501,
+    E501
     # W503: Line break before binary operator: for compatibility with black settings
     W503
     # import is controlled by isort
@@ -18,13 +22,18 @@ ignore=
     I201
     I202
 exclude=
-    .git,
-    __pycache__,
-    docs/source/conf.py,
-    adhoc,
-    wrk,
-    build,
-    dist,
+    .git
+    __pycache__
+    docs/source/conf.py
+    adhoc
+    wrk
+    build
+    dist
+    tools
+    *.pyc
+    *.egg-info
+    .cache
+    .eggs
 per-file-ignores =
     noxfile.py:ANN,DAR101
     tests/*:S101,ANN,DAR100,D100,D103,DAR101,DAR103
