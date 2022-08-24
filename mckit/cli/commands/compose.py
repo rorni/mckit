@@ -2,6 +2,8 @@
 """
 Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации.
 """
+from __future__ import annotations
+
 from typing import Dict, List, Optional, Tuple, Union
 
 from functools import reduce
@@ -9,13 +11,16 @@ from pathlib import Path
 
 import mckit as mk
 import numpy as np
-import tomlkit as tk
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 from mckit import Transformation
 from mckit.cli.logging import logger
 from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file
 from mckit.utils import filter_dict
-from tomlkit import items as tk_items
 
 from .common import save_mcnp
 
@@ -28,8 +33,8 @@ def compose(output, fill_descriptor_path, source, override):
     universes_dir = source.absolute().parent
     assert universes_dir.is_dir()
     logger.info("Loading fill-descriptor from {f}", f=fill_descriptor_path)
-    with fill_descriptor_path.open() as fid:
-        fill_descriptor = tk.parse(fid.read())
+    with fill_descriptor_path.open("rb") as fid:
+        fill_descriptor = tomllib.load(fid)
 
     universes = load_universes(fill_descriptor, universes_dir)
     named_transformations = load_named_transformations(fill_descriptor)
@@ -52,7 +57,8 @@ def compose(output, fill_descriptor_path, source, override):
         cell.options = filter_dict(cell.options, "original")
         cell.options["FILL"] = {"universe": universe}
         if transformation is not None:
-            if isinstance(transformation, tk_items.Array):
+            # if isinstance(transformation, tk_items.Array):
+            if isinstance(transformation, list):
                 transformation1 = np.fromiter(
                     map(float, iter(transformation)), dtype=np.double
                 )
@@ -72,7 +78,8 @@ def compose(output, fill_descriptor_path, source, override):
                         f"Failed to process FILL transformation in cell #{cell.name()} of universe #{universe.name()}"
                     ) from ex
                 cell.options["FILL"]["transform"] = transformation2
-            elif isinstance(transformation, tk_items.Integer):
+            # elif isinstance(transformation, tk_items.Integer):
+            elif isinstance(transformation, int):
                 assert (
                     named_transformations is not None
                 ), "There are no named transformations in the fill descriptor file"

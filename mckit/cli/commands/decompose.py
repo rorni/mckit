@@ -12,13 +12,12 @@
 from datetime import datetime
 from pathlib import Path
 
-import tomlkit as tk
+import tomli_w as tw
 
 from mckit import Universe
 from mckit.cli.logging import logger
 from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file
 from mckit.universe import collect_transformations
-from tomlkit.items import item
 
 from .common import save_mcnp
 
@@ -47,18 +46,17 @@ def decompose(output, fill_descriptor_path, source, override):
     else:
         output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    fill_descriptor = tk.document()
-    fill_descriptor.add(tk.comment(f'This is a decomposition of "{source.name}" model'))
     parse_result: ParseResult = from_file(source)
-    if parse_result.title:
-        fill_descriptor.append("title", parse_result.title)
     model: Universe = parse_result.universe
-    if model.comment:
-        fill_descriptor.append("comment", model.comment)
     named_transformations = list(collect_transformations(model))
-    fill_descriptor.append("created", item(datetime.now()))
-    fill_descriptor.add(tk.nl())
     already_processed_universes = set()
+    # TODO dvp: check ordering of items in resulting file
+    fill_descriptor = {
+        "title": parse_result.title,
+        "source": source.name,
+        "comment": model.comment if model.comment else "",
+        "created": datetime.now(),
+    }
     for c in model:
         fill = c.options.pop("FILL", None)
         if fill:
@@ -73,40 +71,35 @@ def decompose(output, fill_descriptor_path, source, override):
             comm = c.options.get("comment", [])
             comm.append("".join(words))
             c.options["comment"] = comm
-            descriptor = tk.table()
+            descriptor = {}
             universe_name = universe.name()
             fn = f"u{universe_name}.i"
             descriptor["universe"] = universe_name
             if transform:
                 name = transform.name()
                 if name is None:
-                    # The transformation is anonymous, so, store it's specification
+                    # The transformation is anonymous, so, store its specification
                     # omitting redundant '*', TR0 words, and interleaving space tokens
-                    descriptor["transform"] = tk.array(transform.mcnp_words()[2:][1::2])
+                    descriptor["transform"] = transform.mcnp_words()[2:][1::2]
                 else:
                     descriptor["transform"] = name
             descriptor["file"] = fn
-            fill_descriptor.append(str(c.name()), descriptor)
-            fill_descriptor.add(tk.nl())
+            fill_descriptor[str(c.name())] = descriptor
             if universe_name not in already_processed_universes:
                 move_universe_attribute_to_comments(universe)
                 save_mcnp(universe, output / fn, override)
                 logger.debug("The universe {} has been saved to {}", universe_name, fn)
                 already_processed_universes.add(universe_name)
 
-    named_transformations_descriptor = tk.table()
+    named_transformations_descriptor = {}
     named_transformations = sorted(named_transformations, key=lambda x: x.name())
     for t in named_transformations:
-        named_transformations_descriptor[f"tr{t.name()}"] = tk.array(
-            t.mcnp_words()[2:][1::2]
-        )
-    fill_descriptor.append("named_transformations", named_transformations_descriptor)
-    fill_descriptor.add(tk.nl())
+        named_transformations_descriptor[f"tr{t.name()}"] = t.mcnp_words()[2:][1::2]
+    fill_descriptor["named_transformations"] = named_transformations_descriptor
 
     fdp = output / fill_descriptor_path
-    with open(fdp, "w") as fid:
-        res = tk.dumps(fill_descriptor)
-        fid.write(res)
+    with open(fdp, "wb") as fid:
+        tw.dump(fill_descriptor, fid)
     logger.debug("Fill descriptor is saved in {}", fdp)
     envelopes_path = output / "envelopes.i"
     save_mcnp(model, envelopes_path, override)
