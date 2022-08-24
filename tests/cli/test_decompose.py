@@ -189,7 +189,7 @@ def test_anonymous_transformation(runner):
             assert len(spec) == 3
             spec1 = np.fromiter(map(float, spec), dtype=float)
             assert_array_equal(
-                spec1, [0.0, -1.0, 0.0], f"Fill descriptor {spec} is wrong"
+                spec1, [0.0, -1.0, 0.0], f"Fill descriptor {spec1} is wrong"
             )
 
 
@@ -212,5 +212,5 @@ def test_named_transformation(runner):
             assert transform_params.size == 3, "Only translation is specified for tr1"
             assert_array_equal(
                 transform_params, [0, -1.0, 0]
-            ), f"Invalid transform {transform}"
+            ), f"Invalid transform {transform_params}"
             assert transforms is not None
