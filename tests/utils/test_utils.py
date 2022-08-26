@@ -4,9 +4,9 @@ import pytest
 from mckit.utils import (
     FLOAT_TOLERANCE,
     are_equal,
+    compute_hash,
     filter_dict,
     get_decades,
-    make_hash,
     prettify_float,
     significant_digits,
 )
@@ -95,7 +95,7 @@ def test_deep_copy_dict(dictionary, drop_items, expected):
 
 @pytest.mark.parametrize("values", [("abc",), ({1: {"a": 2}}, np.arange(10)), (None,)])
 def test_make_hash(values):
-    make_hash(*values)
+    compute_hash(*values)
 
 
 @pytest.mark.parametrize(

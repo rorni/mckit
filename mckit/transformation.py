@@ -8,7 +8,7 @@ import numpy as np
 from mckit.geometry import ORIGIN
 
 from .card import Card
-from .utils import make_hash
+from .utils import compute_hash
 from .utils.tolerance import EstimatorType, MaybeClose, tolerance_estimator
 
 __all__ = ["Transformation", "IDENTITY_ROTATION"]
@@ -134,7 +134,7 @@ class Transformation(Card, MaybeClose):
         else:
             self._t = translation.copy()
         # self._t = -np.dot(u, translation) if inverted  else translation.copy()
-        self._hash = make_hash(self._t, self._u)
+        self._hash = compute_hash(self._t, self._u)
 
     def mcnp_words(self, pretty=False):
         name = self.name()

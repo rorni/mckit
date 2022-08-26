@@ -11,12 +11,12 @@ from .io import (
 from .misc import (
     MAX_DIGITS,
     are_equal,
+    compute_hash,
     deepcopy,
     filter_dict,
     get_decades,
     is_in,
     is_sorted,
-    make_hash,
     make_hashable,
     mids,
     prettify_float,

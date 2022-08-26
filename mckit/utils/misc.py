@@ -146,7 +146,7 @@ def _(a: ndarray, b: ndarray) -> bool:
 
 
 @are_equal.register
-def _(a: collections.abc.Iterable, b) -> bool:  # : ignore=ANN001
+def _(a: collections.abc.Iterable, b) -> bool:
     if not issubclass(type(b), collections.abc.Iterable):
         return False
     for ai, bi in itertools.zip_longest(a, b):
@@ -156,19 +156,20 @@ def _(a: collections.abc.Iterable, b) -> bool:  # : ignore=ANN001
 
 
 @functools.singledispatch
-def is_in(where, x) -> bool:  # : ignore=ANN001
+def is_in(where, x) -> bool:
+    """Check if 'x' belongs to 'where' dispatcher."""
     if where is None:
         return False
     return x is where or x == where
 
 
 @is_in.register
-def _(where: str, x) -> bool:  # : ignore=ANN001
+def _(where: str, x) -> bool:
     return x is where or x == where
 
 
 @is_in.register
-def _(where: tuple, x) -> bool:  # : ignore=ANN001
+def _(where: tuple, x) -> bool:
     for i in where:
         if is_in(i, x):
             return True
@@ -176,19 +177,19 @@ def _(where: tuple, x) -> bool:  # : ignore=ANN001
 
 
 @is_in.register
-def _(where: collections.abc.Callable, x) -> bool:  # : ignore=ANN001
+def _(where: collections.abc.Callable, x) -> bool:
     return where(x)  # type: ignore
 
 
 @is_in.register
-def _(where: collections.abc.Container, x) -> bool:  # : ignore=ANN001
+def _(where: collections.abc.Container, x) -> bool:
     return x in where
 
 
 def filter_dict(
     a: Dict[Any, Any],
-    *drop_items,  # : ignore=ANN001
-) -> Dict[Any, Any]:  # : ignore=ANN002
+    *drop_items,
+) -> Dict[Any, Any]:
     """Create copy of a dictionary omitting some keys."""
     res = {}
     for k, v in a.items():
@@ -205,17 +206,18 @@ def filter_dict(
 
 
 @functools.singledispatch
-def make_hashable(x):  # : ignore=ANN002
+def make_hashable(x):
+    """Create hashable object from 'x'."""
     raise TypeError(f"Don't know how to make {type(x).__name__} objects hashable")
 
 
 @make_hashable.register
-def _(x: collections.abc.Hashable):  # : ignore=ANN002
+def _(x: collections.abc.Hashable):
     return x
 
 
 @make_hashable.register
-def _(x: str):  # : ignore=ANN002
+def _(x: str):
     return x
 
 
@@ -229,9 +231,14 @@ def _(x: collections.abc.Iterable) -> Tuple:
     return tuple(map(make_hashable, x))
 
 
-def make_hash(*items) -> int:  # : ignore=ANN001
+def compute_hash(*items) -> int:
+    """Compute hash for a sequence of potentially formally not hashable objects.
+
+    Note:
+        Take care on the objects values are stable, while the hashes are in use.
+    """
     if 1 < len(items):
-        return make_hash(tuple(map(make_hash, items)))
+        return compute_hash(tuple(map(compute_hash, items)))
     return hash(make_hashable(items[0]))
 
 

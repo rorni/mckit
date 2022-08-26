@@ -3,10 +3,16 @@ select=ANN,B,B9,BLK,C,D,DAR,E,F,I,S,W
 max-complexity=10
 max-line-length=88
 ignore=
+    # ANN001 Missing type annotation for function argument: doesn't allow to use functools dispatching
+    ANN001
+    # ANN002 Missing type annotation for *drop_items: ... as above
+    ANN002
     # ANN101 Missing type annotation for self in method
     ANN101
     # ANN102 Missing type annotation for cls in classmethod
     ANN102
+    # ANN202 Missing return type annotation for protected function: ... dispatching
+    ANN202
     # C812 Missing trailing comma: black compatibility
     C812
     # Missing docstring in __init__
