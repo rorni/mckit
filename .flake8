@@ -34,6 +34,7 @@ exclude=
     *.egg-info
     .cache
     .eggs
+    mckit/parser
 per-file-ignores =
     noxfile.py:ANN,DAR101
     tests/*:S101,ANN,DAR100,D100,D103,DAR101,DAR103

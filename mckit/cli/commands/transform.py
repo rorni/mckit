@@ -32,12 +32,10 @@ def transform(
     src: Universe = parse_result.universe
     logger.debug("Loading transformations {} from {}", transformation, transformations)
     transformations_text = transformations.read_text()
-    transformations_list = list(
-        map(
-            lambda c: parse_transformation(c.text),
-            clean_mcnp_cards(split_to_cards(transformations_text)),
-        )
-    )
+    transformations_list = [
+        parse_transformation(c.text)
+        for c in clean_mcnp_cards(split_to_cards(transformations_text))
+    ]
     transformations_index = IndexOfNamed.from_iterable(
         transformations_list,
         on_duplicate=raise_on_duplicate_strategy,
