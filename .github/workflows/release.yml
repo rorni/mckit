@@ -27,14 +27,14 @@ jobs:
 #    steps:
 #
 #      - name: Checkout repository
-#        uses: actions/checkout@v3
+#        uses: actions/checkout@v3.0.2
 #        with:
 #          fetch-depth: 1
 #
 #      - name: Checkout submodules
 #        run: git submodule update --init --recursive --depth=1
 #
-#      - uses: actions/setup-python@v3.1.2
+#      - uses: actions/setup-python@v4.1.0
 #        with:
 #          python-version: ${{ env.PYTHON_VERSION }}
 #          architecture: x64
@@ -65,12 +65,12 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.0.2
         with:
           fetch-depth: 2    # need previous revision to define tag
 
       - name: Set up Python
-        uses: actions/setup-python@v3.1.2
+        uses: actions/setup-python@v4.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 

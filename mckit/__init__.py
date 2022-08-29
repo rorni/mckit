@@ -1,6 +1,7 @@
+# flake8: noqa
 import mckit._init_dynamic_libraries as init_lib
 
-from mckit._init_dynamic_libraries import (  # noqa
+from mckit._init_dynamic_libraries import (
     Body,
     Cone,
     Cylinder,
@@ -11,13 +12,13 @@ from mckit._init_dynamic_libraries import (  # noqa
     Torus,
     create_surface,
 )
-from mckit.fmesh import FMesh  # noqa
-from mckit.material import AVOGADRO, Composition, Element, Material  # noqa
-from mckit.parser.mctal_parser import read_mctal  # noqa
-from mckit.parser.meshtal_parser import read_meshtal  # noqa
-from mckit.transformation import Transformation  # noqa
-from mckit.universe import Universe  # noqa
-from mckit.version import (  # noqa
+from mckit.fmesh import FMesh
+from mckit.material import AVOGADRO, Composition, Element, Material
+from mckit.parser.mctal_parser import read_mctal
+from mckit.parser.meshtal_parser import read_meshtal
+from mckit.transformation import Transformation
+from mckit.universe import Universe
+from mckit.version import (
     __author__,
     __copyright__,
     __license__,

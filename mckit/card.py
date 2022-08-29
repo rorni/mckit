@@ -83,9 +83,7 @@ class Card(ABC):
     def __hash__(
         self,
     ):  # TODO dvp: dict hashing implementation: check for effect of instability of the options
-        return reduce(
-            xor, map(lambda x: hash(x[0]) ^ hash(x[1]), self.options.items()), 0
-        )
+        return reduce(xor, (hash(k) ^ hash(v) for k, v in self.options.items()), 0)
 
     def __eq__(self, other):  # TODO dvp: what about nested dictionaries?
         for k in other.options.keys():

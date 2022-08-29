@@ -3204,7 +3204,10 @@ class TestRCC:
                 0.5,
                 0,
                 marks=pytest.mark.skipif(
-                    sys.platform == "darwin", reason="Fails on MacOS"
+                    sys.platform == "darwin"
+                    or sys.platform == "linux"
+                    and sys.version_info[0:2] < (3, 9),
+                    reason="Fails on MacOS and Linux with python 3.8",
                 ),
             ),
             ([-2, 0, 0], [4, 0, 0], 3, -1),

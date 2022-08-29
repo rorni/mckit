@@ -26,9 +26,9 @@ from .printer import add_float, pretty_float
 from .transformation import Transformation
 from .utils import (
     are_equal,
+    compute_hash,
     deepcopy,
     filter_dict,
-    make_hash,
     round_array,
     round_scalar,
     significant_array,
@@ -636,7 +636,7 @@ class Plane(Surface, _Plane):
                 k /= length
         Surface.__init__(self, **options)
         _Plane.__init__(self, v, k)
-        self._hash = make_hash(self._k, self._v, self.transformation)
+        self._hash = compute_hash(self._k, self._v, self.transformation)
 
     # noinspection PyTypeChecker
     def round(self):
@@ -756,7 +756,7 @@ class Sphere(Surface, _Sphere):
         radius = float(radius)
         Surface.__init__(self, **options)
         _Sphere.__init__(self, center, radius)
-        self._hash = make_hash(self._radius, self._center, self.transformation)
+        self._hash = compute_hash(self._radius, self._center, self.transformation)
 
     def __getstate__(self):
         return self._center, self._radius, Surface.__getstate__(self)
@@ -885,7 +885,9 @@ class Cylinder(Surface, _Cylinder):
         pt = pt - axis * np.dot(pt, axis)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
-        self._hash = make_hash(self._radius, self._pt, self._axis, self.transformation)
+        self._hash = compute_hash(
+            self._radius, self._pt, self._axis, self.transformation
+        )
 
     def __getstate__(self):
         return self._pt, self._axis, self._radius, Surface.__getstate__(self)
@@ -1049,7 +1051,7 @@ class Cone(Surface, _Cone):
         apex = np.asarray(apex, dtype=float)
         Surface.__init__(self, **options)
         _Cone.__init__(self, apex, axis, t2, sheet)
-        self._hash = make_hash(self._t2, self._sheet, self._apex, self._axis)
+        self._hash = compute_hash(self._t2, self._sheet, self._apex, self._axis)
 
     def apply_transformation(self) -> Surface:
         tr = self.transformation
@@ -1216,7 +1218,7 @@ class GQuadratic(Surface, _GQuadratic):
             factor = 1.0 / np.max(np.abs(eigenvalues))
         Surface.__init__(self, **options)
         _GQuadratic.__init__(self, m, v, k, factor)
-        self._hash = make_hash(self._k, self._v, self._m)
+        self._hash = compute_hash(self._k, self._v, self._m)
 
     def apply_transformation(self) -> Surface:
         tr = self.transformation
@@ -1333,7 +1335,7 @@ class Torus(Surface, _Torus):
             axis *= -1
         Surface.__init__(self, **options)
         _Torus.__init__(self, center, axis, r, a, b)
-        self._hash = make_hash(self._center, self._axis, self._R, self._a, self._b)
+        self._hash = compute_hash(self._center, self._axis, self._R, self._a, self._b)
 
     def round(self) -> "Surface":
         temp = self.apply_transformation()

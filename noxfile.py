@@ -30,28 +30,49 @@ WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform
 MACOS = sys.platform.startswith("darwin")
 
 
-# TODO dvp: uncomment when code and docs are more mature
 nox.options.sessions = (
+    "pre-commit",
     "safety",
     # "isort",   isort and black are included to precommit
     # "black",
-    "pre-commit",
     # TODO dvp: enable default runs with  lint and mypy when code matures and
     #           if these checks are not already enabled in pre-commit
     # "lint",
     # "mypy",
-    # "xdoctest",  # TODO dvp: uncomment when doctests appear in the code (check with: xdoctest -c list <your package>)
+    # TODO dvp: uncomment xdoctest when doctests appear in the code
+    #           (check with: xdoctest -c list <your package>)
+    # "xdoctest",
     "tests",
     # "docs-build",
 )
 
 package = "mckit"
-locations = [package, "tests", "noxfile.py", "docs/source/conf.py"]
-
-supported_pythons = ["3.8", "3.9", "3.10"]
+locations = package, "tests", "noxfile.py", "docs/source/conf.py"
+supported_pythons = "3.8", "3.9", "3.10"
 black_pythons = "3.10"
 mypy_pythons = "3.10"
 lint_pythons = "3.10"
+
+FLAKE8_DEPS = [
+    "flake8",
+    "flake8-annotations",
+    # TODO dvp: versions 3.0.0 and older don't work with recent flake8, check on update
+    #  "flake8-bandit",
+    "flake8-bugbear",
+    "flake8-builtins",
+    "flake8-colors",
+    "flake8-commas",
+    "flake8-comprehensions",
+    "flake8-docstrings",
+    "flake8-import-order",
+    "flake8-print",
+    "flake8-rst-docstrings",
+    "flake8-use-fstring",
+    "mccabe",
+    "pep8-naming",
+    "pydocstyle",
+    "tryceratops",
+]
 
 
 def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
@@ -64,8 +85,6 @@ def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
     Args:
         s: The Session object.
     """
-    assert s.bin is not None
-
     virtualenv = s.env.get("VIRTUAL_ENV")
     if virtualenv is None:
         return
@@ -99,7 +118,7 @@ def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
                 {s.bin!r},
                 os.environ.get("PATH", ""),
             ))
-            """
+            """,
         )
 
         lines.insert(1, header)
@@ -113,19 +132,12 @@ def precommit(s: Session) -> None:
     s.install(
         "black",
         "darglint",
-        "flake8",
-        "flake8-annotations",
-        "flake8-bandit",
-        "flake8-black",
-        "flake8-bugbear",
-        "flake8-docstrings",
-        "flake8-rst-docstrings",
-        "pep8-naming",
         "pre-commit",
         "pre-commit-hooks",
         "isort",
         "mypy",
         "types-setuptools",
+        # *FLAKE8_DEPS,  TODO dvp: enable linting on precommit when flake8 become happy
     )
     s.run("pre-commit", *args)
     if args and args[0] == "install":
@@ -135,11 +147,9 @@ def precommit(s: Session) -> None:
 @session(python="3.10")
 def safety(s: Session) -> None:
     """Scan dependencies for insecure packages."""
-    # args = s.posargs or ["--ignore", "44715"]  - was used because of old numpy issues, no issues now
-    args = s.posargs
     requirements = s.poetry.export_requirements()
     s.install("safety")
-    s.run("safety", "check", "--full-report", f"--file={requirements}", *args)
+    s.run("safety", "check", "--full-report", f"--file={requirements}", *s.posargs)
 
 
 @session(python=supported_pythons)
@@ -151,16 +161,7 @@ def tests(s: Session) -> None:
         "--no-dev",
         external=True,
     )
-    s.install("pytest", "pytest-cov", "pytest-mock", "coverage[toml]")
-    # if WIN:
-    #     dlls = list(DIR.glob("**/*geometry*.pyd"))
-    #     if dlls:
-    #         s.warn(f"Found geometry files:")
-    #         for dll in dlls:
-    #             s.warn(dll)
-    #     else:
-    #         s.warn("Geometry files not found")
-    #     s.run("pip", "list")
+    s.install("pytest", "pygments", "coverage[toml]")
     try:
         s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
@@ -209,9 +210,16 @@ def isort(s: Session) -> None:
         "profiles/*.py",
     ]
     files_to_process: List[str] = sum(
-        map(lambda p: glob(p, recursive=True), search_patterns), []
+        (glob(p, recursive=True) for p in search_patterns),
+        [],
     )
-    s.run("isort", "--check", "--diff", *files_to_process, external=True)
+    s.run(
+        "isort",
+        "--check",
+        "--diff",
+        *files_to_process,
+        external=True,
+    )
 
 
 @session(python=black_pythons)
@@ -226,17 +234,7 @@ def black(s: Session) -> None:
 def lint(s: Session) -> None:
     """Lint using flake8."""
     args = s.posargs or locations
-    s.install(
-        "flake8",
-        "flake8-annotations",
-        "flake8-bandit",
-        "flake8-black",
-        "flake8-bugbear",
-        "flake8-docstrings",
-        "flake8-rst-docstrings",
-        "flake8-import-order",
-        "darglint",
-    )
+    s.install(*FLAKE8_DEPS)
     s.run("flake8", *args)
 
 
@@ -254,47 +252,6 @@ def mypy(s: Session) -> None:
     s.run("mypy", *args)
     if not s.posargs:
         s.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
-
-
-@session(python=supported_pythons)
-def wheels(s: Session) -> None:
-    """Build wheels and install from wheels."""
-    s.skip(
-        "Not implemented yet (invalid wheel?)"
-    )  # TODO dvp: fix this session, check on poetry update
-    s.run(
-        "poetry",
-        "install",
-        "--no-dev",
-        "--no-root",
-        external=True,
-    )
-    dist_dir = Path("dist")
-    if dist_dir.exists():
-        shutil.rmtree(str(dist_dir))
-    s.run(
-        "poetry",
-        "build",
-        "--format",
-        "wheel",
-        external=True,
-    )
-    if not dist_dir.exists():
-        s.error("'dist' directory is not created on poetry build")
-        return
-    wheel_path = next(dist_dir.glob("*.whl")).absolute()
-    s.log(f"Installing {package} from wheel {wheel_path}")
-    s.run(
-        "pip",
-        "install",
-        str(wheel_path),
-        "--verbose",
-    )
-    s.run(
-        f"{package}",
-        "--version",
-        external=True,
-    )
 
 
 @session(python=supported_pythons)
@@ -369,3 +326,44 @@ def docs(s: Session) -> None:
         shutil.rmtree(build_dir)
 
     s.run("sphinx-autobuild", *args)
+
+
+@session(python=supported_pythons)
+def wheels(s: Session) -> None:
+    """Build wheels and install from wheels."""
+    s.skip(
+        "Not implemented yet (invalid wheel?)",
+    )  # TODO dvp: fix this session, check on poetry update
+    s.run(
+        "poetry",
+        "install",
+        "--no-dev",
+        "--no-root",
+        external=True,
+    )
+    dist_dir = Path("dist")
+    if dist_dir.exists():
+        shutil.rmtree(str(dist_dir))
+    s.run(
+        "poetry",
+        "build",
+        "--format",
+        "wheel",
+        external=True,
+    )
+    if not dist_dir.exists():
+        s.error("'dist' directory is not created on poetry build")
+        return
+    wheel_path = next(dist_dir.glob("*.whl")).absolute()
+    s.log(f"Installing {package} from wheel {wheel_path}")
+    s.run(
+        "pip",
+        "install",
+        str(wheel_path),
+        "--verbose",
+    )
+    s.run(
+        f"{package}",
+        "--version",
+        external=True,
+    )

@@ -2,7 +2,11 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import tomlkit as tk
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 from mckit.cli.commands.decompose import get_default_output_directory
 from mckit.cli.runner import mckit
@@ -154,7 +158,7 @@ def test_fill_descriptor(runner):
         with output.open() as fid:
             fill_descriptor = fid.read()
             assert fill_descriptor.find("simple_cubes.mcnp")
-            fill_descriptor = tk.parse(fill_descriptor)
+            fill_descriptor = tomllib.loads(fill_descriptor)
             assert "created" in fill_descriptor
             assert "2" in fill_descriptor
             assert "universe" in fill_descriptor["2"]
@@ -183,13 +187,13 @@ def test_anonymous_transformation(runner):
             mckit, args=["decompose", source], catch_exceptions=False
         )
         assert result.exit_code == 0, "Should success"
-        with open(output / "fill-descriptor.toml") as fid:
-            descriptor = tk.parse(fid.read())
+        with open(output / "fill-descriptor.toml", "rb") as fid:
+            descriptor = tomllib.load(fid)
             spec = descriptor["2"]["transform"]
             assert len(spec) == 3
             spec1 = np.fromiter(map(float, spec), dtype=float)
             assert_array_equal(
-                spec1, [0.0, -1.0, 0.0], f"Fill descriptor {spec} is wrong"
+                spec1, [0.0, -1.0, 0.0], f"Fill descriptor {spec1} is wrong"
             )
 
 
@@ -201,8 +205,8 @@ def test_named_transformation(runner):
             mckit, args=["decompose", source], catch_exceptions=False
         )
         assert result.exit_code == 0, "Should success"
-        with open(output / "fill-descriptor.toml") as fid:
-            descriptor = tk.parse(fid.read())
+        with open(output / "fill-descriptor.toml", "rb") as fid:
+            descriptor = tomllib.load(fid)
             spec = descriptor["2"]["transform"]
             assert spec == 1, f"Fill descriptor {spec} is wrong"
             transforms = descriptor["named_transformations"]
@@ -212,5 +216,5 @@ def test_named_transformation(runner):
             assert transform_params.size == 3, "Only translation is specified for tr1"
             assert_array_equal(
                 transform_params, [0, -1.0, 0]
-            ), f"Invalid transform {transform}"
+            ), f"Invalid transform {transform_params}"
             assert transforms is not None
