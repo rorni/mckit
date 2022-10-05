@@ -37,7 +37,7 @@ classifiers = [
 
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.11"   # TODO dvp: increase upper version bound along with scipy updates
+python = ">=3.8,<3.12"  # TODO dvp: increase the upper limit along with scipy updates
 DateTime = ">=4.3"
 atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"
@@ -45,7 +45,7 @@ click = ">=8.0.1"
 colorama = ">=0.4.4"
 loguru = ">=0.6.0"
 mkl-devel = ">=2022.1.0"
-numpy = ">=1.22.1"
+numpy = ">=1.23.2"
 ply = ">=3.11"
 python-dotenv = ">=0.20.0"
 scipy = ">=1.7.3"
@@ -54,58 +54,95 @@ tomli = {version = ">=1.1.0", python="<3.11"}
 tomli-w = ">=1.0.0"
 tqdm = ">=4.55.1"
 
-[tool.poetry.dev-dependencies]
-Pygments = ">=2.7.2"
-Sphinx = ">=5.0.0"
-black = ">=22.1.0"
-blacken-docs = ">=1.12.1"
-cmake = ">=3.22.2"
-codecov = ">=2.1.12"
-coverage = {version = ">=6.3", extras = ["toml"]}
-darglint = ">=1.5.5"
+
+[tool.poetry.group.dev.dependencies]
+Pygments = ">=2.10.0"
+nox = ">=2022.1.7"
+tomli = ">=2.0.1"
+#cmake = ">=3.22.2"
+
+
+#[tool.poetry.group.profile]
+#optional = true
+
+#[tool.poetry.group.profile.dependencies]
+# TODO dvp: apply yappi: https://coderzcolumn.com/tutorials/python/yappi-yet-another-python-profiler
+#yappi = ">=1.3.2"
+
+[tool.poetry.group.safety.dependencies]
+safety = ">=1.10.3"
+
+[tool.poetry.group.pre_commit.dependencies]
+pre-commit = ">=2.15.0"
+rstcheck = ">=3.3.1"
+
+[tool.poetry.group.black.dependencies]
+black = ">=22.8.0"
+
+[tool.poetry.group.isort.dependencies]
+isort = ">=5.9.3"
+pycln = {version = "^2.1.1", extras = ["click"]}
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=7.0.1"
+pytest-cache = ">=1.0"
+pytest-cov = ">=3.0.0"
+pytest-mock = ">=3.6.1"
+#codecov = ">=2.1.12"
+coverage = { version = ">=6.1.2", extras = ["toml"] }
+
+[tool.poetry.group.coverage.dependencies]
+coverage = { version = ">=6.1.2", extras = ["toml"] }
+
+[tool.poetry.group.xdoctest.dependencies]
+xdoctest = {extras = ["colors"], version = ">=0.15.10"}
+
+[tool.poetry.group.typeguard.dependencies]
+typeguard = ">=2.13.0"
+
+[tool.poetry.group.mypy.dependencies]
+mypy = ">=0.931"
+pep8-naming = ">=0.12.1"
+types-setuptools = ">=57.4.2"
+numpy = ">=1.23.2"
+
+[tool.poetry.group.flake8.dependencies]
+darglint = ">=1.8.1"
 flake8 = ">=4.0.1"
-flake8-annotations = ">=2.4.1"
-flake8-black = ">=0.3.2"
+flake8-annotations = ">=2.6.2"
+flake8-bandit = ">=4.1.1"
 flake8-bugbear = ">=22.3.23"
 flake8-builtins = ">=1.5.3"
 flake8-colors = ">=0.1.9"
 flake8-commas = ">=2.1.0"
 flake8-comprehensions = ">=3.10.0"
-flake8-docstrings = ">=1.5.0"
+flake8-docstrings = ">=1.6.0"
 flake8-import-order = ">=0.18.1"
 flake8-print = ">=5.0.0"
 flake8-rst-docstrings = ">=0.2.7"
 flake8-use-fstring = ">=1.4"
-isort = ">=5.7.0"
-mypy = ">=0.950"
-nox = ">=2022.1.7"
-nox-poetry = ">=0.9.0"
-numpydoc = ">=1.1.0"
-pep8-naming = ">=0.13.2"
-pre-commit = ">=2.17.0"
-pydocstyle = ">=6.1.1"
-pytest = ">=7.0.1"
-pytest-benchmark = ">=3.4.1"
-pytest-cov = ">=3.0.0"
-pytest-mock = ">=3.7.0"
-rstcheck = ">=5.0.0"
-safety = ">=1.10.3"
-sphinx-autobuild = ">=2021.3.14"
-sphinx-autodoc-typehints = ">=1.16.0"
+tryceratops = ">=1.0.1"
+
+[tool.poetry.group.docs.dependencies]
+sphinx = ">=5.0.2"
+sphinx-autodoc-typehints = ">=1.12.0"
 sphinx-autorun = ">=1.1.1"
-sphinx-click = ">=4.0.0"
+sphinx-click = ">=4.0.3"
 sphinx-rtd-theme = ">=1.0.0"
 sphinxcontrib-napoleon = ">=0.7"
-tryceratops = ">=1.1.0"
-wheel = ">=0.35.1"
-xdoctest = {extras = ["colors"], version = ">=1.0.0"}
-yappi = ">=1.3.2"
+
+[tool.poetry.group.docs_auto.dependencies]
+sphinx-autobuild = ">=2021.3.14"
+
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = [
-    "poetry-core>=1.0.7",
-    "setuptools>=58.1.0",
+    "poetry-core>=1.1.0",
+    "setuptools>=65.4.1",
+    "cmake>=3.22.2",
+    "mkl-devel>=2022.1.0",
+    "numpy>=1.23.2",
 ]
 
 [tool.poetry.scripts]
@@ -141,7 +178,6 @@ skip_glob = ["setup*.py", "*-example.py"]
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
 include = '''
 (
     \.pyi?$
@@ -151,11 +187,11 @@ exclude = '''
 (
     \.eggs
   | \.git
-  | \.hg
   | \.mypy_cache
   | \.pytest_cache
   | \.nox
   | \.venv
+  | \.idea
   | _build
   | build
   | build_configs
@@ -164,7 +200,6 @@ exclude = '''
   | data
   | htmlcov
   | \.egg-info
-  | mckit\.egg-info
   | _tab\.py$
   | notebooks
   | tutorial
@@ -220,43 +255,6 @@ exclude_lines = [
 ignore_errors = true
 sort = "Cover"
 
-# TODO dvp: flake8 does not support pyproject configuring
-#[tool.flake8]
-##select = ANN,B,B9,BLK,C,D,DAR,E,F,I,S,W
-#select = ['C', 'E', 'F', 'W']
-#max-complexity = 10
-#max-line-length = 88
-#ignore = [
-#    # E203: Whitespace before ‘:'
-#    "E203",
-#    # E501: Line too long
-#    "E501",
-#    # W503: Line break before binary operator: for compatibility with black settings
-#    "W503",
-#    # import is controlled by isort
-#    "I100",
-#    "I202"
-#]
-#exclude = [
-#    # No need to traverse our git directory
-#    ".git",
-#    # There's no value in checking cache directories
-#    "__pycache__",
-#    # The conf file is mostly autogenerated, ignore it
-#    "docs/source/conf.py",
-#    # Don't chek the adhoc, wrk directories
-#    "adhoc",
-#    "wrk",
-#    # This contains our built documentation
-#    "build",
-#    # This contains builds of flake8 that we don't want to check
-#    "dist",
-#]
-#per-file-ignores = [
-#    "noxfile.py:ANN",
-#    "tests/*:S101,ANN",
-#]
-
 
 # MyPy config
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
@@ -278,15 +276,25 @@ files = "mckit/**/*.py"
 
 [[tool.mypy.overrides]]
 module = [
-    "nox",
-    "nox_poetry",
-    "pandas",
-    "pytest",
     "click",
     "click.testing",
     "loguru",
-    "numpy.testing",
     "multipledispatch",
+    "nox",
+    "numpy.testing",
+    "pandas",
+    "pytest",
+    "scipy.constants",
     "pkg_resources",
 ]
 ignore_missing_imports = true
+
+
+[tool.tryceratops]
+include = ["mckit"]
+#ignore = ["TC002", "TC200", "TC300"]
+experimental = true
+
+[tool.pycln]
+path = "."
+#silence = true

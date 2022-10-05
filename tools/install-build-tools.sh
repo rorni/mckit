@@ -48,9 +48,9 @@ install_linux_pyenv() {
 }
 
 install_python() {
-    local version="${1:-3.10.4}"
+    local version="${1:-3.10.7}"
     pyenv install "$version"
-    python="python$version"
+    local python="python$version"
     $python -m pip install --upgrade pip setuptools wheel
     pyenv local "$version"
 }

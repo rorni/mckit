@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 
 import mckit as mk
-import numpy as np
 
 universes_to_process = [97, 98, 99]
 

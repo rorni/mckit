@@ -11,7 +11,9 @@ on:
       - .github/workflows/labeler.yml
   pull_request:
     branches:
+      - main
       - master
+      - devel
     paths:
       - .github/labels.yaml
       - .github/workflows/labeler.yml
@@ -24,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.1.0
 
       - name: Sync GitHub Issue Labels
-        uses: crazy-max/ghaction-github-labeler@v4.0.0
+        uses: crazy-max/ghaction-github-labeler@v4
         with:
           github-token: ${{ secrets.MCKIT_GITHUB_TOKEN }}
           skip-delete: true

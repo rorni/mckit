@@ -2,10 +2,10 @@
 #
 # Prepare pyenv environment for mckit development on Linux.
 #
-# dvp, Apr 2022
+# dvp, Oct 2022
 #
 
-default_python_version=3.10.4
+default_python_version=3.10.7
 
 usage() {
   cat <<- EndOfMessage
@@ -45,9 +45,9 @@ get_args() {
 reset_env() {
   unset LD_PRELOAD
   pyenv local "$python_version"
-  pyenv virtualenv-delete -f "$mckit" > /dev/nul
+  pyenv virtualenv-delete -f "$mckit"
   pyenv virtualenv "$python_version" "$mckit"
-  pyenv local "$mckit" "3.9.12" "3.8.12"
+  pyenv local "$mckit" "3.9.14" "3.8.14"
 
   # pip is obsolete almost always
   python -m pip install --upgrade pip
@@ -68,7 +68,7 @@ check_environment() {
   poetry run pytest -m "not slow" &&  echo "SUCCESS: pytest is passed OK"
 
   poetry run nox --list
-  poetry run nox -s safety
+#  poetry run nox -s safety
   poetry run nox -s tests -p "$python_version" -- -m "not slow" --cov
 
   tools/create-jk.sh "$mckit" || echo "ERROR: failed to create Jupyter Kernel for $mckit environment" &&  return 1

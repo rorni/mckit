@@ -1,3 +1,4 @@
+# nopycln: file
 from .cell_index import CellDummyIndex, CellNotFoundError, CellStrictIndex, DummyCell
 from .composition_index import (
     CompositionDummyIndex,
