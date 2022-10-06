@@ -71,6 +71,11 @@ jobs:
 #        run: |
 #          nox --force-color --session=safety
 
+      # For unknown reason, the next step cannot install mckit without this step
+      - name: Build mckit
+        run: |
+          poetry build -f wheel
+
       - name: Run pre commit checks
         run: |
           nox --force-color --session=pre-commit
