@@ -142,6 +142,7 @@ requires = [
     "cmake>=3.22.2",
     "mkl-devel>=2022.1.0",
     "numpy>=1.23.2",
+    "wheel>=0.37.1",
 ]
 
 [tool.poetry.scripts]
