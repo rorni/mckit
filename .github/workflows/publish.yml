@@ -47,7 +47,6 @@ jobs:
 
       - name: Build wheel
         run: |
-          poetry install --no-dev --no-root
           poetry build -f wheel
 
       - name: Build sdist

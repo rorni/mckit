@@ -59,12 +59,12 @@ jobs:
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/constraints.txt poetry
+          pip install --constraint=.github/constraints.txt poetry
           poetry --version
 
       - name: Install Nox
         run: |
-          pipx install --pip-args=--constraint=.github/constraints.txt nox
+          pip install --constraint=.github/constraints.txt nox
           nox --version
 
 #      - name: Run safety session
@@ -99,12 +99,12 @@ jobs:
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/constraints.txt poetry
+          pip install --constraint=.github/constraints.txt poetry
           poetry --version
 
       - name: Install Nox
         run: |
-          pipx install --pip-args=--constraint=.github/constraints.txt nox
+          pip install --constraint=.github/constraints.txt nox
           nox --version
 
       - name: Build documentation
@@ -178,7 +178,7 @@ jobs:
 
       - name: Install Nox
         run: |
-          pipx install --pip-args=--constraint=.github/constraints.txt nox
+          pip install --constraint=.github/constraints.txt nox
           nox --version
 
       - name: Download coverage data
