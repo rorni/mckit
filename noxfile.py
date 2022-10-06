@@ -148,7 +148,7 @@ def tests(s: Session) -> None:
         "install",
         "--no-root",
         "--only",
-        "test,xdoctest,coverage",
+        "main,test,xdoctest,coverage",
         external=True,
     )
     try:
