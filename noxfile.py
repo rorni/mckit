@@ -62,7 +62,6 @@ locations: Final = f"{package}", "tests", "noxfile.py", "docs/source/conf.py"
 
 supported_pythons: Final = "3.8", "3.9", "3.10", "3.11"
 black_pythons: Final = "3.10"
-mypy_pythons: Final = "3.10"
 lint_pythons: Final = "3.10"
 
 
@@ -120,13 +119,12 @@ def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
 def precommit(s: Session) -> None:
     """Lint using pre-commit."""
     args = s.posargs or ["run", "--all-files", "--show-diff-on-failure"]
-    # Note: the "main" group is required to install mckit itself in isolated session
-    # because this is not pure python project
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
-        "main,pre_commit,style,isort,black",
+        "pre_commit,style,isort,black",
         external=True,
     )
     s.run("pre-commit", *args)
@@ -148,8 +146,9 @@ def tests(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
-        "main,test,xdoctest,coverage",
+        "test,xdoctest,coverage",
         external=True,
     )
     try:
@@ -171,8 +170,9 @@ def coverage(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
-        "main,coverage",
+        "coverage",
         external=True,
     )
 
@@ -189,6 +189,7 @@ def typeguard(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
         "main,test,typeguard",
         external=True,
@@ -212,6 +213,7 @@ def isort(s: Session) -> None:
         s.run(
             "poetry",
             "install",
+            "--no-root",
             "--only",
             "isort",
             external=True,
@@ -239,6 +241,7 @@ def black(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
         "black",
         external=True,
@@ -253,6 +256,7 @@ def lint(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
         "flake8",
         external=True,
@@ -260,15 +264,16 @@ def lint(s: Session) -> None:
     s.run("flake8", *args)
 
 
-@session(python=mypy_pythons)
+@session(python="3.10")
 def mypy(s: Session) -> None:
     """Type-check using mypy."""
-    args = s.posargs or [package, "tests", "docs/source/conf.py"]
+    args = s.posargs or [package]  # "tests", "docs/source/conf.py"]
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
-        "main,mypy",
+        "mypy",
         external=True,
     )
     s.run("mypy", *args)
@@ -283,22 +288,26 @@ def xdoctest(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
-        "main,xdoctest",
+        "xdoctest",
         external=True,
     )
     s.run("python", "-m", "xdoctest", *args)
 
 
-@session(name="docs-build", python="3.10")
+# TODO dvp: sphinxcontib.napoleon <= 0.7.0 is not compatible with Python3.10
+#           check compatibility on updates and shift python version when possible
+@session(name="docs-build", python="3.9")
 def docs_build(s: Session) -> None:
     """Build the documentation."""
     args = s.posargs or ["docs/source", "docs/_build"]
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
-        "main,docs",
+        "docs",
         external=True,
     )
     build_dir = Path("docs", "_build")
@@ -308,15 +317,16 @@ def docs_build(s: Session) -> None:
     s.run("sphinx-build", *args)
 
 
-@session(python="3.10")
+@session(python="3.9")
 def docs(s: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = s.posargs or ["--open-browser", "docs/source", "docs/_build"]
     s.run(
         "poetry",
         "install",
+        "--no-root",
         "--only",
-        "main,docs,docs_auto",
+        "docs,docs_auto",
         external=True,
     )
     build_dir = Path("docs", "_build")
