@@ -146,7 +146,6 @@ def tests(s: Session) -> None:
     s.run(
         "poetry",
         "install",
-        "--no-root",
         "--only",
         "main,test,xdoctest,coverage",
         external=True,
@@ -189,7 +188,6 @@ def typeguard(s: Session) -> None:
     s.run(
         "poetry",
         "install",
-        "--no-root",
         "--only",
         "main,test,typeguard",
         external=True,
