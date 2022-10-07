@@ -1,7 +1,7 @@
 name: Release
 
 env:
-  PYTHON_VERSION: '3.9'
+  PYTHON_VERSION: '3.10'
 
 on:
   workflow_dispatch:
@@ -60,12 +60,12 @@ jobs:
 #        run: nox --no-color --python ${{ env.PYTHON_VERSION }}
 
   release:
-#    needs: release-tests
+    name: Release
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.1.0
         with:
           fetch-depth: 2    # need previous revision to define tag
 
@@ -79,7 +79,7 @@ jobs:
           pip install --constraint=.github/constraints.txt pip
           pip --version
 
-      - name: Install poetry
+      - name: Install Poetry
         run: |
           pip install --constraint=.github/constraints.txt poetry
           poetry --version
@@ -92,7 +92,7 @@ jobs:
       - name: Detect and tag new version
         id: check-version
         if: steps.check-parent-commit.outputs.sha
-        uses: salsify/action-detect-and-tag-new-version@v2
+        uses: salsify/action-detect-and-tag-new-version@v2.0.1
         with:
           version-command: |
             poetry version --short | sed "s/-.*$//g"
@@ -128,7 +128,7 @@ jobs:
 #          repository_url: https://test.pypi.org/legacy/
 
       - name: Publish the release notes
-        uses: release-drafter/release-drafter@v5.20.1
+        uses: release-drafter/release-drafter@v5.21.0
         with:
           publish: ${{ steps.check-version.outputs.tag != '' }}
           tag: ${{ steps.check-version.outputs.tag }}

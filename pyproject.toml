@@ -35,6 +35,15 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 
+[tool.poetry.scripts]
+mckit = "mckit.cli.runner:mckit"
+
+[tool.poetry.urls]
+"Repository" = "https://github.com/MC-kit/mckit"
+"Bug Tracker" = "https://github.com/MC-kit/mckit/issues"
+# "Documentation" TODO
+
+
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.12"  # TODO dvp: increase the upper limit along with scipy updates
@@ -58,8 +67,6 @@ tqdm = ">=4.55.1"
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
 nox = ">=2022.1.7"
-#cmake = ">=3.22.2"
-
 
 #[tool.poetry.group.profile]
 #optional = true
@@ -136,7 +143,6 @@ sphinx-autobuild = ">=2021.3.14"
 
 
 [build-system]
-build-backend = "poetry.core.masonry.api"
 requires = [
     "poetry-core>=1.1.0",
     "setuptools>=65.4.1",
@@ -145,15 +151,7 @@ requires = [
     "numpy>=1.23.2",
     "wheel>=0.37.1",
 ]
-
-[tool.poetry.scripts]
-mckit = "mckit.cli.runner:mckit"
-
-[tool.poetry.urls]
-"Repository" = "https://github.com/MC-kit/mckit"
-"Bug Tracker" = "https://github.com/MC-kit/mckit/issues"
-# "Documentation" TODO
-
+build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 atomic = true
@@ -238,7 +236,7 @@ omit = ["*_tab.py"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-#fail_under = 80  # TODO dvp: increase limit to 100 with code maturing
+fail_under = 85  # TODO dvp: increase limit to 100 with code maturing
 # Regexes for lines to exclude from consideration
 exclude_lines = [
     # Have to re-enable the standard pragma
@@ -260,9 +258,9 @@ sort = "Cover"
 # MyPy config
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
 [tool.mypy]
-python_version = 3.10
+python_version = "3.10"
 # strict = true     # TODO dvp: uncomment this to get strict control
-follow_imports = "skip"
+follow_imports = "silent"
 # namespace_packages = true
 warn_return_any = true
 warn_unused_configs = true

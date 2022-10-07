@@ -71,11 +71,9 @@ jobs:
 #        run: |
 #          nox --force-color --session=safety
 
-
       - name: Run pre commit checks
         run: |
           nox --force-color --session=pre-commit
-          # this includes pycln, isort, black checks
 
 #      - name: Run mypy static type checks
 #        run: |
