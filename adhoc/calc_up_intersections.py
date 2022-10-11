@@ -14,7 +14,6 @@ from functools import reduce
 from glob import glob
 from pathlib import Path
 
-import click
 import mckit as mk
 
 from tqdm import tqdm

@@ -13,6 +13,8 @@ on:
       - "**.yaml"
       - "**.yml"
       - "**.toml"
+      - "**/data/**"
+      - ".github/constraints.txt"
       - "!adhoc/**"
       - "!tools/**"
   pull_request:
@@ -30,37 +32,104 @@ on:
       - "!adhoc/**"
       - "!tools/**"
 
-#defaults:
-#  run:
-#    shell: bash
 
 concurrency:
   group: ci-tests-${{ github.ref }}-1
   cancel-in-progress: true
 
 jobs:
-  tests:
-    name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
-    runs-on: ${{ matrix.os }}
+
+  lint:
+    runs-on: ubuntu-latest
     if: |
       !contains(github.event.head_commit.message, '[skip_ci]')
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.1.0
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4.2.0
+        with:
+          python-version: '3.10'
+
+      - name: Upgrade pip
+        run: |
+          pip install --constraint=.github/constraints.txt pip
+          pip --version
+
+      - name: Install Poetry
+        run: |
+          pip install --constraint=.github/constraints.txt poetry
+          poetry --version
+
+      - name: Install Nox
+        run: |
+          pip install --constraint=.github/constraints.txt nox
+          nox --version
+
+#      - name: Run safety session
+#        run: |
+#          nox --force-color --session=safety
+
+      - name: Run pre commit checks
+        run: |
+          nox --force-color --session=pre-commit
+
+#      - name: Run mypy static type checks
+#        run: |
+#          nox --force-color --session=mypy
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.1.0
+
+      - name: Set up Python 3.9  # TODO dvp: switch to 3.10 when sphinxcontrib.napoleon allows
+        uses: actions/setup-python@v4.2.0
+        with:
+          python-version: '3.9'
+
+      - name: Upgrade pip
+        run: |
+          pip install --constraint=.github/constraints.txt pip
+          pip --version
+
+      - name: Install Poetry
+        run: |
+          pip install --constraint=.github/constraints.txt poetry
+          poetry --version
+
+      - name: Install Nox
+        run: |
+          pip install --constraint=.github/constraints.txt nox
+          nox --version
+
+      - name: Build documentation
+        run: |
+          nox --force-color --session=docs-build
+
+
+
+  tests:
+    name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
+    needs: lint
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # TODO dvp: return window-latest on resolving https://github.com/actions/virtual-environments/issues/5141
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.8', '3.9', '3.10']
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.1.0
         with:
           fetch-depth: 1
       - name: Checkout submodules
         run: |
           git submodule update --init --recursive --depth=1
-      # TODO(ci) dvp: check v2 - libnlopt not found on linux...
-      # TODO(ci) dvp: check v3 - libnlopt not found on linux and geometry not found on windows, macos - works fine
-      - uses: actions/setup-python@v4.1.0
+      - uses: actions/setup-python@v4.2.0
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -68,65 +137,61 @@ jobs:
         run: |
           pip install --constraint=.github/constraints.txt pip virtualenv
           pip --version
+      - name: Install nox
+        run: |
+          pip install --constraint=.github/constraints.txt nox
+          nox --version
       - name: Install poetry
         run: |
           pip install --constraint=.github/constraints.txt poetry
           poetry --version
-      - name: Install nox and nox-poetry
-        run: |
-          pip install --constraint=.github/constraints.txt nox nox-poetry
-          nox --version
       - name: Run nox tests
-        run: |
-          nox --python ${{ matrix.python-version }}
+        run: nox  --force-color --session tests --python ${{ matrix.python-version }}
       - name: Upload coverage data
-        uses: "actions/upload-artifact@v3"
+        uses: actions/upload-artifact@v3.1.0
         with:
           name: coverage-data
           path: ".coverage.*"
-
-#      - name: Build documentations
-#        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
-#        run:  nox -s docs-build --no-color --python ${{ matrix.python-version }}
-#
-#      - name: Upload documentation
-#        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: docs
-#          path: docs/_build
 
   coverage:
     runs-on: ubuntu-latest
     needs: tests
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.1.0
+
       - name: Set up Python 3.10
-        uses: actions/setup-python@v4.1.0
+        uses: actions/setup-python@v4.2.0
         with:
           python-version: '3.10'
+
       - name: Use frozen pip version
         run: |
           pip install --constraint=.github/constraints.txt pip
           pip --version
+
       - name: Install Poetry
         run: |
           pip install --constraint=.github/constraints.txt poetry
           poetry --version
+
       - name: Install Nox
         run: |
-          pip  install --constraint=.github/constraints.txt nox nox-poetry
+          pip install --constraint=.github/constraints.txt nox
           nox --version
+
       - name: Download coverage data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v3.0.0
         with:
           name: coverage-data
+
       - name: Combine coverage data and display human readable report
         run: |
-          nox --session=coverage
+          nox --force-color --session=coverage
+
       - name: Create coverage report
         run: |
-          nox --session=coverage -- xml
+          nox --force-color --session=coverage -- xml
+
       - name: Upload coverage report
-        uses: codecov/codecov-action@v3.1.0
+        uses: codecov/codecov-action@v3.1.1

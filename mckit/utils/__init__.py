@@ -1,10 +1,10 @@
 # flake8: noqa F401
+# nopycln: file
 from .accept import TVisitor, accept, on_unknown_acceptor
 from .io import (
     MCNP_ENCODING,
     check_if_all_paths_exist,
     check_if_path_exists,
-    get_root_dir,
     make_dir,
     make_dirs,
 )

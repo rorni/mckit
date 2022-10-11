@@ -14,6 +14,9 @@ delete_directory_recursively() {
     done
 }
 
+# TODO dvp: consider this
+# pyenv virtualenv-delete -f  mckit && pyenv virtualenv 3.10.7 mckit && rm -f mckit/*.so && rm -fr build && rm -fr dist
+# TODO dvp: coverage clean
 clean() {
     if [[ "$#" -eq "0" ]]; then
         delete_directory build dist .egg ./*.egg-info .nox

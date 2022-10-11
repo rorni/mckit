@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from mckit.utils import get_decades, significant_digits
 

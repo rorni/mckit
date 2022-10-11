@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -exu
+
+pyenv virtualenv-delete -f  mckit
+pyenv virtualenv 3.10.7 mckit
+pyenv rehash
+poetry install
+pyenv rehash
+python -c "import mckit; print(mckit.__version__)"
+
+
+# vim: set ts=4 sw=4 tw=92 ss=0 ft=sh et ai :
