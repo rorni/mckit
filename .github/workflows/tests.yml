@@ -148,7 +148,7 @@ jobs:
       - name: Run nox tests
         run: nox  --force-color --session tests --python ${{ matrix.python-version }}
       - name: Upload coverage data
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: coverage-data
           path: ".coverage.*"
