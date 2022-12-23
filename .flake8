@@ -1,6 +1,6 @@
 [flake8]
 select=ANN,B,B9,BLK,C,D,DAR,E,F,I,S,W
-max-complexity=10
+max-complexity=15
 max-line-length=88
 ignore=
     # ANN001 Missing type annotation for function argument: doesn't allow to use functools dispatching
@@ -13,6 +13,8 @@ ignore=
     ANN102
     # ANN202 Missing return type annotation for protected function: ... dispatching
     ANN202
+    # B905 `zip()` without an explicit `strict=` parameter - ignore while support 3.8, 3.9
+    B905
     # C812 Missing trailing comma: black compatibility
     C812
     # Missing docstring in __init__
