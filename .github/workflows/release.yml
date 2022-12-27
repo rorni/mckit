@@ -65,12 +65,12 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v3.2.0
         with:
           fetch-depth: 2    # need previous revision to define tag
 
       - name: Set up Python
-        uses: actions/setup-python@v4.3.0
+        uses: actions/setup-python@v4.3.1
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -92,10 +92,9 @@ jobs:
       - name: Detect and tag new version
         id: check-version
         if: steps.check-parent-commit.outputs.sha
-        uses: salsify/action-detect-and-tag-new-version@v2.0.2
+        uses: salsify/action-detect-and-tag-new-version@v2.0.3
         with:
-          version-command: |
-            poetry version --short | sed "s/-.*$//g"
+          version-command: poetry version --short
 
 #      - name: Bump version for developmental release
 #        if: "! steps.check-version.outputs.tag"

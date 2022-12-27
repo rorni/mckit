@@ -213,9 +213,15 @@ def create_bin_distributions(
 
 
 def expand_matrix_distribution(
-    intensities: np.ndarray, *var_values: list[float], start_name: int = 1
+    intensities: np.ndarray,
+    *var_values: list[float],
+    start_name: int = 1,
 ) -> Tuple[int, Tuple[list[float], ...], List[float]]:
     """Converts matrix distribution to the len(var_values) linear.
+
+    Creates:
+        - expr_valu_values -  A tuple of lists of values for each source variable.
+        - exp_intensities -   A list of expanded intensities for every hyperbin.
 
     Args:
         intensities :  A matrix of source intensities.
@@ -225,11 +231,14 @@ def expand_matrix_distribution(
     Returns:
         free_name: int,  exp_var_values : tuple, exp_intensities : list[float]
 
-    expr_valu_values -    A tuple of lists of values for each source variable.
-    exp_intensities -   A list of expanded intensities for every hyperbin.
+
+    Raises:
+        ValueError: if the distribution is neither discrete, nor pdf, nor histogram.
     """
     if len(intensities.shape) != len(var_values):
-        msg = "Length of var_values must be equal to the number of intensities dimensions."
+        msg = (
+            "Length of var_values must be equal to the number of intensities dimensions."
+        )
         raise ValueError(msg)
     uniq_values = []
     exp_var_values = []

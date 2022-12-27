@@ -28,6 +28,30 @@ files = [
 test = ["coverage", "flake8", "pexpect", "wheel"]
 
 [[package]]
+name = "astor"
+version = "0.8.1"
+description = "Read/rewrite/write Python ASTs"
+category = "dev"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
+files = [
+    {file = "astor-0.8.1-py2.py3-none-any.whl", hash = "sha256:070a54e890cefb5b3739d19f30f5a5ec840ffc9c50ffa7d23cc9fc1a38ebbfc5"},
+    {file = "astor-0.8.1.tar.gz", hash = "sha256:6a6effda93f4e1ce9f618779b2dd1d9d84f1e32812c23a29b3fff6fd7f63fa5e"},
+]
+
+[[package]]
+name = "astpretty"
+version = "3.0.0"
+description = "Pretty print the output of python stdlib `ast.parse`."
+category = "dev"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "astpretty-3.0.0-py2.py3-none-any.whl", hash = "sha256:15bfd47593667169485a1fa7938b8de9445b11057d6f2b6e214b2f70667f94b6"},
+    {file = "astpretty-3.0.0.tar.gz", hash = "sha256:b08c95f32e5994454ea99882ff3c4a0afc8254c38998a0ed4b479dba448dc581"},
+]
+
+[[package]]
 name = "atomicwrites"
 version = "1.4.1"
 description = "Atomic file writes."
@@ -184,6 +208,20 @@ files = [
 
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[[package]]
+name = "cognitive-complexity"
+version = "1.3.0"
+description = "Library to calculate Python functions cognitive complexity via code"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "cognitive_complexity-1.3.0.tar.gz", hash = "sha256:a0cfbd47dee0b19f4056f892389f501694b205c3af69fb703cc744541e03dde5"},
+]
+
+[package.dependencies]
+setuptools = "*"
 
 [[package]]
 name = "colorama"
@@ -370,6 +408,18 @@ conda = ["pyyaml"]
 pipenv = ["pipenv"]
 
 [[package]]
+name = "eradicate"
+version = "2.1.0"
+description = "Removes commented-out code."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "eradicate-2.1.0-py3-none-any.whl", hash = "sha256:8bfaca181db9227dc88bdbce4d051a9627604c2243e7d85324f6d6ce0fd08bb2"},
+    {file = "eradicate-2.1.0.tar.gz", hash = "sha256:aac7384ab25b1bf21c4c012de9b4bf8398945a14c98c911545b2ea50ab558014"},
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.1.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -433,6 +483,21 @@ pycodestyle = ">=2.9.0,<2.10.0"
 pyflakes = ">=2.5.0,<2.6.0"
 
 [[package]]
+name = "flake8-adjustable-complexity"
+version = "0.0.6"
+description = "A flake8 extension that checks cyclomatic complexity and calculates max complexity limit in runtime"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8_adjustable_complexity-0.0.6-py3-none-any.whl", hash = "sha256:6c84d22aba91b6ccea2cd9d240f76e1cc973232322e64d89f07d803fcd547042"},
+    {file = "flake8_adjustable_complexity-0.0.6.tar.gz", hash = "sha256:3a0adc2a957370cf8878fc255b111244b77ae48f9944fc67db6935388dbd1b15"},
+]
+
+[package.dependencies]
+flake8 = "*"
+
+[[package]]
 name = "flake8-annotations"
 version = "2.9.1"
 description = "Flake8 Type Annotation Checks"
@@ -447,6 +512,21 @@ files = [
 [package.dependencies]
 attrs = ">=21.4"
 flake8 = ">=3.7"
+
+[[package]]
+name = "flake8-annotations-coverage"
+version = "0.0.6"
+description = "A flake8 extension that checks for type annotations coverage"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8_annotations_coverage-0.0.6-py3-none-any.whl", hash = "sha256:9662ca85d4b40acbe683bb87fa08d9ff28e28b2aab3d2403974b09a9ee5f6a04"},
+    {file = "flake8_annotations_coverage-0.0.6.tar.gz", hash = "sha256:b94d34b35e558be23991d14f685a13a4a77a46c16586f9bbff90b40c13724ce1"},
+]
+
+[package.dependencies]
+flake8 = "*"
 
 [[package]]
 name = "flake8-bandit"
@@ -500,6 +580,37 @@ flake8 = "*"
 
 [package.extras]
 test = ["pytest"]
+
+[[package]]
+name = "flake8-class-attributes-order"
+version = "0.1.3"
+description = "A flake8 extension that checks classes attributes order"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8_class_attributes_order-0.1.3-py3-none-any.whl", hash = "sha256:6398368da4511cdda1a7c0e25934bcaac49d9df89aa2842729353b4a20f7ed13"},
+    {file = "flake8_class_attributes_order-0.1.3.tar.gz", hash = "sha256:9dde5581832d278ce247d4c47777f980cd86df2232bc0c50275144857d56e91d"},
+]
+
+[package.dependencies]
+flake8 = "*"
+typing-extensions = "*"
+
+[[package]]
+name = "flake8-cognitive-complexity"
+version = "0.1.0"
+description = "An extension for flake8 that validates cognitive functions complexity"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "flake8_cognitive_complexity-0.1.0.tar.gz", hash = "sha256:f202df054e4f6ff182b659c261922b9c684628a47beb19cb0973c50d6a7831c1"},
+]
+
+[package.dependencies]
+cognitive_complexity = "*"
+setuptools = "*"
 
 [[package]]
 name = "flake8-colors"
@@ -563,6 +674,55 @@ flake8 = ">=3"
 pydocstyle = ">=2.1"
 
 [[package]]
+name = "flake8-eradicate"
+version = "1.4.0"
+description = "Flake8 plugin to find commented out code"
+category = "dev"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "flake8-eradicate-1.4.0.tar.gz", hash = "sha256:3088cfd6717d1c9c6c3ac45ef2e5f5b6c7267f7504d5a74b781500e95cb9c7e1"},
+    {file = "flake8_eradicate-1.4.0-py3-none-any.whl", hash = "sha256:e3bbd0871be358e908053c1ab728903c114f062ba596b4d40c852fd18f473d56"},
+]
+
+[package.dependencies]
+attrs = "*"
+eradicate = ">=2.0,<3.0"
+flake8 = ">=3.5,<6"
+
+[[package]]
+name = "flake8-expression-complexity"
+version = "0.0.11"
+description = "A flake8 extension that checks expressions complexity"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8_expression_complexity-0.0.11-py3-none-any.whl", hash = "sha256:b56bac37f7dd5d3d102a7111c89f6579c2cbd897b868147794c9ed12aadc627c"},
+    {file = "flake8_expression_complexity-0.0.11.tar.gz", hash = "sha256:4dd8909fecbc20f53814cdcef9d0b04f61532764278d9b6e8026686812e96631"},
+]
+
+[package.dependencies]
+astpretty = "*"
+flake8 = "*"
+
+[[package]]
+name = "flake8-functions"
+version = "0.0.7"
+description = "A flake8 extension that checks functions"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "flake8_functions-0.0.7-py3-none-any.whl", hash = "sha256:f2f75545c2b0df9eeba0ad316e2ac38c101676970b4441300fc07af3226a44f6"},
+    {file = "flake8_functions-0.0.7.tar.gz", hash = "sha256:40584b05d57e5ab185545bcfa08aa0edca52b04646d0df266e2b1667d6437184"},
+]
+
+[package.dependencies]
+mr-proper = "*"
+setuptools = "*"
+
+[[package]]
 name = "flake8-import-order"
 version = "0.18.2"
 description = "Flake8 and pylama plugin that checks the ordering of import statements."
@@ -577,6 +737,21 @@ files = [
 [package.dependencies]
 pycodestyle = "*"
 setuptools = "*"
+
+[[package]]
+name = "flake8-pie"
+version = "0.16.0"
+description = "A flake8 extension that implements misc. lints"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-pie-0.16.0.tar.gz", hash = "sha256:b8dcb7b92706fa33d05d92a4b3e49b7a9fd3f0041849166275b646ba50e515ba"},
+    {file = "flake8_pie-0.16.0-py3-none-any.whl", hash = "sha256:24cd7849b0eee22e2328b9e9d2a1dea40013b0a3106864bbadd06a4b05dbb71f"},
+]
+
+[package.dependencies]
+typing_extensions = "*"
 
 [[package]]
 name = "flake8-print"
@@ -615,6 +790,39 @@ restructuredtext-lint = "*"
 develop = ["build", "twine"]
 
 [[package]]
+name = "flake8-scream"
+version = "0.1.0"
+description = "flake8 plugin which checks for code that can be simplified"
+category = "dev"
+optional = false
+python-versions = ">=3.6.1"
+files = [
+    {file = "flake8_scream-0.1.0-py3-none-any.whl", hash = "sha256:11e03260c64364d22ee1c8de4773bc382beb317b826a0f602c4b898f5fde0649"},
+    {file = "flake8_scream-0.1.0.tar.gz", hash = "sha256:0f1e04fdd90db44cda46b38619e99f9463f4bceefb59701b4e160782097b7580"},
+]
+
+[package.dependencies]
+astor = ">=0.1"
+flake8 = ">=3.7"
+flake8-simplify = ">=0.18.2"
+
+[[package]]
+name = "flake8-simplify"
+version = "0.19.3"
+description = "flake8 plugin which checks for code that can be simplified"
+category = "dev"
+optional = false
+python-versions = ">=3.6.1"
+files = [
+    {file = "flake8_simplify-0.19.3-py3-none-any.whl", hash = "sha256:1057320e9312d75849541fee822900d27bcad05b2405edc84713affee635629e"},
+    {file = "flake8_simplify-0.19.3.tar.gz", hash = "sha256:2fb083bf5142a98d9c9554755cf2f56f8926eb4a33eae30c0809041b1546879e"},
+]
+
+[package.dependencies]
+astor = ">=0.1"
+flake8 = ">=3.7"
+
+[[package]]
 name = "flake8-use-fstring"
 version = "1.4"
 description = "Flake8 plugin for string formatting style."
@@ -632,6 +840,21 @@ flake8 = ">=3"
 ci = ["coverage (>=4.0.0,<5.0.0)", "coveralls", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
 dev = ["coverage (>=4.0.0,<5.0.0)", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
 test = ["coverage (>=4.0.0,<5.0.0)", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
+
+[[package]]
+name = "flake8-use-pathlib"
+version = "0.3.0"
+description = "A plugin for flake8 finding use of functions that can be replaced by pathlib module."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-use-pathlib-0.3.0.tar.gz", hash = "sha256:0ef19f255a51601bcf04ff54f25ef8a466dff68210cd95b4f1db36a78ace5223"},
+    {file = "flake8_use_pathlib-0.3.0-py3-none-any.whl", hash = "sha256:c7b6d71575b575f7d70ebf3f1d7f2dd6685e401d3280208f1db9dbb6bfa32608"},
+]
+
+[package.dependencies]
+flake8 = ">=3.6"
 
 [[package]]
 name = "gitdb"
@@ -973,6 +1196,23 @@ files = [
     {file = "mkl_include-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:1f9514cec32ab1e467c7fc44674485622d9b151e91b9318e4d97249a28595671"},
     {file = "mkl_include-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:14b0958dff799378975d83fbd00ce756645aa36b9f924bdfdb0fb031f72b734d"},
 ]
+
+[[package]]
+name = "mr-proper"
+version = "0.0.7"
+description = "Static Python code analyzer, that tries to check if functions in code are pure or not and why."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mr_proper-0.0.7-py3-none-any.whl", hash = "sha256:74a1b60240c46f10ba518707ef72811a01e5c270da0a78b5dd2dd923d99fdb14"},
+    {file = "mr_proper-0.0.7.tar.gz", hash = "sha256:03b517b19e617537f711ce418b125e5f2efd82ec881539cdee83195c78c14a02"},
+]
+
+[package.dependencies]
+click = ">=7.1.2"
+setuptools = "*"
+stdlib-list = ">=0.5.0"
 
 [[package]]
 name = "mypy"
@@ -2084,6 +2324,21 @@ lint = ["docutils-stubs", "flake8", "mypy"]
 test = ["pytest"]
 
 [[package]]
+name = "stdlib-list"
+version = "0.8.0"
+description = "A list of Python Standard Libraries (2.6-7, 3.2-9)."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "stdlib-list-0.8.0.tar.gz", hash = "sha256:a1e503719720d71e2ed70ed809b385c60cd3fb555ba7ec046b96360d30b16d9f"},
+    {file = "stdlib_list-0.8.0-py3-none-any.whl", hash = "sha256:2ae0712a55b68f3fbbc9e58d6fa1b646a062188f49745b495f94d3310a9fdd3e"},
+]
+
+[package.extras]
+develop = ["sphinx"]
+
+[[package]]
 name = "stevedore"
 version = "4.1.1"
 description = "Manage dynamic plugins for Python applications"
@@ -2464,4 +2719,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.12"  # TODO dvp: increase the upper limit along with scipy updates
-content-hash = "e1ae42730fe13a0d7f89d214487d71367833ef73169dc01b5c75f88ec7e5b63a"
+content-hash = "e57b7a8a7792ee182a5623b5621c6c2051d0c85302ecd4fa8dd97702dffaa120"

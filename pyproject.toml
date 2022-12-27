@@ -76,7 +76,7 @@ nox = ">=2022.1.7"
 #yappi = ">=1.3.2"
 
 [tool.poetry.group.safety.dependencies]
-safety = ">=1.10.3"
+safety = ">=2.3.5"
 
 [tool.poetry.group.pre_commit.dependencies]
 pre-commit = ">=2.15.0"
@@ -115,26 +115,40 @@ numpy = ">=1.23.2"
 [tool.poetry.group.flake8.dependencies]
 darglint = ">=1.8.1"
 flake8 = ">=4.0.1"
+flake8-adjustable-complexity = ">=0.0.6"
 flake8-annotations = ">=2.6.2"
+flake8-annotations-coverage = ">=0.0.6"
 flake8-bandit = ">=4.1.1"
 flake8-bugbear = ">=22.3.23"
 flake8-builtins = ">=1.5.3"
+flake8-class-attributes-order = ">=0.1.3"
+flake8-cognitive-complexity = ">=0.1.0"
 flake8-colors = ">=0.1.9"
 flake8-commas = ">=2.1.0"
 flake8-comprehensions = ">=3.10.0"
 flake8-docstrings = ">=1.6.0"
+flake8-eradicate = ">=1.4.0"
+flake8-expression-complexity = ">=0.0.11"
+flake8-functions = ">=0.0.7"
 flake8-import-order = ">=0.18.1"
+flake8-pie = ">=0.16.0"
 flake8-print = ">=5.0.0"
 flake8-rst-docstrings = ">=0.2.7"
+flake8-scream = ">=0.1.0"
+flake8-simplify = ">=0.19.3"
 flake8-use-fstring = ">=1.4"
+flake8-use-pathlib = ">=0.3.0"
 tryceratops = ">=1.0.1"
 
+# TODO dvp: check/use flake8-pyprojecttoml plugin
+# https://gitlab.com/durko/flake8-pyprojecttoml/-/blob/master/pyproject.toml
+
 [tool.poetry.group.docs.dependencies]
-sphinx = ">=5.0.2"
-sphinx-autodoc-typehints = ">=1.12.0"
+sphinx = ">=5.3.0"
+sphinx-autodoc-typehints = ">=1.19.5"
 sphinx-autorun = ">=1.1.1"
-sphinx-click = ">=4.0.3"
-sphinx-rtd-theme = ">=1.0.0"
+sphinx-click = ">=4.4.0"
+sphinx-rtd-theme = ">=1.1.1"
 sphinxcontrib-napoleon = ">=0.7"
 numpydoc = ">=1.4.0"
 
@@ -162,7 +176,7 @@ sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 default_section = "FIRSTPARTY"
 use_parentheses = true
 multi_line_output = 3
-line_length = 88
+line_length = 90
 include_trailing_comma = true
 lines_between_types = 1
 skip_gitignore = true
@@ -176,7 +190,7 @@ skip_glob = ["setup*.py", "*-example.py"]
 # character.
 
 [tool.black]
-line-length = 88
+line-length = 90
 include = '''
 (
     \.pyi?$
@@ -218,10 +232,13 @@ markers = [
 ]
 # xfail tests that pass should fail the test suite
 xfail_strict = true
+filterwarnings = [
+    "ignore:.*not typechecking multipledispatch.dispatcher.*:UserWarning"
+]
 
-
-
-
+[tool.xdoctest]
+quiet = true
+options = ""
 
 # [tool.coverage]
 [tool.coverage.paths]
@@ -257,8 +274,9 @@ sort = "Cover"
 
 # MyPy config
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
+#     https://dev.to/tusharsadhwani/the-comprehensive-guide-to-mypy-561m
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 # strict = true     # TODO dvp: uncomment this to get strict control
 follow_imports = "silent"
 # namespace_packages = true
@@ -285,13 +303,34 @@ module = [
     "pytest",
     "scipy.constants",
     "pkg_resources",
+    "tomllib",
+    "tomli"
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = [
+    "tomllib",
+    "tomli"
+]
+allow_redefinition = true
+disable_error_code = "no-redef"
+
+[tool.check-manifest]
+ignore = [
+    "tests/*",
+    "tools/*",
+    "*.yaml",
+    "noxfile.py",
+]
+
+[tool.ipdb]
+# For debugging in jupyterlab and ipython
+# see https://github.com/gotcha/ipdb
+context=5
 
 [tool.tryceratops]
 include = ["mckit"]
-#ignore = ["TC002", "TC200", "TC300"]
 experimental = true
 
 [tool.pycln]
