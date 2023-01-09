@@ -98,9 +98,7 @@ def create_surface(kind, *params: Any, **options: Any) -> "Surface":
     # -------- Plane -------------------
     if kind[0] == "P":
         if len(kind) == 2:
-            return Plane(
-                axis, -params[0], assume_normalized=assume_normalized, **options
-            )
+            return Plane(axis, -params[0], assume_normalized=assume_normalized, **options)
         else:
             return Plane(
                 params[:3], -params[3], assume_normalized=assume_normalized, **options
@@ -405,9 +403,7 @@ class RCC(Surface, _RCC):
         if 1 <= number <= len(args):
             return args[number - 1]
         else:
-            raise ValueError(
-                "There is no such surface in macrobody: {0}".format(number)
-            )
+            raise ValueError("There is no such surface in macrobody: {0}".format(number))
 
     def get_params(self):
         args = self.surfaces
@@ -523,9 +519,7 @@ class BOX(Surface, _BOX):
         if 1 <= number <= len(args):
             return args[number - 1]
         else:
-            raise ValueError(
-                "There is no such surface in macrobody: {0}".format(number)
-            )
+            raise ValueError("There is no such surface in macrobody: {0}".format(number))
 
     def __hash__(self):
         return self._hash
@@ -780,7 +774,9 @@ class Sphere(Surface, _Sphere):
         if self is other:
             return True
         if not isinstance(other, Sphere):
-            return False  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
+            return (
+                False  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
+            )
         return are_equal(
             (self._radius, self._center, self.transformation),
             (other._radius, other._center, other.transformation),
@@ -885,9 +881,7 @@ class Cylinder(Surface, _Cylinder):
         pt = pt - axis * np.dot(pt, axis)
         Surface.__init__(self, **options)
         _Cylinder.__init__(self, pt, axis, radius)
-        self._hash = compute_hash(
-            self._radius, self._pt, self._axis, self.transformation
-        )
+        self._hash = compute_hash(self._radius, self._pt, self._axis, self.transformation)
 
     def __getstate__(self):
         return self._pt, self._axis, self._radius, Surface.__getstate__(self)
@@ -906,7 +900,9 @@ class Cylinder(Surface, _Cylinder):
         )
 
     def __repr__(self):
-        return f"Cylinder({self._pt}, {self._axis}, {self.options if self.options else ''})"
+        return (
+            f"Cylinder({self._pt}, {self._axis}, {self.options if self.options else ''})"
+        )
 
     def __hash__(self):
         return self._hash
@@ -1450,9 +1446,7 @@ class Torus(Surface, _Torus):
         elif estimator(self._axis, EZ):
             words.append("TZ")
         else:
-            raise NotImplementedError(
-                "The axis of a torus should be along EX, EY or EZ"
-            )
+            raise NotImplementedError("The axis of a torus should be along EX, EY or EZ")
         x, y, z = self._center
         for v in [x, y, z, self._R, self._a, self._b]:
             add_float(words, v, pretty)

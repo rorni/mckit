@@ -40,9 +40,7 @@ def check_directories(*directories: str) -> None:
             raise EnvironmentError(f"The directory {directory} does not exist")
 
 
-def insert_directories(
-    destination: List[str], value: Union[str, List[str]]
-) -> List[str]:
+def insert_directories(destination: List[str], value: Union[str, List[str]]) -> List[str]:
     dirs = value
     if not isinstance(value, list):
         dirs = [dirs]

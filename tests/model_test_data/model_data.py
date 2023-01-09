@@ -1,9 +1,7 @@
 case_names = ["model1"]
 
 
-get_universe_dependencies_ans = {
-    "model1": {0: {2, 3}, 1: set(), 2: {1}, 3: {4}, 4: {1}}
-}
+get_universe_dependencies_ans = {"model1": {0: {2, 3}, 1: set(), 2: {1}, 3: {4}, 4: {1}}}
 
 get_contained_cells_ans = {
     "model1": {

@@ -49,9 +49,7 @@ def test_when_no_c_comments_in_text():
     1001.21c -1.0
     """
     actual = m.drop_c_comments(text)
-    assert (
-        actual is text
-    ), "drop_c_comments should return the text object without changes"
+    assert actual is text, "drop_c_comments should return the text object without changes"
 
 
 RE_FLOAT = re.compile(m.FLOAT)

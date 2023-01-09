@@ -33,9 +33,7 @@ def load_universe(universe_name: int) -> mk.Universe:
     return universe
 
 
-def process_universe(
-    universe_name: int, min_volume=1e-3, out=sys.stdout
-) -> tp.NoReturn:
+def process_universe(universe_name: int, min_volume=1e-3, out=sys.stdout) -> tp.NoReturn:
     universe = load_universe(universe_name)
     cell: mk.Body = universe[0]
     volume0 = cell.shape.volume(min_volume=min_volume)

@@ -11,9 +11,7 @@ Item = TypeVar("Item")
 class Index(Dict[Key, Item]):
     """Like collections.defaultdict but the factory takes key as argument."""
 
-    def __init__(
-        self, default_factory: Callable[[Key], Optional[Item]] = None, **kwargs
-    ):
+    def __init__(self, default_factory: Callable[[Key], Optional[Item]] = None, **kwargs):
         super().__init__(self, **kwargs)
         self._default_factory = default_factory
 
@@ -63,7 +61,9 @@ class NumberedItemDuplicateError(ValueError):
         self._curr = curr
 
     def __str__(self):
-        return f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"
+        return (
+            f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"
+        )
 
 
 def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> NoReturn:

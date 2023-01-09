@@ -57,9 +57,7 @@ def test_when_fill_descriptor_is_not_specified(runner, source, output, expected)
         assert (
             result.exit_code == 0
         ), "Should success using fill_descriptor in the same directory as source file"
-        assert Path(
-            output
-        ).exists(), f"Should create file {output} file in {test_folder}"
+        assert Path(output).exists(), f"Should create file {output} file in {test_folder}"
         actual = from_file(output)
         expected = from_file(data_filename_resolver(expected))
         assert actual.universe.has_equivalent_cells(expected.universe), "Cells differ"
@@ -84,9 +82,7 @@ def test_anonymous_transforms(runner, source, output, expected):
         assert (
             result.exit_code == 0
         ), "Should success using fill_descriptor in the same directory as source file"
-        assert Path(
-            output
-        ).exists(), f"Should create file {output} file in {test_folder}"
+        assert Path(output).exists(), f"Should create file {output} file in {test_folder}"
         actual = from_file(output)
         expected = from_file(data_filename_resolver(expected))
         assert actual.universe.has_equivalent_cells(expected.universe), "Cells differ"
@@ -113,9 +109,7 @@ def test_compose(runner, universes):
         assert (
             result.exit_code == 0
         ), "Should success using fill_descriptor in the same directory as source file"
-        assert Path(
-            output
-        ).exists(), f"Should create file {output} file in {test_folder}"
+        assert Path(output).exists(), f"Should create file {output} file in {test_folder}"
         actual = from_file(output)
         expected = from_file(data_filename_resolver(expected))
         assert actual.universe.has_equivalent_cells(expected.universe), "Cells differ"
