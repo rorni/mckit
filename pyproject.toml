@@ -46,7 +46,7 @@ mckit = "mckit.cli.runner:mckit"
 
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"  # TODO dvp: increase the upper limit along with scipy updates
+python = ">=3.8,<4.0"  # TODO dvp: increase the upper limit along with scipy updates
 DateTime = ">=4.3"
 atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"
