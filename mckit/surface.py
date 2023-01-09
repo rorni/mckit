@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Surface methods."""
 from typing import Any, Callable, Dict, List, Optional, Sequence, Text, Tuple, Union
 
 from abc import abstractmethod
@@ -62,24 +62,22 @@ VectorLike = Union[np.ndarray, List[float]]
 
 
 # noinspection PyPep8Naming
-def create_surface(kind, *params: Any, **options: Any) -> "Surface":
+def create_surface(kind: str, *params: float, **options: Any) -> "Surface":
     """Creates new surface.
 
-    Parameters
-    ----------
-    kind : str
-        Surface kind designator. See MCNP manual.
-    params : list[float]
-        List of surface parameters.
-    options : dict
-        Dictionary of surface's options. Possible values:
-            transform = tr - transformation to be applied to the surface being
-                             created. Transformation instance.
-
-    Returns
-    -------
-    surf : Surface
+    Args:
+        kind: Surface kind designator. See MCNP manual.
+        params: List of surface parameters.
+        options: Dictionary of surface's options.
+                In particular:
+                    transform = tr - transformation instance to be applied to the surface being
+                                 created.
+    Returns:
         New surface.
+
+    Raises:
+        NotImplementedError: when some logic is not implemented yet
+        ValueError: on incompatible `params`
     """
     params = np.asarray(params, dtype=float)
     kind = kind.upper()
