@@ -16,13 +16,11 @@ from textwrap import dedent
 
 import nox
 
-from nox import Session, session  # mypy: ignore
+from nox import Session, session
 
 nox.options.sessions = (
     "safety",
     "pre-commit",
-    # "lint",
-    # "mypy",
     "tests",
     "docs-build",
 )
@@ -66,7 +64,7 @@ lint_pythons: Final = "3.11"
 mypy_pythons: Final = "3.11"
 
 
-def _update_hook(hook, virtualenv, s: Session) -> None:
+def _update_hook(hook: Path, virtualenv: str, s: Session) -> None:
     text = hook.read_text()
     bin_dir = repr(s.bin)[1:-1]  # strip quotes
     if Path("A") == Path("a") and bin_dir.lower() in text.lower() or bin_dir in text:
@@ -281,6 +279,8 @@ def mypy(s: Session) -> None:
         external=True,
     )
     s.run("mypy", *args)
+
+    # special case for noxfile.py: need to find `nox` itself in session
     if not s.posargs:
         s.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
 

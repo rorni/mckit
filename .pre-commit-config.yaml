@@ -77,7 +77,6 @@ repos:
         language: system
         types: [python]
      # TODO dvp: enable linting on precommit when flake8 become happy
-     # Flake8 - linter, requires high code quality
 #    -   id: flake8
 #        name: flake8
 #        entry: poetry run flake8 noxfile.py src
