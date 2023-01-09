@@ -1,4 +1,4 @@
-"""Generic utitility methods."""
+"""Generic utility methods."""
 from __future__ import annotations
 
 from typing import Any, Dict, Tuple, cast
@@ -53,9 +53,6 @@ def significant_digits(
         return high
 
 
-# LG2 = math.log10(2.0)
-
-
 def get_decades(value: int | float) -> int:
     """Compute number of digits needed to represent integer part of 'value' in fixed format.
 
@@ -65,17 +62,6 @@ def get_decades(value: int | float) -> int:
     Returns:
         Number of decades.
     """
-    # TODO dvp: check if math.frexp is applicable,
-    #           this mostly works but some test for pretty_print fail.
-    # if value == 0.0:
-    #     return 0
-    # mantissa, exponent = math.frexp(value)  # type: float, int
-    # if -0.5 <= mantissa <= 0.5:
-    #     decades: int = math.floor(LG2 * (exponent - 1))
-    # else:
-    #     decades: int = math.floor(LG2 * exponent)
-    # return decades
-
     if value != 0:
         decimal_power = np.log10(abs(value))
     else:
@@ -149,10 +135,7 @@ def _(a: ndarray, b: ndarray) -> bool:
 def _(a: collections.abc.Iterable, b) -> bool:
     if not issubclass(type(b), collections.abc.Iterable):
         return False
-    for ai, bi in itertools.zip_longest(a, b):
-        if not are_equal(ai, bi):
-            return False
-    return True
+    return all(are_equal(ai, bi) for ai, bi in itertools.zip_longest(a, b))
 
 
 @functools.singledispatch
@@ -170,10 +153,7 @@ def _(where: str, x) -> bool:
 
 @is_in.register
 def _(where: tuple, x) -> bool:
-    for i in where:
-        if is_in(i, x):
-            return True
-    return False
+    return any(is_in(i, x) for i in where)
 
 
 @is_in.register
