@@ -61,7 +61,12 @@ sly = ">=0.4"
 tomli = {version = ">=2.0.1", python="<3.11"}
 tomli-w = ">=1.0.0"
 tqdm = ">=4.55.1"
-mkl-devel = "^2023.0.0"
+# mkl again has different versions for different platforms
+mkl-devel = [
+    {version=">=2023.0.0", markers="sys_platform == 'linux'"},
+    {version=">=2023.0.0", markers="sys_platform == 'darvin'"},
+    {version="=2022.2.1", markers="sys_platform == 'win32'"},
+]
 
 
 [tool.poetry.group.dev.dependencies]
@@ -149,7 +154,7 @@ sphinx-autodoc-typehints = ">=1.19.5"
 sphinx-autorun = ">=1.1.1"
 sphinx-click = ">=4.4.0"
 sphinx-rtd-theme = ">=1.1.1"
-sphinxcontrib-napoleon = ">=0.7"
+#sphinxcontrib-napoleon = ">=0.7"
 numpydoc = ">=1.4.0"
 
 [tool.poetry.group.docs_auto.dependencies]

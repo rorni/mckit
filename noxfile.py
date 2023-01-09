@@ -308,7 +308,7 @@ def docs_build(s: Session) -> None:
         "poetry",
         "install",
         "--only",
-        "docs",
+        "main,docs",
         external=True,
     )
     build_dir = Path("docs", "_build")

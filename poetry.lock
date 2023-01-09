@@ -959,6 +959,21 @@ files = [
 
 [[package]]
 name = "intel-openmp"
+version = "2022.2.1"
+description = "Intel® OpenMP* Runtime Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "intel_openmp-2022.2.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:6ae4a878135ec08aa16dd97b6d72ac16bb92fad4c6ba40f28b3558d70b1f447a"},
+    {file = "intel_openmp-2022.2.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:c8b95fc493e2945b259153f7b0dd34a3d849e8e1e43b6c14ac04f613b3b45433"},
+    {file = "intel_openmp-2022.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:342c9e2b6e1500a9fb8d39828293ab5f9bb310b81fad7eba5c9d865001b95a7e"},
+    {file = "intel_openmp-2022.2.1-py2.py3-none-win32.whl", hash = "sha256:22e09934d9f8f8b864ae68cab95bf43667f00d24e4675eb6d2a4ee089754c439"},
+    {file = "intel_openmp-2022.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:77414289c14cb48d7f99926da69c9ced9e70c27feb825b0608f304f9d49844ae"},
+]
+
+[[package]]
+name = "intel-openmp"
 version = "2023.0.0"
 description = "Intel® OpenMP* Runtime Library"
 category = "main"
@@ -1152,6 +1167,25 @@ files = [
 
 [[package]]
 name = "mkl"
+version = "2022.2.1"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl-2022.2.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:d49ca0b0f435bc7b7a28a5c51e8e214e08eea719e4564b0b0f90b3b35727e56a"},
+    {file = "mkl-2022.2.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:25310f6901e7295276a93d6c4d4406a221e6aa2f75846110cbac9f5d854015f5"},
+    {file = "mkl-2022.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:0cf6cbb639bc4ecf3b77e5337d4ceb2e24ef025043f764e2abcc32f6797a7138"},
+    {file = "mkl-2022.2.1-py2.py3-none-win32.whl", hash = "sha256:98ca4b8de23d361d7a5c314d23ec9490d5377bec68421c57d564d99adc60bab8"},
+    {file = "mkl-2022.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:67f6ed435c2fd6b526d0d360259fa2be9453365ecde75f589db61c3624ef1cd8"},
+]
+
+[package.dependencies]
+intel-openmp = ">=2022.0.0,<2023.0.0"
+tbb = ">=2021.0.0,<2022.0.0"
+
+[[package]]
+name = "mkl"
 version = "2023.0.0"
 description = "Intel® oneAPI Math Kernel Library"
 category = "main"
@@ -1169,6 +1203,25 @@ tbb = ">=2021.0.0,<2022.0.0"
 
 [[package]]
 name = "mkl-devel"
+version = "2022.2.1"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl_devel-2022.2.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:2824ce9f34309f32adf27cd69390af3b28c94df72513aea6a7f794f2345d07ec"},
+    {file = "mkl_devel-2022.2.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:3803c381a116fa82ab05898c53109d51f8f4627077500ae1113e1cf18335b757"},
+    {file = "mkl_devel-2022.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:187b1a087369fb4ebfb28aaf2ed7abb27ad703fe9c9feb339d758406b7febc9c"},
+    {file = "mkl_devel-2022.2.1-py2.py3-none-win32.whl", hash = "sha256:755663fec8661b7009b77ec021e8b0082d1ce53f793282747a77b699adde43a7"},
+    {file = "mkl_devel-2022.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:7a000cf0d680cc6acd3c513949d2e8c50aa34cf2b618e7235f98ec1b2b9b3b09"},
+]
+
+[package.dependencies]
+mkl = "2022.2.1"
+mkl-include = "2022.2.1"
+
+[[package]]
+name = "mkl-devel"
 version = "2023.0.0"
 description = "Intel® oneAPI Math Kernel Library"
 category = "main"
@@ -1183,6 +1236,21 @@ files = [
 [package.dependencies]
 mkl = "2023.0.0"
 mkl-include = "2023.0.0"
+
+[[package]]
+name = "mkl-include"
+version = "2022.2.1"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl_include-2022.2.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:623c904257b6aa3df6dbefab5e672ad4c38151a071d3a0b329f194b295f5f96a"},
+    {file = "mkl_include-2022.2.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:b5cf93f476449dceff4c99478382a0cb3ee17c1a997c8d8268749a82a1eb4bea"},
+    {file = "mkl_include-2022.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:1af7c95646c58ce269e252cd52a2e36118d1c0df4a58fd3229297fbf11b653d1"},
+    {file = "mkl_include-2022.2.1-py2.py3-none-win32.whl", hash = "sha256:cc968ccb3d22f437871c1f67ec53f9646e451f7c4134633851bc4a28a6c22948"},
+    {file = "mkl_include-2022.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:460874c6e4b7ce5e569fe0ec846ec4de282fc1a9556215201d57ee10c7cfbdd6"},
+]
 
 [[package]]
 name = "mkl-include"
@@ -2739,4 +2807,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"  # TODO dvp: increase the upper limit along with scipy updates
-content-hash = "b84ffb79c5cd06aa353a122640fed477e075a24ce1ea5192eb75952bb315e535"
+content-hash = "112d07c8b4989191d974fc10a2f656f3bdc8e00e57f8a576cb70ce63458bf491"

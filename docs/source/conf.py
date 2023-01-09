@@ -43,7 +43,7 @@ extensions = [
     "numpydoc",
     "sphinxcontrib.htmlhelp",
     # "sphinxcontrib.jsmath",  # TODO dvp: check these modules docs
-    "sphinxcontrib.napoleon",
+    # "sphinxcontrib.napoleon",
     "sphinxcontrib.qthelp",
     # "sphinx_autodoc_typehints",
     # "sphinx_autorun",
