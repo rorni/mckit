@@ -973,19 +973,6 @@ files = [
 ]
 
 [[package]]
-name = "intel-openmp"
-version = "2023.0.0"
-description = "Intel® OpenMP* Runtime Library"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "intel_openmp-2023.0.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:77131c2cda75ace2060f6e9cdcc9f9c672ec838c4602fc544ce0858cfe8f416e"},
-    {file = "intel_openmp-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:adfb32b0dde6b3a95ced62608b05a45a7cfad928054136ddbfe0563e16cbf33c"},
-    {file = "intel_openmp-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:1ebce47df0b5ddad77992a70689fd3185df25f47cf901dd8384fd6d05a974f81"},
-]
-
-[[package]]
 name = "isort"
 version = "5.11.4"
 description = "A Python utility / library to sort Python imports."
@@ -1186,23 +1173,6 @@ intel-openmp = ">=2022.0.0,<2023.0.0"
 tbb = ">=2021.0.0,<2022.0.0"
 
 [[package]]
-name = "mkl"
-version = "2023.0.0"
-description = "Intel® oneAPI Math Kernel Library"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "mkl-2023.0.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:e75ce244cd8ba36c497404fa166896f9042531a2f838ae83c75591c9af15589e"},
-    {file = "mkl-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:7c5c1f3aa4d129e0ae004e1f35d4e6bbdd0720715e5139b218b559c8901c7d97"},
-    {file = "mkl-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:9c9309dc7a394d935b50996772b35b95b4056c668e0deca5939de55b6e9995b4"},
-]
-
-[package.dependencies]
-intel-openmp = ">=2023.0.0,<2024.0.0"
-tbb = ">=2021.0.0,<2022.0.0"
-
-[[package]]
 name = "mkl-devel"
 version = "2022.2.1"
 description = "Intel® oneAPI Math Kernel Library"
@@ -1222,23 +1192,6 @@ mkl = "2022.2.1"
 mkl-include = "2022.2.1"
 
 [[package]]
-name = "mkl-devel"
-version = "2023.0.0"
-description = "Intel® oneAPI Math Kernel Library"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "mkl_devel-2023.0.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:365c1b05cb1acd741c4b09242664dc57e954b8b177c3ccf53347d550ed457b13"},
-    {file = "mkl_devel-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:4595efb5215f62abcb37f2e6476687024499b7992c7e8e3453b391ef2b6b11c7"},
-    {file = "mkl_devel-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:1f2fd9941e8d4f010fa7f3f237ea0da513429348d9cce2a32f424dcb53ffeef7"},
-]
-
-[package.dependencies]
-mkl = "2023.0.0"
-mkl-include = "2023.0.0"
-
-[[package]]
 name = "mkl-include"
 version = "2022.2.1"
 description = "Intel® oneAPI Math Kernel Library"
@@ -1251,19 +1204,6 @@ files = [
     {file = "mkl_include-2022.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:1af7c95646c58ce269e252cd52a2e36118d1c0df4a58fd3229297fbf11b653d1"},
     {file = "mkl_include-2022.2.1-py2.py3-none-win32.whl", hash = "sha256:cc968ccb3d22f437871c1f67ec53f9646e451f7c4134633851bc4a28a6c22948"},
     {file = "mkl_include-2022.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:460874c6e4b7ce5e569fe0ec846ec4de282fc1a9556215201d57ee10c7cfbdd6"},
-]
-
-[[package]]
-name = "mkl-include"
-version = "2023.0.0"
-description = "Intel® oneAPI Math Kernel Library"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "mkl_include-2023.0.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:b5645757a5fe4e8add2c9f2946556d03169ac9e6a2e3db2a92acbec837bfde0d"},
-    {file = "mkl_include-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:1f9514cec32ab1e467c7fc44674485622d9b151e91b9318e4d97249a28595671"},
-    {file = "mkl_include-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:14b0958dff799378975d83fbd00ce756645aa36b9f924bdfdb0fb031f72b734d"},
 ]
 
 [[package]]
@@ -2411,21 +2351,6 @@ pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 
 [[package]]
 name = "tbb"
-version = "2021.7.1"
-description = "Intel® oneAPI Threading Building Blocks"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "tbb-2021.7.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:38db98913b5d8279321d6a5f53bd2d518344b1ba31bbca534aa2aa3dd5d9257e"},
-    {file = "tbb-2021.7.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:a5f6f5e22d7546e9b5013062c1922374a691a8c462d963de0070a9a6983cfbe7"},
-    {file = "tbb-2021.7.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:7bc07cd9198ab4041bf3f898ba8fc899395d267f1e2d82a44cd3f7b8ff6e79d5"},
-    {file = "tbb-2021.7.1-py3-none-win32.whl", hash = "sha256:19d0c6ef9fe0d788bf1b38ef6cae4ecc9a716f2537c2a1e86855383dcf451cd1"},
-    {file = "tbb-2021.7.1-py3-none-win_amd64.whl", hash = "sha256:ff30051e957461c1bdfb168e3ee6312d21fc9c7843eed397f3e5ea24f9d67426"},
-]
-
-[[package]]
-name = "tbb"
 version = "2021.8.0"
 description = "Intel® oneAPI Threading Building Blocks (oneTBB)"
 category = "main"
@@ -2792,5 +2717,5 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.8,<4.0"  # TODO dvp: increase the upper limit along with scipy updates
-content-hash = "3d4cc77c6bc35cc8f56b1519755ff4079e020113967397e92718d1404410817c"
+python-versions = ">=3.8,<4.0"
+content-hash = "67c08bbae54850bbb0e4f5876fe219884b710c3913db36a42dade930f2bc579b"

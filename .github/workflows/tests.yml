@@ -67,6 +67,14 @@ jobs:
           pip install --constraint=.github/constraints.txt nox
           nox --version
 
+      - name: Load cached poetry artifacts
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
       - name: Run safety session
         run: |
           nox --force-color --session=safety
@@ -103,11 +111,16 @@ jobs:
           pip install --constraint=.github/constraints.txt poetry
           poetry --version
           poetry env info
-      - name: Build mckit
-        run: |
-          poetry config --local virtualenvs.create false
-          poetry install --only main
-          poetry build
+      - name: Load cached poetry artifacts
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+#      - name: Build mckit
+#        run: |
+#          poetry build
       - name: Install Nox
         run: |
           pip install --constraint=.github/constraints.txt nox
@@ -141,6 +154,13 @@ jobs:
         run: |
           pip install --constraint=.github/constraints.txt pip virtualenv
           pip --version
+      - name: Load cached poetry artifacts
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install Poetry
         run: |
           pip install --constraint=.github/constraints.txt poetry
@@ -194,6 +214,14 @@ jobs:
         uses: actions/download-artifact@v3.0.1
         with:
           name: coverage-data
+
+      - name: Load cached poetry artifacts
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Combine coverage data and display human readable report
         run: |
