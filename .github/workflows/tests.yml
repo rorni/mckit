@@ -45,7 +45,7 @@ jobs:
       !contains(github.event.head_commit.message, '[skip_ci]')
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4.4.0
@@ -84,7 +84,7 @@ jobs:
     needs: lint
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
       - name: Set up Python 3.11
         uses: actions/setup-python@v4.4.0
         with:
@@ -120,7 +120,7 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11']
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
         with:
           fetch-depth: 1
       - name: Checkout submodules
@@ -163,7 +163,7 @@ jobs:
     needs: tests
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4.4.0
