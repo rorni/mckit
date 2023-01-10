@@ -38,9 +38,10 @@ classifiers = [
 [build-system]
 requires = [
     "poetry-core>=1.1.0",
-    "setuptools>=65.4.1",
+    "setuptools>=65.6.3",
     "cmake>=3.23.1",
     "mkl-devel == 2022.2.1",  # TODO(dvp): check for MKL updates with the wheels for all the OS
+    "tbb == 2021.7.1",  # ...
     "numpy>=1.23.2",
     "wheel>=0.37.1",
 ]
@@ -73,27 +74,28 @@ tomli = {version = ">=2.0.1", python="<3.11"}
 tomli-w = ">=1.0.0"
 tqdm = ">=4.55.1"
 # mkl again has different versions for different platforms
-mkl-devel = "2022.2.1"
+#mkl-devel = "2022.2.1"
+#tbb = "2021.7.1"
 #[
 #    {version=">=2023.0.0", markers="sys_platform == 'linux'"},
 #    {version=">=2023.0.0", markers="sys_platform == 'darvin'"},
 #    {version="=2022.2.1", markers="sys_platform == 'win32'"},
 #]
-#mkl-devel = [
-#    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
-#    {version = "2023.0.0", markers = "sys_platform == 'linux'"},
-#    {version = "2022.2.1", markers = "sys_platform == 'win32'"}
-#]
-#intel-openmp = [
-#    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
-#    {version = "2023.0.0", markers = "sys_platform == 'linux'"},
-#    {version = "2022.2.1", markers = "sys_platform == 'win32'"}
-#]
-#tbb = [
-#    {version = "2021.8.0", markers = "sys_platform == 'darvin'"},
-#    {version = "2021.8.0", markers = "sys_platform == 'linux'"},
-#    {version = "2021.7.1", markers = "sys_platform == 'win32'"}
-#]
+mkl-devel = [
+    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
+    {version = "2023.0.0", markers = "sys_platform == 'linux'"},
+    {version = "2022.2.1", markers = "sys_platform == 'win32'"}
+]
+intel-openmp = [
+    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
+    {version = "2023.0.0", markers = "sys_platform == 'linux'"},
+    {version = "2022.2.1", markers = "sys_platform == 'win32'"}
+]
+tbb = [
+    {version = "2021.8.0", markers = "sys_platform == 'darvin'"},
+    {version = "2021.8.0", markers = "sys_platform == 'linux'"},
+    {version = "2021.7.1", markers = "sys_platform == 'win32'"}
+]
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
