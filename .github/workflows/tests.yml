@@ -46,31 +46,28 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3.2.0
-
+      - name: Checkout submodules
+        run: |
+          git submodule update --init --recursive --depth=1
       - name: Set up Python 3.11
         uses: actions/setup-python@v4.4.0
         with:
           python-version: '3.11'
-
       - name: Upgrade pip
         run: |
           pip install --constraint=.github/constraints.txt pip
           pip --version
-
       - name: Install Poetry
         run: |
           pip install --constraint=.github/constraints.txt poetry
           poetry --version
-
       - name: Install Nox
         run: |
           pip install --constraint=.github/constraints.txt nox
           nox --version
-
       - name: Run safety session
         run: |
           nox --force-color --session=safety
-
       - name: Run pre commit checks
         run: |
           nox --force-color --session=pre-commit
@@ -100,6 +97,7 @@ jobs:
           poetry env info
       - name: Build mckit
         run: |
+          poetry install --only main
           poetry build
       - name: Install Nox
         run: |
