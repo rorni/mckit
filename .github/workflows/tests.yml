@@ -52,6 +52,13 @@ jobs:
         with:
           python-version: '3.11'
 
+#      - name: Load pip cache
+#        uses: actions/cache@v3.2.3
+#        with:
+#          path: ~/.cache/pip
+#          key: ${{ runner.os }}-pip
+#          restore-keys: ${{ runner.os }}-pip
+
       - name: Upgrade pip
         run: |
           pip install --constraint=.github/constraints.txt pip
@@ -67,9 +74,9 @@ jobs:
           pip install --constraint=.github/constraints.txt nox
           nox --version
 
-      - name: Load cached poetry artifacts
+      - name: Load poetry cache
         id: cached-poetry-dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3.2.3
         with:
           path: |
             ~/.cache/pypoetry
@@ -102,6 +109,14 @@ jobs:
         uses: actions/setup-python@v4.4.0
         with:
           python-version: '3.11'
+#      #----------------------------------------------
+#      #        load pip cache if cache exists
+#      #----------------------------------------------
+#      - uses: actions/cache@v3.2.3
+#        with:
+#          path: ~/.cache/pip
+#          key: ${{ runner.os }}-pip
+#          restore-keys: ${{ runner.os }}-pip
       - name: Upgrade pip
         run: |
           pip install --constraint=.github/constraints.txt pip
@@ -113,7 +128,7 @@ jobs:
           poetry env info
       - name: Load cached poetry artifacts
         id: cached-poetry-dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3.2.3
         with:
           path: |
             ~/.cache/pypoetry
@@ -156,7 +171,7 @@ jobs:
           pip --version
       - name: Load cached poetry artifacts
         id: cached-poetry-dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3.2.3
         with:
           path: |
             ~/.cache/pypoetry
@@ -217,7 +232,7 @@ jobs:
 
       - name: Load cached poetry artifacts
         id: cached-poetry-dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3.2.3
         with:
           path: |
             ~/.cache/pypoetry
