@@ -1077,6 +1077,7 @@ category = "dev"
 optional = false
 python-versions = "*"
 files = [
+    {file = "livereload-2.6.3-py2.py3-none-any.whl", hash = "sha256:ad4ac6f53b2d62bb6ce1a5e6e96f1f00976a32348afedcb4b6d68df2a1d346e4"},
     {file = "livereload-2.6.3.tar.gz", hash = "sha256:776f2f865e59fde56490a56bcc6773b6917366bce0c267c60ee8aaf1a0959869"},
 ]
 
@@ -1988,6 +1989,7 @@ files = [
     {file = "ruamel.yaml.clib-0.2.7-cp310-cp310-win_amd64.whl", hash = "sha256:d000f258cf42fec2b1bbf2863c61d7b8918d31ffee905da62dede869254d3b8a"},
     {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:045e0626baf1c52e5527bd5db361bc83180faaba2ff586e763d3d5982a876a9e"},
     {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-macosx_12_6_arm64.whl", hash = "sha256:721bc4ba4525f53f6a611ec0967bdcee61b31df5a56801281027a3a6d1c2daf5"},
+    {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl", hash = "sha256:41d0f1fa4c6830176eef5b276af04c89320ea616655d01327d5ce65e50575c94"},
     {file = "ruamel.yaml.clib-0.2.7-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:4b3a93bb9bc662fc1f99c5c3ea8e623d8b23ad22f861eb6fce9377ac07ad6072"},
     {file = "ruamel.yaml.clib-0.2.7-cp36-cp36m-macosx_12_0_arm64.whl", hash = "sha256:a234a20ae07e8469da311e182e70ef6b199d0fbeb6c6cc2901204dd87fb867e8"},
     {file = "ruamel.yaml.clib-0.2.7-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:15910ef4f3e537eea7fe45f8a5d19997479940d9196f357152a09031c5be59f3"},
@@ -2409,6 +2411,21 @@ pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 
 [[package]]
 name = "tbb"
+version = "2021.7.1"
+description = "Intel® oneAPI Threading Building Blocks"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "tbb-2021.7.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:38db98913b5d8279321d6a5f53bd2d518344b1ba31bbca534aa2aa3dd5d9257e"},
+    {file = "tbb-2021.7.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:a5f6f5e22d7546e9b5013062c1922374a691a8c462d963de0070a9a6983cfbe7"},
+    {file = "tbb-2021.7.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:7bc07cd9198ab4041bf3f898ba8fc899395d267f1e2d82a44cd3f7b8ff6e79d5"},
+    {file = "tbb-2021.7.1-py3-none-win32.whl", hash = "sha256:19d0c6ef9fe0d788bf1b38ef6cae4ecc9a716f2537c2a1e86855383dcf451cd1"},
+    {file = "tbb-2021.7.1-py3-none-win_amd64.whl", hash = "sha256:ff30051e957461c1bdfb168e3ee6312d21fc9c7843eed397f3e5ea24f9d67426"},
+]
+
+[[package]]
+name = "tbb"
 version = "2021.8.0"
 description = "Intel® oneAPI Threading Building Blocks (oneTBB)"
 category = "main"
@@ -2776,4 +2793,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"  # TODO dvp: increase the upper limit along with scipy updates
-content-hash = "8b4fef69d80cd888633d2fa93d687f0111c3f94dc5aef1d31b4aa48cdf9d546a"
+content-hash = "3d4cc77c6bc35cc8f56b1519755ff4079e020113967397e92718d1404410817c"
