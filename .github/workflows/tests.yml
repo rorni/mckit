@@ -149,8 +149,8 @@ jobs:
       - name: Build mckit
         run: |
           poetry config --local virtualenvs.create false
-          poetry install --only main
-          poetry build
+          poetry install --ansi --only main
+          poetry build --ansi
       - name: Install nox
         run: |
           pip install --constraint=.github/constraints.txt nox

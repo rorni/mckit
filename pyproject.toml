@@ -40,7 +40,7 @@ requires = [
     "poetry-core>=1.1.0",
     "setuptools>=65.4.1",
     "cmake>=3.23.1",
-    "mkl-devel = 2022.2.1",  # TODO(dvp): check for MKL updates with the wheels for all the OS
+    "mkl-devel == 2022.2.1",  # TODO(dvp): check for MKL updates with the wheels for all the OS
     "numpy>=1.23.2",
     "wheel>=0.37.1",
 ]
