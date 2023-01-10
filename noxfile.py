@@ -150,6 +150,7 @@ def tests(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "-v",
         "--only",
         "main,test,xdoctest,coverage",
         external=True,
@@ -307,6 +308,7 @@ def docs_build(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "-v",
         "--only",
         "main,docs",
         external=True,

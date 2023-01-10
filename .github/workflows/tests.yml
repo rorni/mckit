@@ -90,22 +90,22 @@ jobs:
         uses: actions/setup-python@v4.4.0
         with:
           python-version: '3.11'
-
       - name: Upgrade pip
         run: |
           pip install --constraint=.github/constraints.txt pip
           pip --version
-
       - name: Install Poetry
         run: |
           pip install --constraint=.github/constraints.txt poetry
           poetry --version
-
+          poetry env info
+      - name: Build mckit
+        run: |
+          poetry build
       - name: Install Nox
         run: |
           pip install --constraint=.github/constraints.txt nox
           nox --version
-
       - name: Build documentation
         run: |
           nox --force-color --session=docs-build
@@ -137,6 +137,10 @@ jobs:
         run: |
           pip install --constraint=.github/constraints.txt pip virtualenv
           pip --version
+          poetry env info
+      - name: Build mckit
+        run: |
+          poetry build
       - name: Install nox
         run: |
           pip install --constraint=.github/constraints.txt nox
