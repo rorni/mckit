@@ -105,7 +105,8 @@ jobs:
           poetry env info
       - name: Build mckit
         run: |
-          poetry install
+          poetry config --local virtualenvs.create false
+          poetry install --only main
           poetry build
       - name: Install Nox
         run: |
@@ -147,7 +148,8 @@ jobs:
           poetry env info
       - name: Build mckit
         run: |
-          poetry install
+          poetry config --local virtualenvs.create false
+          poetry install --only main
           poetry build
       - name: Install nox
         run: |
