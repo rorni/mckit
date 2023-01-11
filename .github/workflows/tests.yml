@@ -51,6 +51,7 @@ jobs:
         uses: actions/setup-python@v4.4.0
         with:
           python-version: '3.11'
+          cache: "poetry"
 
 #      - name: Load pip cache
 #        uses: actions/cache@v3.2.3
@@ -74,13 +75,13 @@ jobs:
           pip install --constraint=.github/constraints.txt nox
           nox --version
 
-      - name: Load poetry cache
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3.2.3
-        with:
-          path: |
-            ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+#      - name: Load poetry cache
+#        id: cached-poetry-dependencies
+#        uses: actions/cache@v3.2.3
+#        with:
+#          path: |
+#            ~/.cache/pypoetry
+#          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Run safety session
         run: |
@@ -109,6 +110,7 @@ jobs:
         uses: actions/setup-python@v4.4.0
         with:
           python-version: '3.11'
+          cache: "poetry"
 #      #----------------------------------------------
 #      #        load pip cache if cache exists
 #      #----------------------------------------------
@@ -126,16 +128,13 @@ jobs:
           pip install --constraint=.github/constraints.txt poetry
           poetry --version
           poetry env info
-      - name: Load cached poetry artifacts
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3.2.3
-        with:
-          path: |
-            ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-#      - name: Build mckit
-#        run: |
-#          poetry build
+#      - name: Load cached poetry artifacts
+#        id: cached-poetry-dependencies
+#        uses: actions/cache@v3.2.3
+#        with:
+#          path: |
+#            ~/.cache/pypoetry
+#          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install Nox
         run: |
           pip install --constraint=.github/constraints.txt nox
@@ -165,17 +164,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
+          cache: "poetry"
       - name: Use frozen pip version
         run: |
           pip install --constraint=.github/constraints.txt pip virtualenv
           pip --version
-      - name: Load cached poetry artifacts
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3.2.3
-        with:
-          path: |
-            ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+#      - name: Load cached poetry artifacts
+#        id: cached-poetry-dependencies
+#        uses: actions/cache@v3.2.3
+#        with:
+#          path: |
+#            ~/.cache/pypoetry
+#          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install Poetry
         run: |
           pip install --constraint=.github/constraints.txt poetry
@@ -209,6 +209,7 @@ jobs:
         uses: actions/setup-python@v4.4.0
         with:
           python-version: '3.11'
+          cache: "poetry"
 
       - name: Use frozen pip version
         run: |
@@ -230,13 +231,13 @@ jobs:
         with:
           name: coverage-data
 
-      - name: Load cached poetry artifacts
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3.2.3
-        with:
-          path: |
-            ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+#      - name: Load cached poetry artifacts
+#        id: cached-poetry-dependencies
+#        uses: actions/cache@v3.2.3
+#        with:
+#          path: |
+#            ~/.cache/pypoetry
+#          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Combine coverage data and display human readable report
         run: |

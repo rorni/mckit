@@ -1,5 +1,6 @@
-# -*- coding: utf-8 -*-
-"""Represents transformations."""
+"""Code for transformations."""
+from __future__ import annotations
+
 from typing import Any
 
 import numpy as np
