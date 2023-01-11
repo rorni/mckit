@@ -1,5 +1,7 @@
 """Surface methods."""
-from typing import Any, Callable, Dict, List, Optional, Sequence, Text, Tuple, Union
+from __future__ import annotations
+
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Text, Tuple, Union
 
 from abc import abstractmethod
 
@@ -200,7 +202,7 @@ def create_surface(kind: str, *params: float, **options: Dict[str, Any]) -> "Sur
 
 
 def create_replace_dictionary(
-    surfaces: set["Surface"],
+    surfaces: Set["Surface"],
     unique: Optional[set["Surface"]] = None,
     box=GLOBAL_BOX,
     tol: float = 1.0e-10,
@@ -247,8 +249,6 @@ class Surface(Card, MaybeClose):
         Checks if this surface and surf are equal inside the box.
     test_point(p)
         Checks the sense of point p with respect to this surface.
-    transform(tr)
-        Applies transformation tr to this surface.
     test_box(box)
         Checks whether this surface crosses the box.
     projection(p)
@@ -270,8 +270,7 @@ class Surface(Card, MaybeClose):
 
     @property
     def transformation(self) -> Optional[Transformation]:
-        transformation: Transformation = self.options.get("transform", None)
-        return transformation
+        return self.options.get("transform", None)
 
     @abstractmethod
     def apply_transformation(self) -> "Surface":
