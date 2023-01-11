@@ -185,7 +185,7 @@ jobs:
         run: |
           poetry config --local virtualenvs.create false
           poetry install --ansi --only main
-          poetry build --ansi
+          poetry build -v --ansi
       - name: Install nox
         run: |
           pip install --constraint=.github/constraints.txt nox

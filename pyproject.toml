@@ -82,18 +82,18 @@ tqdm = ">=4.55.1"
 #    {version="=2022.2.1", markers="sys_platform == 'win32'"},
 #]
 mkl-devel = [
-    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
     {version = "2023.0.0", markers = "sys_platform == 'linux'"},
+    {version = "2022.2.1", markers = "sys_platform == 'darvin'"},
     {version = "2022.2.1", markers = "sys_platform == 'win32'"}
 ]
 intel-openmp = [
-    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
     {version = "2023.0.0", markers = "sys_platform == 'linux'"},
+    {version = "2022.2.1", markers = "sys_platform == 'darvin'"},
     {version = "2022.2.1", markers = "sys_platform == 'win32'"}
 ]
 tbb = [
-    {version = "2021.8.0", markers = "sys_platform == 'darvin'"},
     {version = "2021.8.0", markers = "sys_platform == 'linux'"},
+    {version = "2021.7.1", markers = "sys_platform == 'darvin'"},
     {version = "2021.7.1", markers = "sys_platform == 'win32'"}
 ]
 
