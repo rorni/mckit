@@ -259,14 +259,6 @@ jobs:
         with:
           name: coverage-data
 
-      - name: Load cached poetry artifacts
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3.2.3
-        with:
-          path: |
-            ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-
       - name: Combine coverage data and display human readable report
         run: |
           nox --force-color --session=coverage
