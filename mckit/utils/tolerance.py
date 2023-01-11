@@ -1,4 +1,5 @@
-from typing import Any, Callable, Iterable, Optional, Union
+"""Code to estimate "closeness" of various objects."""
+from typing import Callable, Iterable, Optional, Union
 
 import itertools
 import math
@@ -12,12 +13,14 @@ from numpy import ndarray
 
 
 class MaybeClose(ABC):
+    """Interface to be implemented by objects supporting the "closeness" estimation."""
+
     @abstractmethod
-    def is_close_to(self, other: Any, estimator: "EstimatorType") -> bool:
-        """Objects can be estimated as close with some estimator"""
+    def is_close_to(self, other: object, estimator: "EstimatorType") -> bool:
+        """Objects can be estimated as close with some estimator."""
 
 
-ComparableType = Optional[Union[Iterable, ndarray, float, MaybeClose]]
+ComparableType = Optional[Union[Iterable, ndarray, float, int, MaybeClose]]
 EstimatorType = Callable[[ComparableType, ComparableType], bool]
 
 
@@ -26,26 +29,23 @@ def tolerance_estimator(
     atol: float = FLOAT_TOLERANCE,
     equal_nan: bool = False,
 ) -> EstimatorType:
-    """
-    Estimates "closeness of numpy arrays and float scalars using math.isclose and numpy.allclose methods
+    """Estimates "closeness".
+
+    For numpy arrays and float scalars uses math.isclose and numpy.allclose methods.
+    For integers - direct comparison.
+    Scans generic iterables and compares objects implementing MayBeClose interface.
+
+    Returns:
+        EstimatorType: estimator
     """
 
-    def _call(a: ComparableType, b: ComparableType) -> bool:
-        if a is b:
-            return True
-        if a is None:
-            return False  # b is not None here
-        if b is None:
-            return True  # in our use cases absent optional objects (like Transformations) are equal
+    def _estimate(a: ComparableType, b: ComparableType) -> bool:
         if isinstance(a, float) and isinstance(b, float):
             return math.isclose(a, b, rel_tol=rtol, abs_tol=atol)
         elif isinstance(a, ndarray) and isinstance(b, ndarray):
             return np.allclose(a, b, rtol, atol, equal_nan)
         elif issubclass(type(a), Iterable) and issubclass(type(b), Iterable):
-            for ai, bi in itertools.zip_longest(a, b):
-                if not _call(ai, bi):
-                    return False
-            return True
+            return all(_call(ai, bi) for ai, bi in itertools.zip_longest(a, b))
         elif isinstance(a, int) and isinstance(b, int):
             return a == b
         elif isinstance(a, MaybeClose) and isinstance(b, MaybeClose):
@@ -55,4 +55,17 @@ def tolerance_estimator(
                 f"Not implemented for {type(a).__name__} and {type(b).__name__}"
             )
 
+    def _call(a: ComparableType, b: ComparableType) -> bool:
+        if a is b:
+            return True
+        if a is None:
+            return False  # `a` is None, but `b` is not None here
+        if b is None:
+            return True
+            # TODO(dvp): in our use cases absent optional objects (like Transformations) are equal
+        return _estimate(a, b)
+
     return _call
+
+
+DEFAULT_TOLERANCE_ESTIMATOR = tolerance_estimator()

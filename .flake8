@@ -37,6 +37,8 @@ ignore=
     I202
 
     # ignore some questionable pandas-vet warnings
+    # use operator instead of method - to many false positives in non pandas code
+    PD005
     # We use at() to access single values
     PD008
     # And we use iat()

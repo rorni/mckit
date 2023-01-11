@@ -34,7 +34,7 @@ from .utils import (
     significant_array,
     significant_digits,
 )
-from .utils.tolerance import FLOAT_TOLERANCE, MaybeClose, tolerance_estimator
+from .utils.tolerance import DEFAULT_TOLERANCE_ESTIMATOR, FLOAT_TOLERANCE, MaybeClose
 
 # fmt:on
 
@@ -62,16 +62,15 @@ VectorLike = Union[np.ndarray, List[float]]
 
 
 # noinspection PyPep8Naming
-def create_surface(kind: str, *params: float, **options: Any) -> "Surface":
+def create_surface(kind: str, *params: float, **options: Dict[str, Any]) -> "Surface":
     """Creates new surface.
 
     Args:
         kind: Surface kind designator. See MCNP manual.
         params: List of surface parameters.
         options: Dictionary of surface's options.
-                In particular:
-                    transform = tr - transformation instance to be applied to the surface being
-                                 created.
+                In particular, transform  - transformation instance to be applied to the surface being created.
+
     Returns:
         New surface.
 
@@ -99,7 +98,10 @@ def create_surface(kind: str, *params: float, **options: Any) -> "Surface":
             return Plane(axis, -params[0], assume_normalized=assume_normalized, **options)
         else:
             return Plane(
-                params[:3], -params[3], assume_normalized=assume_normalized, **options
+                params[:3],
+                -params[3],
+                assume_normalized=assume_normalized,
+                **options,
             )
     # -------- SQ -------------------
     elif kind == "SQ":
@@ -197,25 +199,25 @@ def create_surface(kind: str, *params: float, **options: Any) -> "Surface":
             raise NotImplementedError
 
 
-def create_replace_dictionary(surfaces, unique=None, box=GLOBAL_BOX, tol=1.0e-10):
+def create_replace_dictionary(
+    surfaces: set["Surface"],
+    unique: Optional[set["Surface"]] = None,
+    box=GLOBAL_BOX,
+    tol: float = 1.0e-10,
+) -> dict["Surface", tuple["Surface", int]]:
     """Creates surface replace dictionary for equal surfaces removing.
 
-    Parameters
-    ----------
-    surfaces : set[Surface]
-        A set of surfaces to be checked.
-    unique: set[Surface]
-        A set of surfaces that are assumed to be unique. If not None, than
-        'surfaces' are checked for coincidence with one of them.
-    box : Box
-        A box, which is used for comparison.
-    tol : float
-        Tolerance
+    Args:
+        surfaces : A set of surfaces to be checked.
+        unique:  A set of surfaces that are assumed to be unique. If not None, then
+                `surfaces` are checked for coincidence with one of them.
+        box : Box
+            A box, which is used for comparison.
+        tol : float
+            Tolerance
 
-    Returns
-    -------
-    replace : dict
-        A replace dictionary. surface -> (replace_surface, sense). Sense is +1
+    Returns:
+        A replacement dictionary. surface -> (replace_surface, sense). Sense is +1
         if surfaces have the same direction of normals. -1 otherwise.
     """
     replace = {}
@@ -229,6 +231,11 @@ def create_replace_dictionary(surfaces, unique=None, box=GLOBAL_BOX, tol=1.0e-10
         else:
             unique_surfaces.add(s)
     return replace
+
+
+def _drop_empty_transformation(options: Dict[str, Any]) -> None:
+    if "transform" in options and not options["transform"]:  # empty transformation option
+        del options["transform"]
 
 
 class Surface(Card, MaybeClose):
@@ -248,18 +255,14 @@ class Surface(Card, MaybeClose):
         Gets projection of point p on the surface.
     """
 
-    def __init__(self, **options):
-        if (
-            "transform" in options and not options["transform"]
-        ):  # empty transformation option
-            del options["transform"]
+    def __init__(self, **options) -> None:
+        """Create :class:`Surface` with the options.
+
+        Args:
+            options: kwargs - properties for the `Surface` card.
+        """
+        _drop_empty_transformation(options)
         Card.__init__(self, **options)
-
-    def __getstate__(self):
-        return self.options
-
-    def __setstate__(self, state):
-        self.options = state
 
     @abstractmethod
     def copy(self) -> "Surface":
@@ -291,14 +294,10 @@ class Surface(Card, MaybeClose):
     def transform(self, tr: Transformation) -> "Surface":
         """Applies transformation to this surface.
 
-        Parameters
-        ----------
-        tr : Transform
-            Transformation to be applied.
+        Args:
+            tr: Transformation to be applied.
 
-        Returns
-        -------
-        surf : Surface
+        Returns:
             The result of this surface transformation.
         """
 
@@ -306,19 +305,15 @@ class Surface(Card, MaybeClose):
     def is_close_to(
         self,
         other: "Surface",
-        estimator: Callable[[Any, Any], bool] = tolerance_estimator(),
+        estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
-        """
-        Checks if this surface is close to other one with the given tolerance values.
-        """
+        """Checks if this surface is close to other one with the given tolerance values."""
 
     @abstractmethod
     def round(self) -> "Surface":
-        """
-        Returns rounded version of self
-        """
+        """Returns rounded version of self."""
 
-    def mcnp_words(self, pretty=False):
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
         words = []
         mod = self.options.get("modifier", None)
         if mod:
@@ -326,10 +321,6 @@ class Surface(Card, MaybeClose):
         words.append(str(self.name()))
         words.append(" ")
         # TODO dvp: add transformations processing in Universe.
-        # tr = self.transformation
-        # if tr is not None:
-        #     words.append(str(tr.name()))
-        #     words.append(' ')
         return words
 
     def clean_options(self) -> Dict[Text, Any]:
@@ -354,6 +345,12 @@ class Surface(Card, MaybeClose):
         if tr is None:
             return False
         return my_transformation.is_close(tr, estimator)
+
+    def __getstate__(self):
+        return self.options
+
+    def __setstate__(self, state):
+        self.options = state
 
 
 def internalize_ort(v: np.ndarray) -> Tuple[np.ndarray, bool]:
@@ -386,22 +383,12 @@ class RCC(Surface, _RCC):
         Surface.__init__(self, **options)
         self._hash = hash(cyl) ^ hash(plane2) ^ hash(plane3)
 
-    def __hash__(self):
-        return self._hash
-
-    def __eq__(self, other):
-        if not isinstance(other, RCC):
-            return False
-        args_this = self.surfaces
-        args_other = other.surfaces
-        return args_this == args_other
-
     def surface(self, number):
         args = self.surfaces
         if 1 <= number <= len(args):
             return args[number - 1]
         else:
-            raise ValueError("There is no such surface in macrobody: {0}".format(number))
+            raise ValueError(f"There is no such surface in macrobody: {number}")
 
     def get_params(self):
         args = self.surfaces
@@ -414,7 +401,7 @@ class RCC(Surface, _RCC):
         radius = args[0]._radius
         return center, direction, radius
 
-    def mcnp_words(self, pretty=False):
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
         words = Surface.mcnp_words(self, pretty)
         words.append("RCC")
         words.append(" ")
@@ -430,21 +417,29 @@ class RCC(Surface, _RCC):
             words.append(" ")
         return words
 
-    def transform(self, tr):
+    def transform(self, tr: Transformation) -> "RCC":
         """Transforms the shape.
 
-        Parameters
-        ----------
-        tr : Transformation
-            Transformation to be applied.
+        Args:
+            tr:  Transformation to be applied.
 
-        Returns
-        -------
-        result : Shape
-            New shape.
+        Returns:
+            New RCC shape with the transformation stored in options.
         """
         center, direction, radius = self.get_params()
+        # TODO(dvp): What if `self` already has transformation?
+        #            Should we apply the both transformation on new one?
         return RCC(center, direction, radius, transform=tr)
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        if not isinstance(other, RCC):
+            return False
+        args_this = self.surfaces
+        args_other = other.surfaces
+        return args_this == args_other
 
     def __getstate__(self):
         surf_state = Surface.__getstate__(self)
@@ -517,7 +512,7 @@ class BOX(Surface, _BOX):
         if 1 <= number <= len(args):
             return args[number - 1]
         else:
-            raise ValueError("There is no such surface in macrobody: {0}".format(number))
+            raise ValueError(f"There is no such surface in macrobody: {number}")
 
     def __hash__(self):
         return self._hash
@@ -551,7 +546,7 @@ class BOX(Surface, _BOX):
         dir_z = np.dot(norm_z, diag) * norm_z
         return center, dir_x, dir_y, dir_z
 
-    def mcnp_words(self, pretty=False):
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
         words = Surface.mcnp_words(self, pretty)
         words.append("BOX")
         words.append(" ")
@@ -690,7 +685,7 @@ class Plane(Surface, _Plane):
     def is_close_to(
         self,
         other: "Surface",
-        estimator: Callable[[Any, Any], bool] = tolerance_estimator(),
+        estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
             return True
@@ -783,7 +778,7 @@ class Sphere(Surface, _Sphere):
     def is_close_to(
         self,
         other: "Sphere",
-        estimator: Callable[[Any, Any], bool] = tolerance_estimator(),
+        estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
             return True
@@ -881,13 +876,6 @@ class Cylinder(Surface, _Cylinder):
         _Cylinder.__init__(self, pt, axis, radius)
         self._hash = compute_hash(self._radius, self._pt, self._axis, self.transformation)
 
-    def __getstate__(self):
-        return self._pt, self._axis, self._radius, Surface.__getstate__(self)
-
-    def __setstate__(self, state):
-        pt, axis, radius, options = state
-        self.__init__(pt, axis, radius, assume_normalized=True, **options)
-
     def copy(self):
         return Cylinder(
             self._pt,
@@ -918,7 +906,7 @@ class Cylinder(Surface, _Cylinder):
     def is_close_to(
         self,
         other: "Cylinder",
-        estimator: Callable[[Any, Any], bool] = tolerance_estimator(),
+        estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
             return True
@@ -1002,6 +990,13 @@ class Cylinder(Surface, _Cylinder):
             return GQuadratic(m, v, k, **self.options).mcnp_repr(pretty)
         add_float(words, self._radius, pretty)
         return words
+
+    def __getstate__(self):
+        return self._pt, self._axis, self._radius, Surface.__getstate__(self)
+
+    def __setstate__(self, state):
+        pt, axis, radius, options = state
+        self.__init__(pt, axis, radius, assume_normalized=True, **options)
 
 
 # noinspection PyProtectedMember,PyUnresolvedReferences,DuplicatedCode,PyTypeChecker
@@ -1107,7 +1102,7 @@ class Cone(Surface, _Cone):
     def is_close_to(
         self,
         other: "Surface",
-        estimator: Callable[[Any, Any], bool] = tolerance_estimator(),
+        estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
             return True
@@ -1126,15 +1121,6 @@ class Cone(Surface, _Cone):
         cone = Cone(
             self._apex, self._axis, self._t2, sheet=self._sheet, transform=tr, **options
         )
-        # TODO dvp: check if the following code returning shape instead of Cone is necessary?
-        # TODO dvp: if necessary, then move this to apply_transformation()
-        # if self._sheet != 0:
-        #     plane = Plane(self._axis, -np.dot(self._axis, self._apex), name=1, transform=tr)
-        #     if self._sheet == +1:
-        #         op = 'C'
-        #     else:
-        #         op = 'S'
-        #     return mckit.body.Shape('U', cone, mckit.body.Shape(op, plane))
         return cone
 
     def mcnp_words(self, pretty: bool = False) -> List[str]:
@@ -1262,7 +1248,7 @@ class GQuadratic(Surface, _GQuadratic):
     def is_close_to(
         self,
         other: Surface,
-        estimator: Callable[[Any, Any], bool] = tolerance_estimator(),
+        estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
             return True
@@ -1407,7 +1393,7 @@ class Torus(Surface, _Torus):
     def is_close_to(
         self,
         other: "Torus",
-        estimator: Callable[[Any, Any], bool] = tolerance_estimator(),
+        estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
             return True
@@ -1436,7 +1422,7 @@ class Torus(Surface, _Torus):
 
     def mcnp_words(self, pretty: bool = False) -> List[str]:
         words = Surface.mcnp_words(self)
-        estimator = tolerance_estimator()
+        estimator = DEFAULT_TOLERANCE_ESTIMATOR
         if estimator(self._axis, EX):
             words.append("TX")
         elif estimator(self._axis, EY):

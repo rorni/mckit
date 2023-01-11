@@ -9,7 +9,7 @@ from mckit.geometry import ORIGIN
 
 from .card import Card
 from .utils import compute_hash
-from .utils.tolerance import EstimatorType, MaybeClose, tolerance_estimator
+from .utils.tolerance import DEFAULT_TOLERANCE_ESTIMATOR, EstimatorType, MaybeClose
 
 __all__ = ["Transformation", "IDENTITY_ROTATION"]
 
@@ -305,7 +305,7 @@ class Transformation(Card, MaybeClose):
         return Transformation(translation=t1, rotation=u1)
 
     def is_close_to(
-        self, other: Any, estimator: EstimatorType = tolerance_estimator()
+        self, other: Any, estimator: EstimatorType = DEFAULT_TOLERANCE_ESTIMATOR
     ) -> bool:
         if self is other:
             return True
