@@ -28,7 +28,6 @@ jobs:
 
   tests:
     name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
-    needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
