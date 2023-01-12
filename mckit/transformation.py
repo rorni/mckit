@@ -1,12 +1,13 @@
 """Code for transformations."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import ORIGIN
+from numpy.typing import ArrayLike
 
 from .card import Card
 from .utils import compute_hash
@@ -72,7 +73,7 @@ class Transformation(Card, MaybeClose):
         rotation=None,
         indegrees=False,
         inverted=False,
-        **options: Any,
+        **options: dict[str, Any],
     ):
 
         Card.__init__(self, **options)
@@ -134,10 +135,9 @@ class Transformation(Card, MaybeClose):
                 self._t = -np.dot(u, translation)
         else:
             self._t = translation.copy()
-        # self._t = -np.dot(u, translation) if inverted  else translation.copy()
         self._hash = compute_hash(self._t, self._u)
 
-    def mcnp_words(self, pretty=False):
+    def mcnp_words(self, pretty=False) -> list[str]:
         name = self.name()
         if name is None:
             name = 0
@@ -145,90 +145,75 @@ class Transformation(Card, MaybeClose):
         words.extend(self.get_words(pretty))
         return words
 
-    def get_words(self, pretty=False):
+    def get_words(self, _pretty=False) -> list[str]:
         words = []
         for v in self._t:
             words.append(" ")
-            words.append(
-                "{:.10g}".format(v)
-            )  # TODO dvp: check if precision 13 is necessary
-            # add_float(words, v, pretty)
+            words.append(f"{v:.10g}")  # TODO dvp: check if precision 13 is necessary
         if self._u is not IDENTITY_ROTATION:
             for v in self._u.transpose().ravel():
                 words.append(" ")
-                words.append("{:.10g}".format(np.arccos(v) * 180 / np.pi))
+                _value = np.arccos(v) * 180 / np.pi
+                words.append(f"{_value:.10g}")
         return words
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return self._hash
 
-    def __eq__(self, other):
-        if self is other:
-            return True
-        if not isinstance(other, Transformation):
-            return False
-        if np.array_equal(self._u, other._u):
-            if np.array_equal(self._t, other._t):
-                return True
-        return False
+    def __eq__(self, other) -> bool:
+        return self is other or (
+            isinstance(other, Transformation)
+            and np.array_equal(self._u, other._u)
+            and np.array_equal(self._t, other._t)
+        )
 
-    def __getitem__(self, key):
-        return self.options.get(key, None)
-
-    def __setitem__(self, key, value):
-        self.options[key] = value
-
-    def apply2gq(self, m1, v1, k1):
+    def apply2gq(
+        self, m1: ArrayLike, v1: ArrayLike, k1: float
+    ) -> Tuple[ArrayLike, ArrayLike, float]:
         """Gets parameters of generic quadratic surface in the main CS.
 
-        Parameters
-        ----------
-        m1 : array_like[float]
-            A 3x3 matrix which defines coefficients of quadratic terms of
-            generic quadratic surface equation in the auxiliary coordinate
-            system.
-        v1 : array_like[float]
-            A vector of size 3, which defines coefficients of linear terms of
-            generic quadratic equation in the auxiliary coordinate system.
-        k1 : float
-            Free term of generic quadratic equation in the auxiliary coordinate
-            system.
+        Args:
+            m1 : array_like[float]
+                A 3x3 matrix which defines coefficients of quadratic terms of
+                generic quadratic surface equation in the auxiliary coordinate
+                system.
+            v1 : array_like[float]
+                A vector of size 3, which defines coefficients of linear terms of
+                generic quadratic equation in the auxiliary coordinate system.
+            k1 : float
+                Free term of generic quadratic equation in the auxiliary coordinate
+                system.
 
-        Returns
-        -------
-        m : numpy.ndarray
-            A 3x3 matrix which defines quadratic coefficients of GQ surface
-            equation in the main coordinate system.
-        v : numpy.ndarray
-            A vector of size 3 which defines linear coefficients of GQ surface
-            equation in the main coordinate system.
-        k : float
-            Free term of GQ surface equation in the main coordinate system.
+        Returns:
+            m, v, k
+            m : numpy.ndarray
+                A 3x3 matrix which defines quadratic coefficients of GQ surface
+                equation in the main coordinate system.
+            v : numpy.ndarray
+                A vector of size 3 which defines linear coefficients of GQ surface
+                equation in the main coordinate system.
+            k : float
+                Free term of GQ surface equation in the main coordinate system.
         """
         m = np.dot(np.dot(self._u, m1), np.transpose(self._u))
         v = np.dot(self._u, v1) - 2 * np.dot(m, self._t)
         k = k1 - np.dot(v, self._t) - np.dot(self._t, np.dot(m, self._t))
         return m, v, k
 
-    def apply2plane(self, v1, k1):
+    def apply2plane(self, v1: ArrayLike, k1: float) -> Tuple[ArrayLike, float]:
         """Gets parameters of plane surface in the main coordinate system.
 
-        Parameters
-        ----------
-        v1 : array_like
-            A vector of size 3 which defines vector, normal to the plane in
-            the auxiliary coordinate system.
-        k1 : float
-            Free term of plane equation in the auxiliary coordinate
-            system.
+        Args:
+            v1: A vector of size 3 which defines vector, normal to the plane in
+                the auxiliary coordinate system.
+            k1: Free term of plane equation in the auxiliary coordinate
+                system.
 
-        Returns
-        -------
-        v : numpy.ndarray
-            A vector of size 3 which defines vector, normal to the plane surface
-            in the main coordinate system.
-        k : float
-            Free term of plane surface equation in the main coordinate system.
+        Returns:
+            v, k
+            - v: A vector of size 3 which defines vector, normal to the plane surface
+                 in the main coordinate system.
+            - k: Free term of plane surface equation in the main coordinate system.
         """
         v = np.dot(self._u, v1)
         k = k1 - np.dot(v, self._t)
@@ -316,3 +301,9 @@ class Transformation(Card, MaybeClose):
 
     def __repr__(self):
         return f"Transformation(translation={self._t}, rotation={self._u})"
+
+    def __getitem__(self, key):
+        return self.options.get(key, None)
+
+    def __setitem__(self, key, value):
+        self.options[key] = value
