@@ -90,7 +90,11 @@ tbb = [
     {version = "2021.7.1", markers = "sys_platform == 'win32'"}
 ]
 
-# Check MKL wheels availablility: https://pypi.org/simple/mkl-devel/
+# Check MKL wheels availablility:
+#   https://pypi.org/simple/mkl-devel/
+#   https://pypi.org/simple/intel-openmp/
+#   https://pypi.org/simple/tbb/
+# As for 2022.01.12 for MacOS only version 10.15 is supported
 # TODO dvp: automate the check above
 
 [tool.poetry.group.dev.dependencies]
