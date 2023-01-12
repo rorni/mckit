@@ -973,6 +973,19 @@ files = [
 ]
 
 [[package]]
+name = "intel-openmp"
+version = "2023.0.0"
+description = "Intel® OpenMP* Runtime Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "intel_openmp-2023.0.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:77131c2cda75ace2060f6e9cdcc9f9c672ec838c4602fc544ce0858cfe8f416e"},
+    {file = "intel_openmp-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:adfb32b0dde6b3a95ced62608b05a45a7cfad928054136ddbfe0563e16cbf33c"},
+    {file = "intel_openmp-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:1ebce47df0b5ddad77992a70689fd3185df25f47cf901dd8384fd6d05a974f81"},
+]
+
+[[package]]
 name = "isort"
 version = "5.11.4"
 description = "A Python utility / library to sort Python imports."
@@ -1173,6 +1186,42 @@ intel-openmp = ">=2022.0.0,<2023.0.0"
 tbb = ">=2021.0.0,<2022.0.0"
 
 [[package]]
+name = "mkl"
+version = "2022.2.1"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl-2022.2.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:d49ca0b0f435bc7b7a28a5c51e8e214e08eea719e4564b0b0f90b3b35727e56a"},
+    {file = "mkl-2022.2.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:25310f6901e7295276a93d6c4d4406a221e6aa2f75846110cbac9f5d854015f5"},
+    {file = "mkl-2022.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:0cf6cbb639bc4ecf3b77e5337d4ceb2e24ef025043f764e2abcc32f6797a7138"},
+    {file = "mkl-2022.2.1-py2.py3-none-win32.whl", hash = "sha256:98ca4b8de23d361d7a5c314d23ec9490d5377bec68421c57d564d99adc60bab8"},
+    {file = "mkl-2022.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:67f6ed435c2fd6b526d0d360259fa2be9453365ecde75f589db61c3624ef1cd8"},
+]
+
+[package.dependencies]
+intel-openmp = ">=2022.0.0,<2023.0.0"
+tbb = ">=2021.0.0,<2022.0.0"
+
+[[package]]
+name = "mkl"
+version = "2023.0.0"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl-2023.0.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:e75ce244cd8ba36c497404fa166896f9042531a2f838ae83c75591c9af15589e"},
+    {file = "mkl-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:7c5c1f3aa4d129e0ae004e1f35d4e6bbdd0720715e5139b218b559c8901c7d97"},
+    {file = "mkl-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:9c9309dc7a394d935b50996772b35b95b4056c668e0deca5939de55b6e9995b4"},
+]
+
+[package.dependencies]
+intel-openmp = ">=2023.0.0,<2024.0.0"
+tbb = ">=2021.0.0,<2022.0.0"
+
+[[package]]
 name = "mkl-devel"
 version = "2022.1.0"
 description = "Intel® oneAPI Math Kernel Library"
@@ -1192,6 +1241,42 @@ mkl = "2022.1.0"
 mkl-include = "2022.1.0"
 
 [[package]]
+name = "mkl-devel"
+version = "2022.2.1"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl_devel-2022.2.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:2824ce9f34309f32adf27cd69390af3b28c94df72513aea6a7f794f2345d07ec"},
+    {file = "mkl_devel-2022.2.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:3803c381a116fa82ab05898c53109d51f8f4627077500ae1113e1cf18335b757"},
+    {file = "mkl_devel-2022.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:187b1a087369fb4ebfb28aaf2ed7abb27ad703fe9c9feb339d758406b7febc9c"},
+    {file = "mkl_devel-2022.2.1-py2.py3-none-win32.whl", hash = "sha256:755663fec8661b7009b77ec021e8b0082d1ce53f793282747a77b699adde43a7"},
+    {file = "mkl_devel-2022.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:7a000cf0d680cc6acd3c513949d2e8c50aa34cf2b618e7235f98ec1b2b9b3b09"},
+]
+
+[package.dependencies]
+mkl = "2022.2.1"
+mkl-include = "2022.2.1"
+
+[[package]]
+name = "mkl-devel"
+version = "2023.0.0"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl_devel-2023.0.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:365c1b05cb1acd741c4b09242664dc57e954b8b177c3ccf53347d550ed457b13"},
+    {file = "mkl_devel-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:4595efb5215f62abcb37f2e6476687024499b7992c7e8e3453b391ef2b6b11c7"},
+    {file = "mkl_devel-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:1f2fd9941e8d4f010fa7f3f237ea0da513429348d9cce2a32f424dcb53ffeef7"},
+]
+
+[package.dependencies]
+mkl = "2023.0.0"
+mkl-include = "2023.0.0"
+
+[[package]]
 name = "mkl-include"
 version = "2022.1.0"
 description = "Intel® oneAPI Math Kernel Library"
@@ -1204,6 +1289,34 @@ files = [
     {file = "mkl_include-2022.1.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:71b4ec9aae98baf92b04e9e42a1ba8f3b9b920d20609a094ed9be8219b7201d9"},
     {file = "mkl_include-2022.1.0-py2.py3-none-win32.whl", hash = "sha256:3dedd91c6ee5c00e4cbf2b5270ecb62c757c123509c4c68b29d3605dfd34dd59"},
     {file = "mkl_include-2022.1.0-py2.py3-none-win_amd64.whl", hash = "sha256:4ad0d1b29328bfc79f9bb9958f8617bfc5d8a2a0df77cf0ec6d33275ad73407b"},
+]
+
+[[package]]
+name = "mkl-include"
+version = "2022.2.1"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl_include-2022.2.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:623c904257b6aa3df6dbefab5e672ad4c38151a071d3a0b329f194b295f5f96a"},
+    {file = "mkl_include-2022.2.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:b5cf93f476449dceff4c99478382a0cb3ee17c1a997c8d8268749a82a1eb4bea"},
+    {file = "mkl_include-2022.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:1af7c95646c58ce269e252cd52a2e36118d1c0df4a58fd3229297fbf11b653d1"},
+    {file = "mkl_include-2022.2.1-py2.py3-none-win32.whl", hash = "sha256:cc968ccb3d22f437871c1f67ec53f9646e451f7c4134633851bc4a28a6c22948"},
+    {file = "mkl_include-2022.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:460874c6e4b7ce5e569fe0ec846ec4de282fc1a9556215201d57ee10c7cfbdd6"},
+]
+
+[[package]]
+name = "mkl-include"
+version = "2023.0.0"
+description = "Intel® oneAPI Math Kernel Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mkl_include-2023.0.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:b5645757a5fe4e8add2c9f2946556d03169ac9e6a2e3db2a92acbec837bfde0d"},
+    {file = "mkl_include-2023.0.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:1f9514cec32ab1e467c7fc44674485622d9b151e91b9318e4d97249a28595671"},
+    {file = "mkl_include-2023.0.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:14b0958dff799378975d83fbd00ce756645aa36b9f924bdfdb0fb031f72b734d"},
 ]
 
 [[package]]
@@ -2351,6 +2464,21 @@ pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 
 [[package]]
 name = "tbb"
+version = "2021.7.1"
+description = "Intel® oneAPI Threading Building Blocks"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "tbb-2021.7.1-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:38db98913b5d8279321d6a5f53bd2d518344b1ba31bbca534aa2aa3dd5d9257e"},
+    {file = "tbb-2021.7.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:a5f6f5e22d7546e9b5013062c1922374a691a8c462d963de0070a9a6983cfbe7"},
+    {file = "tbb-2021.7.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:7bc07cd9198ab4041bf3f898ba8fc899395d267f1e2d82a44cd3f7b8ff6e79d5"},
+    {file = "tbb-2021.7.1-py3-none-win32.whl", hash = "sha256:19d0c6ef9fe0d788bf1b38ef6cae4ecc9a716f2537c2a1e86855383dcf451cd1"},
+    {file = "tbb-2021.7.1-py3-none-win_amd64.whl", hash = "sha256:ff30051e957461c1bdfb168e3ee6312d21fc9c7843eed397f3e5ea24f9d67426"},
+]
+
+[[package]]
+name = "tbb"
 version = "2021.8.0"
 description = "Intel® oneAPI Threading Building Blocks (oneTBB)"
 category = "main"
@@ -2718,4 +2846,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "df513bf0337659ca63297c885cd2d6fa95f7755399bed5df39704dc9c763798c"
+content-hash = "01fe20241e2067f402c1e97d4c0b39ac62d5da9f0a561874a91f096e4663d7eb"
