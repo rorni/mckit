@@ -1,5 +1,7 @@
-"""Features, common for all cards"""
-from typing import List, Optional, Text
+"""Features, common for all cards."""
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional, Text, cast
 
 from abc import ABC, abstractmethod
 from functools import reduce
@@ -13,8 +15,39 @@ from .printer import print_card
 class Card(ABC):
     """Features, common for all cards."""
 
-    def __init__(self, **options):
-        self.options = options
+    def __init__(self, **options: Dict[str, Any]):
+        self.options: Dict[str, Any] = options
+
+    def __str__(self):
+        # TODO dvp: option `name` is printed twice,
+        #           (second time as option)
+        #           This should be explicit property of this class instance
+        return f'{self.name()}: "{self.options}"'
+
+    @property
+    def is_anonymous(self) -> bool:
+        """Is the card is named?"""
+        return self.name() is None
+
+    @property
+    def has_original(self) -> bool:
+        """Has original text stored in options."""
+        return "original" in self.options
+
+    @property
+    def original(self) -> Optional[str]:
+        """Original text from an MCNP model."""
+        return cast(Optional[str], self.options.get("original", None))
+
+    @property
+    def has_comment_above(self) -> bool:
+        """Has comment above stored in options."""
+        return "comment_above" in self.options
+
+    @property
+    def comment_above(self) -> Optional[str]:
+        """Comment located above this card in an MCNP model."""
+        return cast(Optional[str], self.options.get("comment_above", None))
 
     def name(
         self,
@@ -27,73 +60,32 @@ class Card(ABC):
     def rename(self, new_name) -> "Card":
         """Renames the card."""
         self.options["name"] = new_name
+        self.drop_original()
         return self
-
-    @property
-    def is_anonymous(self):
-        return self.name() is None
 
     @abstractmethod
     def mcnp_words(self, pretty=False) -> List[Text]:
         """Gets a list of card words."""
 
-    @property
-    def has_original(self) -> bool:
-        return "original" in self.options.keys()
-
-    @property
-    def has_comment_above(self) -> bool:
-        return "comment_above" in self.options.keys()
-
-    def mcnp_repr(self, pretty: bool = False) -> Text:
+    def mcnp_repr(self, pretty: bool = False) -> str:
         """Gets str representation of the card."""
-        # TODO dvp: try to use original texts, if available
-        # if self.has_original:
-        #     if self.has_comment_above:
-        #         return self.comment_above + '\n' + self.original
-        #     else:
-        #         return self.original
-        # else:
-        text: Text = print_card(self.mcnp_words(pretty))
-        return text
-
-    @property
-    def comment_above(self) -> Optional[Text]:
-        comment: Optional[Text] = self.options.get("comment_above", None)
-        return comment
-
-    @property
-    def original(self) -> Optional[Text]:
-        original: Text = self.options.get("original", None)
-        return original
+        # TODO dvp: try to use original texts, if available - this will preserve comments
+        return cast(str, print_card(self.mcnp_words(pretty)))
 
     def drop_original(self) -> None:
-        del self.options["original"]
+        """Drop original text, if any.
+
+        Do this, if the card is changed and doesn't correspond to original text anymore.
+        """
+        if "original" in self.options:
+            del self.options["original"]
 
     def add_comment(self, *comment: str) -> None:
-        comm = self.options.get("comment", [])
-        comm.extend(comment)
-        self.options["comment"] = comm
+        """Add a comment to this card."""
+        self.options.setdefault("comment", []).extend(comment)
 
-    def __str__(
-        self,
-    ):  # TODO dvp: option `name` is printed twice, should be explicit property of this class instance
-        return '{}: "{}"'.format(self.name(), self.options)
-
-    def __hash__(
-        self,
-    ):  # TODO dvp: dict hashing implementation: check for effect of instability of the options
+    def __hash__(self) -> int:
         return reduce(xor, (hash(k) ^ hash(v) for k, v in self.options.items()), 0)
 
-    def __eq__(self, other):  # TODO dvp: what about nested dictionaries?
-        for k in other.options.keys():
-            if k not in self.options:
-                return False
-        for k, v in self.options.items():
-            if k not in other.options:
-                return False
-            my = self.options[k]
-            their = other.options[k]
-            if my != their:
-                return False
-        return True
+    def __eq__(self, other) -> bool:
+        return self is other or self.options == other.options
