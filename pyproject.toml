@@ -77,6 +77,9 @@ tqdm = ">=4.55.1"
 # mkl again has different versions for different platforms
 mkl-devel = "2022.2.1"
 tbb = "2021.7.1"
+# The following works for linux and windows, but not for macos
+# besides we need to have the same versions on build (see [build-system]),
+# so, we use the most recent version compatbile to all the OS.
 #mkl-devel = [
 #    {version = "2023.0.0", markers = "sys_platform == 'linux'"},
 #    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
