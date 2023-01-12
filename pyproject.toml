@@ -93,6 +93,9 @@ mkl-devel = "2022.1.0"
 #    {version = "2021.7.1", markers = "sys_platform == 'win32'"}
 #]
 
+# Check MKL wheels availablility: https://pypi.org/simple/mkl-devel/
+# TODO dvp: automate the check above
+
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
 nox = ">=2022.1.7"
