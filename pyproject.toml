@@ -76,12 +76,12 @@ tqdm = ">=4.55.1"
 # mkl again has different versions for different platforms
 mkl-devel = [
     {version = "2023.0.0", markers = "sys_platform == 'linux'"},
-    {version = "2022.1.0", markers = "sys_platform == 'darvin'"},
+    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
     {version = "2022.2.1", markers = "sys_platform == 'win32'"}
 ]
 intel-openmp = [
     {version = "2023.0.0", markers = "sys_platform == 'linux'"},
-    {version = "2022.2.1", markers = "sys_platform == 'darvin'"},
+    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
     {version = "2022.2.1", markers = "sys_platform == 'win32'"}
 ]
 tbb = [
