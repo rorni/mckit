@@ -1,7 +1,7 @@
 """Code for transformations."""
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 import numpy as np
 
@@ -80,11 +80,10 @@ class Transformation(Card, MaybeClose):
 
         if translation is not ORIGIN:
             translation = np.asarray(translation, dtype=float)
-
-        if translation.shape != (3,):
-            raise ValueError(
-                f"Transaction #{self.name()}: wrong length of translation vector."
-            )
+            if translation.shape != (3,):
+                raise ValueError(
+                    f"Transaction #{self.name()}: wrong length of translation vector."
+                )
 
         if rotation is None:
             u = IDENTITY_ROTATION
@@ -92,41 +91,7 @@ class Transformation(Card, MaybeClose):
             u = np.asarray(rotation, dtype=float)
             if indegrees:
                 u = np.cos(np.multiply(u, np.pi / 180.0))
-            zero_cosines_idx = np.abs(u) < ZERO_COS_TOLERANCE
-            u[zero_cosines_idx] = 0.0
-            # TODO: Implement creation from reduced rotation parameter set.
-            if u.shape == (9,):
-                u = u.reshape((3, 3), order="F")
-            if u.shape != (3, 3):
-                raise ValueError(
-                    f'Transaction{"" if self.is_anonymous else " #" + str(self.name())}: \
-                      wrong number of rotation parameters: {u}.'
-                )
-            if np.array_equal(u, IDENTITY_ROTATION):
-                u = IDENTITY_ROTATION
-            else:
-                # normalize auxiliary CS basis and orthogonalize it.
-                u, r = np.linalg.qr(u)
-                # QR decomposition returns orthogonal matrix u - which is corrected
-                # rotation matrix, and upper triangular matrix r. On the main
-                # diagonal r contains lengths of corresponding (negative if the
-                # corrected vector is directed opposite to the initial one) input
-                # basis vectors. Other elements are cosines of angles between
-                # different basis vectors.
-
-                # cos(pi/2 - ANGLE_TOLERANCE) = sin(ANGLE_TOLERANCE) - maximum
-                # value of cosine of angle between two basis vectors.
-                if (
-                    abs(r[0, 1]) > COS_TH
-                    or abs(r[0, 2]) > COS_TH
-                    or abs(r[1, 2]) > COS_TH
-                ):
-                    raise ValueError(
-                        f"Transaction #{self.name()}: non-orthogonality is greater than 0.001 rad."
-                    )
-                # To preserve directions of corrected basis vectors.
-                for i in range(3):
-                    u[:, i] = u[:, i] * np.sign(r[i, i])
+            u = self._setup_rotation_matrix(u)
         self._u = u
         if inverted:
             if u is IDENTITY_ROTATION:
@@ -137,7 +102,8 @@ class Transformation(Card, MaybeClose):
             self._t = translation.copy()
         self._hash = compute_hash(self._t, self._u)
 
-    def mcnp_words(self, pretty=False) -> list[str]:
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
+        """Prepare words to output this Transformation with MCNP label."""
         name = self.name()
         if name is None:
             name = 0
@@ -145,7 +111,8 @@ class Transformation(Card, MaybeClose):
         words.extend(self.get_words(pretty))
         return words
 
-    def get_words(self, _pretty=False) -> list[str]:
+    def get_words(self, _pretty: bool = False) -> list[str]:
+        """Prepare words to output this Transformation content."""
         words = []
         for v in self._t:
             words.append(" ")
@@ -156,16 +123,6 @@ class Transformation(Card, MaybeClose):
                 _value = np.arccos(v) * 180 / np.pi
                 words.append(f"{_value:.10g}")
         return words
-
-    def __hash__(self) -> int:
-        return self._hash
-
-    def __eq__(self, other) -> bool:
-        return self is other or (
-            isinstance(other, Transformation)
-            and np.array_equal(self._u, other._u)
-            and np.array_equal(self._t, other._t)
-        )
 
     def apply2gq(
         self, m1: ArrayLike, v1: ArrayLike, k1: float
@@ -219,71 +176,57 @@ class Transformation(Card, MaybeClose):
         k = k1 - np.dot(v, self._t)
         return v, k
 
-    def apply2point(self, p1):
+    def apply2point(self, p1: ArrayLike) -> ArrayLike:
         """Gets coordinates of point p1 in the main coordinate system.
 
-        Parameters
-        ----------
-        p1 : array_like[float]
-            Coordinates of the point(s) in the auxiliary coordinate system.
-            It has shape (3,) if there is the only point or (N, 3) - if there
-            are N points.
+        Args:
+            p1: Coordinates of the point(s) in the auxiliary coordinate system.
+                It has shape (3,) if there is the only point or (N, 3) - if there
+                are N points.
 
-        Returns
-        -------
-        p : numpy.ndarray
+        Returns:
             Coordinates of the point(s) in the main coordinate system.
         """
         # Matrix U is transposed to change U p1 -> p1 U^T - to preserve shape
         # of p1 and p.
         return np.dot(p1, np.transpose(self._u)) + self._t
 
-    def apply2vector(self, v1):
+    def apply2vector(self, v1: ArrayLike) -> ArrayLike:
         """Gets coordinates of vector v1 in the main coordinate system.
 
-        Parameters
-        ----------
-        v1 : array_like[float]
-            Coordinates of the vector(s) in the auxiliary coordinate system.
+        Args:
+            v1: Coordinates of the vector(s) in the auxiliary coordinate system.
 
-        Returns
-        -------
-        v : numpy.ndarray
+        Returns:
             Coordinates of the vector(s) in the main coordinate system.
         """
         # In contrast with apply2point - no translation is needed.
         return np.dot(v1, np.transpose(self._u))
 
-    def apply2transform(self, tr):
+    def apply2transform(self, tr: "Transformation") -> "Transformation":
         """Gets new transformation.
 
-        Suppose there are three coordinate systems r0, r1, r2. Transformation
+        Suppose there are three coordinate systems r, r1, r2. Transformation
         tr: r2 -> r1; and this transformation: r1 -> r. Thus the resulting
         transformation: r2 -> r. In other words the result is a sequence of
-        two transformations: tr and this. tr is applied first.
+        two transformations: `tr` and this. The `tr` is applied first.
 
-        Parameters
-        ----------
-        tr : Transformation
-            Transformation to be modified.
+        Args:
+            tr: Transformation to be modified.
 
-        Returns
-        -------
-        new_tr : Transformation
+        Returns:
             New transformation - the result.
         """
         rot = np.dot(self._u, tr._u)
         trans = self.apply2point(tr._t)
         return Transformation(translation=trans, rotation=rot)
 
-    def reverse(self):
+    def reverse(self) -> "Transformation":
         """Reverses this transformation.
 
         Gets new transformation which is complement to this one.
 
-        Returns
-        -------
-        tr : Transform
+        Returns:
             Reversed version of this transformation.
         """
         u1 = np.transpose(self._u)
@@ -291,13 +234,60 @@ class Transformation(Card, MaybeClose):
         return Transformation(translation=t1, rotation=u1)
 
     def is_close_to(
-        self, other: Any, estimator: EstimatorType = DEFAULT_TOLERANCE_ESTIMATOR
+        self, other: object, estimator: EstimatorType = DEFAULT_TOLERANCE_ESTIMATOR
     ) -> bool:
+        """Check if this transformation is almost equal to `other` one."""
         if self is other:
             return True
         if not isinstance(other, Transformation):
             return False
         return estimator((self._t, self._u), (other._t, other._u))
+
+    def _setup_rotation_matrix(self, u: Optional[ArrayLike]) -> ArrayLike:
+        zero_cosines_idx = np.abs(u) < ZERO_COS_TOLERANCE
+        u[zero_cosines_idx] = 0.0
+        # TODO: Implement creation from reduced rotation parameter set.
+        if u.shape == (9,):
+            u = u.reshape((3, 3), order="F")
+        if u.shape != (3, 3):
+            raise ValueError(
+                f'Transaction{"" if self.is_anonymous else " #" + str(self.name())}: \
+                  wrong number of rotation parameters: {u}.'
+            )
+
+        if np.array_equal(u, IDENTITY_ROTATION):
+            return IDENTITY_ROTATION
+
+        # normalize auxiliary CS basis and orthogonalize it.
+        u, r = np.linalg.qr(u)
+        # QR decomposition returns orthogonal matrix u - which is corrected
+        # rotation matrix, and upper triangular matrix r. On the main
+        # diagonal r contains lengths of corresponding (negative if the
+        # corrected vector is directed opposite to the initial one) input
+        # basis vectors. Other elements are cosines of angles between
+        # different basis vectors.
+
+        # cos(pi/2 - ANGLE_TOLERANCE) = sin(ANGLE_TOLERANCE) - maximum
+        # value of cosine of angle between two basis vectors.
+        if abs(r[0, 1]) > COS_TH or abs(r[0, 2]) > COS_TH or abs(r[1, 2]) > COS_TH:
+            raise ValueError(
+                f"Transaction #{self.name()}: non-orthogonality is greater than 0.001 rad."
+            )
+        # To preserve directions of corrected basis vectors.
+        for i in range(3):
+            u[:, i] = u[:, i] * np.sign(r[i, i])
+
+        return u
+
+    def __hash__(self) -> int:
+        return self._hash
+
+    def __eq__(self, other) -> bool:
+        return self is other or (
+            isinstance(other, Transformation)
+            and np.array_equal(self._u, other._u)
+            and np.array_equal(self._t, other._t)
+        )
 
     def __repr__(self):
         return f"Transformation(translation={self._t}, rotation={self._u})"
