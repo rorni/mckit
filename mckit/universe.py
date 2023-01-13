@@ -1,15 +1,4 @@
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union, cast
 
 import operator
 import sys
@@ -50,9 +39,7 @@ from .utils.named import Name
 
 
 class NameClashError(ValueError):
-    def __init__(
-        self, result: Union[str, Dict[str, Dict[int, Set["Universe"]]]]
-    ) -> None:
+    def __init__(self, result: Union[str, Dict[str, Dict[int, Set["Universe"]]]]) -> None:
         if isinstance(result, str):
             ValueError.__init__(self, result)
         else:
@@ -283,9 +270,7 @@ class Universe:
 
             if name_rule == "keep" and cell.name() in cell_names:
                 raise NameClashError("Cell name clash: {0}".format(cell.name()))
-            elif (
-                name_rule == "new" or name_rule == "clash" and cell.name() in cell_names
-            ):
+            elif name_rule == "new" or name_rule == "clash" and cell.name() in cell_names:
                 new_name = max(cell_names, default=0) + 1
                 new_cell.rename(new_name)
             cell_names.add(new_cell.name())
@@ -752,9 +737,7 @@ class Universe:
                     items.append(item)
         return items
 
-    def simplify(
-        self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False, verbose=True
-    ):
+    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False, verbose=True):
         """Simplifies all cells of the universe.
 
         Modifies current universe.
@@ -788,9 +771,7 @@ class Universe:
         if verbose:
             print("Universe {0} simplification has been finished.".format(self.name()))
             print(
-                "{0} empty cells were deleted.".format(
-                    len(self._cells) - len(new_cells)
-                )
+                "{0} empty cells were deleted.".format(len(self._cells) - len(new_cells))
             )
 
         self._cells = new_cells
@@ -879,9 +860,7 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
         if universe_no in groups:
             groups[universe_no].cells.append(c)
         else:
-            new_group = _UniverseCellsGroup(
-                universe=Universe([], universe_no), cells=[c]
-            )
+            new_group = _UniverseCellsGroup(universe=Universe([], universe_no), cells=[c])
             groups[universe_no] = new_group
     for c in cells:
         fill: Dict[str, Any] = c.options.get("FILL", None)

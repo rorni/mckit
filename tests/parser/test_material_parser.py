@@ -109,9 +109,7 @@ c something
 )
 def test_composition_parser(text, expected):
     result = mp.parse(text)
-    assert isinstance(
-        result, Composition
-    ), "Parser should create instance of Composition"
+    assert isinstance(result, Composition), "Parser should create instance of Composition"
     assert result == expected
     assert result.options == expected.options
 

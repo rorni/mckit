@@ -129,9 +129,7 @@ class Parser(sly.Parser):
             composition_no, density = p.cell_material  # type: int, float
             composition = self.compositions[composition_no]
             if density > 0:
-                material = Material(
-                    composition=composition, concentration=density * 1e24
-                )
+                material = Material(composition=composition, concentration=density * 1e24)
             else:
                 material = Material(composition=composition, density=-density)
             options["MAT"] = material

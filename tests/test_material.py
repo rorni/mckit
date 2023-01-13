@@ -674,12 +674,8 @@ class TestComposition:
         ans = {Element(k): pytest.approx(v, rel=1.0e-3) for k, v in expected.items()}
         assert comp._composition == ans
         inp2 = {
-            "atomic": [
-                (Element(k), v) for k, v in self.cases[case_no].get("atomic", [])
-            ],
-            "weight": [
-                (Element(k), v) for k, v in self.cases[case_no].get("weight", [])
-            ],
+            "atomic": [(Element(k), v) for k, v in self.cases[case_no].get("atomic", [])],
+            "weight": [(Element(k), v) for k, v in self.cases[case_no].get("weight", [])],
         }
         comp2 = Composition(**inp2)
         assert comp2._composition == ans

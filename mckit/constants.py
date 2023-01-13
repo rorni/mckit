@@ -1,13 +1,9 @@
-# -*- coding: utf-8 -*-
-
+"""Shared constants."""
 import numpy as np
-
-# from mckit.geometry import MIN_VOLUME
 
 __all__ = [
     "MIN_BOX_VOLUME",
     "RESOLUTION",
-    "TIME_UNITS",
     "FLOAT_TOLERANCE",
     "MCNP_ENCODING",
     "DROP_OPTIONS",

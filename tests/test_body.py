@@ -1919,9 +1919,7 @@ class TestShape:
             [(0, 0, -1), (-1, -1, 0), (0, -1, 0), (0, 0, -1), (0, 0, 0), (0, 0, 0)]
         ),
     )
-    def test_box(
-        self, geometry, box, box_no: int, case_no: int, expected: tp.Tuple[int]
-    ):
+    def test_box(self, geometry, box, box_no: int, case_no: int, expected: tp.Tuple[int]):
         result = geometry[case_no].test_box(box[box_no])
         assert result == expected[box_no]
 

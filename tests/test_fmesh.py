@@ -195,9 +195,7 @@ class TestRectMesh:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        "mi, ti", product(range(len(bins)), range(len(transforms)))
-    )
+    @pytest.mark.parametrize("mi, ti", product(range(len(bins)), range(len(transforms))))
     def test_get_voxel(self, mi: int, ti: int):
         tr = transforms[ti]
         bin = bins[mi]

@@ -34,9 +34,7 @@ def test_filename_resolver(package, resource, expected):
 def test_filename_resolver_when_resource_doesnt_exist(package, resource, expected):
     resolver = filename_resolver(package)
     actual = resolver(resource)
-    assert not Path(
-        actual
-    ).exists(), f"The resource '{resource}' should not be available"
+    assert not Path(actual).exists(), f"The resource '{resource}' should not be available"
 
 
 def test_path_resolver():

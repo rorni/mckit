@@ -64,7 +64,9 @@ def test_when_there_are_no_universes(runner, source, expected):
         assert result.exit_code == 0, "Should success without universes"
         assert Path(
             "universes/envelopes.i"
-        ).exists(), "Should store the only envelopes.i file in the default directory 'universes'"
+        ).exists(), (
+            "Should store the only envelopes.i file in the default directory 'universes'"
+        )
 
 
 @pytest.mark.parametrize(
@@ -73,9 +75,7 @@ def test_when_there_are_no_universes(runner, source, expected):
 def test_when_only_source_is_specified(runner, source, expected):
     source: Path = data_filename_resolver(source)
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            mckit, args=["decompose", source], catch_exceptions=False
-        )
+        result = runner.invoke(mckit, args=["decompose", source], catch_exceptions=False)
         assert result.exit_code == 0, (
             "Should success without specified output: " + result.output
         )
@@ -107,15 +107,11 @@ def test_when_output_is_specified(runner, source, output, expected):
             catch_exceptions=False,
         )
         assert result.exit_code == 0
-        assert (
-            output.exists()
-        ), f"The {output} directory should exist after the test run"
+        assert output.exists(), f"The {output} directory should exist after the test run"
         for f in expected:
             assert (
                 output / f
-            ).exists(), (
-                f"Should store the file {f} in the default directory 'universes'"
-            )
+            ).exists(), f"Should store the file {f} in the default directory 'universes'"
 
 
 def test_when_output_file_exists_and_override_is_not_specified(runner):
@@ -124,9 +120,7 @@ def test_when_output_file_exists_and_override_is_not_specified(runner):
         output = Path(prefix) / "simple_cubes.universes/envelopes.i"
         output.parent.mkdir(parents=True)
         output.touch(exist_ok=False)
-        result = runner.invoke(
-            mckit, args=["decompose", source], catch_exceptions=False
-        )
+        result = runner.invoke(mckit, args=["decompose", source], catch_exceptions=False)
         assert (
             result.exit_code != 0
         ), "Should fail when output file exists and --override is not specified"
@@ -150,9 +144,7 @@ def test_fill_descriptor(runner):
     source = data_filename_resolver("cli/data/simple_cubes.mcnp")
     with runner.isolated_filesystem() as prefix:
         output = Path(prefix) / "simple_cubes.universes/fill-descriptor.toml"
-        result = runner.invoke(
-            mckit, args=["decompose", source], catch_exceptions=False
-        )
+        result = runner.invoke(mckit, args=["decompose", source], catch_exceptions=False)
         assert result.exit_code == 0, "Should success"
         assert output.exists()
         with output.open() as fid:
@@ -183,9 +175,7 @@ def test_anonymous_transformation(runner):
     source = data_filename_resolver("cli/data/cubes_with_fill_transforms.mcnp")
     with runner.isolated_filesystem() as prefix:
         output = Path(prefix) / "cubes_with_fill_transforms.universes"
-        result = runner.invoke(
-            mckit, args=["decompose", source], catch_exceptions=False
-        )
+        result = runner.invoke(mckit, args=["decompose", source], catch_exceptions=False)
         assert result.exit_code == 0, "Should success"
         with open(output / "fill-descriptor.toml", "rb") as fid:
             descriptor = tomllib.load(fid)
@@ -201,9 +191,7 @@ def test_named_transformation(runner):
     source = data_filename_resolver("cli/data/cubes_with_fill_named_transforms.mcnp")
     with runner.isolated_filesystem() as prefix:
         output = Path(prefix) / "cubes_with_fill_named_transforms.universes"
-        result = runner.invoke(
-            mckit, args=["decompose", source], catch_exceptions=False
-        )
+        result = runner.invoke(mckit, args=["decompose", source], catch_exceptions=False)
         assert result.exit_code == 0, "Should success"
         with open(output / "fill-descriptor.toml", "rb") as fid:
             descriptor = tomllib.load(fid)

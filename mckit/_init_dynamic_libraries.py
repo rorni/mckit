@@ -44,9 +44,7 @@ SHARED_LIBRARY_DIRECTORIES: List[Path] = []
 if WIN:
     SHARED_LIBRARY_DIRECTORIES.append(Path(sys.prefix, "Library", "bin"))
 else:
-    ld_library_path = os.environ.get(
-        "DYLD_LIBRARY_PATH" if MACOS else "LD_LIBRARY_PATH"
-    )
+    ld_library_path = os.environ.get("DYLD_LIBRARY_PATH" if MACOS else "LD_LIBRARY_PATH")
     if ld_library_path:
         SHARED_LIBRARY_DIRECTORIES.extend(map(Path, ld_library_path.split(":")))
     SHARED_LIBRARY_DIRECTORIES.append(Path(sys.prefix, "lib"))

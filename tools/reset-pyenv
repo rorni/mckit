@@ -1,13 +1,18 @@
 #!/bin/bash
 
-set -exu
+# set -exu
 
-pyenv virtualenv-delete -f  mckit
-pyenv virtualenv 3.10.7 mckit
+env="mckit"
+pkg="${env//-/_}"
+
+pyenv virtualenv-delete -f  "$env"
+pyenv virtualenv "3.11.1" "$env"
+pyenv local "$env" "3.10.9" "3.9.16" "3.8.16"
 pyenv rehash
+poetry env info
 poetry install
 pyenv rehash
-python -c "import mckit; print(mckit.__version__)"
+python -c "import ${pkg}; print(${pkg}.__version__)"
 
 
 # vim: set ts=4 sw=4 tw=92 ss=0 ft=sh et ai :

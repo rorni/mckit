@@ -317,8 +317,7 @@ def assert_mcnp_repr(desc, answer):
             [0.5, -2.5, 3.0, 1.1, -1.3, -5.4, -7.0, 3.2, -1.7, 8.4],
             {
                 "_m": np.diag([0.5, -2.5, 3.0]),
-                "_v": 2
-                * np.array([1.1 - 0.5 * 3.2, -1.3 - 2.5 * 1.7, -5.4 - 3.0 * 8.4]),
+                "_v": 2 * np.array([1.1 - 0.5 * 3.2, -1.3 - 2.5 * 1.7, -5.4 - 3.0 * 8.4]),
                 "_k": 0.5 * 3.2**2
                 - 2.5 * 1.7**2
                 + 3.0 * 8.4**2
@@ -2443,9 +2442,7 @@ class TestCone:
         if i1 < i2:
             s1, s2 = s1.round(), s2.round()
             if self.eq_matrix[i1][i2]:
-                assert hash(s1) == hash(
-                    s2
-                ), "The hash should be equal for equal objects"
+                assert hash(s1) == hash(s2), "The hash should be equal for equal objects"
 
     @pytest.mark.parametrize("surf", surfs)
     def test_copy(self, surf):
@@ -3329,17 +3326,13 @@ class TestRCC:
         (create_surface("PX", 0), create_surface("PX", 1e-12), True),
         (
             create_surface("PX", 0).transform(Transformation(translation=[0, 0, 0])),
-            create_surface("PX", 0).transform(
-                Transformation(translation=[0, 0, 1e-12])
-            ),
+            create_surface("PX", 0).transform(Transformation(translation=[0, 0, 1e-12])),
             True,
         ),
         (create_surface("PX", 0), create_surface("PX", 1e-11), False),
         (
             create_surface("PX", 0).transform(Transformation(translation=[0, 0, 0])),
-            create_surface("PX", 0).transform(
-                Transformation(translation=[0, 0, 1e-11])
-            ),
+            create_surface("PX", 0).transform(Transformation(translation=[0, 0, 1e-11])),
             False,
         ),
     ],
