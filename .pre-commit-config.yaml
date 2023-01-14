@@ -36,7 +36,11 @@ repos:
   rev: "v1.3.1"
   hooks:
   - id: remove-tabs
-
+# Format doc strings
+- repo: https://github.com/DanielNoord/pydocstringformatter
+  rev: "v0.7.3"
+  hooks:
+    - id: pydocstringformatter
 #- repo: https://github.com/sirosen/texthooks
 #  rev: "0.3.1"
 #  hooks:
