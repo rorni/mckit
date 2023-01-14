@@ -371,7 +371,7 @@ path = "."
 [tool.pydocstringformatter]
 write = true
 style = "pep257"
-exclude = ["tools/**", "**/parser/**"]
+exclude = ["tools/**","**/*_parser.py","**/*_tab.py"]
 strip-whitespaces = true
 max-line-length = 90
 summary-quotes-same-line = true

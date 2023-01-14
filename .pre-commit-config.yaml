@@ -41,6 +41,7 @@ repos:
   rev: "v0.7.3"
   hooks:
     - id: pydocstringformatter
+      exclude: _parser\.py$|_tab\.py
 #- repo: https://github.com/sirosen/texthooks
 #  rev: "0.3.1"
 #  hooks:

@@ -92,13 +92,11 @@ def extract_comments(text):
 
 
 class ParseError(ValueError):
-    """Parsing exception"""
+    """Parsing exception."""
 
 
 def internalize(word: str, words: Iterable[str]) -> str:
-    """
-    Replaces given `word` with the equal word from the list `words` to reuse the object for repeating small words.
-    """
+    """Replaces given `word` with the equal word from the list `words` to reuse the object for repeating small words."""
     for w in words:
         if w == word:
             return w, True

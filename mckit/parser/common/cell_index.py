@@ -6,7 +6,7 @@ from mckit.utils.Index import Index, NumberedItemNotFoundError
 
 
 class DummyCell(Body):
-    """To substitute cell when it's not found"""
+    """To substitute cell when it's not found."""
 
     def __init__(self, name: int):
         self._name = name

@@ -5,7 +5,7 @@ from mckit.utils.Index import Index, NumberedItemNotFoundError
 
 
 class DummyTransformation(Transformation):
-    """To substitute transformation when it's not found"""
+    """To substitute transformation when it's not found."""
 
     def __init__(self, name: int):
         super().__init__(name=name, comment="dummy")
