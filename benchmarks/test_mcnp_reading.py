@@ -1,5 +1,4 @@
-"""
-Tests with benchmarks on large mcnp files.
+"""Tests with benchmarks on large mcnp files.
 
 To use it install plugin pytest-benchmark (https://pytest-benchmark.readthedocs.io/en/latest/index.html#)
     conda install pytest-benchmark

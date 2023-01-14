@@ -274,8 +274,7 @@ class Surface(Card, MaybeClose):
 
     @abstractmethod
     def apply_transformation(self) -> "Surface":
-        """
-        Applies transformation specified for the surface.
+        """Applies transformation specified for the surface.
 
         Returns
         -------

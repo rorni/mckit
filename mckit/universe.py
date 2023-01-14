@@ -799,7 +799,10 @@ class Universe:
         return result
 
     def transform(self, tr: Transformation) -> "Universe":
-        """Applies transformation tr to this universe. Returns a new universe."""
+        """Applies transformation tr to this universe.
+
+        Returns a new universe.
+        """
         new_cells = [c.transform(tr) for c in self]
         return Universe(
             new_cells,
@@ -811,6 +814,7 @@ class Universe:
 
     def apply_transformation(self) -> "Universe":
         """Applies transformations specified in cells.
+
         Returns a new universe.
         """
         new_cells = [c.apply_transformation() for c in self]
@@ -947,10 +951,10 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
 
 # TODO dvp: make names of cards not optional
 IU = Tuple[List[Optional[Name]], Name]
-"""Entities, Universe name"""
+"""Entities, Universe name."""
 
 E2U = Dict[Name, Dict[Name, int]]
-"""Map Entity name -> Universe Name -> Count"""
+"""Map Entity name -> Universe Name -> Count."""
 
 
 def entity_to_universe_map_reducer(result: E2U, entry: IU) -> E2U:

@@ -76,7 +76,7 @@ class Composition(Card):
     """
 
     _tolerance = 1.0e-3
-    """Relative composition element concentration equality tolerance"""
+    """Relative composition element concentration equality tolerance."""
 
     # TODO dvp: are there specs using both atomic and weight definitions?
     def __init__(

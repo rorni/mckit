@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # coding: utf-8
-"""
-Compute UP08 ISS/Portcell model intersection with envelopes for  UP08 ex-vessel components.
+"""Compute UP08 ISS/Portcell model intersection with envelopes for  UP08 ex-vessel components.
 ===================================================================================================
 
 We don't use bounding boxes here, because the number of cells in the model is much more (about 1000 times)
 than number of GA envelopes. The complexity is not reduced significantly using bounding box.
-
 """
 import typing as tp
 

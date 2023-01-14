@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Проверяет корректность модели и выдает статистику.
-"""
+"""Проверяет корректность модели и выдает статистику."""
 from typing import Any, Callable, Iterable, Optional
 
 from pathlib import Path

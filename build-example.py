@@ -1,5 +1,5 @@
-"""
-See: https://gist.github.com/dmontagu/b91d5fd5319ae6fe004ecd28771d985e
+"""See: https://gist.github.com/dmontagu/b91d5fd5319ae6fe004ecd28771d985e.
+
 Adapted from https://github.com/pybind/cmake_example
 """
 from typing import Any, Dict

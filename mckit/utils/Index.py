@@ -16,9 +16,7 @@ class Index(Dict[Key, Item]):
         self._default_factory = default_factory
 
     def __missing__(self, key: Key) -> Optional[Item]:
-        """
-        Calls default factory with the key as argument.
-        """
+        """Calls default factory with the key as argument."""
         if self._default_factory:
             df = self._default_factory
             return df(key)

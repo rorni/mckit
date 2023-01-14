@@ -1,8 +1,6 @@
-"""
-Intercept log messages from the used libraries and pass them to `loguru`.
+"""Intercept log messages from the used libraries and pass them to `loguru`.
 
 See https://github.com/Delgan/loguru
-
 """
 from typing import Final
 
@@ -23,7 +21,7 @@ from loguru import logger
 
 
 class InterceptHandler(logging.Handler):
-    """Send events from standard logging to loguru"""
+    """Send events from standard logging to loguru."""
 
     def emit(self, record):
         # Get corresponding Loguru level if it exists

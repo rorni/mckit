@@ -1,5 +1,5 @@
-"""
-Code to profile on large mcnp files.
+"""Code to profile on large mcnp files.
+
 Not using pytest.
 """
 from zipfile import ZipFile
