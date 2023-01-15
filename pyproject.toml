@@ -134,7 +134,6 @@ pytest = ">=7.0.1"
 pytest-cache = ">=1.0"
 pytest-cov = ">=3.0.0"
 pytest-mock = ">=3.6.1"
-#codecov = ">=2.1.12"
 coverage = { version = ">=6.1.2", extras = ["toml"] }
 
 [tool.poetry.group.coverage.dependencies]
@@ -207,7 +206,7 @@ sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 default_section = "FIRSTPARTY"
 use_parentheses = true
 multi_line_output = 3
-line_length = 90
+line_length = 100
 include_trailing_comma = true
 lines_between_types = 1
 skip_gitignore = true
@@ -220,7 +219,7 @@ skip_glob = ["setup*.py", "*-example.py"]
 # character.
 
 [tool.black]
-line-length = 90
+line-length = 100
 include = '''
 (
     \.pyi?$
@@ -375,3 +374,9 @@ exclude = ["tools/**","**/*_parser.py","**/*_tab.py"]
 strip-whitespaces = true
 max-line-length = 90
 summary-quotes-same-line = true
+
+
+[tool.pylint]
+good-names-rgxs=["."]  # a single character variable is okay
+logging-format-style="new"   # use {} in logging messages
+deprecated-modules=["six"]
