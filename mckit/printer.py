@@ -10,9 +10,7 @@ from mckit.utils import get_decades, prettify_float, significant_digits
 IMPORTANCE_FORMAT = "{0:.3f}"
 
 
-def print_card(
-    tokens: List[str], offset: int = 8, max_column: int = 80, sep: str = "\n"
-) -> str:
+def print_card(tokens: List[str], offset: int = 8, max_column: int = 80, sep: str = "\n") -> str:
     """Produce string in MCNP card format.
 
     Parameters

@@ -61,9 +61,7 @@ def process_universe(universe_name: int, min_volume=1e-3, out=sys.stdout) -> tp.
     material_volume_fractions = []
     for k, v in material_volume_map.items():
         material_volume_fractions.append((material_index[k], v / volume0))
-    mixed_material = mk.Material.mixture(
-        *material_volume_fractions, fraction_type="volume"
-    )
+    mixed_material = mk.Material.mixture(*material_volume_fractions, fraction_type="volume")
     composition = mixed_material.composition
     composition.rename(universe_name)
     print(

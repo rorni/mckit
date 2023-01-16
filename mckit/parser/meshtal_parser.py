@@ -279,17 +279,13 @@ def p_tally(p):
             if k != "TIME":
                 shape[v] -= 1
         if "ENERGY" in boundaries.keys():
-            boundaries["ENERGY"] = 0.5 * (
-                boundaries["ENERGY"][1:] + boundaries["ENERGY"][:-1]
-            )
+            boundaries["ENERGY"] = 0.5 * (boundaries["ENERGY"][1:] + boundaries["ENERGY"][:-1])
         result = np.empty(shape)
         error = np.empty(shape)
         indices = np.empty((data.shape[0], 4), dtype=int)
         for k in boundaries.keys():
             if k in header:
-                indices[:, od[k]] = (
-                    np.searchsorted(boundaries[k], data[:, header.index(k)]) - 1
-                )
+                indices[:, od[k]] = np.searchsorted(boundaries[k], data[:, header.index(k)]) - 1
             else:
                 indices[:, od[k]] = np.zeros(data.shape[0])
         res_ind = header.index("RESULT")

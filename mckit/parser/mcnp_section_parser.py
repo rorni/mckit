@@ -25,9 +25,7 @@ SPACE_PATTERN = re.compile(r"\s+", flags=re.MULTILINE)
 SDEF_PATTERN = re.compile(r"(sdef)|(s[ibp]\d+)|(ds\d+)|(wwp.*)", re.IGNORECASE)
 
 # pattern to match labels of cards relevant for tallies section
-TALLY_PATTERN = re.compile(
-    r"(?P<tag>f(c|(m(esh)?)?)|(e)|(d[ef]))(?P<number>\d+)", re.IGNORECASE
-)
+TALLY_PATTERN = re.compile(r"(?P<tag>f(c|(m(esh)?)?)|(e)|(d[ef]))(?P<number>\d+)", re.IGNORECASE)
 
 
 class Kind(IntEnum):
@@ -155,13 +153,9 @@ class InputSections(object):
     def check(self, attribute, value) -> None:
         if self.is_continue:
             if self.cell_cards or self.surface_cards:
-                raise ValueError(
-                    "Cells and Surfaces shouldn't present in 'continue' mode model"
-                )
+                raise ValueError("Cells and Surfaces shouldn't present in 'continue' mode model")
             if not self.data_cards:
-                raise ValueError(
-                    "At least one data card should present in 'continue' mode model"
-                )
+                raise ValueError("At least one data card should present in 'continue' mode model")
 
     def print(self, stream=sys.stdout):
         if self.message:
@@ -318,9 +312,7 @@ def check_title_is_continue(title):
 def is_comment(text: str) -> bool:
     assert isinstance(text, str), "The parameter 'line' should be text"
     if "\n" in text:
-        res = next(
-            (line for line in text.split("\n") if not is_comment_line(line)), False
-        )
+        res = next((line for line in text.split("\n") if not is_comment_line(line)), False)
         return not res
     else:
         return is_comment_line(text, skip_asserts=True)

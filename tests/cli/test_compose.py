@@ -24,9 +24,7 @@ def test_when_there_is_no_args(runner):
 
 
 def test_not_existing_envelopes_file(runner):
-    result = runner.invoke(
-        mckit, args=["compose", "not-existing.imcnp"], catch_exceptions=False
-    )
+    result = runner.invoke(mckit, args=["compose", "not-existing.imcnp"], catch_exceptions=False)
     assert result.exit_code > 0
     assert "Path 'not-existing.imcnp' does not exist" in result.output
 

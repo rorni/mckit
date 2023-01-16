@@ -1895,9 +1895,7 @@ class TestShape:
         result = geometry[geom_no].test_points(point)
         np.testing.assert_array_equal(result, ans)
 
-    @pytest.mark.parametrize(
-        "case_no, expected", enumerate([5, 2, 2, 13, 4, 6, 4, 4, 3, 2])
-    )
+    @pytest.mark.parametrize("case_no, expected", enumerate([5, 2, 2, 13, 4, 6, 4, 4, 3, 2]))
     def test_complexity(self, geometry, case_no, expected):
         assert geometry[case_no].complexity() == expected
 
@@ -1915,9 +1913,7 @@ class TestShape:
     @pytest.mark.parametrize("box_no", range(len(box_data)))
     @pytest.mark.parametrize(
         "case_no, expected",
-        enumerate(
-            [(0, 0, -1), (-1, -1, 0), (0, -1, 0), (0, 0, -1), (0, 0, 0), (0, 0, 0)]
-        ),
+        enumerate([(0, 0, -1), (-1, -1, 0), (0, -1, 0), (0, 0, -1), (0, 0, 0), (0, 0, 0)]),
     )
     def test_box(self, geometry, box, box_no: int, case_no: int, expected: tp.Tuple[int]):
         result = geometry[case_no].test_box(box[box_no])
@@ -2048,8 +2044,7 @@ class TestShape:
         new_surfs = new_shape.get_surfaces()
         ids = {id(s) for s in new_surfs}
         ids_ans = {
-            id(s) if n not in replace_names else id(replace_dict[s])
-            for n, s in surfs.items()
+            id(s) if n not in replace_names else id(replace_dict[s]) for n, s in surfs.items()
         }
         assert ids == ids_ans
 
@@ -2081,12 +2076,7 @@ class TestBody:
     @pytest.mark.parametrize("kwargs", kwarg_data)
     @pytest.mark.parametrize(
         "no1, no2",
-        [
-            (i, j)
-            for i in range(len(basic_geoms))
-            for j in range(len(basic_geoms))
-            if i != j
-        ],
+        [(i, j) for i in range(len(basic_geoms)) for j in range(len(basic_geoms)) if i != j],
     )
     def test_intersection(self, geometry, no1, no2, kwargs):
         body1 = Body(geometry[no1], **kwargs)
@@ -2099,12 +2089,7 @@ class TestBody:
     @pytest.mark.parametrize("kwargs", kwarg_data)
     @pytest.mark.parametrize(
         "no1, no2",
-        [
-            (i, j)
-            for i in range(len(basic_geoms))
-            for j in range(len(basic_geoms))
-            if i != j
-        ],
+        [(i, j) for i in range(len(basic_geoms)) for j in range(len(basic_geoms)) if i != j],
     )
     def test_union(self, geometry, no1, no2, kwargs):
         body1 = Body(geometry[no1], **kwargs)

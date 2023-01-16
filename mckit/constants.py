@@ -18,6 +18,4 @@ FLOAT_TOLERANCE = 1.0e-12
 
 MCNP_ENCODING = "cp1251"
 
-DROP_OPTIONS = frozenset(
-    ["original", "transform", "comment", "trailing_comment", "comment_above"]
-)
+DROP_OPTIONS = frozenset(["original", "transform", "comment", "trailing_comment", "comment_above"])

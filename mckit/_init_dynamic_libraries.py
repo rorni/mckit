@@ -77,12 +77,4 @@ init()
 import mckit.geometry as geometry  # noqa
 
 from mckit.body import Body, Shape  # noqa
-from mckit.surface import (  # noqa
-    Cone,
-    Cylinder,
-    GQuadratic,
-    Plane,
-    Sphere,
-    Torus,
-    create_surface,
-)
+from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface  # noqa

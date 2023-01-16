@@ -455,9 +455,7 @@ def test_corners(box, case_no, expected):
 
 @pytest.mark.parametrize(
     "case_no, expected",
-    enumerate(
-        [[[0.0, 1.0], [0.0, 2.0], [0.0, 3.0]], [[-1.0, 2.0], [-2.0, 0.0], [1.0, 2.0]]]
-    ),
+    enumerate([[[0.0, 1.0], [0.0, 2.0], [0.0, 3.0]], [[-1.0, 2.0], [-2.0, 0.0], [1.0, 2.0]]]),
 )
 def test_bounds(box, case_no, expected):
     bounds = box[case_no].bounds

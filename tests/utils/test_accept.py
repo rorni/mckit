@@ -47,9 +47,7 @@ def test_accept_two_levels():
         def __repr__(self):
             return f"Item({self.name})"
 
-    dc = DemoContainer(
-        map(Intermediate, [map(DemoItem, range(2)), map(DemoItem, range(2, 4))])
-    )
+    dc = DemoContainer(map(Intermediate, [map(DemoItem, range(2)), map(DemoItem, range(2, 4))]))
     expected = [[sum(range(2)), 2], [sum(range(2, 4)), 2]]
 
     def at_item(initial: Any, b: DemoItem) -> Any:
