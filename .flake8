@@ -1,5 +1,5 @@
 [flake8]
-select=ANN,B,B9,BLK,C,D,DAR,E,F,I,N,PD,R,TC,S,W
+select=ANN,B,B9,BLK,C,D,DAR,E,F,I,N,PD,R,TC,TR,S,W
 max-complexity=15
 max-line-length=90
 ignore=
