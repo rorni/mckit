@@ -23,25 +23,20 @@ def transform(
     logger.debug("Working dir {}", Path(".").absolute())
     logger.info("Transforming model from {s}", s=source)
     if output.exists() and not override:
-        raise FileExistsError(
-            f"File {output} already exists. Remove it or use --override option"
-        )
+        raise FileExistsError(f"File {output} already exists. Remove it or use --override option")
     parse_result: ParseResult = from_file(source)
     src: Universe = parse_result.universe
     logger.debug("Loading transformations {} from {}", transformation, transformations)
     transformations_text = transformations.read_text()
     transformations_list = [
-        parse_transformation(c.text)
-        for c in clean_mcnp_cards(split_to_cards(transformations_text))
+        parse_transformation(c.text) for c in clean_mcnp_cards(split_to_cards(transformations_text))
     ]
     transformations_index = IndexOfNamed.from_iterable(
         transformations_list,
         on_duplicate=raise_on_duplicate_strategy,
     )
     if transformation not in transformations_index:
-        raise ValueError(
-            f"Transformation {transformation} is not found in {transformations}"
-        )
+        raise ValueError(f"Transformation {transformation} is not found in {transformations}")
     the_transformation = transformations_index[transformation]
     dst = src.transform(the_transformation)
     save_mcnp(dst, output, override)

@@ -47,9 +47,7 @@ class NameClashError(ValueError):
             msg.write("\n")
             for kind, index in result.items():
                 for i, u in index.items():
-                    universes = reduce(
-                        lambda a, b: a.append(b) or a, map(Universe.name, u), []
-                    )
+                    universes = reduce(lambda a, b: a.append(b) or a, map(Universe.name, u), [])
                     msg.write(f"{kind} {i} is found in universes {universes}\n")
             ValueError.__init__(self, msg.getvalue())
 
@@ -254,9 +252,7 @@ class Universe:
             if cell.shape.is_empty():
                 continue
 
-            new_shape = self._get_cell_replaced_shape(
-                cell, surf_replace, surf_names, name_rule
-            )
+            new_shape = self._get_cell_replaced_shape(cell, surf_replace, surf_names, name_rule)
 
             new_cell = Body(new_shape, **cell.options)
             mat = new_cell.material()
@@ -264,9 +260,7 @@ class Universe:
                 new_comp = Universe._update_replace_dict(
                     mat.composition, comp_replace, comp_names, name_rule, "Material"
                 )
-                new_cell.options["MAT"] = Material(
-                    composition=new_comp, density=mat.density
-                )
+                new_cell.options["MAT"] = Material(composition=new_comp, density=mat.density)
 
             if name_rule == "keep" and cell.name() in cell_names:
                 raise NameClashError("Cell name clash: {0}".format(cell.name()))
@@ -304,9 +298,7 @@ class Universe:
             if mat:
                 comp = mat.composition
                 if comp in common_materials:
-                    c.options["MAT"] = Material(
-                        composition=cmd[comp], density=mat.density
-                    )
+                    c.options["MAT"] = Material(composition=cmd[comp], density=mat.density)
 
     @staticmethod
     def _get_cell_replaced_shape(cell, surf_replace, surf_names, name_rule):
@@ -332,9 +324,7 @@ class Universe:
                 print(entity.mcnp_repr())
                 for c in replace.keys():
                     print(c.mcnp_repr())
-                raise NameClashError(
-                    "{0} name clash: {1}".format(err_desc, entity.name())
-                )
+                raise NameClashError("{0} name clash: {1}".format(err_desc, entity.name()))
             elif rule == "new" or rule == "clash" and new_entity.name() in names:
                 new_name = max(names, default=0) + 1
                 new_entity.rename(new_name)
@@ -511,9 +501,7 @@ class Universe:
         def reducer(surfaces_list, cell):
             surfaces_list.extend(cell.shape.get_surfaces())
             if inner and "FILL" in cell.options:
-                surfaces_list.extend(
-                    cell.options["FILL"]["universe"].get_surfaces_list(inner)
-                )
+                surfaces_list.extend(cell.options["FILL"]["universe"].get_surfaces_list(inner))
             return surfaces_list
 
         return reduce(reducer, self, [])
@@ -574,9 +562,7 @@ class Universe:
         }
         mats = {None: list(map(Card.name, self._common_materials))}
         for u in universes:
-            mats[u] = list(
-                map(Card.name, u.get_compositions().difference(self._common_materials))
-            )
+            mats[u] = list(map(Card.name, u.get_compositions().difference(self._common_materials)))
         univs = {u: [u.name()] for u in universes}
         cstat = Universe._produce_stat(universe_to_cell_name_map)
         stat = {}
@@ -595,9 +581,7 @@ class Universe:
         return stat
 
     @staticmethod
-    def _produce_stat(
-        names: Dict["Universe", Iterable[int]]
-    ) -> Dict[int, Set["Universe"]]:
+    def _produce_stat(names: Dict["Universe", Iterable[int]]) -> Dict[int, Set["Universe"]]:
         stat = defaultdict(list)
         for u, u_names in names.items():
             for name in u_names:
@@ -770,9 +754,7 @@ class Universe:
 
         if verbose:
             print("Universe {0} simplification has been finished.".format(self.name()))
-            print(
-                "{0} empty cells were deleted.".format(len(self._cells) - len(new_cells))
-            )
+            print("{0} empty cells were deleted.".format(len(self._cells) - len(new_cells)))
 
         self._cells = new_cells
 
@@ -879,9 +861,7 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
 
 
 def collect_transformations(universe: Universe, recursive=True) -> Set[Transformation]:
-    def add_surface_transformation(
-        aggregator: Set[Transformation], surface: Surface
-    ) -> None:
+    def add_surface_transformation(aggregator: Set[Transformation], surface: Surface) -> None:
         transformation = surface.transformation
         if transformation and transformation.name():
             aggregator.add(transformation)
@@ -987,9 +967,7 @@ def compositions_to_universe_mapper(universe: Universe) -> IU:
 
 def transformations_to_universe_mapper(universe: Universe) -> IU:
     return (
-        list(
-            map(Transformation.name, collect_transformations(universe, recursive=False))
-        ),
+        list(map(Transformation.name, collect_transformations(universe, recursive=False))),
         universe.name(),
     )
 
@@ -1033,9 +1011,7 @@ class UniverseAnalyser:
             cells,
             on_duplicate=self.cell_duplicates,
         )
-        self.cell_to_universe_map = collect_shared_entities(
-            cells_to_universe_mapper, universes
-        )
+        self.cell_to_universe_map = collect_shared_entities(cells_to_universe_mapper, universes)
         self.surface_duplicates = StatisticsCollector(ignore_equal=True)
         self.surface_index = IndexOfNamed[Name, Surface].from_iterable(
             universe.get_surfaces_list(inner=True),

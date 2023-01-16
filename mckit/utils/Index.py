@@ -59,9 +59,7 @@ class NumberedItemDuplicateError(ValueError):
         self._curr = curr
 
     def __str__(self):
-        return (
-            f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"
-        )
+        return f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"
 
 
 def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> NoReturn:

@@ -22,10 +22,7 @@ def test_old_mcnp_reading():
 
 def test_sly_mcnp_reading():
     result: ParseResult = from_text(CLITE_TEXT)
-    assert (
-        result.title
-        == "C-LITE VERSION 1 RELEASE 131031 ISSUED 31/10/2013 - Halloween edition"
-    )
+    assert result.title == "C-LITE VERSION 1 RELEASE 131031 ISSUED 31/10/2013 - Halloween edition"
     assert len(result.universe) == 150
 
 

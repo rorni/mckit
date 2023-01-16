@@ -127,9 +127,7 @@ def create_surface(kind: str, *params: float, **options: Dict[str, Any]) -> "Sur
         A = 1 - axis
         if kind[1] == "/":
             Ax, Az = np.dot(A, EX), np.dot(A, EZ)
-            r0 = params[0] * (Ax * EX + (1 - Ax) * EY) + params[1] * (
-                (1 - Az) * EY + Az * EZ
-            )
+            r0 = params[0] * (Ax * EX + (1 - Ax) * EY) + params[1] * ((1 - Az) * EY + Az * EZ)
         else:
             r0 = ORIGIN
         R = params[-1]
@@ -147,9 +145,7 @@ def create_surface(kind: str, *params: float, **options: Dict[str, Any]) -> "Sur
     # ---------- GQ -----------------
     elif kind == "GQ":
         A, B, C, D, E, F, G, H, J, k = params
-        m = np.array(
-            [[A, 0.5 * D, 0.5 * F], [0.5 * D, B, 0.5 * E], [0.5 * F, 0.5 * E, C]]
-        )
+        m = np.array([[A, 0.5 * D, 0.5 * F], [0.5 * D, B, 0.5 * E], [0.5 * F, 0.5 * E, C]])
         v = np.array([G, H, J])
         return GQuadratic(m, v, k, **options)
     # ---------- Torus ---------------------
@@ -392,9 +388,7 @@ class RCC(Surface, _RCC):
         args = self.surfaces
         for a in args:
             print(a.mcnp_repr())
-        center = args[0]._pt - args[2]._k * args[0]._axis * np.dot(
-            args[0]._axis, args[2]._v
-        )
+        center = args[0]._pt - args[2]._k * args[0]._axis * np.dot(args[0]._axis, args[2]._v)
         direction = -(args[1]._k + args[2]._k) * args[1]._v
         radius = args[0]._radius
         return center, direction, radius
@@ -497,12 +491,7 @@ class BOX(Surface, _BOX):
         options.pop("transform", None)
         Surface.__init__(self, **options)
         self._hash = (
-            hash(surf1)
-            ^ hash(surf2)
-            ^ hash(surf3)
-            ^ hash(surf4)
-            ^ hash(surf5)
-            ^ hash(surf6)
+            hash(surf1) ^ hash(surf2) ^ hash(surf3) ^ hash(surf4) ^ hash(surf5) ^ hash(surf6)
         )
 
     def surface(self, number):
@@ -608,9 +597,7 @@ class Plane(Surface, _Plane):
                              Transformation instance.
     """
 
-    def __init__(
-        self, normal: VectorLike, offset: float, assume_normalized=False, **options: Any
-    ):
+    def __init__(self, normal: VectorLike, offset: float, assume_normalized=False, **options: Any):
         v = np.asarray(normal, dtype=float)
         k = float(offset)
         if not assume_normalized:
@@ -734,9 +721,7 @@ class Sphere(Surface, _Sphere):
                              created. Transformation instance.
     """
 
-    def __init__(
-        self, center: Union[Sequence[float], np.ndarray], radius: float, **options: Any
-    ):
+    def __init__(self, center: Union[Sequence[float], np.ndarray], radius: float, **options: Any):
         center = np.asarray(center, dtype=float)
         radius = float(radius)
         Surface.__init__(self, **options)
@@ -765,9 +750,7 @@ class Sphere(Surface, _Sphere):
         if self is other:
             return True
         if not isinstance(other, Sphere):
-            return (
-                False  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
-            )
+            return False  # TODO dvp: what if `other` is GQuadratic representation of Sphere?
         return are_equal(
             (self._radius, self._center, self.transformation),
             (other._radius, other._center, other.transformation),
@@ -884,9 +867,7 @@ class Cylinder(Surface, _Cylinder):
         )
 
     def __repr__(self):
-        return (
-            f"Cylinder({self._pt}, {self._axis}, {self.options if self.options else ''})"
-        )
+        return f"Cylinder({self._pt}, {self._axis}, {self.options if self.options else ''})"
 
     def __hash__(self):
         return self._hash
@@ -1116,9 +1097,7 @@ class Cone(Surface, _Cone):
             return self
         tr = self.combine_transformations(tr)
         options = self.clean_options()
-        cone = Cone(
-            self._apex, self._axis, self._t2, sheet=self._sheet, transform=tr, **options
-        )
+        cone = Cone(self._apex, self._axis, self._t2, sheet=self._sheet, transform=tr, **options)
         return cone
 
     def mcnp_words(self, pretty: bool = False) -> List[str]:
@@ -1414,9 +1393,7 @@ class Torus(Surface, _Torus):
             return self
         tr = self.combine_transformations(tr)
         options = self.clean_options()
-        return Torus(
-            self._center, self._axis, self._R, self._a, self._b, transform=tr, **options
-        )
+        return Torus(self._center, self._axis, self._R, self._a, self._b, transform=tr, **options)
 
     def mcnp_words(self, pretty: bool = False) -> List[str]:
         words = Surface.mcnp_words(self)

@@ -21,9 +21,7 @@ OUTER_LINE = "=" * 40
 INNER_LINE = "-" * 40
 
 
-def print_text(
-    text: str, output_dir: Path, section_file_name: str, override: bool
-) -> None:
+def print_text(text: str, output_dir: Path, section_file_name: str, override: bool) -> None:
     if text:
         out = output_dir / section_file_name
         check_if_path_exists(out, override)
@@ -54,9 +52,7 @@ def split(
     print_cards(sections.cell_cards, output_dir, "cells.txt", override)
     print_cards(sections.surface_cards, output_dir, "surfaces.txt", override)
     if sections.data_cards:
-        materials, transformations, sdef, tallies, others = sp.distribute_cards(
-            sections.data_cards
-        )
+        materials, transformations, sdef, tallies, others = sp.distribute_cards(sections.data_cards)
         print_cards(materials, output_dir, "materials.txt", override)
         print_cards(transformations, output_dir, "transformations.txt", override)
         print_cards(sdef, output_dir, "sdef.txt", override)

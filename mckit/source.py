@@ -234,9 +234,7 @@ def expand_matrix_distribution(
         ValueError: if the distribution is neither discrete, nor pdf, nor histogram.
     """
     if len(intensities.shape) != len(var_values):
-        msg = (
-            "Length of var_values must be equal to the number of intensities dimensions."
-        )
+        msg = "Length of var_values must be equal to the number of intensities dimensions."
         raise ValueError(msg)
     uniq_values = []
     exp_var_values = []

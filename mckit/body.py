@@ -226,12 +226,8 @@ class Shape(_Shape):
             return True
         if len(self.args) != len(other.args):
             return False
-        self_groups = {
-            k: list(v) for k, v in groupby(sorted(self.args, key=hash), key=hash)
-        }
-        other_groups = {
-            k: list(v) for k, v in groupby(sorted(other.args, key=hash), key=hash)
-        }
+        self_groups = {k: list(v) for k, v in groupby(sorted(self.args, key=hash), key=hash)}
+        other_groups = {k: list(v) for k, v in groupby(sorted(other.args, key=hash), key=hash)}
         flag = False  # TODO dvp: check is this statement doesn't break tests
         for hash_value, entities in self_groups.items():
             flag = False
@@ -888,9 +884,7 @@ class Body(Card):
         return cell
 
 
-def simplify(
-    cells: Iterable, box: Box = GLOBAL_BOX, min_volume: float = 1.0
-) -> tp.Generator:
+def simplify(cells: Iterable, box: Box = GLOBAL_BOX, min_volume: float = 1.0) -> tp.Generator:
     """Simplifies the cells.
 
     Parameters
@@ -972,8 +966,6 @@ def simplify_mpp(
     def fmt_fun(x):
         return "Simplifying cell #{0}".format(x.name() if x else x)
 
-    with progressbar(
-        simplify_mp(cells, box, min_volume, chunk_size), item_show_func=fmt_fun
-    ) as pb:
+    with progressbar(simplify_mp(cells, box, min_volume, chunk_size), item_show_func=fmt_fun) as pb:
         for c in pb:
             yield c

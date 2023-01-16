@@ -51,9 +51,7 @@ MCKIT_CONSOLE_LOG_FORMAT: Final[str] = environ.get(
 )
 
 
-def init_logger(
-    logfile, quiet, verbose, *, stderr_format: str = MCKIT_CONSOLE_LOG_FORMAT
-):
+def init_logger(logfile, quiet, verbose, *, stderr_format: str = MCKIT_CONSOLE_LOG_FORMAT):
     stderr_level: str = "INFO"
     if quiet:
         stderr_level = "WARNING"

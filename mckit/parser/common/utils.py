@@ -73,9 +73,7 @@ def extract_comments(text):
                 if c is not None:
                     comments.append((i + 1, [c]))  # lexer counts lines from 1
             else:
-                assert (
-                    c is not None
-                ), "If there's no text, then at least comment should present"
+                assert c is not None, "If there's no text, then at least comment should present"
                 trailing_comment.append(c)
 
     assert cleaned_text, "There should be some  text in a card"

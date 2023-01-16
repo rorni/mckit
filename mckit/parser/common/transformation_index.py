@@ -24,9 +24,7 @@ class TransformationStrictIndex(Index):
         super().__init__(raise_on_absent_transformation_strategy, **kwargs)
 
     @classmethod
-    def from_iterable(
-        cls, items: Iterable[Transformation]
-    ) -> "TransformationStrictIndex":
+    def from_iterable(cls, items: Iterable[Transformation]) -> "TransformationStrictIndex":
         index = cls()
         index.update((c.name(), c) for c in items)
         return index
