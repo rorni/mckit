@@ -47,7 +47,8 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v3.3.0
 
-      - uses: actions/setup-python@v4.4.0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4.4.0
         with:
           python-version: '3.11'
 
@@ -100,10 +101,10 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.9   # TODO dvp: restricted by sphinxcontrib-napoleon 0.7
         uses: actions/setup-python@v4.4.0
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
       - name: Use frozen pip version
         run: |
@@ -142,8 +143,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO dvp: check https://github.com/MC-kit/mckit/issues/228 on macos
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-20.04, ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
@@ -192,7 +192,7 @@ jobs:
         run: nox  --force-color --session tests --python ${{ matrix.python-version }}
 
       - name: Upload coverage data
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: coverage-data
           path: ".coverage.*"

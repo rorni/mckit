@@ -6,7 +6,7 @@ import sys
 
 from pathlib import Path
 
-from extension_utils import MACOS, WIN, get_library_dir
+from building.extension_utils import MACOS, WIN, get_library_dir
 from setuptools import Extension as _Extension
 
 # See MKL linking options for various versions of MKL and OS:

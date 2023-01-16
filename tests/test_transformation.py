@@ -33,11 +33,7 @@ from mckit.transformation import IDENTITY_ROTATION, Transformation
             {"name": 1},
         ),
         (
-            {
-                "rotation": np.cos(
-                    np.array([30, 60, 90, 120, 30, 90, 90, 90, 0]) * np.pi / 180
-                )
-            },
+            {"rotation": np.cos(np.array([30, 60, 90, 120, 30, 90, 90, 90, 0]) * np.pi / 180)},
             np.cos(np.array([[30, 120, 90], [60, 30, 90], [90, 90, 0]]) * np.pi / 180),
             ORIGIN,
             {},

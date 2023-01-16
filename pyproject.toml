@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.6.20"
+version = "0.6.21"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -12,14 +12,18 @@ keywords = ["mckit", "MCNP"]
 build = "build.py"
 readme = "README.rst"
 packages = [
-    { include = "mckit" }
+    { include = "mckit" },
+    { include = "building", format="sdist"},
+    { include = "tests", format="sdist"},
+    { include = "benchmarks", format="sdist"},
 ]
 include = [
     "mckit/data/isotopes.dat",
+    { path = "build.py", format="sdist"}
 ]
 exclude = [
-#    "__pycache__",
     ".py[co]$",
+    "setup.py"
 ]
 # Select from PyPI classifiers: https://pypi.org/classifiers/
 classifiers = [
@@ -39,7 +43,7 @@ classifiers = [
 requires = [
     "poetry-core >= 1.1.0",
     "setuptools >= 65.6.3",
-    "cmake >= 3.23.1",
+    "cmake >= 3.25.0",
     "mkl-devel == 2022.2.1",
     "tbb == 2021.7.1",
 #    Note: keep in sync with main dependencies
@@ -102,6 +106,10 @@ tbb = "2021.7.1"
 # Also interesting: https://pypistats.org/packages/mkl - no visible MacOS downloads
 # As for 2022.01.12 for MacOS only version 10.15 is supported
 # TODO dvp: automate the check above
+#
+# TODO dvp: check
+#      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
+#
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
@@ -120,6 +128,7 @@ safety = ">=2.3.5"
 [tool.poetry.group.pre_commit.dependencies]
 pre-commit = ">=2.15.0"
 rstcheck = ">=3.3.1"
+pydocstringformatter = "^0.7.3"
 
 [tool.poetry.group.black.dependencies]
 black = ">=22.8.0"
@@ -133,7 +142,6 @@ pytest = ">=7.0.1"
 pytest-cache = ">=1.0"
 pytest-cov = ">=3.0.0"
 pytest-mock = ">=3.6.1"
-#codecov = ">=2.1.12"
 coverage = { version = ">=6.1.2", extras = ["toml"] }
 
 [tool.poetry.group.coverage.dependencies]
@@ -178,18 +186,19 @@ flake8-simplify = ">=0.19.3"
 flake8-use-fstring = ">=1.4"
 flake8-use-pathlib = ">=0.3.0"
 tryceratops = ">=1.0.1"
-
+pylint = ">=2.15.10"
+flake8-pylint = ">=0.1.3"
 # TODO dvp: check/use flake8-pyprojecttoml plugin
 # https://gitlab.com/durko/flake8-pyprojecttoml/-/blob/master/pyproject.toml
+
 
 [tool.poetry.group.docs.dependencies]
 sphinx = ">=5.3.0"
 sphinx-autodoc-typehints = ">=1.19.5"
 sphinx-autorun = ">=1.1.1"
 sphinx-click = ">=4.4.0"
-sphinx-rtd-theme = ">=1.1.1"
-#sphinxcontrib-napoleon = ">=0.7"
-numpydoc = ">=1.4.0"
+sphinx-rtd-theme = ">=1.1.1"   # TODO dvp: sphix-rtd-scheme breaks updating to the sphinx 6.3
+sphinxcontrib-napoleon = ">=0.7"
 
 [tool.poetry.group.docs_auto.dependencies]
 sphinx-autobuild = ">=2021.3.14"
@@ -204,7 +213,7 @@ sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 default_section = "FIRSTPARTY"
 use_parentheses = true
 multi_line_output = 3
-line_length = 90
+line_length = 100
 include_trailing_comma = true
 lines_between_types = 1
 skip_gitignore = true
@@ -217,7 +226,7 @@ skip_glob = ["setup*.py", "*-example.py"]
 # character.
 
 [tool.black]
-line-length = 90
+line-length = 100
 include = '''
 (
     \.pyi?$
@@ -363,3 +372,18 @@ experimental = true
 [tool.pycln]
 path = "."
 #silence = true
+
+
+[tool.pydocstringformatter]
+write = true
+style = "pep257"
+exclude = ["tools/**","**/*_parser.py","**/*_tab.py"]
+strip-whitespaces = true
+max-line-length = 90
+summary-quotes-same-line = true
+
+
+[tool.pylint]
+good-names-rgxs=["."]  # a single character variable is okay
+logging-format-style="new"   # use {} in logging messages
+deprecated-modules=["six"]

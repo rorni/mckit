@@ -40,9 +40,7 @@ class RectMesh:
         self._origin = np.array([self._xbins[0], self._ybins[0], self._zbins[0]])
         self._tr = None  # TODO dvp: and what this _tr is for?
         if transform is not None:
-            self.transform(
-                transform
-            )  # TODO dvp: it's  wrong to apply transormaiton immideately
+            self.transform(transform)  # TODO dvp: it's  wrong to apply transormaiton immideately
 
     def __eq__(self, other):
         return self is other
@@ -261,9 +259,7 @@ class CylMesh:
         """Transforms this mesh."""
         raise NotImplementedError
 
-    def calculate_volumes(
-        self, cells, with_mat_only=True, verbose=False, min_volume=1.0e-3
-    ):
+    def calculate_volumes(self, cells, with_mat_only=True, verbose=False, min_volume=1.0e-3):
         """Calculates volumes of cells.
 
         Parameters
@@ -552,9 +548,7 @@ class FMesh:
         else:
             axis, index, x, y = self._mesh.slice_axis_index(R=R, Z=Z, T=T)
 
-        data = self._data.take(
-            index, axis=axis + 1
-        )  # +1 because the first axis is for energy.
+        data = self._data.take(index, axis=axis + 1)  # +1 because the first axis is for energy.
         err = self._error.take(index, axis=axis + 1)
 
         if E == "total":

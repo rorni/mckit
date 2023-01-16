@@ -12,7 +12,6 @@ def cd_tmpdir(tmpdir):
 
     Yields:
         None
-
     """
     old_dir = tmpdir.chdir()
     try:

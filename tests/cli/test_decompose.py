@@ -45,16 +45,12 @@ def test_when_there_is_no_args(runner):
 
 
 def test_not_existing_mcnp_file(runner):
-    result = runner.invoke(
-        mckit, args=["decompose", "not-existing.imcnp"], catch_exceptions=False
-    )
+    result = runner.invoke(mckit, args=["decompose", "not-existing.imcnp"], catch_exceptions=False)
     assert result.exit_code > 0
     assert "Path 'not-existing.imcnp' does not exist" in result.output
 
 
-@pytest.mark.parametrize(
-    "source, expected", [("parser_test_data/parser1.txt", "envelopes.i")]
-)
+@pytest.mark.parametrize("source, expected", [("parser_test_data/parser1.txt", "envelopes.i")])
 def test_when_there_are_no_universes(runner, source, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem():
@@ -64,9 +60,7 @@ def test_when_there_are_no_universes(runner, source, expected):
         assert result.exit_code == 0, "Should success without universes"
         assert Path(
             "universes/envelopes.i"
-        ).exists(), (
-            "Should store the only envelopes.i file in the default directory 'universes'"
-        )
+        ).exists(), "Should store the only envelopes.i file in the default directory 'universes'"
 
 
 @pytest.mark.parametrize(
@@ -76,15 +70,11 @@ def test_when_only_source_is_specified(runner, source, expected):
     source: Path = data_filename_resolver(source)
     with runner.isolated_filesystem():
         result = runner.invoke(mckit, args=["decompose", source], catch_exceptions=False)
-        assert result.exit_code == 0, (
-            "Should success without specified output: " + result.output
-        )
+        assert result.exit_code == 0, "Should success without specified output: " + result.output
         output: Path = get_default_output_directory(source)
         for f in expected:
             p = output / f
-            assert (
-                p.exists()
-            ), f"Should store the file {p} in the default directory '{output}'"
+            assert p.exists(), f"Should store the file {p} in the default directory '{output}'"
             model = from_file(p).universe
             for cell in model:
                 assert "U" not in cell.options or cell.options["U"].name() == 0
@@ -98,9 +88,7 @@ def test_when_output_is_specified(runner, source, output, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem():
         output = Path(output)
-        assert (
-            not output.exists()
-        ), f"The {output} directory should not exist before the test run"
+        assert not output.exists(), f"The {output} directory should not exist before the test run"
         result = runner.invoke(
             mckit,
             args=["decompose", "--output", str(output), source],
@@ -182,9 +170,7 @@ def test_anonymous_transformation(runner):
             spec = descriptor["2"]["transform"]
             assert len(spec) == 3
             spec1 = np.fromiter(map(float, spec), dtype=float)
-            assert_array_equal(
-                spec1, [0.0, -1.0, 0.0], f"Fill descriptor {spec1} is wrong"
-            )
+            assert_array_equal(spec1, [0.0, -1.0, 0.0], f"Fill descriptor {spec1} is wrong")
 
 
 def test_named_transformation(runner):

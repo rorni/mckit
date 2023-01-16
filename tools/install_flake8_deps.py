@@ -20,7 +20,6 @@ References
 Partially borrowed from:
 
 - https://cthoyt.com/2020/04/25/how-to-code-with-me-flake8.html
-
 """  # : ignore B950
 
 import subprocess

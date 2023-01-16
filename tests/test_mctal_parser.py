@@ -21,9 +21,7 @@ file_resolver = filename_resolver("tests")
                     "vars": ["f"],
                     "bins": [[1, 2, 3, 4]],
                     "comment": "One line comment",
-                    "data": np.array(
-                        [8.80794e-05, 1.50383e-05, 2.11945e-06, 8.56005e-06]
-                    ),
+                    "data": np.array([8.80794e-05, 1.50383e-05, 2.11945e-06, 8.56005e-06]),
                     "error": np.array([0.0004, 0.0044, 0.0094, 0.0015]),
                 },
                 5: {
@@ -689,7 +687,5 @@ def test_mctal_parser(mctal_file, expected):
         assert tally["dims"] == expected[name]["dims"]
         assert tally["vars"] == expected[name]["vars"]
         assert tally["bins"] == expected[name]["bins"]
-        np.testing.assert_array_almost_equal(
-            tally["data"], expected[name]["data"], decimal=2
-        )
+        np.testing.assert_array_almost_equal(tally["data"], expected[name]["data"], decimal=2)
         np.testing.assert_array_almost_equal(tally["error"], expected[name]["error"])

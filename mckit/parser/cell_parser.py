@@ -138,9 +138,7 @@ class Parser(sly.Parser):
     @_("INTEGER LIKE INTEGER BUT attributes")
     def cell(self, p):
         reference_body = self.cells[p[2]]
-        options = filter_dict(
-            reference_body.options, "original", "comment", "comment_above"
-        )
+        options = filter_dict(reference_body.options, "original", "comment", "comment_above")
         options.update(p.attributes)
         options["name"] = p[0]
         new_body = Body(reference_body, **options)
@@ -240,18 +238,14 @@ class Parser(sly.Parser):
     @_('"*" FILL integer "(" transform_params ")"')
     def fill_attribute(self, p):
         translation, rotation, inverted = p.transform_params
-        transformation = Parser.build_transformation(
-            translation, rotation, True, inverted
-        )
+        transformation = Parser.build_transformation(translation, rotation, True, inverted)
         fill = {"universe": p.integer, "transform": transformation}
         return {"FILL": fill}
 
     @_('FILL integer "(" transform_params ")"')
     def fill_attribute(self, p):
         translation, rotation, inverted = p.transform_params
-        transformation = Parser.build_transformation(
-            translation, rotation, False, inverted
-        )
+        transformation = Parser.build_transformation(translation, rotation, False, inverted)
         fill = {"universe": p.integer, "transform": transformation}
         return {"FILL": fill}
 
@@ -279,16 +273,12 @@ class Parser(sly.Parser):
     @_('"*" TRCL "(" transform_params ")"')
     def trcl_attribute(self, p):
         translation, rotation, inverted = p.transform_params
-        return {
-            "TRCL": Parser.build_transformation(translation, rotation, True, inverted)
-        }
+        return {"TRCL": Parser.build_transformation(translation, rotation, True, inverted)}
 
     @_('TRCL "(" transform_params ")"')
     def trcl_attribute(self, p):
         translation, rotation, inverted = p.transform_params
-        return {
-            "TRCL": Parser.build_transformation(translation, rotation, False, inverted)
-        }
+        return {"TRCL": Parser.build_transformation(translation, rotation, False, inverted)}
 
     @_("TRCL integer")
     def trcl_attribute(self, p):

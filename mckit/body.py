@@ -226,12 +226,8 @@ class Shape(_Shape):
             return True
         if len(self.args) != len(other.args):
             return False
-        self_groups = {
-            k: list(v) for k, v in groupby(sorted(self.args, key=hash), key=hash)
-        }
-        other_groups = {
-            k: list(v) for k, v in groupby(sorted(other.args, key=hash), key=hash)
-        }
+        self_groups = {k: list(v) for k, v in groupby(sorted(self.args, key=hash), key=hash)}
+        other_groups = {k: list(v) for k, v in groupby(sorted(other.args, key=hash), key=hash)}
         flag = False  # TODO dvp: check is this statement doesn't break tests
         for hash_value, entities in self_groups.items():
             flag = False
@@ -344,7 +340,8 @@ class Shape(_Shape):
         Returns
         -------
         result : Shape
-            New shape."""
+            New shape.
+        """
         return Shape("U", self, *other)
 
     def transform(self, tr):
@@ -404,7 +401,7 @@ class Shape(_Shape):
             return 0
 
     def get_surfaces(self) -> Set[Surface]:
-        """Gets all the surfaces that describe the shape"""
+        """Gets all the surfaces that describe the shape."""
         args = self.args
         if len(args) == 1:
             return {args[0]}
@@ -680,7 +677,10 @@ class Body(Card):
         return words
 
     def _options_list(self):
-        """Generates a list of option words. For __str__ method."""
+        """Generates a list of option words.
+
+        For __str__ method.
+        """
         text = []
         for opt_group in CELL_OPTION_GROUPS:
             for key in opt_group:
@@ -696,7 +696,10 @@ class Body(Card):
         return self._shape
 
     def material(self) -> Optional[mm.Material]:
-        """Gets body's Material. None is returned if no material present."""
+        """Gets body's Material.
+
+        None is returned if no material present.
+        """
         composition = self.options.get("MAT", None)
         assert composition is None or isinstance(composition, mm.Material)
         return composition
@@ -784,7 +787,6 @@ class Body(Card):
         Returns
         -------
         cells : list
-
         """
         self.shape.collect_statistics(box, min_volume)
         shape_groups = self.shape.split_shape()
@@ -882,9 +884,7 @@ class Body(Card):
         return cell
 
 
-def simplify(
-    cells: Iterable, box: Box = GLOBAL_BOX, min_volume: float = 1.0
-) -> tp.Generator:
+def simplify(cells: Iterable, box: Box = GLOBAL_BOX, min_volume: float = 1.0) -> tp.Generator:
     """Simplifies the cells.
 
     Parameters
@@ -896,7 +896,6 @@ def simplify(
         Box, from which simplification process starts. Default: GLOBAL_BOX.
     min_volume : float
         Minimal volume of the box, when splitting process terminates.
-
     """
 
     for c in cells:
@@ -967,8 +966,6 @@ def simplify_mpp(
     def fmt_fun(x):
         return "Simplifying cell #{0}".format(x.name() if x else x)
 
-    with progressbar(
-        simplify_mp(cells, box, min_volume, chunk_size), item_show_func=fmt_fun
-    ) as pb:
+    with progressbar(simplify_mp(cells, box, min_volume, chunk_size), item_show_func=fmt_fun) as pb:
         for c in pb:
             yield c

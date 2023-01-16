@@ -99,9 +99,7 @@ def test_clashes_on_non_equal_items(entities):
 )
 def test_collect_statistics_on_clashes(entities, expected, expected_collected):
     collector = StatisticsCollector()
-    actual = IndexOfNamed.from_iterable(
-        entities, key=lambda x: x.name, on_duplicate=collector
-    )
+    actual = IndexOfNamed.from_iterable(entities, key=lambda x: x.name, on_duplicate=collector)
     assert actual == expected
     assert collector == expected_collected
 

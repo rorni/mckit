@@ -1,5 +1,4 @@
-"""
-"""
+""""""
 # import matplotlib.pyplot as plt
 # import seaborn as sb
 # import pandas as pd
@@ -126,9 +125,7 @@ def subtract_model_from_model(
     return new_universe
 
 
-def subtract_model_from_cell(
-    cell: mk.Body, model: mk.Universe, simplify: bool = True
-) -> mk.Body:
+def subtract_model_from_cell(cell: mk.Body, model: mk.Universe, simplify: bool = True) -> mk.Body:
     new_cell = cell
     cbb = cell.bounding_box
     for b_cell in model:
@@ -143,9 +140,7 @@ def subtract_model_from_cell(
 
 def set_common_materials(*universes) -> None:
     universes_collection = reduce(set.union, map(mk.Universe.get_universes, universes))
-    common_materials = reduce(
-        set.union, map(mk.Universe.get_compositions, universes_collection)
-    )
+    common_materials = reduce(set.union, map(mk.Universe.get_compositions, universes_collection))
     for u in universes_collection:
         u.set_common_materials(common_materials)
 
@@ -167,9 +162,7 @@ def main():
     cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
 
     LOG.info("Attaching bounding boxes to c-model envelopes %s", cells_to_fill)
-    attach_bounding_boxes(
-        [envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1
-    )
+    attach_bounding_boxes([envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
     # attach_bounding_boxes((envelopes), tolerance=10.0, chunksize=5)
     LOG.info("Backing up original envelopes")
     envelopes_original = envelopes.copy()

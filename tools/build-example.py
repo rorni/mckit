@@ -1,5 +1,5 @@
-"""
-See: https://gist.github.com/dmontagu/b91d5fd5319ae6fe004ecd28771d985e
+"""See: https://gist.github.com/dmontagu/b91d5fd5319ae6fe004ecd28771d985e.
+
 Adapted from https://github.com/pybind/cmake_example
 """
 from typing import Any, Dict
@@ -66,9 +66,7 @@ class ExtensionBuilder(build_ext):
         build_args = ["--config", cfg]
 
         if platform.system() == "Windows":
-            cmake_args += [
-                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
-            ]
+            cmake_args += ["-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)]
             if sys.maxsize > 2**32:
                 cmake_args += ["-A", "x64"]
             build_args += ["--", "/m"]
@@ -83,9 +81,7 @@ class ExtensionBuilder(build_ext):
         )
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
-        subprocess.check_call(
-            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env
-        )
+        subprocess.check_call(["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
         subprocess.check_call(["cmake", "--build", "."] + build_args, cwd=self.build_temp)
 
 

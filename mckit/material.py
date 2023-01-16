@@ -76,12 +76,10 @@ class Composition(Card):
     """
 
     _tolerance = 1.0e-3
-    """Relative composition element concentration equality tolerance"""
+    """Relative composition element concentration equality tolerance."""
 
     # TODO dvp: are there specs using both atomic and weight definitions?
-    def __init__(
-        self, atomic: TFractions = None, weight: TFractions = None, **options: Any
-    ):
+    def __init__(self, atomic: TFractions = None, weight: TFractions = None, **options: Any):
         Card.__init__(self, **options)
         self._composition = {}  # type Dict[Element, float]
         elem_w = []
@@ -106,17 +104,11 @@ class Composition(Card):
         if len(frac_w) + len(frac_a) > 0:
             total_frac_w = np.sum(frac_w)
             total_frac_a = np.sum(frac_a)
-            atoms_in_weight_spec = np.sum(
-                np.divide(frac_w, [e.molar_mass for e in elem_w])
-            )
-            mass_in_atomic_spec = np.sum(
-                np.multiply(frac_a, [e.molar_mass for e in elem_a])
-            )
+            atoms_in_weight_spec = np.sum(np.divide(frac_w, [e.molar_mass for e in elem_w]))
+            mass_in_atomic_spec = np.sum(np.multiply(frac_a, [e.molar_mass for e in elem_a]))
 
             totals_diff = total_frac_a - total_frac_w
-            sq_root = np.sqrt(
-                totals_diff**2 + 4 * atoms_in_weight_spec * mass_in_atomic_spec
-            )
+            sq_root = np.sqrt(totals_diff**2 + 4 * atoms_in_weight_spec * mass_in_atomic_spec)
             if totals_diff <= 0:
                 self._mu = 0.5 * (sq_root - totals_diff) / atoms_in_weight_spec
             else:
@@ -136,9 +128,7 @@ class Composition(Card):
         self._hash = reduce(xor, map(hash, self._composition.keys()))
 
     def copy(self):
-        return Composition(
-            atomic=cast(TFractions, self._composition.items()), **self.options
-        )
+        return Composition(atomic=cast(TFractions, self._composition.items()), **self.options)
 
     def __eq__(self, other):
         if len(self._composition.keys()) != len(other._composition.keys()):
@@ -668,10 +658,7 @@ class Element:
             Keys - elements - Element instances, values - atomic fractions.
         """
         result = {}
-        if (
-            self._mass_number > 0
-            and self._mass_number in _NATURAL_ABUNDANCE[self._charge].keys()
-        ):
+        if self._mass_number > 0 and self._mass_number in _NATURAL_ABUNDANCE[self._charge].keys():
             result[self] = 1.0
         elif self._mass_number == 0:
             for at_num, frac in _NATURAL_ABUNDANCE[self._charge].items():

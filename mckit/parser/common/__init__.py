@@ -8,12 +8,7 @@ from .composition_index import (
     DummyMaterial,
 )
 from .Lexer import Lexer
-from .surface_index import (
-    DummySurface,
-    SurfaceDummyIndex,
-    SurfaceNotFoundError,
-    SurfaceStrictIndex,
-)
+from .surface_index import DummySurface, SurfaceDummyIndex, SurfaceNotFoundError, SurfaceStrictIndex
 from .transformation_index import (
     DummyTransformation,
     TransformationDummyIndex,

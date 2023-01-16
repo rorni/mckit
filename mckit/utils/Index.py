@@ -16,9 +16,7 @@ class Index(Dict[Key, Item]):
         self._default_factory = default_factory
 
     def __missing__(self, key: Key) -> Optional[Item]:
-        """
-        Calls default factory with the key as argument.
-        """
+        """Calls default factory with the key as argument."""
         if self._default_factory:
             df = self._default_factory
             return df(key)
@@ -61,9 +59,7 @@ class NumberedItemDuplicateError(ValueError):
         self._curr = curr
 
     def __str__(self):
-        return (
-            f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"
-        )
+        return f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"
 
 
 def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> NoReturn:

@@ -1,5 +1,4 @@
-"""
-Tests with benchmarks on large mcnp files.
+"""Tests with benchmarks on large mcnp files.
 
 To use it install plugin pytest-benchmark (https://pytest-benchmark.readthedocs.io/en/latest/index.html#)
     conda install pytest-benchmark
@@ -28,10 +27,7 @@ def test_old_mcnp_reading(benchmark):
 
 def test_sly_mcnp_reading(benchmark):
     result: ParseResult = benchmark(from_text, CLITE_TEXT)
-    assert (
-        result.title
-        == "C-LITE VERSION 1 RELEASE 131031 ISSUED 31/10/2013 - Halloween edition"
-    )
+    assert result.title == "C-LITE VERSION 1 RELEASE 131031 ISSUED 31/10/2013 - Halloween edition"
     assert len(result.universe) == 150
 
 

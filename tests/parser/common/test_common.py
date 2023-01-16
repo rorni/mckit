@@ -95,9 +95,7 @@ def test_float_pattern(text, expected):
         ),
     ],
 )
-def test_extract_comments(
-    text, expected_new_text, expected_comments, expected_trailing_comment
-):
+def test_extract_comments(text, expected_new_text, expected_comments, expected_trailing_comment):
     actual_new_text, actual_comments, actual_trailing_comment = m.extract_comments(text)
     assert actual_new_text == expected_new_text
     assert actual_comments == expected_comments

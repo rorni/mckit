@@ -5,11 +5,14 @@ from typing import Generator
 from pathlib import Path
 
 MCNP_ENCODING = "Cp1251"
-"""The encoding used in SuperMC when creating MCNP models code. Some symbols are not Unicode."""
+"""The encoding used in SuperMC when creating MCNP models code.
+
+Some symbols are not Unicode.
+"""
 
 
 def make_dir(d: Path) -> Path:
-    """Create directory"""
+    """Create directory."""
     d.mkdir(parents=True, exist_ok=True)
     return d
 

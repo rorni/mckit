@@ -104,9 +104,7 @@ def test_happy_path(runner, msg, _source, transformation, expected):
         ),
     ],
 )
-def test_when_transform_happy_path(
-    runner, source, transformation, transformations, expected
-):
+def test_when_transform_happy_path(runner, source, transformation, transformations, expected):
     source = data_filename_resolver(source)
     transformations = data_filename_resolver(transformations)
     with runner.isolated_filesystem():

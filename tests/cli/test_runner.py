@@ -28,9 +28,7 @@ def test_fails_on_unknown_command(runner):
 def test_writes_to_logger_on_errors(runner):
     sink = StringIO()
     logger.add(sink)
-    result = runner.invoke(
-        mckit, args=["check", "not_existing.i"], catch_exceptions=False
-    )
+    result = runner.invoke(mckit, args=["check", "not_existing.i"], catch_exceptions=False)
     assert result.exit_code != 0, "Does not_existing.i exist?"
 
 

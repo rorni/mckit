@@ -292,9 +292,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "keep",
             [7],
@@ -306,9 +304,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "new",
             [5],
@@ -320,9 +316,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "clash",
             [7],
@@ -334,9 +328,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=6), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=6), density=2.0),
             ),
             "clash",
             [7],
@@ -804,9 +796,7 @@ def test_name_clashes_with_common_materials(
     u.set_common_materials(common_mat)
     for stat_item in stat.values():
         for kind, universes_names in stat_item.items():
-            stat_item[kind] = {
-                universes_idx[uname] if uname else None for uname in universes_names
-            }
+            stat_item[kind] = {universes_idx[uname] if uname else None for uname in universes_names}
     s = u.name_clashes()
     for c in u._common_materials:
         print(c.mcnp_repr())

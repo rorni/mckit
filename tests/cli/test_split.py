@@ -26,9 +26,7 @@ def test_when_there_is_no_args(runner):
 
 
 def test_not_existing_mcnp_file(runner):
-    result = runner.invoke(
-        mckit, args=["split", "not-existing.imcnp"], catch_exceptions=False
-    )
+    result = runner.invoke(mckit, args=["split", "not-existing.imcnp"], catch_exceptions=False)
     assert result.exit_code > 0
     assert "Path 'not-existing.imcnp' does not exist" in result.output
 
@@ -46,9 +44,7 @@ def test_not_existing_mcnp_file(runner):
 def test_when_output_dir_is_specified(runner, source, out, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            mckit, args=["split", "-o", out, source], catch_exceptions=False
-        )
+        result = runner.invoke(mckit, args=["split", "-o", out, source], catch_exceptions=False)
         assert result.exit_code == 0, "Should success without output directory"
         out = Path(out)
         assert out.is_dir()

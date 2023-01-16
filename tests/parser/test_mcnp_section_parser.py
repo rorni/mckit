@@ -27,9 +27,7 @@ def test_blank_line_pattern(text: str, expected: List[str]) -> None:
         ("1 0 1\n", ("1 0 1\n", 0)),
         ("1 0 1 $bla bla bla\n", ("1 0 1\n", 1)),
         (
-            "1 0 1 $bla bla bla\n"
-            + "c the comment with the space before c\n"
-            + "   2 -3",
+            "1 0 1 $bla bla bla\n" + "c the comment with the space before c\n" + "   2 -3",
             ("1 0 1\n" + "   2 -3", 2),
         ),
     ],

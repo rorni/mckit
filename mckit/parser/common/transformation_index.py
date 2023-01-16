@@ -5,7 +5,7 @@ from mckit.utils.Index import Index, NumberedItemNotFoundError
 
 
 class DummyTransformation(Transformation):
-    """To substitute transformation when it's not found"""
+    """To substitute transformation when it's not found."""
 
     def __init__(self, name: int):
         super().__init__(name=name, comment="dummy")
@@ -24,9 +24,7 @@ class TransformationStrictIndex(Index):
         super().__init__(raise_on_absent_transformation_strategy, **kwargs)
 
     @classmethod
-    def from_iterable(
-        cls, items: Iterable[Transformation]
-    ) -> "TransformationStrictIndex":
+    def from_iterable(cls, items: Iterable[Transformation]) -> "TransformationStrictIndex":
         index = cls()
         index.update((c.name(), c) for c in items)
         return index

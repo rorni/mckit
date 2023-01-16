@@ -51,9 +51,7 @@ def tolerance_estimator(
         elif isinstance(a, MaybeClose) and isinstance(b, MaybeClose):
             return a.is_close_to(b, _call)
         else:
-            raise TypeError(
-                f"Not implemented for {type(a).__name__} and {type(b).__name__}"
-            )
+            raise TypeError(f"Not implemented for {type(a).__name__} and {type(b).__name__}")
 
     def _call(a: ComparableType, b: ComparableType) -> bool:
         if a is b:

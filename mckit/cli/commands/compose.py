@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации.
-"""
+"""Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации."""
 from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple, Union
@@ -59,9 +57,7 @@ def compose(output, fill_descriptor_path, source, override):
         if transformation is not None:
             # if isinstance(transformation, tk_items.Array):
             if isinstance(transformation, list):
-                transformation1 = np.fromiter(
-                    map(float, iter(transformation)), dtype=np.double
-                )
+                transformation1 = np.fromiter(map(float, iter(transformation)), dtype=np.double)
                 try:
                     translation = transformation1[:3]
                     if len(transformation1) > 3:

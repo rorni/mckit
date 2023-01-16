@@ -1,23 +1,23 @@
 import numpy as np
 
 R = 400
-"""Major radius to measure toroidal coil thickness at"""
+"""Major radius to measure toroidal coil thickness at."""
 
 d = 50
-"""Thickness of toroidal coil at R"""
+"""Thickness of toroidal coil at R."""
 
 n = 16
-"""Number of toroidal coil segments"""
+"""Number of toroidal coil segments."""
 
 a = d / (2 * np.pi * R)
-"""Toroidal coil sector width in rotations"""
+"""Toroidal coil sector width in rotations."""
 
 b = 1 / n - a
-"""Toroidal coil gap width in rotations"""
+"""Toroidal coil gap width in rotations."""
 
 
 def calc_theta(_a, _b, _n):
-    """Compute VEC and KMESH values for cylinder mesh for TRT"""
+    """Compute VEC and KMESH values for cylinder mesh for TRT."""
     alpha = _a * np.pi
     _vec = [
         np.cos(alpha),

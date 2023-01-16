@@ -238,9 +238,7 @@ class TestRectMesh:
 
     @pytest.mark.parametrize(
         "mi, ti, pi, local",
-        product(
-            range(len(bins)), range(len(transforms)), range(len(points)), [False, True]
-        ),
+        product(range(len(bins)), range(len(transforms)), range(len(points)), [False, True]),
     )
     def test_voxel_index(self, mi: int, ti: int, pi: int, local: bool):
         tr = transforms[ti]
@@ -610,9 +608,7 @@ class TestFMesh:
                         [0.00000000e00, 0.00000000e00, 0.00000000e00, 0.00000000e00],
                     ]
                 ),
-                np.array(
-                    [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]]
-                ),
+                np.array([[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]]),
             ),
         ],
     )

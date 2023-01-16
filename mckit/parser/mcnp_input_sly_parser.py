@@ -2,18 +2,7 @@
 """
  Read and parse MCNP file text.
 """
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Iterable,
-    List,
-    NewType,
-    Optional,
-    TextIO,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Generator, Iterable, List, NewType, Optional, TextIO, Tuple, Union
 
 from itertools import repeat
 from pathlib import Path
@@ -41,12 +30,7 @@ from mckit.universe import Universe, produce_universes
 from mckit.utils.Index import Index
 
 from .mcnp_section_parser import Card as TextCard
-from .mcnp_section_parser import (
-    InputSections,
-    Kind,
-    distribute_cards,
-    parse_sections_text,
-)
+from .mcnp_section_parser import InputSections, Kind, distribute_cards, parse_sections_text
 
 T = NewType("T", Any)
 T1 = NewType("T1", Any)
@@ -176,9 +160,7 @@ def parse_compositions(text_cards: Iterable[TextCard]) -> List[Composition]:
     return list(parse_section(text_cards, Kind.MATERIAL, parse_composition))
 
 
-def parse_surfaces(
-    text_cards: Iterable[TextCard], transformations: Index
-) -> List[Surface]:
+def parse_surfaces(text_cards: Iterable[TextCard], transformations: Index) -> List[Surface]:
     def parser(text: str):
         return parse_surface(text, transformations=transformations)
 

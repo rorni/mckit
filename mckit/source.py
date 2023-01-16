@@ -203,7 +203,6 @@ def create_bin_distributions(
 
     Returns:
         free_name, list of distributions
-
     """
     distributions = []
     for low, high in zip(bins[:-1], bins[1:]):
@@ -231,14 +230,11 @@ def expand_matrix_distribution(
     Returns:
         free_name: int,  exp_var_values : tuple, exp_intensities : list[float]
 
-
     Raises:
         ValueError: if the distribution is neither discrete, nor pdf, nor histogram.
     """
     if len(intensities.shape) != len(var_values):
-        msg = (
-            "Length of var_values must be equal to the number of intensities dimensions."
-        )
+        msg = "Length of var_values must be equal to the number of intensities dimensions."
         raise ValueError(msg)
     uniq_values = []
     exp_var_values = []

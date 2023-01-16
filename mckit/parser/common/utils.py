@@ -73,9 +73,7 @@ def extract_comments(text):
                 if c is not None:
                     comments.append((i + 1, [c]))  # lexer counts lines from 1
             else:
-                assert (
-                    c is not None
-                ), "If there's no text, then at least comment should present"
+                assert c is not None, "If there's no text, then at least comment should present"
                 trailing_comment.append(c)
 
     assert cleaned_text, "There should be some  text in a card"
@@ -92,13 +90,11 @@ def extract_comments(text):
 
 
 class ParseError(ValueError):
-    """Parsing exception"""
+    """Parsing exception."""
 
 
 def internalize(word: str, words: Iterable[str]) -> str:
-    """
-    Replaces given `word` with the equal word from the list `words` to reuse the object for repeating small words.
-    """
+    """Replaces given `word` with the equal word from the list `words` to reuse the object for repeating small words."""
     for w in words:
         if w == word:
             return w, True

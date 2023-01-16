@@ -41,31 +41,25 @@ def mckit(verbose: bool, quiet: bool, logfile: str, override: bool) -> None:
 
 
 @mckit.command()
-@click.option(
-    "--output", "-o", default=None, help="Output directory, default: <source>.universes"
-)
+@click.option("--output", "-o", default=None, help="Output directory, default: <source>.universes")
 @click.option(
     "--fill-descriptor",
     "-f",
     default="fill-descriptor.toml",
     help="TOML file for FILL descriptors",
 )
-@click.argument(
-    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
-)
+@click.argument("source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True)
 def decompose(output, fill_descriptor, source):
-    """Separate an MCNP model to envelopes and filling universes"""
+    """Separate an MCNP model to envelopes and filling universes."""
     return do_decompose(output, fill_descriptor, source, context["OVERRIDE"])
 
 
 @mckit.command()
 @click.option("--output", "-o", required=True, help="Output file")
 @click.option("--fill-descriptor", default=None, help="TOML file for FILL descriptors")
-@click.argument(
-    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
-)
+@click.argument("source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True)
 def compose(output, fill_descriptor, source):
-    """Merge universes and envelopes into MCNP model using merge descriptor"""
+    """Merge universes and envelopes into MCNP model using merge descriptor."""
     if fill_descriptor is None:
         fill_descriptor = Path(source).absolute().parent / "fill-descriptor.toml"
     else:
@@ -88,11 +82,9 @@ def compose(output, fill_descriptor, source):
     default=False,
     help="Write files with decorative comments to separate this model sections (cells, surfaces etc.) on concatenation",
 )
-@click.argument(
-    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
-)
+@click.argument("source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True)
 def split(output, source, separators):
-    """Splits MCNP model to text portions (opposite to concat)"""
+    """Splits MCNP model to text portions (opposite to concat)."""
     if output is None:
         output = get_default_output_directory(source, ".split")
     else:
@@ -100,9 +92,7 @@ def split(output, source, separators):
     output.mkdir(parents=True, exist_ok=True)
     logger.info("Running mckit split")
     logger.debug("Working dir {}", Path(".").absolute())
-    logger.info(
-        'Splitting "{source}" to directory "{output}"', source=source, output=output
-    )
+    logger.info('Splitting "{source}" to directory "{output}"', source=source, output=output)
     return do_split(output, source, context["OVERRIDE"], separators)
 
 
@@ -152,11 +142,12 @@ def resolve_output(output, exist_ok=False, encoding=MCNP_ENCODING):
     default=MCNP_ENCODING,
     help=f"Encoding to write output (default:{MCNP_ENCODING})",
 )
-@click.argument(
-    "parts", metavar="<part...>", type=click.Path(exists=True), nargs=-1, required=True
-)
+@click.argument("parts", metavar="<part...>", type=click.Path(exists=True), nargs=-1, required=True)
 def concat(output, parts_encoding, output_encoding, parts):
-    """Concat text files. (will filter texts according specification in future)"""
+    """Concat text files.
+
+    (will filter texts according specification in future)
+    """
     override = context["OVERRIDE"]
     with resolve_output(output, exist_ok=override, encoding=output_encoding) as out_fid:
         for f in parts:
@@ -200,9 +191,7 @@ def check(sources: List[click.Path]) -> None:
     type=click.Path(exists=True),
     help="Transformations specification file (default: transformations.txt)",
 )
-@click.argument(
-    "source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True
-)
+@click.argument("source", metavar="<source>", type=click.Path(exists=True), nargs=1, required=True)
 def transform(
     output: click.STRING,
     transformation: int,

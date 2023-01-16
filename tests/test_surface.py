@@ -4,17 +4,7 @@ import numpy as np
 import pytest
 
 from mckit.box import Box
-from mckit.surface import (
-    BOX,
-    RCC,
-    Cone,
-    Cylinder,
-    GQuadratic,
-    Plane,
-    Sphere,
-    Torus,
-    create_surface,
-)
+from mckit.surface import BOX, RCC, Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface
 from mckit.transformation import Transformation
 from tests import pass_through_pickle
 
@@ -345,9 +335,7 @@ def test_surface_creation(cls, kind, params, expected):
     "tr",
     [
         None,
-        Transformation(
-            [0, 0, 0], [20.0, 70.0, 90, 110.0, 20.0, 90, 90, 90, 0], indegrees=True
-        ),
+        Transformation([0, 0, 0], [20.0, 70.0, 90, 110.0, 20.0, 90, 90, 90, 0], indegrees=True),
     ],
 )
 @pytest.mark.parametrize(
@@ -511,9 +499,7 @@ class TestPlane:
         surf = Plane(norm, offset)
         assert surf.test_box(box) == ans
 
-    @pytest.mark.parametrize(
-        "norm, offset", [([0, 0, 1], -2), ([1, 0, 0], -2), ([0, 1, 0], -2)]
-    )
+    @pytest.mark.parametrize("norm, offset", [([0, 0, 1], -2), ([1, 0, 0], -2), ([0, 1, 0], -2)])
     def test_transform(self, transform, norm, offset):
         ans_surf = Plane(norm, offset, transform=transform)
         surf = Plane(norm, offset).transform(transform)
@@ -600,9 +586,7 @@ class TestPlane:
         if self.eq_matrix[i1][i2]:
             assert hash(s1.round()) == hash(s2.round())
 
-    @pytest.mark.parametrize(
-        "coeffs", [[0, 2, 1, 3], [4, -1, 2, 0], [-1, 0, 0, 5], [-4, -4, 3, 3]]
-    )
+    @pytest.mark.parametrize("coeffs", [[0, 2, 1, 3], [4, -1, 2, 0], [-1, 0, 0, 5], [-4, -4, 3, 3]])
     def test_reverse(self, coeffs):
         plane = create_surface("P", *coeffs)
         answer = create_surface("P", *[-c for c in coeffs])
@@ -673,9 +657,7 @@ class TestPlane:
 
 
 class TestSphere:
-    @pytest.mark.parametrize(
-        "center, radius, c, r", [([1, 2, 3], 5, np.array([1, 2, 3]), 5)]
-    )
+    @pytest.mark.parametrize("center, radius, c, r", [([1, 2, 3], 5, np.array([1, 2, 3]), 5)])
     def test_init(self, transform, center, radius, c, r):
         surf = Sphere(center, radius, transform=transform).apply_transformation()
         c = transform.apply2point(c)
@@ -1396,17 +1378,11 @@ class TestCone:
         create_surface("KZ", 4, 0.25, name=1),  # 4
         create_surface("KZ", 4 - 1.0e-12, 0.25 + 1.0e-13, name=1),  # 5
         create_surface("K/X", 3, 2, -4, 0.25, name=2),  # 6
-        create_surface(
-            "K/X", 3 - 1.0e-12, 2 + 1.0e-12, -4 + 1.0e-12, 0.25 - 1.0e-13, name=2  # 7
-        ),
+        create_surface("K/X", 3 - 1.0e-12, 2 + 1.0e-12, -4 + 1.0e-12, 0.25 - 1.0e-13, name=2),  # 7
         create_surface("K/Y", 3, 2, -4, 0.25, name=2),  # 8
-        create_surface(
-            "K/Y", 3 - 1.0e-12, 2 + 1.0e-12, -4 + 1.0e-12, 0.25 - 1.0e-13, name=2  # 9
-        ),
+        create_surface("K/Y", 3 - 1.0e-12, 2 + 1.0e-12, -4 + 1.0e-12, 0.25 - 1.0e-13, name=2),  # 9
         create_surface("K/Z", 3, 2, -4, 0.25, name=2),  # 10
-        create_surface(
-            "K/Z", 3 - 1.0e-12, 2 + 1.0e-12, -4 + 1.0e-12, 0.25 - 1.0e-13, name=2  # 11
-        ),
+        create_surface("K/Z", 3 - 1.0e-12, 2 + 1.0e-12, -4 + 1.0e-12, 0.25 - 1.0e-13, name=2),  # 11
         Cone([3, 2, -4], [1, 1.0e-13, -1.0e-13], 0.25, name=3),  # 12
         Cone([3, 2, -4], [1.0e-13, 1, -1.0e-13], 0.25, name=3),  # 13
         Cone([3, 2, -4], [1.0e-13, -1.0e-13, 1], 0.25, name=3),  # 14
@@ -2663,9 +2639,7 @@ class TestTorus:
         surf = Torus(point, axis, radius, a, b)
         assert surf.test_box(box) == ans
 
-    @pytest.mark.parametrize(
-        "point, axis, radius, a, b", [([1, 2, 3], [0, 0, 1], 4, 2, 1)]
-    )
+    @pytest.mark.parametrize("point, axis, radius, a, b", [([1, 2, 3], [0, 0, 1], 4, 2, 1)])
     def test_transform(self, transform, point, axis, radius, a, b):
         ans_surf = Torus(point, axis, radius, a, b, transform=transform)
         surf = Torus(point, axis, radius, a, b)
@@ -2912,9 +2886,7 @@ class TestGQuadratic:
             name=1,
         ),
         GQuadratic(-np.diag([1, 1, 1]), 2 * np.array([1, 1, 1]), -3, name=1),
-        GQuadratic(
-            [[1, 0.25, 0.3], [0.25, 2, 0.4], [0.3, 0.4, 3]], [1, 2, 3], -4, name=2
-        ),
+        GQuadratic([[1, 0.25, 0.3], [0.25, 2, 0.4], [0.3, 0.4, 3]], [1, 2, 3], -4, name=2),
         GQuadratic(
             [[-1, -0.25, -0.3], [-0.25, -2, -0.4], [-0.3, -0.4, -3]],
             [-1, -2, -3],
