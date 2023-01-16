@@ -1,24 +1,26 @@
+"""Build mckit.
+
+The `build` method from this module is called by poetry build system
+to set up proper options for actual builder.
+
+The module builds and arrange C-dependency ``nlopt`` before own build.
+"""
 from typing import Any, Dict, List, Optional
 
-import distutils.log as log
+# import distutils.log as log
 import shutil
 
 from pathlib import Path
 from pprint import pprint
 
-from build_nlopt import build_nlopt
-from extension_geometry import WIN, GeometryExtension
-from extension_utils import MACOS, WIN, get_library_dir
+from building.build_nlopt import build_nlopt
+from building.extension_geometry import GeometryExtension
+from building.extension_utils import MACOS, WIN, get_library_dir
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.dist import Distribution
 
 DIR = Path(__file__).parent
-
-#
-# TODO dvp: check
-#      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
-#
 
 
 class BinaryDistribution(Distribution):
@@ -53,21 +55,21 @@ class MCKitBuilder(build_ext):
         # assert extension.name == "mckit.geometry"
         nlopt_build_dir = build_nlopt(clean=True)
         nlopt_lib = nlopt_build_dir / get_nlopt_lib_name()
-        log.info(f"---***  builder.build_lib: {self.build_lib}")
-        log.info(f"---***  builder.include_dirs: {self.include_dirs}")
-        log.info(f"---***  builder.library_dirs: {self.library_dirs}")
-        log.info(f"---***  nlopt lib path: {nlopt_lib}")
+        # log.info(f"---***  builder.build_lib: {self.build_lib}")
+        # log.info(f"---***  builder.include_dirs: {self.include_dirs}")
+        # log.info(f"---***  builder.library_dirs: {self.library_dirs}")
+        # log.info(f"---***  nlopt lib path: {nlopt_lib}")
         ext_dir = Path(self.get_ext_fullpath(extension.name)).parent.absolute()
-        log.info(f"---***  copy nlopt lib to {ext_dir}")
+        # log.info(f"---***  copy nlopt lib to {ext_dir}")
         if ext_dir.exists():
             save_library(ext_dir, nlopt_lib)
         save_library(DIR / "mckit", nlopt_lib)
-        log.info("---*** Defined geometry extension:")
-        log.info(str(extension))
-        log.info("---***")
+        # log.info("---*** Defined geometry extension:")
+        # log.info(str(extension))
+        # log.info("---***")
         build_ext.build_extension(self, extension)
-        log.info("---*** Search geometry")
-        log.info(DIR.glob("**/*geometry*"))
+        # log.info("---*** Search geometry:")
+        # log.info(list(DIR.glob("**/*geometry*")))
 
 
 def build(setup_kwargs: Dict[str, Any]) -> None:
@@ -93,9 +95,7 @@ def build(setup_kwargs: Dict[str, Any]) -> None:
 def update_setup_requires(setup_kwargs: Dict[str, Any]) -> None:
     """Fix for poetry issue: it doesn't install setup requirements."""
     setup_requires = setup_kwargs.get("setup_requires")  # type: Optional[List[str]]
-    assert (
-        setup_requires is None
-    ), "Poetry has created setup_requires! Check the setup-generated.py"
+    assert setup_requires is None, "Poetry has created setup_requires! Check the setup-generated.py"
     setup_requires = [
         "poetry-core>=1.0.7",
         "setuptools>=58.1",

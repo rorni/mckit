@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from subprocess import check_call
 
-from extension_utils import WIN, create_directory  # , python_inc, site
+from building.extension_utils import WIN, create_directory
 
 
 def execute_command(
@@ -16,17 +16,14 @@ def execute_command(
     check_call(cmd, cwd=cwd, env=env)
 
 
-def build_nlopt(
-    *, install_prefix: str = None, build_dir: Path = None, clean=True
-) -> Path:
+def build_nlopt(*, install_prefix: str = None, build_dir: Path = None, clean=True) -> Path:
 
-    source_dir = Path(__file__).parent.absolute() / "3rd-party" / "nlopt"
+    source_dir = Path(__file__).parent.parent.absolute() / "3rd-party" / "nlopt"
     if not source_dir.exists():
-        execute_command(
-            ["git", "submodule", "update", "--init", "--recursive", "--depth=1"]
-        )
+        execute_command(["git", "submodule", "update", "--init", "--recursive", "--depth=1"])
 
-    # TODO dvp: check if something is to be done to support build isolation, use build_ext.build_temp probably?
+    # TODO dvp: check if something is to be done to support build isolation,
+    #           use build_ext.build_temp probably?
     if build_dir is None:
         build_dir = create_directory(source_dir / "build", clean=clean)
 

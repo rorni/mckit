@@ -12,14 +12,18 @@ keywords = ["mckit", "MCNP"]
 build = "build.py"
 readme = "README.rst"
 packages = [
-    { include = "mckit" }
+    { include = "mckit" },
+    { include = "building", format="sdist"},
+    { include = "tests", format="sdist"},
+    { include = "benchmarks", format="sdist"},
 ]
 include = [
     "mckit/data/isotopes.dat",
+    { path = "build.py", format="sdist"}
 ]
 exclude = [
-#    "__pycache__",
     ".py[co]$",
+    "setup.py"
 ]
 # Select from PyPI classifiers: https://pypi.org/classifiers/
 classifiers = [
@@ -102,6 +106,10 @@ tbb = "2021.7.1"
 # Also interesting: https://pypistats.org/packages/mkl - no visible MacOS downloads
 # As for 2022.01.12 for MacOS only version 10.15 is supported
 # TODO dvp: automate the check above
+#
+# TODO dvp: check
+#      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
+#
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
