@@ -101,10 +101,10 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive --depth=1
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.9   # TODO dvp: restricted by sphinxcontrib-napoleon 0.7
         uses: actions/setup-python@v4.4.0
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
       - name: Use frozen pip version
         run: |
