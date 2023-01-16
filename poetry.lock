@@ -1544,25 +1544,6 @@ files = [
 ]
 
 [[package]]
-name = "numpydoc"
-version = "1.5.0"
-description = "Sphinx extension to support docstrings in Numpy format"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "numpydoc-1.5.0-py3-none-any.whl", hash = "sha256:c997759fb6fc32662801cece76491eedbc0ec619b514932ffd2b270ae89c07f9"},
-    {file = "numpydoc-1.5.0.tar.gz", hash = "sha256:b0db7b75a32367a0e25c23b397842c65e344a1206524d16c8069f0a1c91b5f4c"},
-]
-
-[package.dependencies]
-Jinja2 = ">=2.10"
-sphinx = ">=4.2"
-
-[package.extras]
-testing = ["matplotlib", "pytest", "pytest-cov"]
-
-[[package]]
 name = "packaging"
 version = "21.3"
 description = "Core utilities for Python packages"
@@ -1579,14 +1560,14 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
 name = "pathspec"
-version = "0.9.0"
+version = "0.10.3"
 description = "Utility library for gitignore style pattern matching of file paths."
 category = "dev"
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+python-versions = ">=3.7"
 files = [
-    {file = "pathspec-0.9.0-py2.py3-none-any.whl", hash = "sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a"},
-    {file = "pathspec-0.9.0.tar.gz", hash = "sha256:e564499435a2673d586f6b2130bb5b95f04a3ba06f81b8f895b651a3c76aabb1"},
+    {file = "pathspec-0.10.3-py3-none-any.whl", hash = "sha256:3c95343af8b756205e2aba76e843ba9520a24dd84f68c22b9f93251507509dd6"},
+    {file = "pathspec-0.10.3.tar.gz", hash = "sha256:56200de4077d9d0791465aa9095a01d421861e405b5096955051deefd697d6f6"},
 ]
 
 [[package]]
@@ -1661,6 +1642,21 @@ files = [
 ]
 
 [[package]]
+name = "pockets"
+version = "0.9.1"
+description = "A collection of helpful Python tools!"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pockets-0.9.1-py2.py3-none-any.whl", hash = "sha256:68597934193c08a08eb2bf6a1d85593f627c22f9b065cc727a4f03f669d96d86"},
+    {file = "pockets-0.9.1.tar.gz", hash = "sha256:9320f1a3c6f7a9133fe3b571f283bcf3353cd70249025ae8d618e40e9f7e92b3"},
+]
+
+[package.dependencies]
+six = ">=1.5.2"
+
+[[package]]
 name = "pre-commit"
 version = "2.21.0"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -1681,19 +1677,19 @@ virtualenv = ">=20.10.0"
 
 [[package]]
 name = "pycln"
-version = "2.1.2"
+version = "2.1.3"
 description = "A formatter for finding and removing unused import statements."
 category = "dev"
 optional = false
 python-versions = ">=3.6.2,<4"
 files = [
-    {file = "pycln-2.1.2-py3-none-any.whl", hash = "sha256:b0dcd6d443e72ba84790c53157bdd44c5afbb5ac5b933f10faef0e898fcbb63a"},
-    {file = "pycln-2.1.2.tar.gz", hash = "sha256:aeba833e233c8bb0c4945d4b61ecbcb08a0441c89d8f018d0ee904e7bba8efab"},
+    {file = "pycln-2.1.3-py3-none-any.whl", hash = "sha256:161142502e4ff9853cd462a38401e29eb56235919856df2cb7fa4c84e463717f"},
+    {file = "pycln-2.1.3.tar.gz", hash = "sha256:a33bfc64ded74a623b7cf49eca38b58db4348facc60c35af26d45de149b256f5"},
 ]
 
 [package.dependencies]
 libcst = {version = ">=0.3.10,<0.5.0", markers = "python_version >= \"3.7\""}
-pathspec = ">=0.9.0,<0.10.0"
+pathspec = ">=0.9.0,<0.11.0"
 pyyaml = ">=5.3.1,<7.0.0"
 tomlkit = ">=0.11.1,<0.12.0"
 typer = ">=0.4.1,<0.8.0"
@@ -2516,6 +2512,22 @@ files = [
 test = ["flake8", "mypy", "pytest"]
 
 [[package]]
+name = "sphinxcontrib-napoleon"
+version = "0.7"
+description = "Sphinx \"napoleon\" extension."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sphinxcontrib-napoleon-0.7.tar.gz", hash = "sha256:407382beed396e9f2d7f3043fad6afda95719204a1e1a231ac865f40abcbfcf8"},
+    {file = "sphinxcontrib_napoleon-0.7-py2.py3-none-any.whl", hash = "sha256:711e41a3974bdf110a484aec4c1a556799eb0b3f3b897521a018ad7e2db13fef"},
+]
+
+[package.dependencies]
+pockets = ">=0.3"
+six = ">=1.5.2"
+
+[[package]]
 name = "sphinxcontrib-qthelp"
 version = "1.0.3"
 description = "sphinxcontrib-qthelp is a sphinx extension which outputs QtHelp document."
@@ -3022,4 +3034,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "7845c4ddc36d7de6995554bb76284f0c73e65f3b7beac9dc740b15e4073b7f5f"
+content-hash = "5335d631c6efebb0067efe5fa6116c36f09aa15adad2e0e9b64ca70be16df433"

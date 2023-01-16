@@ -299,7 +299,7 @@ def xdoctest(s: Session) -> None:
     s.run("python", "-m", "xdoctest", *args)
 
 
-@session(name="docs-build", python="3.11")
+@session(name="docs-build", python="3.9")
 def docs_build(s: Session) -> None:
     """Build the documentation."""
     args = s.posargs or ["docs/source", "docs/_build"]
@@ -318,7 +318,7 @@ def docs_build(s: Session) -> None:
     s.run("sphinx-build", *args)
 
 
-@session(python="3.11")
+@session(python="3.9")
 def docs(s: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = s.posargs or ["--open-browser", "docs/source", "docs/_build"]
@@ -326,7 +326,7 @@ def docs(s: Session) -> None:
         "poetry",
         "install",
         "--only",
-        "docs,docs_auto",
+        "main,docs,docs_auto",
         external=True,
     )
     build_dir = Path("docs", "_build")
