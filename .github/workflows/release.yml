@@ -1,7 +1,7 @@
 name: Release
 
 env:
-  PYTHON_VERSION: '3.10'
+  PYTHON_VERSION: '3.11'
 
 on:
   workflow_dispatch:
@@ -70,7 +70,7 @@ jobs:
           fetch-depth: 2    # need previous revision to define tag
 
       - name: Set up Python
-        uses: actions/setup-python@v4.4.0
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 

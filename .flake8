@@ -1,7 +1,7 @@
 [flake8]
 select=ANN,B,B9,BLK,C,D,DAR,E,F,I,N,PD,R,TC,TR,S,W
 max-complexity=15
-max-line-length=90
+max-line-length=100
 ignore=
     # ANN001 Missing type annotation for function argument: doesn't allow to use functools dispatching
     ANN001
