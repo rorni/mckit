@@ -64,6 +64,12 @@ mckit = "mckit.cli.runner:mckit"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
+pip = {version = "21.3.1", python = "3.11"}
+        # TODO dvp: freezing pip version for python 3.11, to avoid:
+        #line 34, in canonicalize_name
+        #      value = _canonicalize_regex.sub("-", name).lower()
+        #              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        #  TypeError: expected string or bytes-like object, got 'NoneType'
 DateTime = ">=4.3"
 atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"

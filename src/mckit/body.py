@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as tp
 
 from typing import Iterable, List, NewType, Optional, Set, Union
