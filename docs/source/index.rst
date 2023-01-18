@@ -21,8 +21,8 @@ Usage
 Command line interface
 ----------------------
 
-.. click:: mapstp.cli.runner:mapstp
-   :prog: mapstp
+.. click:: mckit.cli.runner:mckit
+   :prog: mckit
    :nested: full
 
 
@@ -54,6 +54,9 @@ Details
    material
    readme
    modules
+   mcnp-model
+   mcnp-parser
+   developer
    license
    todo
 
