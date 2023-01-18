@@ -3,7 +3,7 @@ from typing import NamedTuple
 import mckit.utils.named as nm
 import pytest
 
-from mckit.utils.Index import (
+from mckit.utils.indexes import (
     IndexOfNamed,
     NumberedItemDuplicateError,
     StatisticsCollector,

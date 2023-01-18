@@ -3,7 +3,7 @@ from typing import Dict, List, NoReturn
 
 import pytest
 
-from mckit.utils.Index import Index
+from mckit.utils.indexes import Index
 
 
 def dummy_strategy(c: int) -> int:

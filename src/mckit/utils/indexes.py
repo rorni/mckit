@@ -1,4 +1,7 @@
-from typing import Callable, Dict, Iterable, NoReturn, Optional, Type, TypeVar, cast
+"""Classes to index MCNP objects on model file parsing."""
+from __future__ import annotations
+
+from typing import Any, Callable, Dict, Iterable, NoReturn, Optional, Type, TypeVar, cast
 
 from functools import reduce
 
@@ -6,50 +9,79 @@ from mckit.utils.named import Name, default_name_key
 
 Key = TypeVar("Key")
 Item = TypeVar("Item")
+FactoryMethodWithKey = Callable[[Key], Optional[Item]]
 
 
 class Index(Dict[Key, Item]):
-    """Like collections.defaultdict but the factory takes key as argument."""
+    """Like collections.defaultdict but the factory takes key as argument.
 
-    def __init__(self, default_factory: Callable[[Key], Optional[Item]] = None, **kwargs):
+    The class redefines __missing__ method to use `key` on calling factory method.
+
+    Attrs:
+        _default_factory (FactoryMethodWithKey):
+            Same as in Args.
+    """
+
+    def __init__(
+        self,
+        default_factory: FactoryMethodWithKey = None,
+        **kwargs: Dict[Key, Item],
+    ) -> None:
+        """Create `Index`.
+
+        Args:
+            default_factory: factory method accepting `key` as the only positional argument.
+            kwargs: keyword arguments to pass to base class, if any
+        """
         super().__init__(self, **kwargs)
         self._default_factory = default_factory
+
+    @property
+    def default_factory(self) -> FactoryMethodWithKey:
+        """Public accessor to `self._default_factory`."""
+        return self._default_factory
 
     def __missing__(self, key: Key) -> Optional[Item]:
         """Calls default factory with the key as argument."""
         if self._default_factory:
-            df = self._default_factory
-            return df(key)
+            return self._default_factory(key)
 
         raise NumberedItemNotFoundError(key)
 
-    @property
-    def default_factory(self):
-        return self._default_factory
-
 
 # noinspection PyUnusedLocal
-def ignore(item: Key) -> Optional[Item]:
+def ignore(_: Key) -> Optional[Item]:
+    """Default factory for `IgnoringIndex`.
+
+    Returns:
+        None - always.
+    """
     return None
 
 
 class IgnoringIndex(Index[Key, Item]):
-    def __init__(self) -> None:
-        Index.__init__(self, ignore)
+    """Index ignoring absence of a key in the dictionary."""
+
+    def __init__(self, **kwargs: Dict[Key, Item]) -> None:
+        Index.__init__(self, ignore, **kwargs)
 
 
 class NumberedItemNotFoundError(KeyError):
+    """Error to raise, when an item is not found in an `Index`."""
+
     kind: str = ""
 
-    def __init__(self, item: Key, *args, **kwargs) -> None:
-        super().__init__(args, kwargs)
-        self._item = item
+    def __init__(self, key: Key, *args, **kwargs: Dict[Any, Any]) -> None:
+        super().__init__(args, **kwargs)
+        self._key = key
 
     def __str__(self) -> str:
-        return f"{self.kind} #{self._item} is not found"
+        return f"{self.kind} #{self._key} is not found"
 
 
 class NumberedItemDuplicateError(ValueError):
+    """Error to raise, when an item has duplicate in an `Index`."""
+
     kind: str = ""
 
     def __init__(self, item: Key, prev: Item, curr: Item, *args, **kwargs) -> None:
@@ -93,15 +125,13 @@ class IndexOfNamed(Index[Key, Item]):
         key: Callable[[Item], Name] = default_name_key,
         default_factory: Callable[[Key], Item] = None,
         on_duplicate: Callable[[Key, Item, Item], None] = None,
-        **kwargs,
     ) -> "IndexOfNamed[Key, Item]":
-        index = cls(default_factory, **kwargs)
+        index = cls(default_factory)
 
         def reducer(a, b):
             name = key(b)
-            if on_duplicate is not None:
-                if name in a:
-                    on_duplicate(name, a[name], b)
+            if on_duplicate is not None and name in a:
+                on_duplicate(name, a[name], b)
             a[name] = b
             return a
 

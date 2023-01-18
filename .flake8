@@ -59,6 +59,7 @@ exclude=
     .eggs
     src/mckit/parser
 per-file-ignores =
+    **/__init__.py:F401
     noxfile.py:ANN,DAR101
     tests/*:ANN,B950,DAR100,D100,D101,D102,D103,D104,DAR101,DAR103,S101
     src/mckit/_init_dynamic_libraries.py:F401,E402

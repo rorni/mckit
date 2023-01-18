@@ -11,7 +11,7 @@ from mckit.parser.common import SurfaceStrictIndex, TransformationStrictIndex
 from mckit.surface import Surface
 from mckit.transformation import Transformation
 from mckit.utils import filter_dict
-from mckit.utils.Index import Index
+from mckit.utils.indexes import Index
 
 CELL_WORDS = {"U", "MAT", "LAT", "TMP", "RHO", "VOL", "PMT"}
 

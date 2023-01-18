@@ -19,7 +19,7 @@ from mckit.parser.common import (
     SurfaceStrictIndex,
 )
 from mckit.transformation import Transformation
-from mckit.utils.Index import Index
+from mckit.utils.indexes import Index
 
 
 def create_cell(

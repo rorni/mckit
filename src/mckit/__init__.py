@@ -1,4 +1,4 @@
-# flake8: noqa
+"""The mckit package code root."""
 import mckit._init_dynamic_libraries as init_lib
 
 from mckit._init_dynamic_libraries import (
