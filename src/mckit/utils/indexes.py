@@ -1,7 +1,7 @@
 """Classes to index MCNP objects on model file parsing."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, NoReturn, Optional, Type, TypeVar, cast
+from typing import Callable, Dict, Iterable, NoReturn, Optional, Type, TypeVar, cast
 
 from functools import reduce
 
@@ -71,12 +71,9 @@ class NumberedItemNotFoundError(KeyError):
 
     kind: str = ""
 
-    def __init__(self, key: Key, *args, **kwargs: Dict[Any, Any]) -> None:
-        super().__init__(args, **kwargs)
+    def __init__(self, key: Key) -> None:
         self._key = key
-
-    def __str__(self) -> str:
-        return f"{self.kind} #{self._key} is not found"
+        super().__init__(f"{self.kind} #{self._key} is not found")
 
 
 class NumberedItemDuplicateError(ValueError):
@@ -84,26 +81,49 @@ class NumberedItemDuplicateError(ValueError):
 
     kind: str = ""
 
-    def __init__(self, item: Key, prev: Item, curr: Item, *args, **kwargs) -> None:
-        super().__init__(args, kwargs)
-        self._item = item
+    def __init__(self, key: Key, prev: Item, curr: Item) -> None:
+        self._key = key
         self._prev = prev
         self._curr = curr
-
-    def __str__(self):
-        return f"{self.kind} #{self._item} is duplicated, see {self._prev} and {self._curr}"
+        super().__init__(
+            f"{self.kind} #{self._key} is duplicated, see {self._prev} and {self._curr}"
+        )
 
 
 def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> NoReturn:
+    """Raise error on `key` duplicate found, regardless values.
+
+    Args:
+        key: a key in `Index`.
+        prev: the value already in `Index`.
+        curr: the new value to add to `Index`.
+
+    Raises:
+        NumberedItemDuplicateError: exception to inform on `key`, `prev` and `curr` values.
+    """
     raise NumberedItemDuplicateError(key, prev, curr)
 
 
 def ignore_equal_objects_strategy(key: Key, prev: Item, curr: Item) -> None:
+    """Raise error on `key` duplicate found, if the values are not equal.
+
+    Otherwise, ignore an attempt to add the same key/value pair.
+
+    Args:
+        key: a key in `Index`.
+        prev: the value already in `Index`.
+        curr: the new value to add to `Index`.
+
+    Raises:
+        NumberedItemDuplicateError: exception to inform on `key`, `prev` and `curr` values.
+    """
     if prev is not curr and prev != curr:
         raise NumberedItemDuplicateError(key, prev, curr)
 
 
 class StatisticsCollector(Dict[Key, int]):
+    """Duplicates counter."""
+
     def __init__(self, ignore_equal=False):
         super().__init__(self)
         self.ignore_equal = ignore_equal
@@ -112,11 +132,23 @@ class StatisticsCollector(Dict[Key, int]):
         return 1
 
     def __call__(self, key: Key, prev: Item, curr: Item) -> None:
+        """Increase counter.
+
+        If items are duplicates and `self.ignore_equal` is set on,
+        then skip.
+
+        Args:
+            key: a key in `StatisticsCollector`.
+            prev: the value already in `StatisticsCollector`.
+            curr: the new value to add to `StatisticsCollector`.
+        """
         if not self.ignore_equal or prev != curr:
             self[key] += 1
 
 
 class IndexOfNamed(Index[Key, Item]):
+    """Index of items from a key can be extracted."""
+
     @classmethod
     def from_iterable(
         cls: Type["IndexOfNamed[Key, Item]"],
@@ -125,14 +157,15 @@ class IndexOfNamed(Index[Key, Item]):
         key: Callable[[Item], Name] = default_name_key,
         default_factory: Callable[[Key], Item] = None,
         on_duplicate: Callable[[Key, Item, Item], None] = None,
-    ) -> "IndexOfNamed[Key, Item]":
+    ) -> "IndexOfNamed":
+        """Construct `IndexOfNamed` from `items`."""
         index = cls(default_factory)
 
-        def reducer(a, b):
+        def _reducer(a, b):
             name = key(b)
             if on_duplicate is not None and name in a:
                 on_duplicate(name, a[name], b)
             a[name] = b
             return a
 
-        return cast("IndexOfNamed[Key, Item]", reduce(reducer, items, index))
+        return cast("IndexOfNamed[Key, Item]", reduce(_reducer, items, index))
