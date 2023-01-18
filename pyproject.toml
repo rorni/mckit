@@ -196,6 +196,9 @@ flake8-pylint = ">=0.1.3"
 # TODO dvp: check/use flake8-pyprojecttoml plugin
 # https://gitlab.com/durko/flake8-pyprojecttoml/-/blob/master/pyproject.toml
 
+[tool.poetry.group.tryceratops]
+optional = true
+
 [tool.poetry.group.tryceratops.dependencies]
 tryceratops = ">=1.0.1"
 

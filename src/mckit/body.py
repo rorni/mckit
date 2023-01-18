@@ -100,7 +100,7 @@ class Shape(_Shape):
     }
 
     def __init__(self, opc: str, *args: Union["Shape", "Surface"]):
-        opc, args = Shape._clean_args(opc, *args)
+        opc, args = _clean_args(opc, *args)
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
@@ -150,65 +150,6 @@ class Shape(_Shape):
             if need_parentheses:
                 words.append(")")
         return words
-
-    @classmethod
-    def _clean_args(cls, opc, *args):  # TODO dvp: change to staticmethod or external
-        """Clean input arguments."""
-        args = [a.shape if isinstance(a, Body) else a for a in args]
-        cls._verify_opc(opc, *args)
-        if opc == "I" or opc == "U":
-            args = [Shape("S", a) if isinstance(a, Surface) else a for a in args]
-        if len(args) > 1:
-            # Extend arguments
-            args = list(args)
-            i = 0
-            while i < len(args):
-                if args[i].opc == opc:
-                    a = args.pop(i)
-                    args.extend(a.args)
-                else:
-                    i += 1
-
-            i = 0
-            while i < len(args):
-                a = args[i]
-                if a.opc == "E" and opc == "I" or a.opc == "R" and opc == "U":
-                    return a.opc, []
-                elif a.opc == "E" and opc == "U" or a.opc == "R" and opc == "I":
-                    args.pop(i)
-                    continue
-                for j, b in enumerate(args[i + 1 :]):
-                    if a.is_complement(b):
-                        if opc == "I":
-                            return "E", []
-                        else:
-                            return "R", []
-                i += 1
-            args = list(set(args))
-            args.sort(key=hash)
-            if len(args) == 0:
-                opc = "E" if opc == "U" else "R"
-        if (
-            len(args) == 1
-            and isinstance(args[0], Shape)
-            and (opc == "S" or opc == "I" or opc == "U")
-        ):
-            return args[0].opc, args[0].args
-        elif len(args) == 1 and isinstance(args[0], Shape) and opc == "C":
-            item = args[0].complement()
-            return item.opc, item.args
-        return opc, args
-
-    @staticmethod
-    def _verify_opc(opc, *args):
-        """Checks if such argument combination is valid."""
-        if (opc == "E" or opc == "R") and len(args) > 0:
-            raise ValueError("No arguments are expected.")
-        elif (opc == "S" or opc == "C") and len(args) != 1:
-            raise ValueError("Only one operand is expected.")
-        elif opc == "I" or opc == "U":
-            if len(args) == 0:
-                raise ValueError("Operands are expected.")
 
     def __eq__(self, other):
         if self is other:
@@ -580,11 +521,68 @@ class Shape(_Shape):
         return operands.pop()
 
 
+def _clean_args(opc, *args):
+    """Clean input arguments."""
+    args = [a.shape if isinstance(a, Body) else a for a in args]
+    _verify_opc(opc, *args)
+    if opc == "I" or opc == "U":
+        args = [Shape("S", a) if isinstance(a, Surface) else a for a in args]
+    if len(args) > 1:
+        # Extend arguments
+        args = list(args)  # convert tuple to list
+        i = 0
+        while i < len(args):
+            if args[i].opc == opc:
+                a = args.pop(i)
+                args.extend(a.args)
+            else:
+                i += 1
+
+        i = 0
+        while i < len(args):
+            a = args[i]
+            if a.opc == "E" and opc == "I" or a.opc == "R" and opc == "U":
+                return a.opc, []
+            elif a.opc == "E" and opc == "U" or a.opc == "R" and opc == "I":
+                args.pop(i)
+                continue
+            for j, b in enumerate(args[i + 1 :]):
+                if a.is_complement(b):
+                    if opc == "I":
+                        return "E", []
+                    else:
+                        return "R", []
+            i += 1
+        args = list(set(args))
+        args.sort(key=hash)
+        if len(args) == 0:
+            opc = "E" if opc == "U" else "R"
+    if len(args) == 1 and isinstance(args[0], Shape):
+        if opc == "S" or opc == "I" or opc == "U":
+            return args[0].opc, args[0].args
+        if opc == "C":
+            item = args[0].complement()
+            return item.opc, item.args
+    return opc, args
+
+
+def _verify_opc(opc, *args):
+    """Checks if such argument combination is valid."""
+    if (opc == "E" or opc == "R") and len(args) > 0:
+        raise ValueError("No arguments are expected.")
+    elif (opc == "S" or opc == "C") and len(args) != 1:
+        raise ValueError("Only one operand is expected.")
+    elif opc == "I" or opc == "U":
+        if len(args) == 0:
+            raise ValueError("Operands are expected.")
+
+
 TOperation = NewType("TOperation", str)
 TGeometry = NewType("TGeometry", Union[List[Union[Surface, TOperation]], Shape, "Body"])
 
-
 # noinspection PyProtectedMember
+
+
 class Body(Card):
     """Represents MCNP cell.
 
