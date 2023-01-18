@@ -22,7 +22,7 @@ from mckit.geometry import Shape as _Shape
 from .box import GLOBAL_BOX, Box
 from .card import Card
 from .constants import MIN_BOX_VOLUME
-from .printer import CELL_OPTION_GROUPS, print_card, print_option
+from .printer import CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .utils import filter_dict
@@ -34,62 +34,60 @@ __all__ = ["Shape", "Body", "simplify", "GLOBAL_BOX", "Card", "TGeometry", "TGeo
 class Shape(_Shape):
     """Describes shape.
 
-    Shape is immutable object.
+    Note:
+        Shape is immutable object.
 
-    Parameters
-    ----------
-    opc :
-        Operation code. Denotes operation to be applied. Possible values:
-        'I' - for intersection;
-        'U' - for union;
-        'C' - for complement;
-        'S' - (same) no operation;
-        'E' - empty set - no space occupied;
-        'R' - whole space.
-    args :
-        Geometry elements. It can be either Shape or Surface instances. But
-        no arguments must be specified for 'E' or 'R' opc. Only one argument
-        must present for 'C' or 'S' opc values.
+    Args:
+        opc:
+            Operation code. Denotes operation to be applied. Possible values:
+            'I' - for intersection;
+            'U' - for union;
+            'C' - for complement;
+            'S' - (same) no operation;
+            'E' - empty set - no space occupied;
+            'R' - whole space.
+        args:
+            Geometry elements. It can be either Shape or Surface instances. But
+            no arguments must be specified for 'E' or 'R' opc. Only one argument
+            must present for 'C' or 'S' opc values.
 
-    Properties
-    ----------
-    opc : str
-        Operation code. It may be different from opc passed in __init__.
-    invert_opc : str
-        Operation code, complement to the opc.
-    args : tuple
-        A tuple of shape's arguments.
+    Attrs:
+        opc (str):
+            Operation code. It may be different from opc passed in __init__.
+        invert_opc (str):
+            Operation code, complement to the opc.
+        args (Tuple[Shape|Surface...]):
+            A tuple of shape's arguments.
 
-    Methods
-    -------
-    test_box(box)
-        Tests if the box intersects the shape.
-    volume(box, min_volume)
-        Calculates the volume of the shape with desired accuracy.
-    bounding_box(box, tol)
-        Finds bounding box for the shape with desired accuracy.
-    test_points(points)
-        Tests the senses of the points.
-    is_complement(other)
-        Checks if other is a complement to the shape.
-    complement()
-        Gets complement shape.
-    union(*other)
-        Creates a union of the shape with the others.
-    intersection(*other)
-        Creates an intersection of the shape with the others.
-    transform(tr)
-        Gets transformed version of the shape.
-    is_empty()
-        Checks if this shape is empty - no space belong to it.
-    get_surfaces()
-        Gets all Surface objects that bounds the shape.
-    complexity()
-        Gets the complexity of the shape description.
-    get_simplest()
-        Gets the simplest description of the shape.
-    replace_surfaces(replace_dict)
-        Creates new Shape object by replacing surfaces.
+    Methods (inherited from native parent):
+        test_box(box)
+            Tests if the box intersects the shape.
+        volume(box, min_volume)
+            Calculates the volume of the shape with desired accuracy.
+        bounding_box(box, tol)
+            Finds bounding box for the shape with desired accuracy.
+        test_points(points)
+            Tests the senses of the points.
+        is_complement(other)
+            Checks if other is a complement to the shape.
+        complement()
+            Gets complement shape.
+        union(*other)
+            Creates a union of the shape with the others.
+        intersection(*other)
+            Creates an intersection of the shape with the others.
+        transform(tr)
+            Gets transformed version of the shape.
+        is_empty()
+            Checks if this shape is empty - no space belong to it.
+        get_surfaces()
+            Gets all Surface objects that bounds the shape.
+        complexity()
+            Gets the complexity of the shape description.
+        get_simplest()
+            Gets the simplest description of the shape.
+        replace_surfaces(replace_dict)
+            Creates new Shape object by replacing surfaces.
     """
 
     _opc_hash = {
@@ -117,32 +115,24 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._hash = hash_value
 
-    def __str__(self):
-        words = print_card(self._get_words("U"))
-        return words
-
     def __repr__(self):
         return f"Shape({self.opc}, {self.args})"
 
-    def _get_words(self, parent_opc=None):
+    def _get_words(self, parent_opc: str = None) -> List[str]:
         """Gets list of words that describe the shape.
 
-        Parameters
-        ----------
-        parent_opc : str
-            Operation code of parent shape. It is needed for proper use of
-            parenthesis.
+        Args:
+            parent_opc:  Operation code of parent shape.
+                         It is needed for proper use of parenthesis.
 
-        Returns
-        -------
-        words : list[str]
+        Returns:
             List of words.
         """
         words = []
         if self.opc == "S":
-            words.append("{0}".format(self.args[0].options["name"]))
+            words.append(f"{self.args[0].options['name']}")
         elif self.opc == "C":
-            words.append("-{0}".format(self.args[0].options["name"]))
+            words.append(f"-{self.args[0].options['name']}")
         elif self.opc == "E":
             words.append("EMPTY_SET")
         elif self.opc == "R":
@@ -150,13 +140,14 @@ class Shape(_Shape):
         else:
             sep = " " if self.opc == "I" else ":"
             args = self.args
-            if self.opc == "U" and parent_opc == "I":
+            need_parentheses = self.opc == "U" and parent_opc == "I"
+            if need_parentheses:
                 words.append("(")
             for a in args[:-1]:
                 words.extend(a._get_words(self.opc))
                 words.append(sep)
             words.extend(args[-1]._get_words(self.opc))
-            if self.opc == "U" and parent_opc == "I":
+            if need_parentheses:
                 words.append(")")
         return words
 
