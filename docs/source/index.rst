@@ -1,17 +1,33 @@
-.. mckit documentation master file, created by
-   sphinx-quickstart on Tue May  2 16:47:06 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
+=================================
 Welcome to mckit's documentation!
 =================================
+
+.. todo::
+
+   The document is in progress.
+
+
+.. todo::
+
+   Add English version
 
 Пакет mckit предназначен для облегчения работы с кодами радиационного транспорта
 и упрощения процесса анализа полученных результатов. Основной средой для работы
 предполагается использовать jupyter notebook.
 
+Usage
+=====
+
+Command line interface
+----------------------
+
+.. click:: mapstp.cli.runner:mapstp
+   :prog: mapstp
+   :nested: full
+
+
 Основные задачи
----------------
+===============
 
 1. Упрощение процесса подготовки и интеграции моделей.
 
@@ -24,6 +40,10 @@ Welcome to mckit's documentation!
 
 5. Представление результатов.
 
+
+Details
+=======
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -32,7 +52,10 @@ Welcome to mckit's documentation!
    surface
    transformation
    material
+   readme
    modules
+   license
+   todo
 
 
 

@@ -14,7 +14,7 @@ import sys
 
 from pathlib import Path
 
-pkg_path = Path("..", "..").absolute()
+pkg_path = Path("..", "..", "src").absolute()
 assert pkg_path.exists(), f"Invalid path {pkg_path}"
 sys.path.insert(0, str(pkg_path))
 
@@ -46,15 +46,15 @@ extensions: List[str] = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
-    "sphinx.ext.ifconfig",
-    "sphinx.ext.doctest",
+    # "sphinx.ext.ifconfig",
+    # "sphinx.ext.doctest",
     "sphinx.ext.duration",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinx_autodoc_typehints",
+    # "sphinx_autodoc_typehints",
 ]
 """Used extensions.
 

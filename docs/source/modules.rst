@@ -1,5 +1,5 @@
-mckit
-=====
+src
+===
 
 .. toctree::
    :maxdepth: 4

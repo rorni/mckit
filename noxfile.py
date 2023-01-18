@@ -56,7 +56,7 @@ def find_my_name() -> str:
 
 
 package: Final = find_my_name()
-locations: Final = f"{package}", "tests", "./noxfile.py", "docs/source/conf.py"
+locations: Final = f"src/{package}", "tests", "./noxfile.py", "docs/source/conf.py"
 
 supported_pythons: Final = "3.8", "3.9", "3.10", "3.11"
 black_pythons: Final = "3.11"
@@ -203,7 +203,8 @@ def typeguard(s: Session) -> None:
 def isort(s: Session) -> None:
     """Organize imports."""
     search_patterns = [
-        f"{package}/*.py",
+        "*.py",
+        f"src/{package}/*.py",
         "tests/*.py",
         "benchmarks/*.py",
         "profiles/*.py",
@@ -267,7 +268,7 @@ def lint(s: Session) -> None:
 @session(python=mypy_pythons)
 def mypy(s: Session) -> None:
     """Type-check using mypy."""
-    args = s.posargs or [package]  # "tests", "docs/source/conf.py"]
+    args = s.posargs or ["src", "docs/source/conf.py"]
     s.run(
         "poetry",
         "install",
@@ -286,7 +287,7 @@ def mypy(s: Session) -> None:
 @session(python="3.11")
 def xdoctest(s: Session) -> None:
     """Run examples with xdoctest."""
-    args = s.posargs or ["--quiet", "-m", package]
+    args = s.posargs or ["--quiet", "-m", f"src/{package}"]
     s.run(
         "poetry",
         "install",

@@ -794,7 +794,13 @@ class Body(Card):
         return bodies
 
     # noinspection PyShadowingNames
-    def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
+    def fill(
+        self,
+        universe=None,
+        recurrent: bool = False,
+        simplify: bool = False,
+        **kwargs: dict[str, any],
+    ) -> list["Body"]:
         """Fills this cell by filling universe.
 
         If this cell doesn't contain fill options and universe is not
@@ -802,25 +808,22 @@ class Body(Card):
         a list of cells from filling universe bounded by cell being filled is
         returned.
 
-        Parameters
-        ----------
-        universe : Universe
-            Universe which cells fill this one. If None, universe from 'FILL'
-            option will be used. If no such universe, the cell itself will be
-            returned. Default: None.
-        recurrent : bool
-            If filler universe also contains cells with fill option, they will
-            be also filled. Default: False.
-        simplify : bool
-            If True, all cells obtained will be simplified.
-        **kwargs : dict
-            Keyword parameters for simplify method if simplify is True.
-            Default: False.
+        Args:
+            universe:
+                Universe which cells fill this one. If None, universe from 'FILL'
+                option will be used. If no such universe, the cell itself will be
+                returned. Default: None.
+            recurrent:
+                If filler universe also contains cells with fill option, they will
+                be also filled. Default: False.
+            simplify:
+                If True, all cells obtained will be simplified.
+            **kwargs: dict
+                Keyword parameters for simplify method if simplify is True.
+                Default: all False.
 
-        Returns
-        -------
-        cells : list[Body]
-            Resulting cells.
+        Returns:
+            The list of resulting cells.
         """
         if universe is None:
             if "FILL" in self.options.keys():

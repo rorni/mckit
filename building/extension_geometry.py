@@ -1,3 +1,6 @@
+"""Code to build mckit geometry C-extension."""
+from __future__ import annotations
+
 from typing import Iterable, List
 
 import os
@@ -23,35 +26,49 @@ if not WIN:
         According to the recommendation
         https://community.intel.com/t5/Intel-oneAPI-Math-Kernel-Library/pypi-package-for-mkl-2021-2-0-is-not-linkable-under-Linux-and/m-p/1275110?profile.language=ru
         on Linux MKL requires full path to the library.
+        This method construct appropriate paths and searches the libraries.
+
+        Args:
+            lib_dir: directory, where to search libraries
+            mkl_libs: list of library names to find
+
+        Returns:
+             The list of found libraries.
+
+        Raises:
+            EnvironmentError: if a library is not found.
         """
         # TODO dvp: implement logic for other possible suffixes in future MKL versions
         if MACOS:
             suffix = "2.dylib"
         else:
             if sys.platform != "linux":
-                raise EnvironmentError(f"Unknown platform {sys.platform}")
+                msg = f"Unknown platform {sys.platform}"
+                raise EnvironmentError(msg)
             suffix = "so.2"
 
-        lib_paths = list(map(lambda _p: lib_dir / f"lib{_p}.{suffix}", mkl_libs))
+        lib_paths: list[Path] = [lib_dir / f"lib{_p}.{suffix}" for _p in mkl_libs]
+
         for p in lib_paths:
             if not p.exists():
-                raise EnvironmentError(f"{p} is not a valid path to an MKL library.")
-        return list(map(str, lib_paths))
+                msg = f"{p} is not a valid path to an MKL library."
+                raise EnvironmentError(msg)
+
+        return [str(_p) for _p in lib_paths]
 
 
 class GeometryExtension(_Extension):
+    """The :class:`_Extension` specialization for mckit geometry module."""
+
     def __init__(self) -> None:
 
         super().__init__(
             "mckit.geometry",
-            sources=list(map(str, Path("mckit", "src").glob("*.c"))),
+            sources=list(map(str, Path("src", "mckit", "src").glob("*.c"))),
             language="c",
         )
 
         if WIN:
-            # TODO dvp: check new Intel recommended options
-            # define_macros = [("MKL_ILP64", None)]
-            # mkl_intel_ilp64_dll.lib mkl_tbb_thread_dll.lib mkl_core_dll.lib tbb12.lib
             cflags = ["/EHsc", "/bigobj"]
             ldflags = []
             libraries = [
@@ -60,7 +77,6 @@ class GeometryExtension(_Extension):
             ]
         else:
             cflags = [
-                # "-fvisibility=hidden",
                 "-O3",
                 "-Wall",
                 "-m64",
@@ -77,14 +93,9 @@ class GeometryExtension(_Extension):
             # Compiler options:
             # -DMKL_ILP64 -m64 -I"${MKLROOT}/include"
             lib_dir = get_library_dir(check=True)
-            # mkl_libs = [
-            #     "mkl_intel_ilp64",
-            #     "mkl_tbb_thread",
-            #     "mkl_core",
-            # ]  # - this is recommended
-            mkl_libs = ["mkl_rt"]  # - this actually works
-            # TODO dvp: recommended "--no-as-needed" is not available on MacOS, decide if it is necessary
-            # extra_link_args = ["-Wl,--no-as-needed"] + _make_full_names(lib_dir, mkl_libs)
+            mkl_libs = ["mkl_rt"]
+            # Intel recommended link arg "--no-as-needed", but is not available on macOS,
+            # and doesn't affect other OS, let's omit it.
             ldflags = _make_full_names(lib_dir, mkl_libs)
             libraries = ["nlopt", "pthread", "m", "dl"]
 
@@ -92,11 +103,11 @@ class GeometryExtension(_Extension):
         self._add_ldflags(ldflags)
         self._add_libraries(libraries)
 
-    def _add_cflags(self, flags: List[str]) -> None:
+    def _add_cflags(self, flags: list[str]) -> None:
         self.extra_compile_args[:0] = flags
 
-    def _add_ldflags(self, flags: List[str]) -> None:
+    def _add_ldflags(self, flags: list[str]) -> None:
         self.extra_link_args[:0] = flags
 
-    def _add_libraries(self, libraries: List[str]) -> None:
+    def _add_libraries(self, libraries: list[str]) -> None:
         self.libraries[:0] = libraries

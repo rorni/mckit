@@ -37,8 +37,8 @@ ignore=
     I202
 
     # ignore some questionable pandas-vet warnings
-    # use operator instead of method - to many false positives in non pandas code
-    PD005
+    # PD005: use operator instead of method
+    PD005  # - too much false positives
     # We use at() to access single values
     PD008
     # And we use iat()
@@ -57,7 +57,7 @@ exclude=
     *.egg-info
     .cache
     .eggs
-    mckit/parser
+    src/mckit/parser
 per-file-ignores =
     noxfile.py:ANN,DAR101
     tests/*:ANN,B950,DAR100,D100,D101,D102,D103,D104,DAR101,DAR103,S101
