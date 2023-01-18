@@ -21,8 +21,8 @@ class Something(NamedTuple):
     [
         ([], {}),
         (
-            list(map(Something, range(1, 3))),
-            dict((k, Something(k)) for k in range(1, 3)),
+            [Something(i) for i in range(1, 3)],
+            {k: Something(k) for k in range(1, 3)},
         ),
     ],
 )
@@ -38,10 +38,6 @@ def test_index_of_named_happy_path(entities, expected):
     ],
 )
 def test_clashes(entities):
-    # try:
-    #     actual = IndexOfNamed.from_iterable(entities, key=lambda x: x.name, on_duplicate=raise_on_duplicate_strategy)
-    # except NumberedItemDuplicateError as ex:
-    #     pass
     with pytest.raises(NumberedItemDuplicateError, match="Something"):
         actual = IndexOfNamed.from_iterable(
             entities, key=lambda x: x.name, on_duplicate=raise_on_duplicate_strategy
@@ -102,18 +98,3 @@ def test_collect_statistics_on_clashes(entities, expected, expected_collected):
     actual = IndexOfNamed.from_iterable(entities, key=lambda x: x.name, on_duplicate=collector)
     assert actual == expected
     assert collector == expected_collected
-
-
-# @pytest.mark.parametrize(
-#     "entities, expected, expected_collected",
-#     [
-#         ([Something2(1, 1), Something2(1, 2), Something2(2,3)], {1: Something2(1, 2)}, {1: 2, 2: 1}),
-#     ],
-# )
-# def test_collect_statistics_on_clashes(entities, expected, expected_collected):
-#     collector = StatisticsCollector()
-#     actual = IndexOfNamed.from_iterable(
-#         entities, key=lambda x: x.name, on_duplicate=collector
-#     )
-#     assert actual == expected
-#     assert collector == expected_collected
