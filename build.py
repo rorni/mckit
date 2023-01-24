@@ -52,7 +52,6 @@ class MCKitBuilder(build_ext):
         self.include_dirs.append(str(library_dir.parent / "include"))
 
     def build_extension(self, extension: Extension) -> None:
-        # assert extension.name == "mckit.geometry"
         nlopt_build_dir = build_nlopt(clean=True)
         nlopt_lib = nlopt_build_dir / get_nlopt_lib_name()
         # log.info(f"---***  builder.build_lib: {self.build_lib}")
@@ -63,7 +62,7 @@ class MCKitBuilder(build_ext):
         # log.info(f"---***  copy nlopt lib to {ext_dir}")
         if ext_dir.exists():
             save_library(ext_dir, nlopt_lib)
-        save_library(DIR / "mckit", nlopt_lib)
+        save_library(DIR / "src/mckit", nlopt_lib)
         # log.info("---*** Defined geometry extension:")
         # log.info(str(extension))
         # log.info("---***")

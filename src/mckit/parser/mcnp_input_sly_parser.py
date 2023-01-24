@@ -27,7 +27,7 @@ from mckit.parser.surface_parser import parse as parse_surface
 from mckit.parser.transformation_parser import Transformation
 from mckit.parser.transformation_parser import parse as parse_transformation
 from mckit.universe import Universe, produce_universes
-from mckit.utils.Index import Index
+from mckit.utils.indexes import Index
 
 from .mcnp_section_parser import Card as TextCard
 from .mcnp_section_parser import InputSections, Kind, distribute_cards, parse_sections_text

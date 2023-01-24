@@ -2,7 +2,7 @@ from typing import Iterable, Optional
 
 from mckit.body import GLOBAL_BOX, Body, Card
 from mckit.constants import MIN_BOX_VOLUME
-from mckit.utils.Index import Index, NumberedItemNotFoundError
+from mckit.utils.indexes import Index, NumberedItemNotFoundError
 
 
 class DummyCell(Body):

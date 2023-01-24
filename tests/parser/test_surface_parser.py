@@ -3,7 +3,7 @@ import mckit.parser.surface_parser as srp
 import pytest
 
 from mckit.surface import create_surface
-from mckit.utils.Index import IgnoringIndex
+from mckit.utils.indexes import IgnoringIndex
 
 
 @pytest.mark.parametrize(

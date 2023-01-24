@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as tp
 
 from typing import Iterable, List, NewType, Optional, Set, Union
@@ -20,7 +22,7 @@ from mckit.geometry import Shape as _Shape
 from .box import GLOBAL_BOX, Box
 from .card import Card
 from .constants import MIN_BOX_VOLUME
-from .printer import CELL_OPTION_GROUPS, print_card, print_option
+from .printer import CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .utils import filter_dict
@@ -32,62 +34,60 @@ __all__ = ["Shape", "Body", "simplify", "GLOBAL_BOX", "Card", "TGeometry", "TGeo
 class Shape(_Shape):
     """Describes shape.
 
-    Shape is immutable object.
+    Note:
+        Shape is immutable object.
 
-    Parameters
-    ----------
-    opc :
-        Operation code. Denotes operation to be applied. Possible values:
-        'I' - for intersection;
-        'U' - for union;
-        'C' - for complement;
-        'S' - (same) no operation;
-        'E' - empty set - no space occupied;
-        'R' - whole space.
-    args :
-        Geometry elements. It can be either Shape or Surface instances. But
-        no arguments must be specified for 'E' or 'R' opc. Only one argument
-        must present for 'C' or 'S' opc values.
+    Args:
+        opc:
+            Operation code. Denotes operation to be applied. Possible values:
+            'I' - for intersection;
+            'U' - for union;
+            'C' - for complement;
+            'S' - (same) no operation;
+            'E' - empty set - no space occupied;
+            'R' - whole space.
+        args:
+            Geometry elements. It can be either Shape or Surface instances. But
+            no arguments must be specified for 'E' or 'R' opc. Only one argument
+            must present for 'C' or 'S' opc values.
 
-    Properties
-    ----------
-    opc : str
-        Operation code. It may be different from opc passed in __init__.
-    invert_opc : str
-        Operation code, complement to the opc.
-    args : tuple
-        A tuple of shape's arguments.
+    Attrs:
+        opc (str):
+            Operation code. It may be different from opc passed in __init__.
+        invert_opc (str):
+            Operation code, complement to the opc.
+        args (Tuple[Shape|Surface...]):
+            A tuple of shape's arguments.
 
-    Methods
-    -------
-    test_box(box)
-        Tests if the box intersects the shape.
-    volume(box, min_volume)
-        Calculates the volume of the shape with desired accuracy.
-    bounding_box(box, tol)
-        Finds bounding box for the shape with desired accuracy.
-    test_points(points)
-        Tests the senses of the points.
-    is_complement(other)
-        Checks if other is a complement to the shape.
-    complement()
-        Gets complement shape.
-    union(*other)
-        Creates a union of the shape with the others.
-    intersection(*other)
-        Creates an intersection of the shape with the others.
-    transform(tr)
-        Gets transformed version of the shape.
-    is_empty()
-        Checks if this shape is empty - no space belong to it.
-    get_surfaces()
-        Gets all Surface objects that bounds the shape.
-    complexity()
-        Gets the complexity of the shape description.
-    get_simplest()
-        Gets the simplest description of the shape.
-    replace_surfaces(replace_dict)
-        Creates new Shape object by replacing surfaces.
+    Methods (inherited from native parent):
+        test_box(box)
+            Tests if the box intersects the shape.
+        volume(box, min_volume)
+            Calculates the volume of the shape with desired accuracy.
+        bounding_box(box, tol)
+            Finds bounding box for the shape with desired accuracy.
+        test_points(points)
+            Tests the senses of the points.
+        is_complement(other)
+            Checks if other is a complement to the shape.
+        complement()
+            Gets complement shape.
+        union(*other)
+            Creates a union of the shape with the others.
+        intersection(*other)
+            Creates an intersection of the shape with the others.
+        transform(tr)
+            Gets transformed version of the shape.
+        is_empty()
+            Checks if this shape is empty - no space belong to it.
+        get_surfaces()
+            Gets all Surface objects that bounds the shape.
+        complexity()
+            Gets the complexity of the shape description.
+        get_simplest()
+            Gets the simplest description of the shape.
+        replace_surfaces(replace_dict)
+            Creates new Shape object by replacing surfaces.
     """
 
     _opc_hash = {
@@ -100,7 +100,7 @@ class Shape(_Shape):
     }
 
     def __init__(self, opc: str, *args: Union["Shape", "Surface"]):
-        opc, args = Shape._clean_args(opc, *args)
+        opc, args = _clean_args(opc, *args)
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
 
@@ -115,32 +115,24 @@ class Shape(_Shape):
         _Shape.__init__(self, opc, *args)
         self._hash = hash_value
 
-    def __str__(self):
-        words = print_card(self._get_words("U"))
-        return words
-
     def __repr__(self):
         return f"Shape({self.opc}, {self.args})"
 
-    def _get_words(self, parent_opc=None):
+    def _get_words(self, parent_opc: str = None) -> List[str]:
         """Gets list of words that describe the shape.
 
-        Parameters
-        ----------
-        parent_opc : str
-            Operation code of parent shape. It is needed for proper use of
-            parenthesis.
+        Args:
+            parent_opc:  Operation code of parent shape.
+                         It is needed for proper use of parenthesis.
 
-        Returns
-        -------
-        words : list[str]
+        Returns:
             List of words.
         """
         words = []
         if self.opc == "S":
-            words.append("{0}".format(self.args[0].options["name"]))
+            words.append(f"{self.args[0].options['name']}")
         elif self.opc == "C":
-            words.append("-{0}".format(self.args[0].options["name"]))
+            words.append(f"-{self.args[0].options['name']}")
         elif self.opc == "E":
             words.append("EMPTY_SET")
         elif self.opc == "R":
@@ -148,74 +140,16 @@ class Shape(_Shape):
         else:
             sep = " " if self.opc == "I" else ":"
             args = self.args
-            if self.opc == "U" and parent_opc == "I":
+            need_parentheses = self.opc == "U" and parent_opc == "I"
+            if need_parentheses:
                 words.append("(")
             for a in args[:-1]:
                 words.extend(a._get_words(self.opc))
                 words.append(sep)
             words.extend(args[-1]._get_words(self.opc))
-            if self.opc == "U" and parent_opc == "I":
+            if need_parentheses:
                 words.append(")")
         return words
-
-    @classmethod
-    def _clean_args(cls, opc, *args):  # TODO dvp: change to staticmethod or external
-        """Clean input arguments."""
-        args = [a.shape if isinstance(a, Body) else a for a in args]
-        cls._verify_opc(opc, *args)
-        if opc == "I" or opc == "U":
-            args = [Shape("S", a) if isinstance(a, Surface) else a for a in args]
-        if len(args) > 1:
-            # Extend arguments
-            args = list(args)
-            i = 0
-            while i < len(args):
-                if args[i].opc == opc:
-                    a = args.pop(i)
-                    args.extend(a.args)
-                else:
-                    i += 1
-
-            i = 0
-            while i < len(args):
-                a = args[i]
-                if a.opc == "E" and opc == "I" or a.opc == "R" and opc == "U":
-                    return a.opc, []
-                elif a.opc == "E" and opc == "U" or a.opc == "R" and opc == "I":
-                    args.pop(i)
-                    continue
-                for j, b in enumerate(args[i + 1 :]):
-                    if a.is_complement(b):
-                        if opc == "I":
-                            return "E", []
-                        else:
-                            return "R", []
-                i += 1
-            args = list(set(args))
-            args.sort(key=hash)
-            if len(args) == 0:
-                opc = "E" if opc == "U" else "R"
-        if (
-            len(args) == 1
-            and isinstance(args[0], Shape)
-            and (opc == "S" or opc == "I" or opc == "U")
-        ):
-            return args[0].opc, args[0].args
-        elif len(args) == 1 and isinstance(args[0], Shape) and opc == "C":
-            item = args[0].complement()
-            return item.opc, item.args
-        return opc, args
-
-    @staticmethod
-    def _verify_opc(opc, *args):
-        """Checks if such argument combination is valid."""
-        if (opc == "E" or opc == "R") and len(args) > 0:
-            raise ValueError("No arguments are expected.")
-        elif (opc == "S" or opc == "C") and len(args) != 1:
-            raise ValueError("Only one operand is expected.")
-        elif opc == "I" or opc == "U":
-            if len(args) == 0:
-                raise ValueError("Operands are expected.")
 
     def __eq__(self, other):
         if self is other:
@@ -587,11 +521,68 @@ class Shape(_Shape):
         return operands.pop()
 
 
+def _clean_args(opc, *args):
+    """Clean input arguments."""
+    args = [a.shape if isinstance(a, Body) else a for a in args]
+    _verify_opc(opc, *args)
+    if opc == "I" or opc == "U":
+        args = [Shape("S", a) if isinstance(a, Surface) else a for a in args]
+    if len(args) > 1:
+        # Extend arguments
+        args = list(args)  # convert tuple to list
+        i = 0
+        while i < len(args):
+            if args[i].opc == opc:
+                a = args.pop(i)
+                args.extend(a.args)
+            else:
+                i += 1
+
+        i = 0
+        while i < len(args):
+            a = args[i]
+            if a.opc == "E" and opc == "I" or a.opc == "R" and opc == "U":
+                return a.opc, []
+            elif a.opc == "E" and opc == "U" or a.opc == "R" and opc == "I":
+                args.pop(i)
+                continue
+            for j, b in enumerate(args[i + 1 :]):
+                if a.is_complement(b):
+                    if opc == "I":
+                        return "E", []
+                    else:
+                        return "R", []
+            i += 1
+        args = list(set(args))
+        args.sort(key=hash)
+        if len(args) == 0:
+            opc = "E" if opc == "U" else "R"
+    if len(args) == 1 and isinstance(args[0], Shape):
+        if opc == "S" or opc == "I" or opc == "U":
+            return args[0].opc, args[0].args
+        if opc == "C":
+            item = args[0].complement()
+            return item.opc, item.args
+    return opc, args
+
+
+def _verify_opc(opc, *args):
+    """Checks if such argument combination is valid."""
+    if (opc == "E" or opc == "R") and len(args) > 0:
+        raise ValueError("No arguments are expected.")
+    elif (opc == "S" or opc == "C") and len(args) != 1:
+        raise ValueError("Only one operand is expected.")
+    elif opc == "I" or opc == "U":
+        if len(args) == 0:
+            raise ValueError("Operands are expected.")
+
+
 TOperation = NewType("TOperation", str)
 TGeometry = NewType("TGeometry", Union[List[Union[Surface, TOperation]], Shape, "Body"])
 
-
 # noinspection PyProtectedMember
+
+
 class Body(Card):
     """Represents MCNP cell.
 
@@ -794,7 +785,13 @@ class Body(Card):
         return bodies
 
     # noinspection PyShadowingNames
-    def fill(self, universe=None, recurrent=False, simplify=False, **kwargs):
+    def fill(
+        self,
+        universe=None,
+        recurrent: bool = False,
+        simplify: bool = False,
+        **kwargs: dict[str, any],
+    ) -> list["Body"]:
         """Fills this cell by filling universe.
 
         If this cell doesn't contain fill options and universe is not
@@ -802,25 +799,22 @@ class Body(Card):
         a list of cells from filling universe bounded by cell being filled is
         returned.
 
-        Parameters
-        ----------
-        universe : Universe
-            Universe which cells fill this one. If None, universe from 'FILL'
-            option will be used. If no such universe, the cell itself will be
-            returned. Default: None.
-        recurrent : bool
-            If filler universe also contains cells with fill option, they will
-            be also filled. Default: False.
-        simplify : bool
-            If True, all cells obtained will be simplified.
-        **kwargs : dict
-            Keyword parameters for simplify method if simplify is True.
-            Default: False.
+        Args:
+            universe:
+                Universe which cells fill this one. If None, universe from 'FILL'
+                option will be used. If no such universe, the cell itself will be
+                returned. Default: None.
+            recurrent:
+                If filler universe also contains cells with fill option, they will
+                be also filled. Default: False.
+            simplify:
+                If True, all cells obtained will be simplified.
+            **kwargs: dict
+                Keyword parameters for simplify method if simplify is True.
+                Default: all False.
 
-        Returns
-        -------
-        cells : list[Body]
-            Resulting cells.
+        Returns:
+            The list of resulting cells.
         """
         if universe is None:
             if "FILL" in self.options.keys():

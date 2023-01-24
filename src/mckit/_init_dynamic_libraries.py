@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Generator, List
 
 import os
@@ -15,7 +17,7 @@ WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform
 MACOS = sys.platform.startswith("darwin")
 
 
-def library_base_name(_lib_name: str) -> str:
+def _library_base_name(_lib_name: str) -> str:
     return _lib_name if WIN else "lib" + _lib_name
 
 
@@ -23,18 +25,18 @@ SUFFIX = ".dll" if WIN else ".dylib" if MACOS else ".so"
 
 if WIN or MACOS:
 
-    def combine_version_and_suffix(version: int, suffix: str) -> str:
+    def _combine_version_and_suffix(version: int, suffix: str) -> str:
         return f".{version}{suffix}"  # .2.dll or .2.dylib
 
 else:  # Linux
 
-    def combine_version_and_suffix(version: int, suffix: str) -> str:
+    def _combine_version_and_suffix(version: int, suffix: str) -> str:
         return f"{suffix}.{version}"  # .so.2
 
 
-def iterate_suffixes_with_version(max_version: int = 2) -> Generator["str", None, None]:
+def _iterate_suffixes_with_version(max_version: int = 2) -> Generator["str", None, None]:
     while max_version >= 0:
-        yield combine_version_and_suffix(max_version, SUFFIX)
+        yield _combine_version_and_suffix(max_version, SUFFIX)
         max_version -= 1
     yield SUFFIX
 
@@ -52,10 +54,10 @@ else:
 SHARED_LIBRARY_DIRECTORIES.append(HERE)
 
 
-def preload_library(lib_name: str, max_version: int = 2) -> None:
+def _preload_library(lib_name: str, max_version: int = 2) -> None:
     for d in SHARED_LIBRARY_DIRECTORIES:
-        for s in iterate_suffixes_with_version(max_version):
-            p = Path(d, library_base_name(lib_name)).with_suffix(s)
+        for s in _iterate_suffixes_with_version(max_version):
+            p = Path(d, _library_base_name(lib_name)).with_suffix(s)
             if p.exists():
                 cdll.LoadLibrary(str(p))
                 _LOG.info("Found library: {}", p.absolute())
@@ -63,18 +65,19 @@ def preload_library(lib_name: str, max_version: int = 2) -> None:
     raise EnvironmentError(f"Cannot preload library {lib_name}")
 
 
-def init():
-    if WIN:
-        if hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
-            for _dir in SHARED_LIBRARY_DIRECTORIES:
-                os.add_dll_directory(str(_dir))
-    preload_library("mkl_rt", max_version=2)
-    preload_library("nlopt", max_version=0)
+def _init():
+    if WIN and hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
+        for _dir in SHARED_LIBRARY_DIRECTORIES:
+            os.add_dll_directory(str(_dir))
+    _preload_library("mkl_rt", max_version=2)
+    _preload_library("nlopt", max_version=0)
 
 
-init()
+_init()
 
-import mckit.geometry as geometry  # noqa
+# We have to import these libraries here, after preloading libraries.
 
-from mckit.body import Body, Shape  # noqa
-from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface  # noqa
+import mckit.geometry as geometry
+
+from mckit.body import Body, Shape
+from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface

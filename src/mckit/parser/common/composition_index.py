@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
 from mckit.material import Composition, Material
-from mckit.utils.Index import Index, NumberedItemNotFoundError
+from mckit.utils.indexes import Index, NumberedItemNotFoundError
 
 
 class DummyMaterial(Material):

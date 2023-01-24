@@ -34,7 +34,7 @@ __all__ = [
     "UniverseAnalyser",
 ]
 
-from .utils.Index import IndexOfNamed, StatisticsCollector
+from .utils.indexes import IndexOfNamed, StatisticsCollector
 from .utils.named import Name
 
 

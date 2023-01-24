@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
 from mckit.transformation import Transformation
-from mckit.utils.Index import Index, NumberedItemNotFoundError
+from mckit.utils.indexes import Index, NumberedItemNotFoundError
 
 
 class DummyTransformation(Transformation):

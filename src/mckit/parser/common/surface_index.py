@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
 from mckit.surface import EX, Plane, Surface
-from mckit.utils.Index import Index, NumberedItemNotFoundError
+from mckit.utils.indexes import Index, NumberedItemNotFoundError
 
 
 class DummySurface(Plane):

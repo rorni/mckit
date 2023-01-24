@@ -1,7 +1,7 @@
 name: Release
 
 env:
-  PYTHON_VERSION: '3.10'
+  PYTHON_VERSION: '3.11'
 
 on:
   workflow_dispatch:
@@ -21,44 +21,6 @@ concurrency:
 
 
 jobs:
-# TODO: uncomment when finish debugging Release action, reuse Tests workflow?
-#  release-tests:
-#    runs-on: ubuntu-latest
-#    steps:
-#
-#      - name: Checkout repository
-#        uses: actions/checkout@v3.3.0
-#        with:
-#          fetch-depth: 1
-#
-#      - name: Checkout submodules
-#        run: git submodule update --init --recursive --depth=1
-#
-#      - uses: actions/setup-python@v4.4.0
-#        with:
-#          python-version: ${{ env.PYTHON_VERSION }}
-#          architecture: x64
-#
-#
-#      - name: Use frozen pip version
-#        run: |
-#          pip install --constraint=.github/constraints.txt pip
-#          pip --version
-#
-#      - name: Install poetry
-#        run: |
-#          pip install --constraint=.github/constraints.txt poetry
-#          poetry --version
-#          poetry check
-#          poetry version
-#
-#      - name: Install Nox
-#        run: |
-#          pip install --constraint=.github/constraints.txt nox nox-poetry
-#          nox --version
-#      - name: Run nox tests
-#        run: nox --no-color --python ${{ env.PYTHON_VERSION }}
-
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -70,7 +32,7 @@ jobs:
           fetch-depth: 2    # need previous revision to define tag
 
       - name: Set up Python
-        uses: actions/setup-python@v4.4.0
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -96,35 +58,9 @@ jobs:
         with:
           version-command: poetry version --short
 
-#      - name: Bump version for developmental release
-#        if: "! steps.check-version.outputs.tag"
-#        run: |
-#          poetry version patch &&
-#          version=$(poetry version --short) &&
-#          poetry version $version.dev.$(date +%s)
-
-#      - name: Install dependencies before build
-#        run: |
-#          poetry install --no-dev
-#
-#      - name: Build package
-#        run: |
-#          poetry build --ansi
-
-#      - name: Publish package on PyPI
-#        if: steps.check-version.outputs.tag
-#        uses: pypa/gh-action-pypi-publish@v1
-#        with:
-#          user: __token__
-#          password: ${{ secrets.PYPI_TOKEN }}
-#
-#      - name: Publish package on TestPyPI
-#        if: "! steps.check-version.outputs.tag"
-#        uses: pypa/gh-action-pypi-publish@v1
-#        with:
-#          user: __token__
-#          password: ${{ secrets.TEST_PYPI_TOKEN }}
-#          repository_url: https://test.pypi.org/legacy/
+        # The above creates a tag, and that inovokes 'publish' action,
+        # which is separated because it's  rather complicated due platform dependency
+        # and building of dependencies.
 
       - name: Publish the release notes
         uses: release-drafter/release-drafter@v5.22.0

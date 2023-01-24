@@ -83,7 +83,7 @@ def test_are_equal(a, b, expected):
     "dictionary, drop_items, expected",
     [
         ({"a": 1, "b": 2}, "b", {"a": 1}),
-        ({"a": 1, "b": 2, "c": 3}, frozenset("b c".split()), {"a": 1}),
+        ({"a": 1, "b": 2, "c": 3}, frozenset(("b", "c")), {"a": 1}),
         ({"a": 1, "b": {"c": 3}}, "c", {"a": 1, "b": {}}),
         ({"a": 1, "b": {"c": 3}}, lambda x: x == "a", {"b": {"c": 3}}),
     ],
