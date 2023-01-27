@@ -39,7 +39,7 @@ class Distribution:
     def __init__(
         self,
         name: int,
-        values: [Union[ArrayLike, list["Distribution"]]],
+        values: Union[ArrayLike, list["Distribution"]],
         probs: Union[ArrayLike, "Distribution"],
         distribution_variable: Optional[str] = None,
         is_discrete: bool = False,
@@ -86,7 +86,9 @@ class Distribution:
 
     @staticmethod
     def check_distr(
-        bins_or_distrs: [Union[ArrayLike, list["Distribution"]]], size: int, is_discrete: bool
+        bins_or_distrs: [Union[ArrayLike, list["Distribution"]]],
+        size: int,
+        is_discrete: bool,
     ) -> None:
         """Checks if the distribution is correct.
 
