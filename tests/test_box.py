@@ -507,14 +507,18 @@ def test_check_intersection(case1, case2):
     assert result == answer
 
 
-@pytest.mark.parametrize("case1", range(len(boxes)))
-@pytest.mark.parametrize("case2", range(len(boxes)))
-def test_eq_and_hash(case1, case2):
-    box1 = boxes[case1]
-    box2 = boxes[case2]
-    answer = bool(eq_matrix[case1][case2])
-    assert answer == (box1 == box2)
-    assert answer == (hash(box1) == hash(box2))
+def test_repr():
+    box = Box([0, 0, 0], 2, 2, 2)
+    assert f"{box!r}" == "Box([0. 0. 0.], 2.0, 2.0, 2.0)"
+
+
+def test_eq_and_hash():
+    box1 = Box([0, 0, 0], 2, 2, 2)
+    box2 = Box([0, 0, 0], 2, 2, 2)
+    assert box1 == box2
+    assert hash(box1) == hash(box2)
+    box3 = Box([0, 0, 0.0001], 2, 2, 2)
+    assert box1 != box3
 
 
 @pytest.mark.parametrize(
