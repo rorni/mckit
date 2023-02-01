@@ -39,7 +39,7 @@ ignore=
 
     # ignore some questionable pandas-vet warnings
     # PD005: use operator instead of method
-    PD005  # - too much false positives
+    PD005
     # We use at() to access single values
     PD008
     # And we use iat()
@@ -71,8 +71,6 @@ rst-directives = deprecated
 extend-ignore=
     # Google Python style is not RST until after processed by Napoleon
     # See https://github.com/peterjc/flake8-rst-docstrings/issues/17
-    RST201
-    RST203
-    RST301
+    RST201,RST203,RST301,
 
 # vim: set ts=4 sw=0 tw=79 ss=0 ft=ini et ai :

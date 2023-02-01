@@ -49,10 +49,10 @@ repos:
 #  - id: fix-smartquotes
 
 # Automatically remove noqa that are not used
-- repo: https://github.com/asottile/yesqa
-  rev: "v1.4.0"
-  hooks:
-  - id: yesqa
+#- repo: https://github.com/asottile/yesqa
+#  rev: "v1.4.0"
+#  hooks:
+#  - id: yesqa
 
 # TODO dvp: return rstcheck, fix docs files for that
 #-   repo: https://github.com/rstcheck/rstcheck

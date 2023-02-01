@@ -386,7 +386,7 @@ write = true
 style = "pep257"
 exclude = ["tools/**","src/**/*_parser.py","src/**/*_tab.py"]
 strip-whitespaces = true
-max-line-length = 90
+max-line-length = 100
 summary-quotes-same-line = true
 
 
