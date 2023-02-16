@@ -5,12 +5,15 @@
 env="mckit"
 pkg="${env//-/_}"
 
+eval "$(pyenv init -)"
+pyenv local "$env" "3.10.10" "3.9.16" "3.8.16"
 pyenv virtualenv-delete -f  "$env"
-pyenv virtualenv "3.11.1" "$env"
-pyenv local "$env" "3.10.9" "3.9.16" "3.8.16"
+pyenv virtualenv "3.11.2" "$env"
 pyenv rehash
+pyenv shell "$env"
 poetry env info
 poetry install
+pyenv shell --unset
 pyenv rehash
 python -c "import ${pkg}; print(${pkg}.__version__)"
 

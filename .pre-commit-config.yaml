@@ -64,7 +64,7 @@ repos:
     # Remove unused imports
     -   id: pycln
         name: pycln
-        exclude: tools|\.idea|\.cache
+        exclude: tools|\.idea|\.cache|[Pp]arser|tab\.py
         entry: poetry run pycln --config pyproject.toml
         language: system
         types: [python]

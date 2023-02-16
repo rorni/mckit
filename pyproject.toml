@@ -298,6 +298,7 @@ show_missing = true
 skip_covered = true
 fail_under = 85  # TODO dvp: increase limit to 100 with code maturing
 # Regexes for lines to exclude from consideration
+omit = ["*_tab.py", "**/__init__.py"]
 exclude_lines = [
     # Have to re-enable the standard pragma
     "pragma: no cover",
@@ -378,6 +379,29 @@ experimental = true
 
 [tool.pycln]
 path = "src"
+exclude = '''
+(
+    \.egg-info
+  | \.eggs
+  | \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.nox
+  | \.venv
+  | \.idea
+  | _build
+  | 3rd-party
+  | build
+  | build_configs
+  | data
+  | dist
+  | notebooks
+  | htmlcov
+  | wrk
+  | [Pp]arser
+  | tab\.py
+)
+'''
 #silence = true
 
 

@@ -689,7 +689,8 @@ class Body(Card):
     def material(self) -> Optional[mm.Material]:
         """Gets body's Material.
 
-        None is returned if no material present.
+        Returns:
+            The material, if present, otherwise None
         """
         composition = self.options.get("MAT", None)
         assert composition is None or isinstance(composition, mm.Material)

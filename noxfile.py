@@ -208,6 +208,7 @@ def isort(s: Session) -> None:
         "tests/*.py",
         "benchmarks/*.py",
         "profiles/*.py",
+        "adhoc/*.py",
     ]
     files_to_process: List[str] = sum((glob(p, recursive=True) for p in search_patterns), [])
     if files_to_process:
