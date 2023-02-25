@@ -291,8 +291,8 @@ omit = ["*_tab.py"]
 show_missing = true
 skip_covered = true
 fail_under = 85  # TODO dvp: increase limit to 100 with code maturing
-# Regexes for lines to exclude from consideration
 omit = ["*_tab.py", "**/__init__.py"]
+# Regexes for lines to exclude from consideration
 exclude_lines = [
     # Have to re-enable the standard pragma
     "pragma: no cover",
