@@ -1,43 +1,50 @@
-import inspect
+"""Utility methods to access a package data."""
+
+from typing import Callable, cast
 
 from pathlib import Path
 
 import pkg_resources as pkg
 
 
-def filename_resolver(package=None):
-    if package is None:
-        module = inspect.getmodule(inspect.stack()[1][0])
-        package = module.__name__
+def filename_resolver(package: str) -> Callable[[str], str]:
+    """Create method to find data file name.
 
-    resource_manager = pkg.ResourceManager()
+    Uses resource manager to handle all the cases of the deployment.
 
-    def func(resource):
-        return resource_manager.resource_filename(package, resource)
+    Args:
+        package: the package below which the data is stored.
+
+    Returns:
+        callable which appends the argument to the package folder.
+    """
+    resource_manager = pkg.ResourceManager()  # type: ignore[attr-defined]
+
+    def func(resource: str) -> str:
+        return cast(str, resource_manager.resource_filename(package, resource))
 
     func.__doc__ = f"Computes file names for resources located in {package}"
 
     return func
 
 
-def path_resolver(package=None):
+def path_resolver(package: str) -> Callable[[str], Path]:
+    """Create method to find data path.
 
-    # The package is to be found here, otherwise inspect will find this package
-    # instead of caller's package.
-    if package is None:
-        module = inspect.getmodule(inspect.stack()[1][0])
-        package = module.__name__
+    Uses :func:`file_resolver`.
 
+    Args:
+        package: the package below which the data is stored.
+
+    Returns:
+        callable which appends the argument to the package folder adt returns as Path.
+    """
     resolver = filename_resolver(package)
 
-    def func(resource):
+    def func(resource: str) -> Path:
         filename = resolver(resource)
         return Path(filename)
 
-    if package is None:
-        package = "caller package"
-
-    # noinspection PyCompatibility
     func.__doc__ = f"Computes Path for resources located in {package}"
 
     return func

@@ -209,6 +209,7 @@ sphinx-autobuild = ">=2021.3.14"
 atomic = true
 ensure_newline_before_comments = true
 known_first_party = "mckit"
+known_third_party = "mpl_toolkits,matplotlib,numpy,scipy"
 known_typing = "typing,types,typing_extensions,mypy,mypy_extensions"
 sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 default_section = "FIRSTPARTY"
@@ -270,8 +271,13 @@ markers = [
 # xfail tests that pass should fail the test suite
 xfail_strict = true
 filterwarnings = [
-    "ignore:.*not typechecking multipledispatch.dispatcher.*:UserWarning"
+    "error",
+    'ignore:Implementing implicit namespace packages \(as specified in PEP 420\) is preferred to `pkg_resources.declare_namespace`',
+    "ignore:.*not typechecking multipledispatch.dispatcher.*UserWarning",
+    'ignore:.*Deprecated call to `pkg_resources.declare_namespace'
 ]
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.xdoctest]
 quiet = true
@@ -284,15 +290,14 @@ source = ["src", ".nox/*/site-packages"]
 [tool.coverage.run]
 branch = true
 source = ["mckit"]
-omit = ["*_tab.py"]
-
+omit = ["*_tab.py", "**/__init__.py"]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
 fail_under = 85  # TODO dvp: increase limit to 100 with code maturing
-# Regexes for lines to exclude from consideration
 omit = ["*_tab.py", "**/__init__.py"]
+# Regexes for lines to exclude from consideration
 exclude_lines = [
     # Have to re-enable the standard pragma
     "pragma: no cover",
