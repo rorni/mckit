@@ -9,7 +9,6 @@ repository = "https://github.com/MC-kit/mckit"
 documentation = "https://mckit.readthedocs.io"
 license = "GPL3"
 keywords = ["mckit", "MCNP"]
-build = "build.py"
 readme = "README.rst"
 packages = [
     { include = "mckit", from = "src" },
@@ -51,6 +50,10 @@ requires = [
     "wheel>=0.37.1",
 ]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = true
 
 [tool.poetry.scripts]
 mckit = "mckit.cli.runner:mckit"
