@@ -1,6 +1,7 @@
 from itertools import product
 
 import numpy as np
+
 import pytest
 
 from mckit import read_meshtal

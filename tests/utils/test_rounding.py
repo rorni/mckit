@@ -1,4 +1,5 @@
 import numpy as np
+
 import pytest
 
 from mckit.utils import round_array, round_scalar, significant_array, significant_digits

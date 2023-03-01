@@ -1,4 +1,5 @@
 import numpy as np
+
 import pytest
 
 from mckit.parser.mctal_parser import read_mctal

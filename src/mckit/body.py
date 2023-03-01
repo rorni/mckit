@@ -11,8 +11,9 @@ from functools import reduce
 from itertools import groupby, permutations, product
 from multiprocessing import Pool
 
-import mckit.material as mm
 import numpy as np
+
+import mckit.material as mm
 
 from click import progressbar
 

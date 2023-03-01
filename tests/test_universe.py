@@ -6,6 +6,7 @@ import textwrap
 from copy import deepcopy
 
 import numpy as np
+
 import pytest
 
 from mckit.body import Body, Card, Shape

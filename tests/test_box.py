@@ -2,6 +2,7 @@ import io
 import pickle
 
 import numpy as np
+
 import pytest
 
 from mckit.box import Box

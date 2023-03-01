@@ -5,9 +5,10 @@ from typing import Any, Optional, Tuple
 
 import numpy as np
 
+from numpy.typing import ArrayLike
+
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import ORIGIN
-from numpy.typing import ArrayLike
 
 from .card import Card
 from .utils import compute_hash

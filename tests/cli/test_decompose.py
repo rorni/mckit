@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+
 import pytest
 
 try:
@@ -8,11 +9,12 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib
 
+from numpy.testing import assert_array_equal
+
 from mckit.cli.commands.decompose import get_default_output_directory
 from mckit.cli.runner import mckit
 from mckit.parser import from_file
 from mckit.utils.resource import filename_resolver
-from numpy.testing import assert_array_equal
 
 data_filename_resolver = filename_resolver("tests")
 
