@@ -113,6 +113,7 @@ tbb = "2021.7.1"
 # TODO dvp: check
 #      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 #
+importlib-resources = {version = "^5.12.0", python = "3.8"}
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
@@ -146,7 +147,7 @@ pytest-cache = ">=1.0"
 pytest-cov = ">=3.0.0"
 pytest-mock = ">=3.6.1"
 coverage = { version = ">=6.1.2", extras = ["toml"] }
-pytest-benchmark = "^4.0.0"
+pytest-benchmark = ">=4.0.0"
 
 [tool.poetry.group.coverage.dependencies]
 coverage = { version = ">=6.1.2", extras = ["toml"] }
@@ -351,7 +352,6 @@ module = [
     "pandas",
     "pytest",
     "scipy.constants",
-    "pkg_resources",
     "tomllib",
     "tomli"
 ]

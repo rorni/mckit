@@ -1,23 +1,22 @@
 """Utility methods to access a package data."""
 from __future__ import annotations
 
-from typing import Callable
+import sys
 
-import importlib.resources as rc
+if sys.version_info >= (3, 9):
+    from importlib.resources import files
+else:
+    from importlib_resources import files
 
-from pathlib import Path
 
-
-def path_resolver(package: rc.Package) -> Callable[[rc.Resource], Path]:
+def path_resolver(package):
     """Create method to find data path.
 
     Args:
         package: the package below which the data is stored.
 
-    Yields:
-        Path to resource object, may be temporary, if the resource is from zip.
+    Returns:
+        callable which appends the argument to the package folder adt returns as Path.
     """
 
-    resolver = rc.files(package)
-
-    return resolver.joinpath
+    return files(package).joinpath
