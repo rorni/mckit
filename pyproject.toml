@@ -293,7 +293,7 @@ source = ["src", ".nox/*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["mckit"]
+source = ["src"]
 omit = ["*_tab.py", "**/__init__.py"]
 
 [tool.coverage.report]
@@ -323,20 +323,21 @@ sort = "Cover"
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
 #     https://dev.to/tusharsadhwani/the-comprehensive-guide-to-mypy-561m
 [tool.mypy]
-python_version = "3.11"
 # strict = true     # TODO dvp: uncomment this to get strict control
 follow_imports = "silent"
 # namespace_packages = true
 warn_return_any = true
 warn_unused_configs = true
 show_error_codes = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+disable_error_code = ["annotation-unchecked"]
 show_error_context = true
 error_summary = true
 warn_redundant_casts = true
 warn_unreachable = true
 warn_unused_ignores = true
-files = "mckit/**/*.py"
-
+files = "src/**/*.py"
+plugins = ["numpy.typing.mypy_plugin"]
 
 [[tool.mypy.overrides]]
 module = [
