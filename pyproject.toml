@@ -146,6 +146,7 @@ pytest-cache = ">=1.0"
 pytest-cov = ">=3.0.0"
 pytest-mock = ">=3.6.1"
 coverage = { version = ">=6.1.2", extras = ["toml"] }
+pytest-benchmark = "^4.0.0"
 
 [tool.poetry.group.coverage.dependencies]
 coverage = { version = ">=6.1.2", extras = ["toml"] }

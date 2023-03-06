@@ -1,6 +1,7 @@
 """Utility code to use in all other modules."""
-from .accept import TVisitor, accept, on_unknown_acceptor
-from .misc import (
+from mckit.utils.accept import TVisitor, accept, on_unknown_acceptor
+from mckit.utils.io import MCNP_ENCODING
+from mckit.utils.misc import (
     MAX_DIGITS,
     are_equal,
     compute_hash,
@@ -17,8 +18,8 @@ from .misc import (
     significant_array,
     significant_digits,
 )
-from .resource import path_resolver
-from .tolerance import FLOAT_TOLERANCE
+from mckit.utils.resource import path_resolver
+from mckit.utils.tolerance import FLOAT_TOLERANCE
 
 __all__ = [
     "are_equal",
@@ -28,4 +29,6 @@ __all__ = [
     "get_decades",
     "path_resolver",
     "FLOAT_TOLERANCE",
+    "MAX_DIGITS",
+    "MCNP_ENCODING",
 ]

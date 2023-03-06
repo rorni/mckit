@@ -35,7 +35,7 @@ def test_path_resolver_when_resource_doesnt_exist(package, resource, expected):
     assert not Path(actual).exists(), f"The resource {resource!r} should not be available"
 
 
-def test_filename_resolver_when_package_doesnt_exist():
+def test_path_resolver_when_package_doesnt_exist():
     with pytest.raises(ModuleNotFoundError):
         resolver = path_resolver("not_existing")
         resolver("something.txt")

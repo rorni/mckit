@@ -11,7 +11,7 @@ from mckit.geometry import EX, EY, EZ
 from mckit.material import Material
 from mckit.surface import create_surface
 from mckit.transformation import Transformation
-from mckit.utils.resource import filename_resolver
+from mckit.utils.resource import path_resolver
 
 transforms = [
     None,
@@ -59,14 +59,14 @@ class TestRectMesh:
         ],
     )
     def test_creation(self, mi: int, ti: int):
-        bin = bins[mi]
+        _bin = bins[mi]
         tr = transforms[ti]
-        mesh = create_rmesh(bin, tr)
-        np.testing.assert_array_almost_equal(mesh._xbins, bin["xbins"])
-        np.testing.assert_array_almost_equal(mesh._ybins, bin["ybins"])
-        np.testing.assert_array_almost_equal(mesh._zbins, bin["zbins"])
+        mesh = create_rmesh(_bin, tr)
+        np.testing.assert_array_almost_equal(mesh._xbins, _bin["xbins"])
+        np.testing.assert_array_almost_equal(mesh._ybins, _bin["ybins"])
+        np.testing.assert_array_almost_equal(mesh._zbins, _bin["zbins"])
 
-        origin = [bin["xbins"][0], bin["ybins"][0], bin["zbins"][0]]
+        origin = [_bin["xbins"][0], _bin["ybins"][0], _bin["zbins"][0]]
         ex = EX
         ey = EY
         ez = EZ
@@ -84,19 +84,19 @@ class TestRectMesh:
     @pytest.mark.parametrize("mi", range(3))
     def test_bounding_box(self, mi: int, ti: int):
         tr = transforms[ti]
-        bin = bins[mi]
-        mesh = create_rmesh(bin, tr)
+        _bin = bins[mi]
+        mesh = create_rmesh(_bin, tr)
         box = mesh.bounding_box()
         corners = box.corners
         ans_corners = [
-            [bin["xbins"][0], bin["ybins"][0], bin["zbins"][0]],
-            [bin["xbins"][0], bin["ybins"][0], bin["zbins"][-1]],
-            [bin["xbins"][0], bin["ybins"][-1], bin["zbins"][0]],
-            [bin["xbins"][0], bin["ybins"][-1], bin["zbins"][-1]],
-            [bin["xbins"][-1], bin["ybins"][0], bin["zbins"][0]],
-            [bin["xbins"][-1], bin["ybins"][0], bin["zbins"][-1]],
-            [bin["xbins"][-1], bin["ybins"][-1], bin["zbins"][0]],
-            [bin["xbins"][-1], bin["ybins"][-1], bin["zbins"][-1]],
+            [_bin["xbins"][0], _bin["ybins"][0], _bin["zbins"][0]],
+            [_bin["xbins"][0], _bin["ybins"][0], _bin["zbins"][-1]],
+            [_bin["xbins"][0], _bin["ybins"][-1], _bin["zbins"][0]],
+            [_bin["xbins"][0], _bin["ybins"][-1], _bin["zbins"][-1]],
+            [_bin["xbins"][-1], _bin["ybins"][0], _bin["zbins"][0]],
+            [_bin["xbins"][-1], _bin["ybins"][0], _bin["zbins"][-1]],
+            [_bin["xbins"][-1], _bin["ybins"][-1], _bin["zbins"][0]],
+            [_bin["xbins"][-1], _bin["ybins"][-1], _bin["zbins"][-1]],
         ]
         if tr:
             ans_corners = tr.apply2point(ans_corners)
@@ -199,8 +199,8 @@ class TestRectMesh:
     @pytest.mark.parametrize("mi, ti", product(range(len(bins)), range(len(transforms))))
     def test_get_voxel(self, mi: int, ti: int):
         tr = transforms[ti]
-        bin = bins[mi]
-        mesh = create_rmesh(bin, tr)
+        _bin = bins[mi]
+        mesh = create_rmesh(_bin, tr)
         shape = mesh.shape
         ex = EX
         ey = EY
@@ -209,9 +209,9 @@ class TestRectMesh:
             vox = mesh.get_voxel(i, j, k)
             corners = []
             for pr in product(
-                bin["xbins"][i : i + 2],
-                bin["ybins"][j : j + 2],
-                bin["zbins"][k : k + 2],
+                _bin["xbins"][i : i + 2],
+                _bin["ybins"][j : j + 2],
+                _bin["zbins"][k : k + 2],
             ):
                 corners.append(list(pr))
             if tr is not None:
@@ -351,7 +351,7 @@ class TestRectMesh:
             np.testing.assert_array_almost_equal(y, expected["y"])
 
 
-parser_test_data = filename_resolver("tests")
+parser_test_data = path_resolver("tests")
 # dvp: On Linux access to package should be organized with resource name resolver.
 
 

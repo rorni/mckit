@@ -64,7 +64,7 @@ VectorLike = Union[np.ndarray, List[float]]
 
 
 # noinspection PyPep8Naming
-def create_surface(kind: str, *params: float, **options: Dict[str, Any]) -> "Surface":
+def create_surface(kind: str, *params: float, **options) -> "Surface":
     """Creates new surface.
 
     Args:

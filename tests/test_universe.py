@@ -22,9 +22,10 @@ from mckit.universe import (
     collect_transformations,
     surface_selector,
 )
-from mckit.utils.resource import filename_resolver
+from mckit.utils.resource import path_resolver
 
-data_filename_resolver = filename_resolver("tests")
+data_path_resolver = path_resolver("tests")
+data_filename_resolver = lambda x: str(data_path_resolver(x))
 
 TStatItem = Dict[
     int, Union[List[int], Set[Universe]]
@@ -644,9 +645,9 @@ def test_bounding_box(universe, tol, case, expected):
 )
 def test_select(universe, case, condition, inner, answer):
     u = universe(case)
-    result = u.select(condition, inner=inner)
-    assert len(result) == len(answer)
-    for r, (cls, name) in zip(result, answer):
+    selection = u.select(condition, inner=inner)
+    assert len(selection) == len(answer)
+    for r, (cls, name) in zip(selection, answer):
         assert isinstance(r, cls)
         assert r.name() == name
 
@@ -867,7 +868,7 @@ def test_set_common_materials(universe, case, common_mat):
         (2, {"universe": 2}, 1012, Box([0, 0, 0], 20, 20, 20)),
         (
             2,
-            {"predicate": lambda c: "transform" in c.options["FILL"].keys()},
+            {"predicate": lambda c: "transform" in c.options["FILL"]},
             1022,
             Box([0, 0, 0], 20, 20, 20),
         ),
@@ -985,7 +986,7 @@ def test_alone(universe, case):
     u = universe(case)
     current_universe = u.alone()
     assert current_universe is not u
-    assert 0 == current_universe.name()
+    assert current_universe.name() == 0
     assert u.verbose_name == current_universe.verbose_name
     assert len(u._cells) == len(current_universe._cells)
     for c, cc in zip(u, current_universe):

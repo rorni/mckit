@@ -3,9 +3,9 @@ from typing import List, NamedTuple
 import pytest
 
 from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file, from_text
-from mckit.utils import filename_resolver
+from mckit.utils import path_resolver
 
-file_resolver = filename_resolver("tests.parser")
+file_resolver = path_resolver("tests.parser")
 
 
 class TExpected(NamedTuple):
