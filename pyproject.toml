@@ -45,7 +45,6 @@ requires = [
     "cmake >= 3.25.0",
     "mkl-devel == 2022.2.1",
     "tbb == 2021.7.1",
-#    Note: keep in sync with main dependencies, last update 2023.03.01
     "numpy>=1.24.2",
     "wheel>=0.37.1",
 ]
@@ -72,6 +71,7 @@ atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"
 click = ">=8.0.1"
 colorama = ">=0.4.4"
+importlib-resources = {version = ">=5.12.0", python = "3.8"}
 loguru = ">=0.6.0"
 numpy = ">=1.24.2"
 ply = ">=3.11"
@@ -113,7 +113,6 @@ tbb = "2021.7.1"
 # TODO dvp: check
 #      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 #
-importlib-resources = {version = "^5.12.0", python = "3.8"}
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
@@ -143,11 +142,11 @@ pycln = {version = "^2.1.1", extras = ["click"]}
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=7.0.1"
+pytest-benchmark = ">=4.0.0"
 pytest-cache = ">=1.0"
 pytest-cov = ">=3.0.0"
 pytest-mock = ">=3.6.1"
 coverage = { version = ">=6.1.2", extras = ["toml"] }
-pytest-benchmark = ">=4.0.0"
 
 [tool.poetry.group.coverage.dependencies]
 coverage = { version = ">=6.1.2", extras = ["toml"] }
@@ -195,12 +194,6 @@ pylint = ">=2.15.10"
 flake8-pylint = ">=0.1.3"
 # TODO dvp: check/use flake8-pyprojecttoml plugin
 # https://gitlab.com/durko/flake8-pyprojecttoml/-/blob/master/pyproject.toml
-
-[tool.poetry.group.tryceratops]
-optional = true
-
-[tool.poetry.group.tryceratops.dependencies]
-tryceratops = ">=1.0.1"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = ">=6.1.3"
@@ -325,6 +318,7 @@ sort = "Cover"
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
 #     https://dev.to/tusharsadhwani/the-comprehensive-guide-to-mypy-561m
 [tool.mypy]
+python="3.11"
 # strict = true     # TODO dvp: uncomment this to get strict control
 follow_imports = "silent"
 # namespace_packages = true
@@ -345,6 +339,7 @@ plugins = ["numpy.typing.mypy_plugin"]
 module = [
     "click",
     "click.testing",
+    "importlib_resources",
     "loguru",
     "multipledispatch",
     "nox",

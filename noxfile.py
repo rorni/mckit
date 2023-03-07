@@ -4,7 +4,7 @@ See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-0
 """
 from __future__ import annotations
 
-from typing import Final, List
+from typing import Final, List  # type: ignore[attr-defined]
 
 import re
 import shutil
@@ -154,7 +154,7 @@ def tests(s: Session) -> None:
     try:
         s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
-        if s.interactive:
+        if s.interactive and "--no-cov" not in s.posargs:
             s.notify("coverage", posargs=[])
 
 
@@ -193,7 +193,7 @@ def typeguard(s: Session) -> None:
         "main,test,typeguard",
         external=True,
     )
-    s.run("pytest", f"--typeguard-packages={package}", *s.posargs)
+    s.run("pytest", f"--typeguard-packages={package}", *s.posargs, external=True)
 
 
 @session

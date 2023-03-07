@@ -71,7 +71,8 @@ def create_surface(kind: str, *params: float, **options) -> "Surface":
         kind: Surface kind designator. See MCNP manual.
         params: List of surface parameters.
         options: Dictionary of surface's options.
-                In particular, transform  - transformation instance to be applied to the surface being created.
+                In particular, transform  - transformation instance
+                to be applied to the surface being created.
 
     Returns:
         New surface.
