@@ -62,13 +62,14 @@ exclude=
 per-file-ignores =
     **/__init__.py:F401
     noxfile.py:ANN,DAR101
+    tools/clear-prev-dist-info.py:S404,S603,S607
     tests/*:ANN,B950,DAR100,D100,D101,D102,D103,D104,DAR101,DAR103,S101
     src/mckit/_init_dynamic_libraries.py:F401,E402
 ignore-decorators=click,pytest
 docstring-convention = google
 rst-roles = class,const,func,meth,mod,ref
 rst-directives = deprecated
-extend-ignore=
+extend-ignore =
     # Google Python style is not RST until after processed by Napoleon
     # See https://github.com/peterjc/flake8-rst-docstrings/issues/17
     RST201,RST203,RST301,
