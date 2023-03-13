@@ -1,43 +1,26 @@
-import inspect
+"""Utility methods to access a package data."""
+from __future__ import annotations
+
+from typing import Callable
+
+import sys
 
 from pathlib import Path
 
-import pkg_resources as pkg
+if sys.version_info >= (3, 9):
+    from importlib.abc import Traversable
+    from importlib.resources import Package, files
+else:
+    from importlib_resources import files
 
 
-def filename_resolver(package=None):
-    if package is None:
-        module = inspect.getmodule(inspect.stack()[1][0])
-        package = module.__name__
+def path_resolver(package: Package) -> Callable[[str], Path | Traversable]:
+    """Create method to find data path.
 
-    resource_manager = pkg.ResourceManager()
+    Args:
+        package: the package below which the data is stored.
 
-    def func(resource):
-        return resource_manager.resource_filename(package, resource)
-
-    func.__doc__ = f"Computes file names for resources located in {package}"
-
-    return func
-
-
-def path_resolver(package=None):
-
-    # The package is to be found here, otherwise inspect will find this package
-    # instead of caller's package.
-    if package is None:
-        module = inspect.getmodule(inspect.stack()[1][0])
-        package = module.__name__
-
-    resolver = filename_resolver(package)
-
-    def func(resource):
-        filename = resolver(resource)
-        return Path(filename)
-
-    if package is None:
-        package = "caller package"
-
-    # noinspection PyCompatibility
-    func.__doc__ = f"Computes Path for resources located in {package}"
-
-    return func
+    Returns:
+        callable which appends the argument to the package folder adt returns as Path.
+    """
+    return files(package).joinpath

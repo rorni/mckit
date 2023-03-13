@@ -11,8 +11,9 @@ from functools import reduce
 from itertools import groupby, permutations, product
 from multiprocessing import Pool
 
-import mckit.material as mm
 import numpy as np
+
+import mckit.material as mm
 
 from click import progressbar
 
@@ -689,7 +690,8 @@ class Body(Card):
     def material(self) -> Optional[mm.Material]:
         """Gets body's Material.
 
-        None is returned if no material present.
+        Returns:
+            The material, if present, otherwise None
         """
         composition = self.options.get("MAT", None)
         assert composition is None or isinstance(composition, mm.Material)

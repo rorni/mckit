@@ -4,9 +4,10 @@ import pytest
 
 from mckit.cli.runner import mckit
 from mckit.parser import from_file
-from mckit.utils.resource import filename_resolver
+from mckit.utils.resource import path_resolver
 
-data_filename_resolver = filename_resolver("tests.cli")
+data_path_resolver = path_resolver("tests.cli")
+data_filename_resolver = lambda x: str(data_path_resolver(x))
 
 
 def test_when_there_is_no_args(runner):
@@ -45,11 +46,11 @@ def test_output_is_not_defined(runner):
 def test_not_existing_mcnp_file(runner):
     result = runner.invoke(
         mckit,
-        args=["transform", "-t", "1", "not-existing.imcnp"],
+        args=["transform", "-t", "1", "not-existing.mcnp"],
         catch_exceptions=False,
     )
     assert result.exit_code > 0
-    assert "Path 'not-existing.imcnp' does not exist" in result.output
+    assert "Path 'not-existing.mcnp' does not exist" in result.output
 
 
 @pytest.mark.parametrize(

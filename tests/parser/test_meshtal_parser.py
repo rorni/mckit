@@ -1,10 +1,11 @@
 import numpy as np
+
 import pytest
 
 from mckit.parser.meshtal_parser import meshtal_lexer, meshtal_parser
-from mckit.utils import filename_resolver
+from mckit.utils import path_resolver
 
-file_resolver = filename_resolver("tests")
+file_resolver = path_resolver("tests")
 
 
 @pytest.mark.parametrize(

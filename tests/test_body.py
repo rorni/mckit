@@ -1,6 +1,7 @@
 import typing as tp
 
 import numpy as np
+
 import pytest
 
 from mckit.body import Body, Shape

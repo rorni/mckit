@@ -1,6 +1,7 @@
 [flake8]
 select=ANN,B,B9,BLK,C,D,DAR,E,F,I,N,PD,R,TC,TR,S,W
 max-complexity=15
+max-mccabe-complexity=5
 max-line-length=100
 ignore=
     # ANN001 Missing type annotation for function argument: doesn't allow to use functools dispatching
@@ -38,7 +39,7 @@ ignore=
 
     # ignore some questionable pandas-vet warnings
     # PD005: use operator instead of method
-    PD005  # - too much false positives
+    PD005
     # We use at() to access single values
     PD008
     # And we use iat()
@@ -61,6 +62,7 @@ exclude=
 per-file-ignores =
     **/__init__.py:F401
     noxfile.py:ANN,DAR101
+    tools/clear-prev-dist-info.py:S404,S603,S607
     tests/*:ANN,B950,DAR100,D100,D101,D102,D103,D104,DAR101,DAR103,S101
     src/mckit/_init_dynamic_libraries.py:F401,E402
 ignore-decorators=click,pytest

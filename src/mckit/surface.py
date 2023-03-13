@@ -64,14 +64,15 @@ VectorLike = Union[np.ndarray, List[float]]
 
 
 # noinspection PyPep8Naming
-def create_surface(kind: str, *params: float, **options: Dict[str, Any]) -> "Surface":
+def create_surface(kind: str, *params: float, **options) -> "Surface":
     """Creates new surface.
 
     Args:
         kind: Surface kind designator. See MCNP manual.
         params: List of surface parameters.
         options: Dictionary of surface's options.
-                In particular, transform  - transformation instance to be applied to the surface being created.
+                In particular, transform  - transformation instance
+                to be applied to the surface being created.
 
     Returns:
         New surface.

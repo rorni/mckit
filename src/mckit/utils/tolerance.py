@@ -8,8 +8,9 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from mckit.constants import FLOAT_TOLERANCE
 from numpy import ndarray
+
+from mckit.constants import FLOAT_TOLERANCE
 
 
 class MaybeClose(ABC):

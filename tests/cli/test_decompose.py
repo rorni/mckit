@@ -1,20 +1,25 @@
+import sys
+
 from pathlib import Path
 
 import numpy as np
+
 import pytest
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ModuleNotFoundError:
+else:
     import tomli as tomllib
+
+from numpy.testing import assert_array_equal
 
 from mckit.cli.commands.decompose import get_default_output_directory
 from mckit.cli.runner import mckit
 from mckit.parser import from_file
-from mckit.utils.resource import filename_resolver
-from numpy.testing import assert_array_equal
+from mckit.utils.resource import path_resolver
 
-data_filename_resolver = filename_resolver("tests")
+data_path_resolver = path_resolver("tests")
+data_filename_resolver = lambda x: str(data_path_resolver(x))
 
 
 @pytest.mark.parametrize(
@@ -64,17 +69,19 @@ def test_when_there_are_no_universes(runner, source, expected):
 
 
 @pytest.mark.parametrize(
-    "source,expected", [("cli/data/simple_cubes.mcnp", "envelopes.i u1.i u2.i".split())]
+    "source,expected", [("cli/data/simple_cubes.mcnp", ["envelopes.i", "u1.i", "u2.i"])]
 )
 def test_when_only_source_is_specified(runner, source, expected):
-    source: Path = data_filename_resolver(source)
+    source: str = data_filename_resolver(source)
     with runner.isolated_filesystem():
-        result = runner.invoke(mckit, args=["decompose", source], catch_exceptions=False)
-        assert result.exit_code == 0, "Should success without specified output: " + result.output
+        run_result = runner.invoke(mckit, args=["decompose", source], catch_exceptions=False)
+        assert run_result.exit_code == 0, (
+            "Should success without specified output: " + run_result.output
+        )
         output: Path = get_default_output_directory(source)
         for f in expected:
             p = output / f
-            assert p.exists(), f"Should store the file {p} in the default directory '{output}'"
+            assert p.exists(), f"Should store the file {p} in the default directory {output!r}"
             model = from_file(p).universe
             for cell in model:
                 assert "U" not in cell.options or cell.options["U"].name() == 0
@@ -82,7 +89,7 @@ def test_when_only_source_is_specified(runner, source, expected):
 
 @pytest.mark.parametrize(
     "source,output,expected",
-    [("cli/data/simple_cubes.mcnp", "split-1", "envelopes.i u1.i u2.i".split())],
+    [("cli/data/simple_cubes.mcnp", "split-1", ["envelopes.i", "u1.i", "u2.i"])],
 )
 def test_when_output_is_specified(runner, source, output, expected):
     source = data_filename_resolver(source)
@@ -142,8 +149,8 @@ def test_fill_descriptor(runner):
             assert "created" in fill_descriptor
             assert "2" in fill_descriptor
             assert "universe" in fill_descriptor["2"]
-            assert 1 == fill_descriptor["2"]["universe"]
-            assert "u1.i" == fill_descriptor["2"]["file"]
+            assert fill_descriptor["2"]["universe"] == 1
+            assert fill_descriptor["2"]["file"] == "u1.i"
 
 
 def test_fill_descriptor_when_fill_descriptor_file_is_specified(runner):

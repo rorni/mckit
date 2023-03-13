@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import re
 
+from pathlib import Path
+
 import numpy as np
+
 import ply.lex as lex
 import ply.yacc as yacc
 
-from ..fmesh import FMesh
+from mckit.fmesh import FMesh
 
 literals = ["+", "-", ":", "/"]
 
@@ -236,6 +241,7 @@ def p_header(p):
     p[0] = {"PROBID": p[l - 2] + p[l - 1], "VERSION": p[3]}
 
 
+# noinspection GrazieInspection
 def p_tallies(p):
     """tallies : tallies tally
     | tallies tally separator
@@ -298,6 +304,7 @@ def p_tally(p):
     p[0] = tally
 
 
+# noinspection PyPep8Naming,GrazieInspection
 def p_tallY_header(p):
     """tally_header : TALLY integer newline particle TALLY newline
     | TALLY integer newline particle TALLY newline ENERGY newline
@@ -527,7 +534,7 @@ _BIN_NAMES = {
 }
 
 
-def read_meshtal(filename):
+def read_meshtal(filename: str | Path) -> dict[int, FMesh]:
     """Reads MCNP meshtal file.
 
     Parameters

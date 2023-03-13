@@ -5,9 +5,10 @@ import pytest
 from mckit.cli.runner import mckit
 from mckit.parser import from_file
 from mckit.universe import collect_transformations
-from mckit.utils.resource import filename_resolver
+from mckit.utils.resource import path_resolver
 
-data_filename_resolver = filename_resolver("tests.cli")
+data_path_resolver = path_resolver("tests.cli")
+data_filename_resolver = lambda x: str(data_path_resolver(x))
 
 
 def test_help_compose(runner):
@@ -24,9 +25,9 @@ def test_when_there_is_no_args(runner):
 
 
 def test_not_existing_envelopes_file(runner):
-    result = runner.invoke(mckit, args=["compose", "not-existing.imcnp"], catch_exceptions=False)
+    result = runner.invoke(mckit, args=["compose", "not-existing.mcnp"], catch_exceptions=False)
     assert result.exit_code > 0
-    assert "Path 'not-existing.imcnp' does not exist" in result.output
+    assert "Path 'not-existing.mcnp' does not exist" in result.output
 
 
 def test_when_output_is_not_specified(runner):

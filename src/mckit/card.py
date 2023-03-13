@@ -15,7 +15,7 @@ from .printer import print_card
 class Card(ABC):
     """Features, common for all cards."""
 
-    def __init__(self, **options: Dict[str, Any]):
+    def __init__(self, **options):
         self.options: Dict[str, Any] = options
 
     def __str__(self):

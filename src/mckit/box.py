@@ -4,6 +4,7 @@ import numpy as np
 from mckit.geometry import EX, EY, EZ
 from mckit.geometry import GLOBAL_BOX as _GLOBAL_BOX
 from mckit.geometry import Box as _Box
+from mckit.utils import make_hashable
 
 
 class Box(_Box):
@@ -22,6 +23,15 @@ class Box(_Box):
             geometry_box.ez,
         )
 
+    def __repr__(self):
+        exm = "" if np.array_equal(self.ex, EX) else f"ex={self.ex}"
+        eym = "" if np.array_equal(self.ey, EY) else f"ey={self.ey}"
+        ezm = "" if np.array_equal(self.ez, EZ) else f"ez={self.ez}"
+        msgs = [x for x in [exm, eym, ezm] if x]
+        emsg = ", " + ", ".join(msgs) if msgs else ""
+        wx, wy, wz = self.dimensions
+        return f"Box({self.center}, {wx}, {wy}, {wz}{emsg})"
+
     def __eq__(self, other):
         return (
             np.array_equal(self.center, other.center)
@@ -32,7 +42,7 @@ class Box(_Box):
         )
 
     def __hash__(self):
-        return hash((self.center, self.dimensions, self.ex, self.ey, self.ez))
+        return hash(make_hashable((self.center, self.dimensions, self.ex, self.ey, self.ez)))
 
     def __getstate__(self):
         center = self.center
