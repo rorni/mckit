@@ -4,7 +4,7 @@ See `Cjolowicz's article <https://cjolowicz.github.io/posts/hypermodern-python-0
 """
 from __future__ import annotations
 
-from typing import Final, List  # type: ignore[attr-defined]
+from typing import Final, List
 
 import re
 import shutil

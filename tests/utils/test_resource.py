@@ -14,7 +14,7 @@ THIS_FILENAME = Path(__file__).name
         ("tests", "cli/data/simple_cubes.mcnp", "/cli/data/simple_cubes.mcnp"),
     ],
 )
-def test_path_resolver(package, resource, expected):
+def test_path_resolver(package, resource, expected) -> None:
     resolver = path_resolver(package)
     actual = resolver(resource)
     assert str(actual).replace("\\", "/").endswith(expected), "Failed to compute resource file name"
@@ -29,19 +29,19 @@ def test_path_resolver(package, resource, expected):
         ("mckit", "data/not_existing", "mckit/data/not_existing"),
     ],
 )
-def test_path_resolver_when_resource_doesnt_exist(package, resource, expected):
+def test_path_resolver_when_resource_doesnt_exist(package, resource, expected) -> None:
     resolver = path_resolver(package)
     actual = resolver(resource)
     assert not Path(actual).exists(), f"The resource {resource!r} should not be available"
 
 
-def test_path_resolver_when_package_doesnt_exist():
+def test_path_resolver_when_package_doesnt_exist() -> None:
     with pytest.raises(ModuleNotFoundError):
         resolver = path_resolver("not_existing")
         resolver("something.txt")
 
 
-def test_path_resolver_local():
+def test_path_resolver_local() -> None:
     resolver = path_resolver("tests")
     actual = resolver("utils/" + THIS_FILENAME)
     assert isinstance(actual, Path)
@@ -49,7 +49,7 @@ def test_path_resolver_local():
     assert actual.exists(), f"The file {THIS_FILENAME!r} should be available"
 
 
-def test_path_resolver_in_own_package_with_separate_file():
+def test_path_resolver_in_own_package_with_separate_file() -> None:
     resolver = path_resolver("tests")
     assert resolver("__init__.py").exists(), "Should find '__init__.py' in the 'tests' package"
 
