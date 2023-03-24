@@ -39,15 +39,7 @@ classifiers = [
 ]
 
 [build-system]
-requires = [
-    "poetry-core >= 1.5.1",
-    "setuptools >= 67.4.0",
-    "cmake >= 3.25.0",
-    "mkl-devel == 2022.2.1",
-    "tbb == 2021.7.1",
-    "numpy>=1.24.2",
-    "wheel>=0.37.1",
-]
+requires = ["poetry-core >= 1.5.2"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.build]
@@ -65,7 +57,7 @@ mckit = "mckit.cli.runner:mckit"
 
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"  # TODO dvp: update upper limit with scipy
+python = ">=3.8.1,<3.12"  # TODO dvp: update upper limit with scipy
 DateTime = ">=4.3"
 atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"
@@ -165,13 +157,13 @@ numpy = ">=1.23.2"
 
 [tool.poetry.group.flake8.dependencies]
 darglint = ">=1.8.1"
-flake8 = ">=4.0.1"  #TODO dvp: update with flake8-eradicate
+flake8 = ">=6.0.0"
 #flake8 = ">=6.0.0"
 flake8-adjustable-complexity = ">=0.0.6"
 flake8-annotations = ">=2.6.2"
 flake8-annotations-coverage = ">=0.0.6"
 flake8-bandit = ">=4.1.1"
-flake8-bugbear = ">=22.3.23"
+flake8-bugbear = ">=23.3.23"
 flake8-builtins = ">=1.5.3"
 flake8-class-attributes-order = ">=0.1.3"
 flake8-cognitive-complexity = ">=0.1.0"
@@ -179,7 +171,7 @@ flake8-colors = ">=0.1.9"
 flake8-commas = ">=2.1.0"
 flake8-comprehensions = ">=3.10.0"
 flake8-docstrings = ">=1.6.0"
-flake8-eradicate = ">=1.4.0"
+# flake8-eradicate = ">=1.4.0"  #TODO dvp: return with  flake8-eradicate update
 flake8-expression-complexity = ">=0.0.11"
 flake8-functions = ">=0.0.7"
 flake8-import-order = ">=0.18.1"
