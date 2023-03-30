@@ -45,16 +45,15 @@ def tolerance_estimator(
     def _estimate(a: ComparableType, b: ComparableType) -> bool:
         if isinstance(a, float) and isinstance(b, float):
             return math.isclose(a, b, rel_tol=rtol, abs_tol=atol)
-        elif isinstance(a, ndarray) and isinstance(b, ndarray):
+        if isinstance(a, ndarray) and isinstance(b, ndarray):
             return np.allclose(a, b, rtol, atol, equal_nan)
-        elif issubclass(type(a), Iterable) and issubclass(type(b), Iterable):
+        if issubclass(type(a), Iterable) and issubclass(type(b), Iterable):
             return all(_call(ai, bi) for ai, bi in itertools.zip_longest(a, b))
-        elif isinstance(a, int) and isinstance(b, int):
+        if isinstance(a, int) and isinstance(b, int):
             return a == b
-        elif isinstance(a, MaybeClose) and isinstance(b, MaybeClose):
+        if isinstance(a, MaybeClose) and isinstance(b, MaybeClose):
             return a.is_close_to(b, _call)
-        else:
-            raise TypeError(f"Not implemented for {type(a).__name__} and {type(b).__name__}")
+        raise TypeError(f"Not implemented for {type(a).__name__} and {type(b).__name__}")
 
     def _call(a: ComparableType, b: ComparableType) -> bool:
         if a is b:

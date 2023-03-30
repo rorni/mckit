@@ -49,8 +49,7 @@ def significant_digits(
     v = round(value, low)
     if abs(value - v) < reltol * d:
         return low
-    else:
-        return high
+    return high
 
 
 def get_decades(value: int | float) -> int:
@@ -237,5 +236,4 @@ def prettify_float(x: float, fmt: str = "{:.13g}") -> str:
     """Format float in uniform way."""
     if x.is_integer():
         return str(int(x))
-    else:
-        return fmt.format(x)
+    return fmt.format(x)
