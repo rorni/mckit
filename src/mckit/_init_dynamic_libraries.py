@@ -62,7 +62,7 @@ def _preload_library(lib_name: str, max_version: int = 2) -> None:
                 cdll.LoadLibrary(str(p))
                 _LOG.info("Found library: {}", p.absolute())
                 return
-    raise EnvironmentError(f"Cannot preload library {lib_name}")
+    raise OSError(f"Cannot preload library {lib_name}")
 
 
 def _init():
@@ -76,8 +76,6 @@ def _init():
 _init()
 
 # We have to import these libraries here, after preloading libraries.
-
-import mckit.geometry as geometry
-
+from mckit import geometry
 from mckit.body import Body, Shape
 from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface

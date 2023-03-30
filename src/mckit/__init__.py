@@ -28,5 +28,3 @@ from mckit.version import (
     __title__,
     __version__,
 )
-
-__doc__ = __summary__
