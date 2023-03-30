@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union, cast
 
 import operator

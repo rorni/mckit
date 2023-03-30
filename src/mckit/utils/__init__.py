@@ -1,4 +1,6 @@
 """Utility code to use in all other modules."""
+from __future__ import annotations
+
 from mckit.utils.accept import TVisitor, accept, on_unknown_acceptor
 from mckit.utils.io import MCNP_ENCODING
 from mckit.utils.misc import (

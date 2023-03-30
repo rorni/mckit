@@ -1,4 +1,5 @@
 # flake8: noca
+from __future__ import annotations
 
 from .check import check as do_check  # noca: F401
 from .compose import compose as do_compose  # noca: F401

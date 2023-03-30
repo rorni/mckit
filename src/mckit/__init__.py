@@ -1,4 +1,6 @@
 """The mckit package code root."""
+from __future__ import annotations
+
 import mckit._init_dynamic_libraries as init_lib
 
 from mckit._init_dynamic_libraries import (

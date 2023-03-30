@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Проверяет корректность модели и выдает статистику."""
+from __future__ import annotations
+
 from typing import Any, Callable, Iterable, Optional
 
 from pathlib import Path
