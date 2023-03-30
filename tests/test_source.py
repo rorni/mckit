@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from mckit.source import Distribution, Source, create_bin_distributions

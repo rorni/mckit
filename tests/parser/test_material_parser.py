@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 
 import mckit.parser.material_parser as mp
 import pytest

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from pathlib import Path
 
 from mckit.cli.runner import mckit

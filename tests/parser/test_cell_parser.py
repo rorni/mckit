@@ -1,6 +1,8 @@
 # Set output for parser debugging before importing Parser classes.
 # from sly import Parser as SlyParser
 # SlyParser.debugfile = "sly-debug.out"
+from __future__ import annotations
+
 from typing import List, Optional
 
 import mckit.parser.cell_parser as clp

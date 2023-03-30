@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 case_names = ["model1"]
 
 

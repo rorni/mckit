@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import mckit.parser.transformation_parser as trp
 import pytest
 
