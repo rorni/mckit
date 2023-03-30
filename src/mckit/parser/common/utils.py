@@ -18,26 +18,26 @@ RE_EMPTY_LINE = re.compile(r"\s*")
 
 def ensure_lower(text: str):
     if not text.islower():
-        text = text.lower()
+        return text.lower()
     return text
 
 
 def ensure_upper(text: str):
     if not text.isupper():
-        text = text.upper()
+        return text.upper()
     return text
 
 
 def drop_c_comments(text: str) -> str:
     has_comments = RE_C_COMMENT.search(text)
     if has_comments:
-        text = RE_C_COMMENT.sub("", text)
+        return RE_C_COMMENT.sub("", text)
     return text
 
 
 def drop_eol_comments(text):
     if RE_EOL_COMMENT.search(text) is not None:
-        text = RE_EOL_COMMENT.sub("", text)
+        return RE_EOL_COMMENT.sub("", text)
     return text
 
 
@@ -81,7 +81,7 @@ def extract_comments(text):
     assert cleaned_text, "There should be some  text in a card"
 
     if comments:
-        comments = dict((k, tuple(v)) for k, v in comments)
+        comments = {k: tuple(v) for k, v in comments}
     else:
         comments = None
 

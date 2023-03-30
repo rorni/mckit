@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
  Read and parse MCNP file text.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Generator, Iterable, List, NewType, Optional, TextIO, Tuple, Union
+from typing import Any, Callable, Generator, Iterable, NewType, TextIO, Tuple, Union
 
 from itertools import repeat
 from pathlib import Path
@@ -44,14 +43,14 @@ YieldGenerator = NewType("YieldGenerator", Generator[T, None, None])
 @attrs
 class ParseResult:
     universe: Universe = attrib()
-    cells: List[Body] = attrib()
+    cells: list[Body] = attrib()
     cells_index: CellStrictIndex = attrib()
-    surfaces: List[Surface] = attrib()
+    surfaces: list[Surface] = attrib()
     surfaces_index: SurfaceStrictIndex = attrib()
-    compositions: Optional[List[Composition]] = attrib()
-    compositions_index: Optional[CompositionStrictIndex] = attrib()
-    transformations: Optional[List[Transformation]] = attrib()
-    transformations_index: Optional[TransformationStrictIndex] = attrib()
+    compositions: list[Composition] | None = attrib()
+    compositions_index: CompositionStrictIndex | None = attrib()
+    transformations: list[Transformation] | None = attrib()
+    transformations_index: TransformationStrictIndex | None = attrib()
     sections: InputSections = attrib()
 
     @property
@@ -59,7 +58,7 @@ class ParseResult:
         return self.sections.title
 
 
-def from_file(path: Union[str, Path]) -> ParseResult:
+def from_file(path: str | Path) -> ParseResult:
     if isinstance(path, str):
         path = Path(path)
     with path.open("r", encoding=MCNP_ENCODING) as fid:
@@ -119,7 +118,7 @@ TSectionGenerator = NewType(
 
 def join_comments(text_cards: Iterable[TextCard]):
     def _iter():
-        comment: Optional[str] = None
+        comment: str | None = None
         for card in text_cards:
             if card.is_comment:
                 assert comment is None, f"Comment is already set {comment[:70]}"
@@ -154,15 +153,15 @@ def parse_section(
     return iterator()
 
 
-def parse_transformations(text_cards: Iterable[TextCard]) -> List[Transformation]:
+def parse_transformations(text_cards: Iterable[TextCard]) -> list[Transformation]:
     return list(parse_section(text_cards, Kind.TRANSFORMATION, parse_transformation))
 
 
-def parse_compositions(text_cards: Iterable[TextCard]) -> List[Composition]:
+def parse_compositions(text_cards: Iterable[TextCard]) -> list[Composition]:
     return list(parse_section(text_cards, Kind.MATERIAL, parse_composition))
 
 
-def parse_surfaces(text_cards: Iterable[TextCard], transformations: Index) -> List[Surface]:
+def parse_surfaces(text_cards: Iterable[TextCard], transformations: Index) -> list[Surface]:
     def parser(text: str):
         return parse_surface(text, transformations=transformations)
 
@@ -174,23 +173,23 @@ def extract_number(text_card: TextCard):
 
 
 class MissedCellsError(RuntimeError):
-    def __init__(self, missed_cells: List[int]):
+    def __init__(self, missed_cells: list[int]):
         self.missed_cells = missed_cells
         msg = f"Not found cells: {missed_cells}"
         super().__init__(msg)
 
     @classmethod
     def from_text_cards(cls, missed_cells: Iterable[TextCard]):
-        missed_cells_numbers: List[int] = list(map(extract_number, missed_cells))
+        missed_cells_numbers: list[int] = list(map(extract_number, missed_cells))
         return cls(missed_cells_numbers)
 
 
 def parse_cells(
-    text_cards: List[TextCard],
+    text_cards: list[TextCard],
     surfaces: Index,
     compositions: Index,
     transformations: Index,
-) -> Tuple[List[Body], CellStrictIndex]:
+) -> tuple[list[Body], CellStrictIndex]:
     text_cards_with_comments = join_comments(text_cards)
     size = len(text_cards_with_comments)
     cells_index = CellStrictIndex()
@@ -224,11 +223,11 @@ def parse_cells(
             cells[i] = card
             cells_index[card.name()] = card
         if cells_to_process_length == len(new_cells_to_process):
-            missed_cells_cards = list(text_cards[i] for i in new_cells_to_process)
+            missed_cells_cards = [text_cards[i] for i in new_cells_to_process]
             raise MissedCellsError.from_text_cards(missed_cells_cards)
         cells_to_process = new_cells_to_process
 
-    if any(map(lambda c: c is None, cells)):
+    if any(c is None for c in cells):
         cells = list(filter(lambda c: c is not None, cells))
 
     return cells, cells_index

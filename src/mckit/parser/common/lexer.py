@@ -39,8 +39,7 @@ class Lexer(sly.Lexer):
         self.lineno += len(token.value)
 
     def get_start_of_line(self, token):
-        prev_cr = self.text.rfind("\n", 0, token.index)
-        return prev_cr
+        return self.text.rfind("\n", 0, token.index)
 
     def get_end_of_line(self, token):
         next_cr = self.text.find("\n", token.index)
@@ -54,8 +53,7 @@ class Lexer(sly.Lexer):
 
     def find_column(self, token):
         prev_cr = self.get_start_of_line(token)
-        column = Lexer.column(token, prev_cr)
-        return column
+        return Lexer.column(token, prev_cr)
 
     def error(self, token):
         prev_cr = self.get_start_of_line(token)

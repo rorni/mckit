@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import Iterable
 
 from mckit.material import Composition, Material
 from mckit.utils.indexes import Index, NumberedItemNotFoundError
@@ -11,8 +11,8 @@ class DummyMaterial(Material):
         self,
         name: int,
         *,
-        density: Optional[float] = None,
-        concentration: Optional[float] = None,
+        density: float | None = None,
+        concentration: float | None = None,
     ) -> None:
         assert (density is None) ^ (concentration is None), "Specify only one of the parameters"
         if density is None:
@@ -32,11 +32,11 @@ class DummyComposition(Composition):
         super().__init__(name=name, weight=[(1001, 1.0)], comment="dummy")
 
 
-def raise_on_absent_composition_strategy(name: int) -> Optional[DummyComposition]:
+def raise_on_absent_composition_strategy(name: int) -> DummyComposition | None:
     raise CompositionNotFoundError(name)
 
 
-def dummy_on_absent_composition_strategy(name: int) -> Optional[DummyComposition]:
+def dummy_on_absent_composition_strategy(name: int) -> DummyComposition | None:
     return DummyComposition(name)
 
 
@@ -45,7 +45,7 @@ class CompositionStrictIndex(Index):
         super().__init__(raise_on_absent_composition_strategy, **kwargs)
 
     @classmethod
-    def from_iterable(cls, items: Iterable[Composition]) -> "CompositionStrictIndex":
+    def from_iterable(cls, items: Iterable[Composition]) -> CompositionStrictIndex:
         index = cls()
         index.update((c.name(), c) for c in items)
         return index
