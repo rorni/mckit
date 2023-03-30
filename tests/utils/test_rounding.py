@@ -38,7 +38,6 @@ def test_significant_digits(value, tol, res):
         rel = abs(value - approx) / max(abs(value), abs(approx))
         assert rel <= tol
         wrong = round(value, precision - 1)
-        print(approx, wrong, precision)
         rel = abs(value - wrong) / max(abs(value), abs(wrong))
         assert rel > tol
 

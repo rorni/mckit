@@ -26,9 +26,9 @@ from mckit.utils.indexes import Index
 
 def create_cell(
     cell_no: int,
-    geometry: List,
-    material: Optional[Material] = None,
-    transformation: Optional[Transformation] = None,
+    geometry: list,
+    material: Material | None = None,
+    transformation: Transformation | None = None,
     **options,
 ):
     if not options:
@@ -174,11 +174,11 @@ def test_found_failures(text, expected):
     assert actual.name() == expected
 
 
-def create_dummy_surface_index(surfaces: List[int]) -> Index:
+def create_dummy_surface_index(surfaces: list[int]) -> Index:
     return SurfaceStrictIndex.from_iterable(map(DummySurface, surfaces))
 
 
-def create_dummy_composition_index(compositions: List[int]) -> Index:
+def create_dummy_composition_index(compositions: list[int]) -> Index:
     return CompositionStrictIndex.from_iterable(map(DummyComposition, compositions))
 
 

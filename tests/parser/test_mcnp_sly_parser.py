@@ -12,8 +12,8 @@ file_resolver = path_resolver("tests.parser")
 
 class TExpected(NamedTuple):
     title: str
-    cells: List[int]
-    surfaces: List[int]
+    cells: list[int]
+    surfaces: list[int]
 
 
 @pytest.mark.parametrize(

@@ -707,13 +707,13 @@ def test_get_universes(universe, case, answer):
 def test_name_clashes(
     universe,
     case: int,
-    rename: Dict[int, Dict[str, int]],
+    rename: dict[int, dict[str, int]],
     stat: TStat,
 ):
     rename = deepcopy(rename)
     stat = deepcopy(stat)
     u: Universe = universe(case)
-    universes_index: Dict[int, Universe] = {x.name(): x for x in u.get_universes()}
+    universes_index: dict[int, Universe] = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
         universes_index[uname].rename(**ren_dict)
     for stat_item in stat.values():
@@ -791,7 +791,7 @@ def test_name_clashes(
 def test_name_clashes_with_common_materials(
     universe,
     case: int,
-    common_mat: Set[Composition],
+    common_mat: set[Composition],
     stat: TStat,
 ):
     stat = deepcopy(stat)
@@ -1180,7 +1180,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
         ),
     ],
 )
-def test_collect_transformations(case: str, expected: List[int]) -> None:
+def test_collect_transformations(case: str, expected: list[int]) -> None:
     case = textwrap.dedent(case)
     u = from_text(case).universe
     actual = sorted(map(int, map(Card.name, collect_transformations(u))))

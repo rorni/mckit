@@ -1571,7 +1571,7 @@ class TestMaterial:
             },
         ],
     )
-    def test_creation_failure(self, data: Dict[str, Any]):
+    def test_creation_failure(self, data: dict[str, Any]):
         data = deepcopy(data)  # this fixes pytest strange behavior (see below)"
         if "composition" in data.keys():
             composition_params = data.pop("composition")
