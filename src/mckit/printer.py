@@ -3,41 +3,39 @@ from __future__ import annotations
 
 from typing import Any
 
-import warnings
+from logging import getLogger
 
-import mckit.constants as constants
-
+from mckit import constants
 from mckit.utils import get_decades, prettify_float, significant_digits
 
 IMPORTANCE_FORMAT = "{0:.3f}"
+
+_LOG = getLogger(__name__)
 
 
 def print_card(tokens: list[str], offset: int = 8, max_column: int = 80, sep: str = "\n") -> str:
     """Produce string in MCNP card format.
 
-    Parameters
-    ----------
-    tokens :
-        List of words to be printed.
-    offset :
-        The number of spaces to make continuation of line. Minimum 5.
-    max_column :
-        The maximum length of card line. Maximum 80.
-    sep :
-        Separator symbol. This symbol marks positions where newline character
-        should be inserted even if max_column position not reached.
+    Args:
+        tokens :
+            List of words to be printed.
+        offset :
+            The number of spaces to make continuation of line. Minimum 5.
+        max_column :
+            The maximum length of card line. Maximum 80.
+        sep :
+            Separator symbol. This symbol marks positions where newline character
+            should be inserted even if max_column position not reached.
 
     Returns:
-    -------
-    text :
         MCNP code of a card.
     """
     if offset < 5:
         offset = 5
-        warnings.warn("offset must not be less than 5. offset is set to be 5.")
+        _LOG.warning("offset must not be less than 5. offset is set to be 5.")
     if max_column > 80:
         max_column = 80
-        warnings.warn("max_column must not be greater than 80. It is set to be 80.")
+        _LOG.warning("max_column must not be greater than 80. It is set to be 80.")
 
     length = 0  # current length.
     words = []  # a list of individual words.
@@ -61,16 +59,13 @@ def print_card(tokens: list[str], offset: int = 8, max_column: int = 80, sep: st
 def separate(tokens: list[str], sep: str = " ") -> list[str]:
     """Adds separation symbols between tokens.
 
-    Parameters
-    ----------
-    tokens :
-        A list of strings.
-    sep :
-        Separator to be inserted between tokens. Default: single space.
+    Args:
+        tokens :
+            A list of strings.
+        sep :
+            Separator to be inserted between tokens. Default: single space.
 
     Returns:
-    -------
-    sep_tokens :
         List of separated tokens.
     """
     sep_tokens = []
@@ -85,12 +80,12 @@ def print_option(option: str, value: Any) -> list[str]:
     name = option[:3]
     par = option[3:]
     if name == "IMP" and (par == "N" or par == "P" or par == "E"):
-        return ["IMP:{0}={1}".format(par, IMPORTANCE_FORMAT.format(value))]
-    elif option == "VOL":
+        return [f"IMP:{par}={IMPORTANCE_FORMAT.format(value)}"]
+    if option == "VOL":
         return [f"VOL={value}"]
-    elif option == "U":
+    if option == "U":
         return [f"U={value.name()}"]
-    elif option == "FILL":
+    if option == "FILL":
         universe = value["universe"]
         tr = value.get("transform", None)
         words = [f"FILL={universe.name()}"]
@@ -106,19 +101,17 @@ def print_option(option: str, value: Any) -> list[str]:
                 words.append(str(tr_name))
                 words.append(")")
         return words
-    else:
-        raise ValueError(f"Incorrect option name: {option}")
+    raise ValueError(f"Incorrect option name: {option}")
 
 
 def pretty_float(value: float, frac_digits: int = None) -> str:
     """Pretty print of the float number.
 
-    Parameters
-    ----------
-    value :
-        Value to be printed.
-    frac_digits :
-        The number of digits after decimal point.
+    Args:
+        value :
+            Value to be printed.
+        frac_digits :
+            The number of digits after decimal point.
     """
     if frac_digits is None:
         frac_digits = significant_digits(
@@ -133,8 +126,7 @@ def pretty_float(value: float, frac_digits: int = None) -> str:
     text_e = format_e.format(value)
     if len(text_f) <= len(text_e):
         return text_f
-    else:
-        return text_e
+    return text_e
 
 
 CELL_OPTION_GROUPS = (

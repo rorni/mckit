@@ -9,6 +9,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from functools import reduce
 from io import StringIO
+from logging import getLogger
 from pathlib import Path
 
 import numpy as np
@@ -38,6 +39,8 @@ __all__ = [
 
 from .utils.indexes import IndexOfNamed, StatisticsCollector
 from .utils.named import Name
+
+_LOG = getLogger(__name__)
 
 
 class NameClashError(ValueError):
@@ -75,8 +78,7 @@ def cell_selector(cell_names):
     def selector(cell):
         if cell.name() in cell_names:
             return [cell]
-        else:
-            return []
+        return []
 
     return selector
 
@@ -266,7 +268,7 @@ class Universe:
 
             if name_rule == "keep" and cell.name() in cell_names:
                 raise NameClashError(f"Cell name clash: {cell.name()}")
-            elif name_rule == "new" or name_rule == "clash" and cell.name() in cell_names:
+            if name_rule == "new" or name_rule == "clash" and cell.name() in cell_names:
                 new_name = max(cell_names, default=0) + 1
                 new_cell.rename(new_name)
             cell_names.add(new_cell.name())
@@ -323,19 +325,18 @@ class Universe:
         if entity not in replace.keys():
             new_entity = entity.copy()
             if rule == "keep" and new_entity.name() in names:
-                print(entity.mcnp_repr())
+                _LOG.debug(entity.mcnp_repr())
                 for c in replace.keys():
-                    print(c.mcnp_repr())
-                raise NameClashError("{0} name clash: {1}".format(err_desc, entity.name()))
-            elif rule == "new" or rule == "clash" and new_entity.name() in names:
+                    _LOG.debug(c.mcnp_repr())
+                raise NameClashError(f"{err_desc} name clash: {entity.name()}")
+            if rule == "new" or rule == "clash" and new_entity.name() in names:
                 new_name = max(names, default=0) + 1
                 new_entity.rename(new_name)
                 names.add(new_name)
             replace[new_entity] = new_entity
             names.add(new_entity.name())
             return new_entity
-        else:
-            return replace[entity]
+        return replace[entity]
 
     @staticmethod
     def _fill_check(predicate):
@@ -343,8 +344,7 @@ class Universe:
             fill = cell.options.get("FILL", None)
             if fill:
                 return predicate(cell)
-            else:
-                return False
+            return False
 
         return _predicate
 
@@ -467,29 +467,22 @@ class Universe:
         """Finds common materials among universes included.
 
         Returns:
-        -------
-        common_mats : set
             A set of common materials.
         """
         comp_count = defaultdict(lambda: 0)
         for u in self.get_universes():
             for c in u.get_compositions():
                 comp_count[c] += 1
-        common_mats = {c for c, cnt in comp_count.items() if cnt > 1}
-        return common_mats
+        return {c for c, cnt in comp_count.items() if cnt > 1}
 
     def get_surfaces(self, inner: bool = False) -> set[Surface]:
         """Gets all surfaces of the universe.
 
-        Parameters
-        ----------
-        inner : bool
-            Whether to take surfaces of inner universes. Default: False -
-            return surfaces of this universe only.
+        Args:
+            inner:  Whether to take surfaces of inner universes. Default: False -
+                    return surfaces of this universe only.
 
         Returns:
-        -------
-        surfs : set
             A set of surfaces that belong to the universe.
         """
         surfs = set()
@@ -754,9 +747,8 @@ class Universe:
             if not cs.shape.is_empty():
                 new_cells.append(cs)
 
-        if verbose:
-            print(f"Universe {self.name()} simplification has been finished.")
-            print(f"{len(self._cells) - len(new_cells)} empty cells were deleted.")
+        _LOG.info(f"Universe {self.name()} simplification has been finished.")
+        _LOG.info(f"{len(self._cells) - len(new_cells)} empty cells were deleted.")
 
         self._cells = new_cells
 

@@ -136,16 +136,14 @@ class Distribution:
         """
         if isinstance(self._probs, Distribution):
             return self._probs
-        else:
-            return None
+        return None
 
     def _mcnp_distribution_tag(self):
         if self._is_discrete:
             return "L"
-        elif self._is_pdf:
+        if self._is_pdf:
             return "A"
-        else:
-            return "H"
+        return "H"
 
     def _prob_tokens_repr(self, bin_tokens):
         if isinstance(self._probs, Distribution):

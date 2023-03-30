@@ -590,7 +590,7 @@ required-imports = ["from __future__ import annotations"]
 
 
 [tool.ruff.flake8-pytest-style]
-parametrize-names-type = "list"
+parametrize-names-type = "csv"
 
 [tool.ruff.pydocstyle]
 # Use Google-style docstrings.
