@@ -57,7 +57,7 @@ class Card(ABC):
         """Returns card's name."""
         return self.options.get("name", None)
 
-    def rename(self, new_name) -> "Card":
+    def rename(self, new_name) -> Card:
         """Renames the card."""
         self.options["name"] = new_name
         self.drop_original()

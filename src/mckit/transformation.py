@@ -202,7 +202,7 @@ class Transformation(Card, MaybeClose):
         # In contrast with apply2point - no translation is needed.
         return np.dot(v1, np.transpose(self._u))
 
-    def apply2transform(self, tr: "Transformation") -> "Transformation":
+    def apply2transform(self, tr: Transformation) -> Transformation:
         """Gets new transformation.
 
         Suppose there are three coordinate systems r, r1, r2. Transformation
@@ -220,7 +220,7 @@ class Transformation(Card, MaybeClose):
         trans = self.apply2point(tr._t)
         return Transformation(translation=trans, rotation=rot)
 
-    def reverse(self) -> "Transformation":
+    def reverse(self) -> Transformation:
         """Reverses this transformation.
 
         Gets new transformation which is complement to this one.

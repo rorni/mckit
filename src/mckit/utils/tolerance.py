@@ -19,7 +19,7 @@ class MaybeClose(ABC):
     """Interface to be implemented by objects supporting the "closeness" estimation."""
 
     @abstractmethod
-    def is_close_to(self, other: object, estimator: "EstimatorType") -> bool:
+    def is_close_to(self, other: object, estimator: EstimatorType) -> bool:
         """Objects can be estimated as close with some estimator."""
 
 

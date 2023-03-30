@@ -100,7 +100,7 @@ class Shape(_Shape):
         "C": ~hash("S"),
     }
 
-    def __init__(self, opc: str, *args: Union["Shape", "Surface"]):
+    def __init__(self, opc: str, *args: Union[Shape, Surface]):
         opc, args = _clean_args(opc, *args)
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
@@ -249,7 +249,7 @@ class Shape(_Shape):
                     return False
         return True
 
-    def intersection(self, *other: Union["Shape", "Body"]) -> "Shape":
+    def intersection(self, *other: Union[Shape, Body]) -> Shape:
         """Gets intersection with other shape.
 
         Parameters
@@ -793,7 +793,7 @@ class Body(Card):
         recurrent: bool = False,
         simplify: bool = False,
         **kwargs: dict[str, any],
-    ) -> list["Body"]:
+    ) -> list[Body]:
         """Fills this cell by filling universe.
 
         If this cell doesn't contain fill options and universe is not
@@ -862,7 +862,7 @@ class Body(Card):
             fill["transform"] = new_tr
         return cell
 
-    def apply_transformation(self) -> "Body":
+    def apply_transformation(self) -> Body:
         """Actually apply transformation to this cell."""
         geometry = self._shape.apply_transformation()
         options = filter_dict(self.options, "original")

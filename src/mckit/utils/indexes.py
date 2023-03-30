@@ -151,13 +151,13 @@ class IndexOfNamed(Index[Key, Item]):
 
     @classmethod
     def from_iterable(
-        cls: Type["IndexOfNamed[Key, Item]"],
+        cls: Type[IndexOfNamed[Key, Item]],
         items: Iterable[Item],
         *,
         key: Callable[[Item], Name] = default_name_key,
         default_factory: Callable[[Key], Item] = None,
         on_duplicate: Callable[[Key, Item, Item], None] = None,
-    ) -> "IndexOfNamed":
+    ) -> IndexOfNamed:
         """Construct `IndexOfNamed` from `items`."""
         index = cls(default_factory)
 

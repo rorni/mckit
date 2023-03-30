@@ -41,7 +41,7 @@ from .utils.named import Name
 
 
 class NameClashError(ValueError):
-    def __init__(self, result: Union[str, Dict[str, Dict[int, Set["Universe"]]]]) -> None:
+    def __init__(self, result: Union[str, Dict[str, Dict[int, Set[Universe]]]]) -> None:
         if isinstance(result, str):
             ValueError.__init__(self, result)
         else:
@@ -365,7 +365,7 @@ class Universe:
     def apply_fill(
         self,
         cell: Union[Body, int] = None,
-        universe: Union["Universe", int] = None,
+        universe: Union[Universe, int] = None,
         predicate: Callable[[Body], bool] = None,
         name_rule: str = "new",
     ):
@@ -530,7 +530,7 @@ class Universe:
             compositions.difference_update(self._common_materials)
         return compositions
 
-    def get_universes(self) -> Set["Universe"]:
+    def get_universes(self) -> Set[Universe]:
         """Gets all inner universes.
 
         Returns
@@ -549,7 +549,7 @@ class Universe:
         """Gets numeric name of the universe."""
         return self._name
 
-    def name_clashes(self) -> Dict[str, Dict[int, Set["Universe"]]]:
+    def name_clashes(self) -> Dict[str, Dict[int, Set[Universe]]]:
         """Checks, if there is name clashes.
 
         Returns
@@ -583,7 +583,7 @@ class Universe:
         return stat
 
     @staticmethod
-    def _produce_stat(names: Dict["Universe", Iterable[int]]) -> Dict[int, Set["Universe"]]:
+    def _produce_stat(names: Dict[Universe, Iterable[int]]) -> Dict[int, Set[Universe]]:
         stat = defaultdict(list)
         for u, u_names in names.items():
             for name in u_names:
@@ -591,7 +591,7 @@ class Universe:
         return Universe._clean_stat_dict(stat)
 
     @staticmethod
-    def _clean_stat_dict(stat) -> Dict[int, Set["Universe"]]:
+    def _clean_stat_dict(stat) -> Dict[int, Set[Universe]]:
         new_stat = {}
         for k, v in stat.items():
             if len(v) > 1:
@@ -782,7 +782,7 @@ class Universe:
             result[test == +1] = i
         return result
 
-    def transform(self, tr: Transformation) -> "Universe":
+    def transform(self, tr: Transformation) -> Universe:
         """Applies transformation tr to this universe.
 
         Returns a new universe.
@@ -796,7 +796,7 @@ class Universe:
             comment=self._comment,
         )
 
-    def apply_transformation(self) -> "Universe":
+    def apply_transformation(self) -> Universe:
         """Applies transformations specified in cells.
 
         Returns a new universe.

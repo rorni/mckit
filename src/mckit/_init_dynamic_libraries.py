@@ -34,7 +34,7 @@ else:  # Linux
         return f"{suffix}.{version}"  # .so.2
 
 
-def _iterate_suffixes_with_version(max_version: int = 2) -> Generator["str", None, None]:
+def _iterate_suffixes_with_version(max_version: int = 2) -> Generator[str, None, None]:
     while max_version >= 0:
         yield _combine_version_and_suffix(max_version, SUFFIX)
         max_version -= 1

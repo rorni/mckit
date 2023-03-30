@@ -39,8 +39,8 @@ class Distribution:
     def __init__(
         self,
         name: int,
-        values: Union[ArrayLike, list["Distribution"]],
-        probs: Union[ArrayLike, "Distribution"],
+        values: Union[ArrayLike, list[Distribution]],
+        probs: Union[ArrayLike, Distribution],
         distribution_variable: Optional[str] = None,
         is_discrete: bool = False,
     ) -> None:
@@ -50,7 +50,7 @@ class Distribution:
         self._is_discrete = is_discrete
         self._values = np.asarray(values)
         if isinstance(probs, Distribution):
-            self._probs: Union[ArrayLike, "Distribution"] = probs
+            self._probs: Union[ArrayLike, Distribution] = probs
         else:
             self._probs = np.asarray(probs)
         self._is_pdf = (
@@ -86,7 +86,7 @@ class Distribution:
 
     @staticmethod
     def check_distr(
-        bins_or_distrs: [Union[ArrayLike, list["Distribution"]]],
+        bins_or_distrs: [Union[ArrayLike, list[Distribution]]],
         size: int,
         is_discrete: bool,
     ) -> None:
@@ -119,7 +119,7 @@ class Distribution:
 
         return card
 
-    def get_inner(self) -> Set["Distribution"]:
+    def get_inner(self) -> Set[Distribution]:
         """Gets nested distributions this one depends on.
 
         If values of this distribution are distributions themselves,
@@ -130,7 +130,7 @@ class Distribution:
         """
         return set(self._values) if self.has_nested_distributions else set()
 
-    def depends_on(self) -> Optional["Distribution"]:
+    def depends_on(self) -> Optional[Distribution]:
         """Gets distribution this one depends on.
 
         Returns:
@@ -195,7 +195,7 @@ def _check_all_are_distributions_or_not(bins_or_distrs):
 
 def create_bin_distributions(
     bins: list[float], start_name: int = 1
-) -> Tuple[int, list["Distribution"]]:
+) -> Tuple[int, list[Distribution]]:
     """Creates bin distributions for specified bins.
 
     A list of distributions created. Index in the list corresponds to the  index of bin.

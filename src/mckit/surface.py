@@ -64,7 +64,7 @@ VectorLike = Union[np.ndarray, List[float]]
 
 
 # noinspection PyPep8Naming
-def create_surface(kind: str, *params: float, **options) -> "Surface":
+def create_surface(kind: str, *params: float, **options) -> Surface:
     """Creates new surface.
 
     Args:
@@ -199,11 +199,11 @@ def create_surface(kind: str, *params: float, **options) -> "Surface":
 
 
 def create_replace_dictionary(
-    surfaces: Set["Surface"],
-    unique: Optional[set["Surface"]] = None,
+    surfaces: Set[Surface],
+    unique: Optional[set[Surface]] = None,
     box=GLOBAL_BOX,
     tol: float = 1.0e-10,
-) -> dict["Surface", tuple["Surface", int]]:
+) -> dict[Surface, tuple[Surface, int]]:
     """Creates surface replace dictionary for equal surfaces removing.
 
     Args:
@@ -262,7 +262,7 @@ class Surface(Card, MaybeClose):
         Card.__init__(self, **options)
 
     @abstractmethod
-    def copy(self) -> "Surface":
+    def copy(self) -> Surface:
         pass
 
     @property
@@ -270,7 +270,7 @@ class Surface(Card, MaybeClose):
         return self.options.get("transform", None)
 
     @abstractmethod
-    def apply_transformation(self) -> "Surface":
+    def apply_transformation(self) -> Surface:
         """Applies transformation specified for the surface.
 
         Returns
@@ -286,7 +286,7 @@ class Surface(Card, MaybeClose):
         return tr
 
     @abstractmethod
-    def transform(self, tr: Transformation) -> "Surface":
+    def transform(self, tr: Transformation) -> Surface:
         """Applies transformation to this surface.
 
         Args:
@@ -299,13 +299,13 @@ class Surface(Card, MaybeClose):
     @abstractmethod
     def is_close_to(
         self,
-        other: "Surface",
+        other: Surface,
         estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         """Checks if this surface is close to other one with the given tolerance values."""
 
     @abstractmethod
-    def round(self) -> "Surface":
+    def round(self) -> Surface:
         """Returns rounded version of self."""
 
     def mcnp_words(self, pretty: bool = False) -> list[str]:
@@ -410,7 +410,7 @@ class RCC(Surface, _RCC):
             words.append(" ")
         return words
 
-    def transform(self, tr: Transformation) -> "RCC":
+    def transform(self, tr: Transformation) -> RCC:
         """Transforms the shape.
 
         Args:
@@ -631,7 +631,7 @@ class Plane(Surface, _Plane):
 
     __deepcopy__ = copy
 
-    def apply_transformation(self) -> "Plane":
+    def apply_transformation(self) -> Plane:
         tr = self.transformation
         if tr is None:
             return self
@@ -639,7 +639,7 @@ class Plane(Surface, _Plane):
         options = self.clean_options()
         return Plane(v, k, transform=None, assume_normalized=True, **options)
 
-    def transform(self, tr: Transformation) -> "Plane":
+    def transform(self, tr: Transformation) -> Plane:
         if tr is None:
             return self
         tr = self.combine_transformations(tr)
@@ -670,7 +670,7 @@ class Plane(Surface, _Plane):
 
     def is_close_to(
         self,
-        other: "Surface",
+        other: Surface,
         estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
@@ -759,7 +759,7 @@ class Sphere(Surface, _Sphere):
 
     def is_close_to(
         self,
-        other: "Sphere",
+        other: Sphere,
         estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
@@ -771,7 +771,7 @@ class Sphere(Surface, _Sphere):
             (other._radius, other._center, other.transformation),
         )
 
-    def round(self) -> "Surface":
+    def round(self) -> Surface:
         temp = self.apply_transformation()
         center_digits = significant_array(
             temp._center,
@@ -788,7 +788,7 @@ class Sphere(Surface, _Sphere):
         options = temp.clean_options()
         return Sphere(center, radius, transform=None, **options)
 
-    def apply_transformation(self) -> "Sphere":
+    def apply_transformation(self) -> Sphere:
         tr = self.transformation
         if tr is None:
             return self
@@ -796,7 +796,7 @@ class Sphere(Surface, _Sphere):
         options = self.clean_options()
         return Sphere(center, self._radius, transform=None, **options)
 
-    def transform(self, tr: Transformation) -> "Sphere":
+    def transform(self, tr: Transformation) -> Sphere:
         if tr is None:
             return self
         tr = self.combine_transformations(tr)
@@ -885,7 +885,7 @@ class Cylinder(Surface, _Cylinder):
 
     def is_close_to(
         self,
-        other: "Cylinder",
+        other: Cylinder,
         estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
@@ -915,7 +915,7 @@ class Cylinder(Surface, _Cylinder):
         # TODO dvp: actually may create Generic Quadratic. Should we use __new__() for this?
         return Cylinder(pt, axis, self._radius, assume_normalized=True, **options)
 
-    def transform(self, tr: Transformation) -> "Cylinder":
+    def transform(self, tr: Transformation) -> Cylinder:
         if tr is None:
             return self
         tr = self.combine_transformations(tr)
@@ -1081,7 +1081,7 @@ class Cone(Surface, _Cone):
 
     def is_close_to(
         self,
-        other: "Surface",
+        other: Surface,
         estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:
@@ -1093,7 +1093,7 @@ class Cone(Surface, _Cone):
             (other._apex, other._axis, other._t2, other.transformation),
         )
 
-    def transform(self, tr: Transformation) -> "Surface":
+    def transform(self, tr: Transformation) -> Surface:
         if tr is None:
             return self
         tr = self.combine_transformations(tr)
@@ -1200,7 +1200,7 @@ class GQuadratic(Surface, _GQuadratic):
         m, v, k, factor, options = state
         self.__init__(m, v, k, factor, **options)
 
-    def copy(self) -> "GQuadratic":
+    def copy(self) -> GQuadratic:
         options = deepcopy(self.options)
         return GQuadratic(self._m, self._v, self._k, self._factor, **options)
 
@@ -1295,7 +1295,7 @@ class Torus(Surface, _Torus):
         _Torus.__init__(self, center, axis, r, a, b)
         self._hash = compute_hash(self._center, self._axis, self._R, self._a, self._b)
 
-    def round(self) -> "Surface":
+    def round(self) -> Surface:
         temp = self.apply_transformation()
         center, axis = map(round_array, [temp._center, temp._axis])
 
@@ -1306,7 +1306,7 @@ class Torus(Surface, _Torus):
         options = temp.clean_options()
         return Torus(center, axis, r, a, b, assume_normalized=True, **options)
 
-    def apply_transformation(self) -> "Surface":
+    def apply_transformation(self) -> Surface:
         tr = self.transformation
         if tr is None:
             return self
@@ -1351,7 +1351,7 @@ class Torus(Surface, _Torus):
     def __hash__(self):
         return self._hash
 
-    def __eq__(self, other: "Torus"):
+    def __eq__(self, other: Torus):
         if self is other:
             return True
         if not isinstance(other, Torus):
@@ -1370,7 +1370,7 @@ class Torus(Surface, _Torus):
 
     def is_close_to(
         self,
-        other: "Torus",
+        other: Torus,
         estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR,
     ) -> bool:
         if self is other:

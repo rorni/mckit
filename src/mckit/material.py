@@ -183,7 +183,7 @@ class Composition(Card):
     def __iter__(self):
         return iter(self._composition.items())
 
-    def __contains__(self, item: Union[str, "Element"]) -> bool:
+    def __contains__(self, item: Union[str, Element]) -> bool:
         """Checks if the composition contains the item.
 
         Parameters
@@ -323,7 +323,7 @@ class Composition(Card):
         return iter(self._composition.keys())
 
     @staticmethod
-    def mixture(*compositions: Tuple["Composition", float]) -> "Composition":
+    def mixture(*compositions: Tuple[Composition, float]) -> Composition:
         """Makes mixture of the compositions with specific fractions.
 
         Parameters
