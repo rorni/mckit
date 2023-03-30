@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 from io import StringIO
 
 import mckit.parser.mcnp_section_parser as sp

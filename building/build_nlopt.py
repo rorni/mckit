@@ -1,4 +1,4 @@
-from typing import Dict, List
+from __future__ import annotations
 
 import os
 import sys
@@ -9,10 +9,9 @@ from subprocess import check_call
 from building.extension_utils import WIN, create_directory
 
 
-def execute_command(
-    cmd: List[str], cwd: Path = Path.cwd(), env: Dict[str, str] = os.environ
-) -> None:
-    print(f"--- {cwd.as_posix()}: {' '.join(cmd)}")
+def execute_command(cmd: list[str], cwd: Path = None, env: dict[str, str] = os.environ) -> None:
+    if cwd is None:
+        cwd = Path.cwd()
     check_call(cmd, cwd=cwd, env=env)
 
 

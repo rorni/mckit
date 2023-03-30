@@ -57,8 +57,7 @@ def test_derived_lexer(text, expected_types, expected_values):
 def test_bad_path(text, msg_contains):
     lexer = DerivedLexer()
     with pytest.raises(LexError, match=msg_contains):
-        for _ in lexer.tokenize(text):
-            pass
+        _ = list(lexer.tokenize(text))
 
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences

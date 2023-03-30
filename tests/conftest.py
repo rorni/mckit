@@ -5,8 +5,8 @@ import os
 import pytest
 
 
-@pytest.fixture
-def cd_tmpdir(tmpdir):
+@pytest.fixture()
+def cd_tmpdir(tmpdir):  # noqa: PT004
     """Temporarily switch to temp directory.
 
     Args:

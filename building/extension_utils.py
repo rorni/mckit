@@ -1,4 +1,4 @@
-from typing import List, Union
+from __future__ import annotations
 
 import shutil
 import sys
@@ -20,7 +20,7 @@ def get_library_dir(check: bool = False) -> Path:
 
     if check:
         if not library_dir.is_dir():
-            raise EnvironmentError(f"{library_dir} is not a valid directory")
+            raise OSError(f"{library_dir} is not a valid directory")
 
     return library_dir
 
@@ -37,10 +37,10 @@ def check_directories(*directories: str) -> None:
         if not isinstance(directory, str):
             raise TypeError(f"The value {directory} is not a string")
         if not Path(directory).is_dir():
-            raise EnvironmentError(f"The directory {directory} does not exist")
+            raise OSError(f"The directory {directory} does not exist")
 
 
-def insert_directories(destination: List[str], value: Union[str, List[str]]) -> List[str]:
+def insert_directories(destination: list[str], value: str | list[str]) -> list[str]:
     dirs = value
     if not isinstance(value, list):
         dirs = [dirs]

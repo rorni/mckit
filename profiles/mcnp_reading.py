@@ -2,6 +2,8 @@
 
 Not using pytest.
 """
+from __future__ import annotations
+
 from zipfile import ZipFile
 
 from mckit.constants import MCNP_ENCODING
