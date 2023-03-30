@@ -38,9 +38,9 @@ class DerivedLexer(LexerBase):
 def test_derived_lexer(text, expected_types, expected_values):
     lexer = DerivedLexer()
     tokens = list(lexer.tokenize(text))
-    result = list(t.type for t in tokens)
+    result = [t.type for t in tokens]
     assert result == expected_types
-    result = list(t.value for t in tokens)
+    result = [t.value for t in tokens]
     assert result == expected_values
 
 
@@ -92,9 +92,9 @@ class MyLexer(LexerBase):
 def test_good_path(text, expected_types, expected_values):
     lexer = MyLexer()
     tokens = list(lexer.tokenize(text))
-    result = list(t.type for t in tokens)
+    result = [t.type for t in tokens]
     assert result == expected_types
-    result = list(t.value for t in tokens)
+    result = [t.value for t in tokens]
     assert result == expected_values
 
 

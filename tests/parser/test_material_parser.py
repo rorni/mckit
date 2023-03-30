@@ -23,9 +23,9 @@ from mckit.material import Composition, Element
 def test_composition_lexer(text, expected_types, expected_values):
     lexer = mp.Lexer()
     tokens = list(lexer.tokenize(text))
-    result = list(t.type for t in tokens)
+    result = [t.type for t in tokens]
     assert result == expected_types
-    result = list(t.value for t in tokens)
+    result = [t.value for t in tokens]
     assert result == expected_values
 
 

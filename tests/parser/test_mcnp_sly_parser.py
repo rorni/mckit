@@ -33,11 +33,11 @@ class TExpected(NamedTuple):
 def test_parser_basic_functionality(text: str, expected: TExpected):
     result: ParseResult = from_text(text)
     assert expected.title == result.title
-    actual_cells = list(c.name() for c in result.cells)
+    actual_cells = [c.name() for c in result.cells]
     assert expected.cells == actual_cells
-    actual_cells = list(c.name() for c in result.universe.cells)
+    actual_cells = [c.name() for c in result.universe.cells]
     assert expected.cells == actual_cells
-    actual_surfaces = list(s.name() for s in result.surfaces)
+    actual_surfaces = [s.name() for s in result.surfaces]
     assert expected.surfaces == actual_surfaces
 
 

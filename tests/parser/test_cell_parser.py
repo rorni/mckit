@@ -62,8 +62,8 @@ def create_cell(
 def test_cell_lexer(text, expected_types, expected_values):
     lexer = clp.Lexer()
     tokens = list(lexer.tokenize(text))
-    actual_types = list(f.type for f in tokens)
-    actual_values = list(f.value for f in tokens)
+    actual_types = [f.type for f in tokens]
+    actual_values = [f.value for f in tokens]
     assert actual_types == expected_types
     assert actual_values == expected_values
 

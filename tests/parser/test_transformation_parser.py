@@ -23,7 +23,7 @@ from mckit.transformation import Transformation
 )
 def test_transformation_lexer(text, expected_types, expected_values):
     lexer = trp.Lexer()
-    tokens = [t for t in lexer.tokenize(text)]
+    tokens = list(lexer.tokenize(text))
     actual_types = [t.type for t in tokens]
     assert actual_types == expected_types
     actual_values = [t.value for t in tokens]
