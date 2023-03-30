@@ -27,7 +27,7 @@ def print_card(tokens: list[str], offset: int = 8, max_column: int = 80, sep: st
         Separator symbol. This symbol marks positions where newline character
         should be inserted even if max_column position not reached.
 
-    Returns
+    Returns:
     -------
     text :
         MCNP code of a card.
@@ -68,7 +68,7 @@ def separate(tokens: list[str], sep: str = " ") -> list[str]:
     sep :
         Separator to be inserted between tokens. Default: single space.
 
-    Returns
+    Returns:
     -------
     sep_tokens :
         List of separated tokens.

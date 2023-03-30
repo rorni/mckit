@@ -51,7 +51,7 @@ class Transformation(Card, MaybeClose):
     options : dict
         Other options, like name, comment, etc.
 
-    Methods
+    Methods:
     -------
     apply2gq(m, v, k)
         Gets parameters of generic quadratic surface in the main coordinate

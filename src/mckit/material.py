@@ -63,7 +63,7 @@ class Composition(Card):
     options : dict
         Dictionary of composition options.
 
-    Methods
+    Methods:
     -------
     molar_mass()
         Gets molar mass of the composition.
@@ -191,7 +191,7 @@ class Composition(Card):
         item :
             Isotope. It can be either isotope name or Element instance.
 
-        Returns
+        Returns:
         -------
         result :
             True if the composition contains the isotope, False otherwise.
@@ -210,7 +210,7 @@ class Composition(Card):
         isotope : str or Element
             Isotope. It can be either isotope name or Element instance.
 
-        Returns
+        Returns:
         -------
         frac : float
             Atomic fraction of the specified isotope.
@@ -229,7 +229,7 @@ class Composition(Card):
         isotope : str or Element
             Isotope. It can be either isotope name or Element instance.
 
-        Returns
+        Returns:
         -------
         frac : float
             Weight fraction of the specified isotope.
@@ -247,7 +247,7 @@ class Composition(Card):
     def expand(self):
         """Expands elements with natural abundances into detailed isotope composition.
 
-        Returns
+        Returns:
         -------
         new_comp : Composition
             New expanded composition or self.
@@ -277,7 +277,7 @@ class Composition(Card):
             Relative tolerance to consider isotope fractions as equal.
             Default: 1.e-8
 
-        Returns
+        Returns:
         -------
         comp : Composition
             self, if composition is reduced successfully to natural. None returned if the
@@ -331,7 +331,7 @@ class Composition(Card):
         compositions :
             List of pairs composition, fraction.
 
-        Returns
+        Returns:
         -------
         mix :
             Mixture.
@@ -380,7 +380,7 @@ class Material:
     molar_mass : float
         Material's molar mass [g/mol].
 
-    Methods
+    Methods:
     -------
     correct(old_vol, new_vol)
         Correct material density - returns the corrected version of the
@@ -465,7 +465,7 @@ class Material:
             By this factor density of material will be multiplied. If factor
             is specified, then its value will be used.
 
-        Returns
+        Returns:
         -------
         new_mat : Material
             New material that takes into account new volume of the cell.
@@ -500,7 +500,7 @@ class Material:
             'volume' - volume fractions;
             'atomic' - atomic fractions.
 
-        Returns
+        Returns:
         -------
         material : Material
             New material.
@@ -541,7 +541,7 @@ class Element:
     isomer : int
         Isomer level. Default 0. Usually may appear in FISPACT output.
 
-    Methods
+    Methods:
     -------
     expand()
         Expands natural composition of this element.
@@ -653,7 +653,7 @@ class Element:
     def expand(self):
         """Expands natural element into individual isotopes.
 
-        Returns
+        Returns:
         -------
         elements : dict
             A dictionary of elements that are comprised by this one.

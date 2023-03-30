@@ -62,7 +62,7 @@ def cell_selector(cell_names):
     cell_names : int or iterable
         Names of cells to be selected.
 
-    Returns
+    Returns:
     -------
     selector : func
         Selector function.
@@ -89,7 +89,7 @@ def surface_selector(surface_names):
     surface_names : int or iterable
         Names of surfaces to be selected.
 
-    Returns
+    Returns:
     -------
     selector : func
         Selector function
@@ -127,7 +127,7 @@ class Universe:
     common_materials : set
         A set of common materials. Default: None.
 
-    Methods
+    Methods:
     -------
     add_cells(cell)
         Adds new cell to the universe.
@@ -351,7 +351,7 @@ class Universe:
     def alone(self):
         """Gets this universe alone, without inner universes.
 
-        Returns
+        Returns:
         -------
         u : Universe
             A copy of the universe with FILL cards removed.
@@ -433,7 +433,7 @@ class Universe:
             box will be considered as infinite and will be excluded from
             analysis.
 
-        Returns
+        Returns:
         -------
         bbox : Box
             Universe bounding box.
@@ -466,7 +466,7 @@ class Universe:
     def find_common_materials(self):
         """Finds common materials among universes included.
 
-        Returns
+        Returns:
         -------
         common_mats : set
             A set of common materials.
@@ -487,7 +487,7 @@ class Universe:
             Whether to take surfaces of inner universes. Default: False -
             return surfaces of this universe only.
 
-        Returns
+        Returns:
         -------
         surfs : set
             A set of surfaces that belong to the universe.
@@ -516,7 +516,7 @@ class Universe:
         exclude_common : bool
             Exclude common compositions from the result. Default: False.
 
-        Returns
+        Returns:
         -------
         comps : set
             A set of Composition objects.
@@ -533,7 +533,7 @@ class Universe:
     def get_universes(self) -> set[Universe]:
         """Gets all inner universes.
 
-        Returns
+        Returns:
         -------
         universes : set
             A set of universes.
@@ -552,7 +552,7 @@ class Universe:
     def name_clashes(self) -> dict[str, dict[int, set[Universe]]]:
         """Checks, if there is name clashes.
 
-        Returns
+        Returns:
         -------
         stat : dict
             Description of found clashes. If no clashes - the dictionary is empty.
@@ -674,7 +674,7 @@ class Universe:
         universes = self.get_universes()
         cells = []
         surfaces = []
-        materials = list(sorted(self._common_materials, key=Card.name))
+        materials = sorted(self._common_materials, key=Card.name)
         for u in sorted(universes, key=Universe.name):
             cells.extend(sorted(u, key=Card.name))
             surfaces.extend(sorted(u.get_surfaces(), key=Card.name))
@@ -704,7 +704,7 @@ class Universe:
             Whether to consider inner universes. Default: False - only this
             universe will be taken into account.
 
-        Returns
+        Returns:
         -------
         items : list
             List of selected items.
@@ -769,7 +769,7 @@ class Universe:
             An array of point coordinates. If there is only one point it has
             shape (3,); if there are n points, it has shape (n, 3).
 
-        Returns
+        Returns:
         -------
         result : np.ndarray[int]
             An array of cell indices to which a particular point belongs to.
@@ -837,7 +837,7 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
     cells : Iterable[Body]
         Cells to process.
 
-    Returns
+    Returns:
     -------
     universe : Universe
         The top level universe with name = 0.
@@ -1061,10 +1061,10 @@ class UniverseAnalyser:
     def print_duplicates_map(self, stream=sys.stdout):
         def printer(_, item: tuple[str, E2U]):
             tag, info = item
-            entities = sorted(list(info.keys()))
+            entities = sorted(info.keys())
             for e in entities:
                 universes_count_map = info[e]
-                universes = sorted(list(universes_count_map.keys()))
+                universes = sorted(universes_count_map.keys())
                 print(f"{tag} {e} occurs", file=stream)
                 for u in universes:
                     print(

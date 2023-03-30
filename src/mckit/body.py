@@ -204,7 +204,7 @@ class Shape(_Shape):
     def complement(self):
         """Gets complement to the shape.
 
-        Returns
+        Returns:
         -------
         comp_shape : Shape
             Complement shape.
@@ -227,7 +227,7 @@ class Shape(_Shape):
     def is_complement(self, other):
         """Checks if this shape is complement to the other.
 
-        Returns
+        Returns:
         -------
         result : bool
             Test result.
@@ -257,7 +257,7 @@ class Shape(_Shape):
         other : tuple
             A list of Shape or Body objects, which must be intersected.
 
-        Returns
+        Returns:
         -------
         result : Shape
             New shape.
@@ -272,7 +272,7 @@ class Shape(_Shape):
         other : tuple
             A list of Shape or Body objects, which must be joined.
 
-        Returns
+        Returns:
         -------
         result : Shape
             New shape.
@@ -287,7 +287,7 @@ class Shape(_Shape):
         tr : Transformation
             Transformation to be applied.
 
-        Returns
+        Returns:
         -------
         result : Shape
             New shape.
@@ -317,7 +317,7 @@ class Shape(_Shape):
     def complexity(self):
         """Gets complexity of shape.
 
-        Returns
+        Returns:
         -------
         complexity : int
             The complexity of the shape description. It is the number of
@@ -394,7 +394,7 @@ class Shape(_Shape):
             Shape variants with complexity greater than minimal one more than
             trim_size are thrown away.
 
-        Returns
+        Returns:
         -------
         shapes : list[Shape]
             A list of shapes with minimal complexity.
@@ -478,7 +478,7 @@ class Shape(_Shape):
         replace_dict : dict
             A dictionary of surfaces to be replaced.
 
-        Returns
+        Returns:
         -------
         shape : Shape
             New Shape object obtained by replacing certain surfaces.
@@ -502,7 +502,7 @@ class Shape(_Shape):
         polish : list
             List of surfaces and operations written in reversed Polish Notation.
 
-        Returns
+        Returns:
         -------
         shape : Shape
             The geometry represented by Shape instance.
@@ -595,7 +595,7 @@ class Body(Card):
     options :
         A set of cell's options.
 
-    Methods
+    Methods:
     -------
     intersection(other)
         Returns an intersection of this cell with the other.
@@ -708,7 +708,7 @@ class Body(Card):
         other : Cell
             Other cell.
 
-        Returns
+        Returns:
         -------
         cell : Cell
             The result.
@@ -727,7 +727,7 @@ class Body(Card):
         other : Cell
             Other cell.
 
-        Returns
+        Returns:
         -------
         cell : Cell
             The result.
@@ -761,7 +761,7 @@ class Body(Card):
             Max size of set to return. It is used to prevent unlimited growth
             of the variant set.
 
-        Returns
+        Returns:
         -------
         simple_cell : Cell
             Simplified version of this cell.
@@ -777,7 +777,7 @@ class Body(Card):
     def split(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME):
         """Splits cell into disjoint cells.
 
-        Returns
+        Returns:
         -------
         cells : list
         """
@@ -847,7 +847,7 @@ class Body(Card):
         tr : Transform
             Transformation to be applied.
 
-        Returns
+        Returns:
         -------
         cell : Cell
             The result of this cell transformation.
