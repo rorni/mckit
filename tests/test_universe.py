@@ -27,7 +27,11 @@ from mckit.universe import (
 from mckit.utils.resource import path_resolver
 
 data_path_resolver = path_resolver("tests")
-data_filename_resolver = lambda x: str(data_path_resolver(x))
+
+
+def data_filename_resolver(x):
+    return str(data_path_resolver(x))
+
 
 TStatItem = Dict[
     int, Union[List[int], Set[Universe]]
@@ -611,7 +615,7 @@ def test_copy(universe, case):
         assert copy_surfaces_idx[k] == v
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 @pytest.mark.parametrize("tol", [0.2, None])
 @pytest.mark.parametrize("case, expected", [(1, [[-10, 10], [-10, 10], [-6.5, 13.5]])])
 def test_bounding_box(universe, tol, case, expected):
@@ -802,12 +806,6 @@ def test_name_clashes_with_common_materials(
         for kind, universes_names in stat_item.items():
             stat_item[kind] = {universes_idx[uname] if uname else None for uname in universes_names}
     s = u.name_clashes()
-    for c in u._common_materials:
-        print(c.mcnp_repr())
-    for name, un in universes_idx.items():
-        print(name)
-        for c in un.get_compositions():
-            print(c.mcnp_repr())
     assert s == stat
 
 
@@ -859,7 +857,7 @@ def test_set_common_materials(universe, case, common_mat):
                     assert comp is cm[comp]
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 @pytest.mark.parametrize(
     "case, condition, answer_case, box",
     [
@@ -1047,7 +1045,7 @@ def test_rename_when_common_mat(universe, case, common, start, answer):
     assert composition_names == answer
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 @pytest.mark.parametrize("verbose", [False, True])
 @pytest.mark.parametrize(
     "case, complexities", [(1, {1: 1, 2: 3, 3: 5, 4: 1}), (3, {1: 1, 2: 3, 4: 5, 5: 1})]

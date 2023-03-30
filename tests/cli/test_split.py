@@ -18,7 +18,10 @@ def runner():
 
 
 data_path_resolver = path_resolver("tests")
-data_filename_resolver = lambda x: str(data_path_resolver(x))
+
+
+def data_filename_resolver(x):
+    return str(data_path_resolver(x))
 
 
 def test_when_there_is_no_args(runner):

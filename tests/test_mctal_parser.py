@@ -8,7 +8,10 @@ from mckit.parser.mctal_parser import read_mctal
 from mckit.utils import path_resolver
 
 data_path_resolver = path_resolver("tests")
-file_resolver = lambda x: str(data_path_resolver(x))
+
+
+def file_resolver(x):
+    return str(data_path_resolver(x))
 
 
 @pytest.mark.parametrize(

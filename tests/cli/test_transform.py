@@ -9,7 +9,10 @@ from mckit.parser import from_file
 from mckit.utils.resource import path_resolver
 
 data_path_resolver = path_resolver("tests.cli")
-data_filename_resolver = lambda x: str(data_path_resolver(x))
+
+
+def data_filename_resolver(x):
+    return str(data_path_resolver(x))
 
 
 def test_when_there_is_no_args(runner):
