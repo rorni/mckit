@@ -1,4 +1,6 @@
-from typing import Generator, Iterable, List, Optional, TextIO, Tuple
+from __future__ import annotations
+
+from typing import Generator, Iterable, TextIO
 
 import re
 import sys
@@ -14,6 +16,7 @@ REMOVE_COMMENT_PATTERN = re.compile(
     r"(\s*\$.*$)|(^\s{0,5}c\s.*\n?)", flags=re.MULTILINE | re.IGNORECASE
 )
 # pattern to split section text to optional "comment" and subsequent MCNP card pairs
+# noinspection RegExpUnexpectedAnchor
 CARD_PATTERN = re.compile(
     r"(?P<comment>((^\s{,5}c( .*)?\s*$)\n?)+)?(?P<card>^\s{,5}(\*|\+|\w).*(\n((^\s{,5}c.*\n?)*^\s{5,}\S.*\n?)*)?)?",
     flags=re.MULTILINE | re.IGNORECASE,
@@ -60,7 +63,7 @@ class Kind(IntEnum):
 
 
 @attrs(str=False)
-class Card(object):
+class Card:
     """
     Generic MCNP card raw text item
 
@@ -69,7 +72,7 @@ class Card(object):
     """
 
     text: str = attrib()
-    kind: Optional[Kind] = attrib(default=None)
+    kind: Kind | None = attrib(default=None)
 
     # noinspection PyUnusedLocal,PyUnresolvedReferences
     @kind.validator
@@ -124,9 +127,8 @@ class Card(object):
         if self.is_surface:
             if name.isdigit():
                 return int(name)
-            else:
-                assert name[0] in "%*", "Expected reflecting, white surface"
-                return int(name[1:])
+            assert name[0] in "%*", "Expected reflecting, white surface"
+            return int(name[1:])
         if self.is_material:
             return int(name[1:])
         if self.is_transformation:
@@ -139,13 +141,13 @@ class Card(object):
 
 
 @attrs
-class InputSections(object):
-    title: Optional[str] = attrib(default=None)
-    cell_cards: Optional[List[Card]] = attrib(default=None)
-    surface_cards: Optional[List[Card]] = attrib(default=None)
-    data_cards: Optional[List[Card]] = attrib(default=None)
-    message: Optional[str] = attrib(default=None)
-    remainder: Optional[str] = attrib(default=None)
+class InputSections:
+    title: str | None = attrib(default=None)
+    cell_cards: list[Card] | None = attrib(default=None)
+    surface_cards: list[Card] | None = attrib(default=None)
+    data_cards: list[Card] | None = attrib(default=None)
+    message: str | None = attrib(default=None)
+    remainder: str | None = attrib(default=None)
     is_continue: bool = attrib(default=False)
 
     # noinspection PyUnusedLocal,PyUnresolvedReferences
@@ -248,7 +250,7 @@ def parse_sections_text(text: str) -> InputSections:
 
     sections = BLANK_LINE_PATTERN.split(text, 5)
 
-    # The first line can be message or title.
+    # The first line can be a message or a title.
     kw = sections[0][: len("message:")].lower()
 
     i = 0
@@ -314,8 +316,7 @@ def is_comment(text: str) -> bool:
     if "\n" in text:
         res = next((line for line in text.split("\n") if not is_comment_line(line)), False)
         return not res
-    else:
-        return is_comment_line(text, skip_asserts=True)
+    return is_comment_line(text, skip_asserts=True)
 
 
 def is_comment_line(line: str, skip_asserts=False) -> bool:
@@ -327,8 +328,7 @@ def is_comment_line(line: str, skip_asserts=False) -> bool:
 
 def get_clean_text(text: str) -> str:
     without_comments = REMOVE_COMMENT_PATTERN.sub("", text)
-    with_spaces_normalized = SPACE_PATTERN.sub(" ", without_comments)
-    return with_spaces_normalized
+    return SPACE_PATTERN.sub(" ", without_comments)
 
 
 def clean_mcnp_cards(iterable: Iterable[Card]) -> Generator[Card, None, None]:
@@ -341,10 +341,10 @@ def clean_mcnp_cards(iterable: Iterable[Card]) -> Generator[Card, None, None]:
 
 def distribute_cards(
     cards: Iterable[Card],
-) -> Tuple[List[Card], List[Card], List[Card], List[Card], List[Card]]:
-    comment: Optional[Card] = None
+) -> tuple[list[Card], list[Card], list[Card], list[Card], list[Card]]:
+    comment: Card | None = None
 
-    def append(_cards: List[Card], _card: Card) -> None:
+    def append(_cards: list[Card], _card: Card) -> None:
         nonlocal comment
         if comment:
             _cards.append(comment)

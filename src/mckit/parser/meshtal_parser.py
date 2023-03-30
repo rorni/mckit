@@ -6,10 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
-import ply.lex as lex
-import ply.yacc as yacc
-
 from mckit.fmesh import FMesh
+from ply import lex, yacc
 
 literals = ["+", "-", ":", "/"]
 
@@ -180,6 +178,7 @@ def t_keyword(t):
         t.type = value
         t.value = value
         return t
+    return None
 
 
 @lex.TOKEN(KEYWORD)
@@ -197,14 +196,13 @@ def t_norm_tally_keyword(t):
         t.type = value
         t.value = value
         return t
+    return None
 
 
 # noinspection PyPep8Naming
 def t_ANY_error(t):
     column = t.lexer.lexpos - t.lexer.last_pos + 1
-    msg = r"Illegal character '{0}' at line {1} column {2}".format(
-        t.value[0], t.lexer.lineno, column
-    )
+    msg = f"Illegal character {t.value[0]!r} at line {t.lexer.lineno} column {column}"
     raise ValueError(msg, t.value[0], t.lexer.lineno, column)
 
 
@@ -237,8 +235,8 @@ def p_header(p):
     """header : MCNP VERSION stamp LD stamp PROBID stamp stamp
     | MCNP VERSION stamp MPI LD stamp PROBID stamp stamp
     """
-    l = len(p)
-    p[0] = {"PROBID": p[l - 2] + p[l - 1], "VERSION": p[3]}
+    t = len(p)
+    p[0] = {"PROBID": p[t - 2] + p[t - 1], "VERSION": p[3]}
 
 
 # noinspection GrazieInspection
@@ -475,9 +473,9 @@ def p_energy_bin(p):
     """energy_bin : ENERGY ':' float '-' float newline separator spatial_bins
     | TIME ':' float newline separator spatial_bins
     """
-    l = len(p) - 1
-    order = [p[1]] + p[l][0]
-    p[0] = order, p[l][1], p[l][2]
+    t = len(p) - 1
+    order = [p[1]] + p[t][0]
+    p[0] = order, p[t][1], p[t][2]
 
 
 def p_total_energy_bin(p):
@@ -511,11 +509,7 @@ def p_spatial_bin(p):
 def p_error(p):
     if p:
         column = p.lexer.lexpos - p.lexer.last_pos + 1
-        print(
-            "Syntax error at token {0} {3}, line {1}, column {2}".format(
-                p.type, p.lexer.lineno, column, p.value
-            )
-        )
+        print(f"Syntax error at token {p.type} {p.value}, line {p.lexer.lineno}, column {column}")
     else:
         print("Syntax error at EOF")
 
@@ -537,16 +531,11 @@ _BIN_NAMES = {
 def read_meshtal(filename: str | Path) -> dict[int, FMesh]:
     """Reads MCNP meshtal file.
 
-    Parameters
-    ----------
-    filename : str
-        File that contains MCNP meshtally data.
+    Args:
+        filename: File that contains MCNP meshtally data.
 
-    Returns
-    -------
-    tallies : dict
-        Dictionary of mesh tallies contained in the file. It is
-        tally_name -> Fmesh pairs.
+    Returns:
+        tallies Index of mesh tallies contained in the file.
     """
     with open(filename) as f:
         text = f.read() + "\n"

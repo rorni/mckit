@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import mckit.parser.common.utils as cmn
 import sly
 
@@ -61,7 +63,7 @@ class Parser(sly.Parser):
 
     @_("float float float")
     def translation(self, p):
-        return [f for f in p]
+        return list(p)
 
     # TODO dvp: check what to do, if transformation is specified with default values using the MCNP J shortcuts?
 
@@ -69,7 +71,7 @@ class Parser(sly.Parser):
     def rotation(self, p):
         m = p[9]
         assert m == -1 or m == 1, f"Invalid M option value {m}"
-        return [f for f in p][:-1], m == -1
+        return list(p)[:-1], m == -1
 
     @_(
         "float float float float float float float float float",
@@ -78,7 +80,7 @@ class Parser(sly.Parser):
         "float float float",
     )
     def rotation(self, p):
-        return [f for f in p], False
+        return list(p), False
 
     @_("FLOAT")
     def float(self, p):
