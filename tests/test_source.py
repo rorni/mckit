@@ -16,7 +16,7 @@ class TestDistribution:
         ],
     )
     def test_create_failure(self, name, values, probs):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Inconsistent size of values."):
             Distribution(name, values, probs)
 
     @pytest.mark.parametrize(

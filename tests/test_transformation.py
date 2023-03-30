@@ -102,7 +102,7 @@ def test_creation(args, rot, offset, options):
     ],
 )
 def test_creation_failure(args):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="wrong|is greater"):
         Transformation(**args)
 
 
@@ -304,10 +304,9 @@ tr_tr_cases = [
 ]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def trtr():
-    tr = [Transformation(**tdata) for tdata in tr_tr_cases]
-    return tr
+    return [Transformation(**tdata) for tdata in tr_tr_cases]
 
 
 @pytest.mark.parametrize("tr1_no", range(len(tr_tr_cases)))

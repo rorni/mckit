@@ -32,7 +32,7 @@ def create_cell(
     **options,
 ):
     if not options:
-        options = dict()
+        options = {}
     options["name"] = cell_no
 
     def convert_integers_to_surfaces(_geometry):

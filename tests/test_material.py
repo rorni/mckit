@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from copy import deepcopy
 
@@ -615,8 +615,7 @@ class TestComposition:
 
     @pytest.fixture(scope="class")
     def compositions(self):
-        comp = [Composition(**params) for params in self.cases]
-        return comp
+        return [Composition(**params) for params in self.cases]
 
     @pytest.mark.parametrize("case_no", range(len(cases)))
     def test_name(self, case_no: int):
@@ -686,7 +685,7 @@ class TestComposition:
         "_input", [{"atomic": [], "weight": []}, {"atomic": []}, {"weight": []}, {}]
     )
     def test_create_failure(self, _input):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incorrect set of parameters."):
             Composition(**_input)
 
     @pytest.mark.parametrize(
@@ -1071,6 +1070,7 @@ class TestComposition:
             if v == 0:
                 with pytest.raises(KeyError):
                     comp.get_atomic(k)
+                with pytest.raises(KeyError):
                     comp.get_atomic(Element(k))
             else:
                 assert comp.get_atomic(k) == pytest.approx(v, rel=1.0e-3)
@@ -1254,6 +1254,7 @@ class TestComposition:
             if v == 0:
                 with pytest.raises(KeyError):
                     comp.get_weight(k)
+                with pytest.raises(KeyError):
                     comp.get_weight(Element(k))
             else:
                 assert comp.get_weight(k) == pytest.approx(v, rel=1.0e-3)
@@ -1450,7 +1451,6 @@ class TestComposition:
     )
     def test_get_option(self, compositions, case_no, name, expected_kw):
         comp = compositions[case_no]
-        print(comp.name(), name)
         assert comp.name() == name
         for key, value in expected_kw.items():
             assert comp[key] == value
@@ -1508,8 +1508,7 @@ class TestMaterial:
 
     @pytest.fixture(scope="class")
     def materials(self):
-        mats = [Material(**c) for c in self.cases]
-        return mats
+        return [Material(**c) for c in self.cases]
 
     @pytest.mark.parametrize(
         "data",
@@ -1581,15 +1580,15 @@ class TestMaterial:
             composition = Composition(**composition_params)
         else:
             composition = None
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incorrect set of parameters."):
             Material(**data, composition=composition)
 
     @pytest.mark.parametrize("case", cases)
     def test_creation(self, case):
         mat1 = Material(**case)
         data = case.copy()
-        atomic = data.pop("atomic", tuple())
-        weight = data.pop("weight", tuple())
+        atomic = data.pop("atomic", ())
+        weight = data.pop("weight", ())
         comp = Composition(atomic=atomic, weight=weight)
         mat2 = Material(composition=comp, **data)
         assert mat1.composition == comp

@@ -15,8 +15,7 @@ from mckit.geometry import EX, EY, EZ
 
 @pytest.fixture(scope="module")
 def box():
-    boxes = [Box([0.5, 1, 1.5], 1, 2, 3), Box([0.5, -1, 1.5], 3, 2, 1)]
-    return boxes
+    return [Box([0.5, 1, 1.5], 1, 2, 3), Box([0.5, -1, 1.5], 3, 2, 1)]
 
 
 @pytest.mark.parametrize(
@@ -475,7 +474,7 @@ def test_volume(box, case_no, expected):
 def test_random_points(box, case_no):
     points = box[case_no].generate_random_points(100)
     pt = box[case_no].test_points(points)
-    assert np.all(pt) == True
+    assert np.all(pt) is True
 
 
 boxes = [
@@ -532,5 +531,5 @@ def test_pickle(center, wx, wy, wz, ex, ey, ez):
     with io.BytesIO() as f:
         pickle.dump(box, f)
         f.seek(0)
-        box_unpickled = pickle.load(f)
+        box_unpickled = pickle.load(f)  # noqa: S301
     assert box == box_unpickled
