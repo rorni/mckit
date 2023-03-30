@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Apply transformation to a model."""
 from __future__ import annotations
 

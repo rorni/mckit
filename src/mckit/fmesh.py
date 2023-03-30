@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 import numpy as np
@@ -133,12 +132,10 @@ class RectMesh:
         k = np.searchsorted(self._zbins, z_proj) - 1
         if len(point.shape) == 1:
             return self.check_indices(i, j, k)
-        else:
-            print("i=", i, "j=", j, "k=", k)
-            indices = []
-            for x, y, z in zip(i, j, k):
-                indices.append(self.check_indices(x, y, z))
-            return indices
+        indices = []
+        for x, y, z in zip(i, j, k):
+            indices.append(self.check_indices(x, y, z))
+        return indices
 
     def check_indices(self, i, j, k):
         """Check if the voxel with such indices really exists.
@@ -158,8 +155,7 @@ class RectMesh:
         k = self._check_z(k)
         if i is None or j is None or k is None:
             return None
-        else:
-            return i, j, k
+        return i, j, k
 
     def _check_x(self, i):
         if i < 0 or i >= self._xbins.size - 1:
@@ -330,8 +326,7 @@ class CylMesh:
         k = self._check_t(k)
         if i is None or j is None or k is None:
             return None
-        else:
-            return i, j, k
+        return i, j, k
 
     def _check_r(self, i):
         if i < 0 or i >= self._rbins.size - 1:
@@ -452,7 +447,7 @@ class FMesh:
             self._mesh = CylMesh(origin, axis, vec, rbins, zbins, tbins)
         if self._data.shape[1:] != self._mesh.shape:
             raise ValueError("Incorrect data shape")
-        elif self._error.shape[1:] != self._mesh.shape:
+        if self._error.shape[1:] != self._mesh.shape:
             raise ValueError("Incorrect error shape")
 
     @property

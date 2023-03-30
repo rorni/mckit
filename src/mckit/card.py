@@ -1,7 +1,7 @@
 """Features, common for all cards."""
 from __future__ import annotations
 
-from typing import Any, Optional, Text, cast
+from typing import Any, Optional, cast
 
 from abc import ABC, abstractmethod
 from functools import reduce
@@ -62,7 +62,7 @@ class Card(ABC):
         return self
 
     @abstractmethod
-    def mcnp_words(self, pretty=False) -> list[Text]:
+    def mcnp_words(self, pretty=False) -> list[str]:
         """Gets a list of card words."""
 
     def mcnp_repr(self, pretty: bool = False) -> str:

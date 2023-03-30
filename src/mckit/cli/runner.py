@@ -150,8 +150,7 @@ def concat(output, parts_encoding, output_encoding, parts):
     """
     override = context["OVERRIDE"]
     with resolve_output(output, exist_ok=override, encoding=output_encoding) as out_fid:
-        for f in parts:
-            f = Path(f)
+        for f in map(Path, parts):
             # TODO dvp: Add filtering of a part's text here. Implement as external scripts call.
             #           Should be configurable
             print(f.read_text(encoding=parts_encoding), file=out_fid, end="")

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Tuple, Union, cast
+from typing import Any, Iterable, Tuple, Union, cast
 
 import math
 import os
@@ -90,7 +90,7 @@ class Composition(Card):
         if weight:
             for elem, frac in weight:
                 if not isinstance(elem, Element):
-                    elem = Element(elem)
+                    elem = Element(elem)  # noqa: PLW2901 - elem is to be overwritten
                 elem_w.append(elem)
                 frac_w.append(frac)
 
@@ -99,7 +99,7 @@ class Composition(Card):
         if atomic:
             for elem, frac in atomic:
                 if not isinstance(elem, Element):
-                    elem = Element(elem)
+                    elem = Element(elem)  # noqa: PLW2901 - elem is to be overwritten
                 elem_a.append(elem)
                 frac_a.append(frac)
 
@@ -263,8 +263,7 @@ class Composition(Card):
                 composition[isotope] += conc * frac
         if already:
             return self
-        else:
-            return Composition(atomic=composition.items(), **self.options)
+        return Composition(atomic=composition.items(), **self.options)
 
     def natural(self, tolerance=1.0e-8):
         """Tries to replace detailed isotope composition by natural elements.
@@ -413,7 +412,7 @@ class Material:
 
         if concentration and density or not concentration and not density:
             raise ValueError("Incorrect set of parameters.")
-        elif concentration:
+        if concentration:
             self._n = concentration
         else:
             self._n = density * AVOGADRO / self._composition.molar_mass
@@ -508,13 +507,22 @@ class Material:
         if not materials:
             raise ValueError("At least one material must be specified.")
         if fraction_type == "weight":
-            fun = lambda m, f: f / m.molar_mass
+
+            def fun(m, f):
+                return f / m.molar_mass
+
             norm = sum(fun(m, f) / m.concentration for m, f in materials)
         elif fraction_type == "volume":
-            fun = lambda m, f: f * m.concentration
+
+            def fun(m, f):
+                return f * m.concentration
+
             norm = 1
         elif fraction_type == "atomic":
-            fun = lambda m, f: f
+
+            def fun(m, f):
+                return f
+
             norm = sum(fun(m, f) / m.concentration for m, f in materials)
         else:
             raise ValueError("Unknown fraction type")
@@ -594,8 +602,7 @@ class Element:
             and self._isomer == other._isomer
         ):
             return True
-        else:
-            return False
+        return False
 
     def __str__(self):
         _name = _CHARGE_TO_NAME[self.charge].capitalize()
@@ -664,7 +671,7 @@ class Element:
             result[self] = 1.0
         elif self._mass_number == 0:
             for at_num, frac in _NATURAL_ABUNDANCE[self._charge].items():
-                elem_name = "{0:d}{1:03d}".format(self._charge, at_num)
+                elem_name = f"{self._charge:d}{at_num:03d}"
                 result[Element(elem_name, lib=self._lib)] = frac
         return result
 
@@ -673,8 +680,8 @@ class Element:
         """Splits element's name into charge and mass number parts."""
         if _name.isnumeric():
             return _name[:-3], _name[-3:]
-        for i, l in enumerate(_name):
-            if l.isdigit():
+        for i, t in enumerate(_name):  # noqa: B007 - `i` is used below
+            if t.isdigit():
                 break
         else:
             return _name, "0"

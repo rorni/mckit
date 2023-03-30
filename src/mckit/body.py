@@ -900,7 +900,7 @@ def simplify(cells: Iterable, box: Box = GLOBAL_BOX, min_volume: float = 1.0) ->
             yield cs
 
 
-class Simplifier(object):
+class Simplifier:
     def __init__(self, box: Box = GLOBAL_BOX, min_volume: float = 1.0):
         self.box = box
         self.min_volume = min_volume

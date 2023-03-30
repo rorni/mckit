@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации."""
 from __future__ import annotations
 
@@ -41,11 +40,11 @@ def compose(output, fill_descriptor_path, source, override):
     for k, v in universes.items():
         u, _ = v
         cps = u.get_compositions()
-        comps[k] = {c for c in cps}
+        comps[k] = set(cps)
 
     common = reduce(set.union, comps.values())
     envelopes.set_common_materials(common)
-    cells_index = dict((cell.name(), cell) for cell in envelopes)
+    cells_index = {cell.name(): cell for cell in envelopes}
 
     for i, spec in universes.items():
         universe, transformation = spec
@@ -90,8 +89,8 @@ def compose(output, fill_descriptor_path, source, override):
 def load_universes(
     fill_descriptor, universes_dir
 ) -> dict[int, tuple[mk.Universe, int | list[float]]]:
-    filler_path_map: dict[int, tuple[Path, mk.Universe]] = dict()
-    cell_filler_map: dict[int, tuple[mk.Universe, int | list[float]]] = dict()
+    filler_path_map: dict[int, tuple[Path, mk.Universe]] = {}
+    cell_filler_map: dict[int, tuple[mk.Universe, int | list[float]]] = {}
 
     for k, v in fill_descriptor.items():
         if isinstance(v, dict) and "universe" in v:
@@ -144,5 +143,4 @@ def load_named_transformations(fill_descriptor) -> dict[int, Transformation] | N
             )
             named_transformations[name] = transform
         return named_transformations
-    else:
-        return None
+    return None
