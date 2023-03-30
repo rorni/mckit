@@ -1,10 +1,9 @@
 """Utility methods to access a package data."""
 from __future__ import annotations
 
-from typing import Callable
-
 import sys
 
+from collections.abc import Callable
 from pathlib import Path
 
 if sys.version_info >= (3, 9):
@@ -21,6 +20,6 @@ def path_resolver(package: Package) -> Callable[[str], Path | Traversable]:
         package: the package below which the data is stored.
 
     Returns:
-        callable which appends the argument to the package folder adt returns as Path.
+        callable which appends the argument to the package folder as Path.
     """
     return files(package).joinpath

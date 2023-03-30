@@ -13,9 +13,10 @@ import sysconfig
 
 from distutils.version import LooseVersion
 
+from numpy import get_include as get_numpy_include
+
 import Cython.Build
 
-from numpy import get_include as get_numpy_include
 from setuptools.command.build_ext import build_ext
 from setuptools.extension import Extension
 

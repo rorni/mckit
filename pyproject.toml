@@ -35,7 +35,7 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: C",
     "Programming Language :: Python",
-    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
 ]
 
 [build-system]
@@ -195,6 +195,17 @@ sphinx-click = ">=4.4.0"
 [tool.poetry.group.docs_auto.dependencies]
 sphinx-autobuild = ">=2021.3.14"
 
+
+[tool.poetry.group.pylsp.dependencies]
+pylsp-mypy = ">=0.6.6"
+pyls-isort = ">=0.2.2"
+python-lsp-black = ">=1.2.1"
+pyls-memestra = ">=0.0.16"
+pylsp-rope = ">=0.1.11"
+ruff-lsp = "^0.0.24"
+
+[tool.poetry.group.ruff.dependencies]
+ruff = ">=0.0.259"
 
 [tool.isort]
 atomic = true
@@ -412,3 +423,166 @@ summary-quotes-same-line = true
 good-names-rgxs=["."]  # a single character variable is okay
 logging-format-style="new"   # use {} in logging messages
 deprecated-modules=["six"]
+
+[tool.ruff]
+target-version = "py38"
+#see full list: https://beta.ruff.rs/docs/rules/#pyflakes-f
+select= [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "I",
+  "N",
+  "PIE",
+  "PT",
+  "PL",
+  "PLC",
+  "PLE",
+  "PLR",
+  "PLW",
+  "PYI",
+  "Q",
+  "R",
+  "S",
+  "T",
+  "U",
+  "W",
+  "YTT"
+]
+
+# Ignore rules that currently fail on the codebase
+ignore = [
+    "ANN001", # ANN001 Missing type annotation for function argument: doesn't allow to use functools dispatching
+    "ANN002", # ANN002 Missing type annotation for *drop_items: ... as above
+    "ANN101", # ANN101 Missing type annotation for self in method
+    "ANN102", # ANN102 Missing type annotation for cls in classmethod
+    "ANN202", # ANN202 Missing return type annotation for protected function: ... dispatching
+    "ANN204", # ANN204 Missing return type annotation for special method
+
+    "B905",   # B905 `zip()` without an explicit `strict=` parameter - ignore while support 3.8, 3.9
+
+    # "C812",   # C812 Missing trailing comma: black compatibility
+    "C901",   # too complex - ...
+
+    "D100",   # Missing docstring in public module
+    "D101",   # Missing docstring in public class
+    "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
+    "D105",   # D105 Missing docstring in magic method (__hash__, __eq__)
+    "D104",   # Missing docstring in public package
+    "D106",   # Missing docstring in public nested class
+    "D107",   # Missing docstring in __init__
+
+
+    # "E203",   # E203: Whitespace before ‘:'
+    # "E401",  # Multiple imports on one line
+    "E402",  # Module level import not at top of file
+    "E501",  # Line too long (<LENGTH> > 100 characters)
+    # "E701",  # Multiple statements on one line (colon)
+    # "E702",  # Multiple statements on one line (semicolon)
+    # "E703",  # Statement ends with an unnecessary semicolon
+    # "E704",  # Multiple statements on one line (def)
+    # "E711",  # Comparison to `None` should be `cond is not None`
+    # "E712",  # Comparison to `<BOOL>` should be `cond is <BOOL>`
+    # "E713",  # Test for membership should be `not in`
+    # "E714",  # Test for object identity should be `is not`
+    # "E721",  # Do not compare types, use `isinstance()`
+    # "E722",  # Do not use bare `except`
+    # "E731",  # Do not assign a `lambda` expression, use a `def`
+    # "E741",  # Ambiguous variable name: `<VARIABLE>`
+    # "E743",  # Ambiguous function name: `<FUNCTION>`
+
+    "N806",    # Variable `D` in function should be lowercase
+
+    # "F401",  # `<TYPE>` imported but unused
+    # "F403",  # `from <MODULE> import *` used; unable to detect undefined names
+    # "F405",  # `<TYPE>` may be undefined, or defined from star imports: `<MODULE>`
+    # "F523",  # `.format` call has unused arguments at position(s): <INDEX>
+    # "F601",  # Dictionary key literal `'<KEY>'` repeated
+    # "F811",  # Redefinition of unused `<VARIABLE>` from line <LINE>
+    # "F821",  # Undefined name `VARIABLE`
+    # "F823",  # Local variable `VARIABLE` referenced before assignment
+    # "F841",  # Local variable `VARIABLE` is assigned to but never used
+
+    "I001",  # import order is controlled by isort
+    # "I101",
+    # "I201",
+    # "I202",
+
+# ignore some questionable pandas-vet warnings
+    # "PD005", # use operator instead of method
+    # "PD008", # We use at() to access single values
+    # "PD009", # And we use iat()
+
+    "PLR0912", # Too many branches (15 > 12)
+    "PLR0913", # Too many arguments to function call (6 > 5)
+    "PLR2004", # magic number - don't want declare 0.0 as constant
+    "PLR0915", # Too many statements (65 > 50)
+    "PT019",   # Fixture `_bin` without value is injected as parameter (false positive?)
+
+    "S101",    # Use of `assert` detected
+
+    # "W503",  # Line break before binary operator: for compatibility with black settings
+]
+
+unfixable = [
+    "F401",    # dont't remove unused imports
+]
+
+# Same as Black.
+line-length = 100
+
+# show an enumeration of all autofixed lint violations
+show-fixes = true
+
+# show source code snippets when reporting violations
+show-source = true
+
+src = ["src", "test"]
+
+# Allow unused variables when underscore-prefixed.
+# dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+dummy-variable-rgx = "^_$"
+exclude = [
+  "docs/source/conf.py",
+  "__pycache__",
+  "adhoc",
+  "wrk",
+  "*.egg-info",
+  ".cache",
+  "notebooks/dvp/*.py"
+]
+# Assume Python 3.10.
+# target-version = "py310"
+
+[tool.ruff.per-file-ignores]
+"**/__init__.py" = ["E402", "F401"]
+"benchmarks/*" = ["S101"]
+"noxfile.py" = ["ANN"]
+"tests/*" = ["ANN", "D100", "D101", "D102", "D103", "D104", "PLR2004", "S101"]
+"tools/*" = ["T201"]
+"src/mckit/_init_dynamic_libraries.py" = [ "F401", "E402" ]
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 15
+
+[tool.ruff.flake8-type-checking]
+strict = true
+
+[tool.ruff.isort]
+known-first-party = ["src"]
+known-third-party = ["mpl_toolkits", "matplotlib", "numpy", "scipy"]
+required-imports = ["from __future__ import annotations"]
+
+
+[tool.ruff.flake8-pytest-style]
+parametrize-names-type = "list"
+
+[tool.ruff.pydocstyle]
+# Use Google-style docstrings.
+convention = "google"

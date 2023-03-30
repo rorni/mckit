@@ -1,9 +1,10 @@
 #!/bin/bash
 
+. ~/.bash-functions.rc
+
 # set -exu
 
-env="mckit"
-pkg="${env//-/_}"
+env=($(pyenv local))[1]
 last_python="3.11.2"
 
 eval "$(pyenv init -)"
@@ -17,7 +18,8 @@ poetry install
 pyenv shell --unset
 pyenv local "$env" "3.10.10" "3.9.16" "3.8.16"
 pyenv rehash
-python -c "import ${pkg}; print(${pkg}.__version__)"
 
+pkg=($(ls src))[1]
+python -c "import ${pkg}; print(${pkg}.__version__)" && success "Environment $env is reset"
 
 # vim: set ts=4 sw=4 tw=92 ss=0 ft=sh et ai :
