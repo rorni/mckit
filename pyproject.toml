@@ -518,6 +518,7 @@ ignore = [
     # "PD008", # We use at() to access single values
     # "PD009", # And we use iat()
 
+    "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
     "PLR0912", # Too many branches (15 > 12)
     "PLR0913", # Too many arguments to function call (6 > 5)
     "PLR2004", # magic number - don't want declare 0.0 as constant
@@ -566,7 +567,15 @@ exclude = [
 "tests/*" = ["ANN", "D100", "D101", "D102", "D103", "D104", "PLR2004", "S101"]
 "tools/*" = ["T201"]
 "src/mckit/_init_dynamic_libraries.py" = [ "F401", "E402" ]
-
+"src/mckit/parser/*" = [
+    "A003",
+    "D",
+    "F811",
+    "F821",
+    "N802",
+    "N816",  # Variable `t_ANY_ignore` in global scope should not be mixedCase
+    "T201",  # print found
+]
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 15
