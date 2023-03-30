@@ -87,13 +87,13 @@ def print_option(option: str, value: Any) -> list[str]:
     if name == "IMP" and (par == "N" or par == "P" or par == "E"):
         return ["IMP:{0}={1}".format(par, IMPORTANCE_FORMAT.format(value))]
     elif option == "VOL":
-        return ["VOL={0}".format(value)]
+        return [f"VOL={value}"]
     elif option == "U":
-        return ["U={0}".format(value.name())]
+        return [f"U={value.name()}"]
     elif option == "FILL":
         universe = value["universe"]
         tr = value.get("transform", None)
-        words = ["FILL={0}".format(universe.name())]
+        words = [f"FILL={universe.name()}"]
         if tr:
             tr_name = tr.name()
             if not tr_name:
@@ -107,7 +107,7 @@ def print_option(option: str, value: Any) -> list[str]:
                 words.append(")")
         return words
     else:
-        raise ValueError("Incorrect option name: {0}".format(option))
+        raise ValueError(f"Incorrect option name: {option}")
 
 
 def pretty_float(value: float, frac_digits: int = None) -> str:
@@ -127,8 +127,8 @@ def pretty_float(value: float, frac_digits: int = None) -> str:
     if value == abs(value):
         value = abs(value)
     decades = get_decades(value)
-    format_f = "{{0:.{0}f}}".format(max(frac_digits, 0))
-    format_e = "{{0:.{0}e}}".format(max(frac_digits + decades, 0))
+    format_f = f"{{0:.{max(frac_digits, 0)}f}}"
+    format_e = f"{{0:.{max(frac_digits + decades, 0)}e}}"
     text_f = format_f.format(round(value, frac_digits))
     text_e = format_e.format(value)
     if len(text_f) <= len(text_e):

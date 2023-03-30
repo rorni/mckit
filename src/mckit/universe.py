@@ -265,7 +265,7 @@ class Universe:
                 new_cell.options["MAT"] = Material(composition=new_comp, density=mat.density)
 
             if name_rule == "keep" and cell.name() in cell_names:
-                raise NameClashError("Cell name clash: {0}".format(cell.name()))
+                raise NameClashError(f"Cell name clash: {cell.name()}")
             elif name_rule == "new" or name_rule == "clash" and cell.name() in cell_names:
                 new_name = max(cell_names, default=0) + 1
                 new_cell.rename(new_name)
@@ -743,7 +743,7 @@ class Universe:
         if verbose:
 
             def fmt_fun(x):
-                return "Simplifying cell #{0}".format(x.name() if x else x)
+                return f"Simplifying cell #{x.name() if x else x}"
 
             uiter = progressbar(self, item_show_func=fmt_fun).__enter__()
         else:
@@ -755,8 +755,8 @@ class Universe:
                 new_cells.append(cs)
 
         if verbose:
-            print("Universe {0} simplification has been finished.".format(self.name()))
-            print("{0} empty cells were deleted.".format(len(self._cells) - len(new_cells)))
+            print(f"Universe {self.name()} simplification has been finished.")
+            print(f"{len(self._cells) - len(new_cells)} empty cells were deleted.")
 
         self._cells = new_cells
 

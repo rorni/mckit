@@ -499,7 +499,7 @@ class FMesh:
         """
         index = self._mesh.voxel_index(point)
         if index is None:
-            raise ValueError("Point {0} lies outside of the mesh.".format(point))
+            raise ValueError(f"Point {point} lies outside of the mesh.")
         return self.get_spectrum_by_index(index)
 
     def get_spectrum_by_index(self, index):

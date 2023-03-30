@@ -960,7 +960,7 @@ def simplify_mpp(
     """
 
     def fmt_fun(x):
-        return "Simplifying cell #{0}".format(x.name() if x else x)
+        return f"Simplifying cell #{x.name() if x else x}"
 
     with progressbar(simplify_mp(cells, box, min_volume, chunk_size), item_show_func=fmt_fun) as pb:
         for c in pb:

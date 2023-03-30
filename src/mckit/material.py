@@ -169,7 +169,7 @@ class Composition(Card):
         )  # TODO dvp: check why self._hash is not used?
 
     def mcnp_words(self, pretty=False):
-        words = ["M{0} ".format(self.name())]
+        words = [f"M{self.name()} "]
         for elem, frac in self._composition.items():
             words.append(elem.mcnp_repr())
             words.append("  ")
@@ -611,7 +611,7 @@ class Element:
         """Gets MCNP representation of the element."""
         _name = str(self.charge * 1000 + self.mass_number)
         if self.lib is not None:
-            _name += ".{0}".format(self.lib)
+            _name += f".{self.lib}"
         return _name
 
     def fispact_repr(self):
