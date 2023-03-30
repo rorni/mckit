@@ -496,6 +496,7 @@ ignore = [
     # "E741",  # Ambiguous variable name: `<VARIABLE>`
     # "E743",  # Ambiguous function name: `<FUNCTION>`
 
+    "N803",    # Argument name `R` should be lowercase
     "N806",    # Variable `D` in function should be lowercase
 
     # "F401",  # `<TYPE>` imported but unused
@@ -566,6 +567,9 @@ exclude = [
 "noxfile.py" = ["ANN"]
 "tests/*" = ["ANN", "D100", "D101", "D102", "D103", "D104", "PLR2004", "S101"]
 "tools/*" = ["T201"]
+"src/mckit/cli/*" = [
+    "PLE1205", # Too many arguments for `logging` format string - we use loguru in CLI modules
+]
 "src/mckit/_init_dynamic_libraries.py" = [ "F401", "E402" ]
 "src/mckit/parser/*" = [
     "A003",
