@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union, cast
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, cast
 
 import operator
 import sys
@@ -41,7 +41,7 @@ from .utils.named import Name
 
 
 class NameClashError(ValueError):
-    def __init__(self, result: Union[str, Dict[str, Dict[int, Set[Universe]]]]) -> None:
+    def __init__(self, result: str | dict[str, dict[int, set[Universe]]]) -> None:
         if isinstance(result, str):
             ValueError.__init__(self, result)
         else:
@@ -178,7 +178,7 @@ class Universe:
         verbose_name: str = None,
         comment: str = None,
         name_rule: str = "keep",
-        common_materials: Set[Composition] = None,
+        common_materials: set[Composition] = None,
     ):
         self._name = name
         self._comment = comment
@@ -364,8 +364,8 @@ class Universe:
 
     def apply_fill(
         self,
-        cell: Union[Body, int] = None,
-        universe: Union[Universe, int] = None,
+        cell: Body | int = None,
+        universe: Universe | int = None,
         predicate: Callable[[Body], bool] = None,
         name_rule: str = "new",
     ):
@@ -478,7 +478,7 @@ class Universe:
         common_mats = {c for c, cnt in comp_count.items() if cnt > 1}
         return common_mats
 
-    def get_surfaces(self, inner: bool = False) -> Set[Surface]:
+    def get_surfaces(self, inner: bool = False) -> set[Surface]:
         """Gets all surfaces of the universe.
 
         Parameters
@@ -508,7 +508,7 @@ class Universe:
 
         return reduce(reducer, self, [])
 
-    def get_compositions(self, exclude_common: bool = False) -> Set[Composition]:
+    def get_compositions(self, exclude_common: bool = False) -> set[Composition]:
         """Gets all compositions of the universe.
 
         Parameters
@@ -530,7 +530,7 @@ class Universe:
             compositions.difference_update(self._common_materials)
         return compositions
 
-    def get_universes(self) -> Set[Universe]:
+    def get_universes(self) -> set[Universe]:
         """Gets all inner universes.
 
         Returns
@@ -549,7 +549,7 @@ class Universe:
         """Gets numeric name of the universe."""
         return self._name
 
-    def name_clashes(self) -> Dict[str, Dict[int, Set[Universe]]]:
+    def name_clashes(self) -> dict[str, dict[int, set[Universe]]]:
         """Checks, if there is name clashes.
 
         Returns
@@ -583,7 +583,7 @@ class Universe:
         return stat
 
     @staticmethod
-    def _produce_stat(names: Dict[Universe, Iterable[int]]) -> Dict[int, Set[Universe]]:
+    def _produce_stat(names: dict[Universe, Iterable[int]]) -> dict[int, set[Universe]]:
         stat = defaultdict(list)
         for u, u_names in names.items():
             for name in u_names:
@@ -591,7 +591,7 @@ class Universe:
         return Universe._clean_stat_dict(stat)
 
     @staticmethod
-    def _clean_stat_dict(stat) -> Dict[int, Set[Universe]]:
+    def _clean_stat_dict(stat) -> dict[int, set[Universe]]:
         new_stat = {}
         for k, v in stat.items():
             if len(v) > 1:
@@ -653,7 +653,7 @@ class Universe:
 
     def save(
         self,
-        filename: Union[str, Path],
+        filename: str | Path,
         encoding: str = MCNP_ENCODING,
         check_clashes: bool = True,
     ):
@@ -823,7 +823,7 @@ class Universe:
 @attrs
 class _UniverseCellsGroup:
     universe: Universe = attrib()
-    cells: List[Body] = attrib()
+    cells: list[Body] = attrib()
 
 
 def produce_universes(cells: Iterable[Body]) -> Universe:
@@ -842,7 +842,7 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
     universe : Universe
         The top level universe with name = 0.
     """
-    groups: Dict[Name, _UniverseCellsGroup] = {}
+    groups: dict[Name, _UniverseCellsGroup] = {}
     for c in cells:
         universe_no: Name = c.options.get("U", 0)
         if universe_no in groups:
@@ -851,7 +851,7 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
             new_group = _UniverseCellsGroup(universe=Universe([], universe_no), cells=[c])
             groups[universe_no] = new_group
     for c in cells:
-        fill: Dict[str, Any] = c.options.get("FILL", None)
+        fill: dict[str, Any] = c.options.get("FILL", None)
         if fill is not None:
             fill_universe_no = fill["universe"]
             fill["universe"] = groups[fill_universe_no].universe
@@ -862,13 +862,13 @@ def produce_universes(cells: Iterable[Body]) -> Universe:
     return top_universe
 
 
-def collect_transformations(universe: Universe, recursive=True) -> Set[Transformation]:
-    def add_surface_transformation(aggregator: Set[Transformation], surface: Surface) -> None:
+def collect_transformations(universe: Universe, recursive=True) -> set[Transformation]:
+    def add_surface_transformation(aggregator: set[Transformation], surface: Surface) -> None:
         transformation = surface.transformation
         if transformation and transformation.name():
             aggregator.add(transformation)
 
-    def at_surface(aggregator: Set[Transformation], s: Union[Surface, Shape, Body]):
+    def at_surface(aggregator: set[Transformation], s: Surface | Shape | Body):
         if isinstance(s, Surface):
             add_surface_transformation(aggregator, s)
         elif isinstance(s, Shape):
@@ -879,13 +879,13 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
         return aggregator
 
     @contextmanager
-    def visit_shape(s: Union[Surface, Body, Shape]):
+    def visit_shape(s: Surface | Body | Shape):
         if isinstance(s, (Surface, Body, Shape)):
             yield at_surface, set()
         else:
             on_unknown_acceptor(s)
 
-    def at_shape(aggregator: Set[Transformation], s: Union[Surface, Body, Shape]):
+    def at_shape(aggregator: set[Transformation], s: Surface | Body | Shape):
         if isinstance(s, Surface):
             add_surface_transformation(aggregator, s)
             return aggregator
@@ -899,7 +899,7 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
         else:
             on_unknown_acceptor(b)
 
-    def at_body(aggregator: Set[Transformation], b: Body) -> Set[Transformation]:
+    def at_body(aggregator: set[Transformation], b: Body) -> set[Transformation]:
         body_transformation = b.transformation
         if body_transformation and body_transformation.name():
             aggregator.add(body_transformation)
@@ -915,7 +915,7 @@ def collect_transformations(universe: Universe, recursive=True) -> Set[Transform
         return aggregator
 
     @contextmanager
-    def visit_universe(u: Universe) -> Set[Transformation]:
+    def visit_universe(u: Universe) -> set[Transformation]:
         if isinstance(u, Universe):
             yield at_body, set()
             # TODO dvp:  set() is not a valid choice as aggregator considering
@@ -974,7 +974,7 @@ def transformations_to_universe_mapper(universe: Universe) -> IU:
     )
 
 
-def is_shared_between_universes(item: Tuple[Name, Dict[Name, int]]) -> bool:
+def is_shared_between_universes(item: tuple[Name, dict[Name, int]]) -> bool:
     entity, universes_counts = item
     return 1 < len(universes_counts.keys())
 
@@ -1008,7 +1008,7 @@ class UniverseAnalyser:
             on_duplicate=self.universe_duplicates,
         )
         self.cell_duplicates = StatisticsCollector()
-        cells: List[Body] = reduce(operator.add, map(list, universes), [])
+        cells: list[Body] = reduce(operator.add, map(list, universes), [])
         self.cell_index = IndexOfNamed[Name, Body].from_iterable(
             cells,
             on_duplicate=self.cell_duplicates,
@@ -1059,7 +1059,7 @@ class UniverseAnalyser:
         return not any(self.duplicates())
 
     def print_duplicates_map(self, stream=sys.stdout):
-        def printer(_, item: Tuple[str, E2U]):
+        def printer(_, item: tuple[str, E2U]):
             tag, info = item
             entities = sorted(list(info.keys()))
             for e in entities:

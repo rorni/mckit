@@ -2,7 +2,7 @@
 """Проверяет корректность модели и выдает статистику."""
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable
 
 from pathlib import Path
 
@@ -13,9 +13,7 @@ from mckit.parser.mcnp_input_sly_parser import ParseResult, from_file
 from mckit.universe import collect_transformations
 
 
-def check_duplicates(
-    iterable: Optional[Iterable[Any]], label: str, key: Callable[[Any], Any]
-) -> None:
+def check_duplicates(iterable: Iterable[Any] | None, label: str, key: Callable[[Any], Any]) -> None:
     if iterable is None:
         print(f"No {label}s are found")  # don't use logger here, should go to stdout
     else:

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 import sys
 
 from contextlib import contextmanager
@@ -164,7 +162,7 @@ def concat(output, parts_encoding, output_encoding, parts):
 @click.argument(
     "sources", metavar="<source>", type=click.Path(exists=True), nargs=-1, required=True
 )
-def check(sources: List[click.Path]) -> None:
+def check(sources: list[click.Path]) -> None:
     """Read MCNP model(s) and show statistics and clashes."""
     for source in sources:
         do_check(source)

@@ -1,7 +1,7 @@
 """Code for transformations."""
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -125,7 +125,7 @@ class Transformation(Card, MaybeClose):
 
     def apply2gq(
         self, m1: ArrayLike, v1: ArrayLike, k1: float
-    ) -> Tuple[ArrayLike, ArrayLike, float]:
+    ) -> tuple[ArrayLike, ArrayLike, float]:
         """Gets parameters of generic quadratic surface in the main CS.
 
         Args:
@@ -156,7 +156,7 @@ class Transformation(Card, MaybeClose):
         k = k1 - np.dot(v, self._t) - np.dot(self._t, np.dot(m, self._t))
         return m, v, k
 
-    def apply2plane(self, v1: ArrayLike, k1: float) -> Tuple[ArrayLike, float]:
+    def apply2plane(self, v1: ArrayLike, k1: float) -> tuple[ArrayLike, float]:
         """Gets parameters of plane surface in the main coordinate system.
 
         Args:
@@ -242,7 +242,7 @@ class Transformation(Card, MaybeClose):
             return False
         return estimator((self._t, self._u), (other._t, other._u))
 
-    def _setup_rotation_matrix(self, u: Optional[ArrayLike]) -> ArrayLike:
+    def _setup_rotation_matrix(self, u: ArrayLike | None) -> ArrayLike:
         zero_cosines_idx = np.abs(u) < ZERO_COS_TOLERANCE
         u[zero_cosines_idx] = 0.0
         # TODO: Implement creation from reduced rotation parameter set.

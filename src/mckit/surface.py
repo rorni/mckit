@@ -1,7 +1,7 @@
 """Surface methods."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Text, Tuple, Union
+from typing import Any, Callable, List, Sequence, Text, Union
 
 from abc import abstractmethod
 
@@ -199,8 +199,8 @@ def create_surface(kind: str, *params: float, **options) -> Surface:
 
 
 def create_replace_dictionary(
-    surfaces: Set[Surface],
-    unique: Optional[set[Surface]] = None,
+    surfaces: set[Surface],
+    unique: set[Surface] | None = None,
     box=GLOBAL_BOX,
     tol: float = 1.0e-10,
 ) -> dict[Surface, tuple[Surface, int]]:
@@ -232,7 +232,7 @@ def create_replace_dictionary(
     return replace
 
 
-def _drop_empty_transformation(options: Dict[str, Any]) -> None:
+def _drop_empty_transformation(options: dict[str, Any]) -> None:
     if "transform" in options and not options["transform"]:  # empty transformation option
         del options["transform"]
 
@@ -266,7 +266,7 @@ class Surface(Card, MaybeClose):
         pass
 
     @property
-    def transformation(self) -> Optional[Transformation]:
+    def transformation(self) -> Transformation | None:
         return self.options.get("transform", None)
 
     @abstractmethod
@@ -318,8 +318,8 @@ class Surface(Card, MaybeClose):
         # TODO dvp: add transformations processing in Universe.
         return words
 
-    def clean_options(self) -> Dict[Text, Any]:
-        result: Dict[Text, Any] = filter_dict(self.options, DROP_OPTIONS)
+    def clean_options(self) -> dict[Text, Any]:
+        result: dict[Text, Any] = filter_dict(self.options, DROP_OPTIONS)
         return result
 
     def compare_transformations(self, tr: Transformation) -> bool:
@@ -348,7 +348,7 @@ class Surface(Card, MaybeClose):
         self.options = state
 
 
-def internalize_ort(v: np.ndarray) -> Tuple[np.ndarray, bool]:
+def internalize_ort(v: np.ndarray) -> tuple[np.ndarray, bool]:
     if v is EX or np.array_equal(v, EX):
         return EX, True
     elif v is EY or np.array_equal(v, EY):
@@ -651,7 +651,7 @@ class Plane(Surface, _Plane):
         options = self.clean_options()
         return Plane(-self._v, -self._k, assume_normalized=True, **options)
 
-    def mcnp_words(self, pretty: bool = False) -> List[str]:
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
         words = Surface.mcnp_words(self, pretty)
         if np.array_equal(self._v, EX):
             words.append("PX")
@@ -722,7 +722,7 @@ class Sphere(Surface, _Sphere):
                              created. Transformation instance.
     """
 
-    def __init__(self, center: Union[Sequence[float], np.ndarray], radius: float, **options: Any):
+    def __init__(self, center: Sequence[float] | np.ndarray, radius: float, **options: Any):
         center = np.asarray(center, dtype=float)
         radius = float(radius)
         Surface.__init__(self, **options)
@@ -803,7 +803,7 @@ class Sphere(Surface, _Sphere):
         options = self.clean_options()
         return Sphere(self._center, self._radius, transform=tr, **options)
 
-    def mcnp_words(self, pretty: bool = False) -> List[str]:
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
         words = Surface.mcnp_words(self, pretty)
         c = self._center
         if np.array_equal(self._center, ORIGIN):
@@ -1101,7 +1101,7 @@ class Cone(Surface, _Cone):
         cone = Cone(self._apex, self._axis, self._t2, sheet=self._sheet, transform=tr, **options)
         return cone
 
-    def mcnp_words(self, pretty: bool = False) -> List[str]:
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
         words = Surface.mcnp_words(self)
         axis = self._axis
         apex = self._apex
@@ -1244,7 +1244,7 @@ class GQuadratic(Surface, _GQuadratic):
         options = self.clean_options()
         return GQuadratic(self._m, self._v, self._k, transform=tr, **options)
 
-    def mcnp_words(self, pretty: bool = False) -> List[str]:
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
         words = Surface.mcnp_words(self)
         words.append("GQ")
         m = self._m
@@ -1396,7 +1396,7 @@ class Torus(Surface, _Torus):
         options = self.clean_options()
         return Torus(self._center, self._axis, self._R, self._a, self._b, transform=tr, **options)
 
-    def mcnp_words(self, pretty: bool = False) -> List[str]:
+    def mcnp_words(self, pretty: bool = False) -> list[str]:
         words = Surface.mcnp_words(self)
         estimator = DEFAULT_TOLERANCE_ESTIMATOR
         if estimator(self._axis, EX):

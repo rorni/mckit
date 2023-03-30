@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as tp
 
-from typing import Iterable, List, NewType, Optional, Set, Union
+from typing import Iterable, List, NewType, Union
 
 import os
 
@@ -100,7 +100,7 @@ class Shape(_Shape):
         "C": ~hash("S"),
     }
 
-    def __init__(self, opc: str, *args: Union[Shape, Surface]):
+    def __init__(self, opc: str, *args: Shape | Surface):
         opc, args = _clean_args(opc, *args)
         _Shape.__init__(self, opc, *args)
         self._calculate_hash(opc, *args)
@@ -119,7 +119,7 @@ class Shape(_Shape):
     def __repr__(self):
         return f"Shape({self.opc}, {self.args})"
 
-    def _get_words(self, parent_opc: str = None) -> List[str]:
+    def _get_words(self, parent_opc: str = None) -> list[str]:
         """Gets list of words that describe the shape.
 
         Args:
@@ -249,7 +249,7 @@ class Shape(_Shape):
                     return False
         return True
 
-    def intersection(self, *other: Union[Shape, Body]) -> Shape:
+    def intersection(self, *other: Shape | Body) -> Shape:
         """Gets intersection with other shape.
 
         Parameters
@@ -335,7 +335,7 @@ class Shape(_Shape):
         else:
             return 0
 
-    def get_surfaces(self) -> Set[Surface]:
+    def get_surfaces(self) -> set[Surface]:
         """Gets all the surfaces that describe the shape."""
         args = self.args
         if len(args) == 1:
@@ -687,7 +687,7 @@ class Body(Card):
         """Gets body's shape."""
         return self._shape
 
-    def material(self) -> Optional[mm.Material]:
+    def material(self) -> mm.Material | None:
         """Gets body's Material.
 
         Returns:

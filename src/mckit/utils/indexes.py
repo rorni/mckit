@@ -1,7 +1,7 @@
 """Classes to index MCNP objects on model file parsing."""
 from __future__ import annotations
 
-from typing import Callable, Dict, Iterable, NoReturn, Optional, Type, TypeVar, cast
+from typing import Callable, Dict, Iterable, NoReturn, Optional, TypeVar, cast
 
 from functools import reduce
 
@@ -25,7 +25,7 @@ class Index(Dict[Key, Item]):
     def __init__(
         self,
         default_factory: FactoryMethodWithKey = None,
-        **kwargs: Dict[Key, Item],
+        **kwargs: dict[Key, Item],
     ) -> None:
         """Create `Index`.
 
@@ -41,7 +41,7 @@ class Index(Dict[Key, Item]):
         """Public accessor to `self._default_factory`."""
         return self._default_factory
 
-    def __missing__(self, key: Key) -> Optional[Item]:
+    def __missing__(self, key: Key) -> Item | None:
         """Calls default factory with the key as argument."""
         if self._default_factory:
             return self._default_factory(key)
@@ -50,7 +50,7 @@ class Index(Dict[Key, Item]):
 
 
 # noinspection PyUnusedLocal
-def ignore(_: Key) -> Optional[Item]:
+def ignore(_: Key) -> Item | None:
     """Default factory for `IgnoringIndex`.
 
     Returns:
@@ -62,7 +62,7 @@ def ignore(_: Key) -> Optional[Item]:
 class IgnoringIndex(Index[Key, Item]):
     """Index ignoring absence of a key in the dictionary."""
 
-    def __init__(self, **kwargs: Dict[Key, Item]) -> None:
+    def __init__(self, **kwargs: dict[Key, Item]) -> None:
         Index.__init__(self, ignore, **kwargs)
 
 
@@ -151,7 +151,7 @@ class IndexOfNamed(Index[Key, Item]):
 
     @classmethod
     def from_iterable(
-        cls: Type[IndexOfNamed[Key, Item]],
+        cls: type[IndexOfNamed[Key, Item]],
         items: Iterable[Item],
         *,
         key: Callable[[Item], Name] = default_name_key,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Generator, List
+from typing import Generator
 
 import os
 import sys
@@ -41,7 +41,7 @@ def _iterate_suffixes_with_version(max_version: int = 2) -> Generator[str, None,
     yield SUFFIX
 
 
-SHARED_LIBRARY_DIRECTORIES: List[Path] = []
+SHARED_LIBRARY_DIRECTORIES: list[Path] = []
 
 if WIN:
     SHARED_LIBRARY_DIRECTORIES.append(Path(sys.prefix, "Library", "bin"))

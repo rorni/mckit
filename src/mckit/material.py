@@ -183,7 +183,7 @@ class Composition(Card):
     def __iter__(self):
         return iter(self._composition.items())
 
-    def __contains__(self, item: Union[str, Element]) -> bool:
+    def __contains__(self, item: str | Element) -> bool:
         """Checks if the composition contains the item.
 
         Parameters
@@ -323,7 +323,7 @@ class Composition(Card):
         return iter(self._composition.keys())
 
     @staticmethod
-    def mixture(*compositions: Tuple[Composition, float]) -> Composition:
+    def mixture(*compositions: tuple[Composition, float]) -> Composition:
         """Makes mixture of the compositions with specific fractions.
 
         Parameters
@@ -551,7 +551,7 @@ class Element:
         Gets MCNP representation of the element.
     """
 
-    def __init__(self, _name: Union[str, int], lib=None, isomer=0, comment=None):
+    def __init__(self, _name: str | int, lib=None, isomer=0, comment=None):
         if isinstance(_name, int):
             self._charge = _name // 1000
             self._mass_number = _name % 1000
@@ -669,7 +669,7 @@ class Element:
         return result
 
     @staticmethod
-    def _split_name(_name: str) -> Tuple[str, str]:
+    def _split_name(_name: str) -> tuple[str, str]:
         """Splits element's name into charge and mass number parts."""
         if _name.isnumeric():
             return _name[:-3], _name[-3:]

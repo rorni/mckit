@@ -1,7 +1,7 @@
 """Functions for MCNP model text printing."""
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 import warnings
 
@@ -12,7 +12,7 @@ from mckit.utils import get_decades, prettify_float, significant_digits
 IMPORTANCE_FORMAT = "{0:.3f}"
 
 
-def print_card(tokens: List[str], offset: int = 8, max_column: int = 80, sep: str = "\n") -> str:
+def print_card(tokens: list[str], offset: int = 8, max_column: int = 80, sep: str = "\n") -> str:
     """Produce string in MCNP card format.
 
     Parameters
@@ -58,7 +58,7 @@ def print_card(tokens: List[str], offset: int = 8, max_column: int = 80, sep: st
     return "".join(words)
 
 
-def separate(tokens: List[str], sep: str = " ") -> List[str]:
+def separate(tokens: list[str], sep: str = " ") -> list[str]:
     """Adds separation symbols between tokens.
 
     Parameters
@@ -81,7 +81,7 @@ def separate(tokens: List[str], sep: str = " ") -> List[str]:
     return sep_tokens
 
 
-def print_option(option: str, value: Any) -> List[str]:
+def print_option(option: str, value: Any) -> list[str]:
     name = option[:3]
     par = option[3:]
     if name == "IMP" and (par == "N" or par == "P" or par == "E"):
@@ -144,7 +144,7 @@ CELL_OPTION_GROUPS = (
 )
 
 
-def add_float(words: List[str], v: float, pretty: bool) -> None:
+def add_float(words: list[str], v: float, pretty: bool) -> None:
     words.append(" ")
     if pretty:
         words.append(pretty_float(v))

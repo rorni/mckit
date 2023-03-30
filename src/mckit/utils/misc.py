@@ -1,7 +1,7 @@
 """Generic utility methods."""
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple, cast
+from typing import Any, cast
 
 import collections
 import collections.abc
@@ -167,9 +167,9 @@ def _(where: collections.abc.Container, x) -> bool:
 
 
 def filter_dict(
-    a: Dict[Any, Any],
+    a: dict[Any, Any],
     *drop_items,
-) -> Dict[Any, Any]:
+) -> dict[Any, Any]:
     """Create copy of a dictionary omitting some keys."""
     res = {}
     for k, v in a.items():
@@ -202,12 +202,12 @@ def _(x: str):
 
 
 @make_hashable.register
-def _(x: collections.abc.Mapping) -> Tuple:
+def _(x: collections.abc.Mapping) -> tuple:
     return tuple((k, make_hashable(v)) for k, v in x.items())
 
 
 @make_hashable.register
-def _(x: collections.abc.Iterable) -> Tuple:
+def _(x: collections.abc.Iterable) -> tuple:
     return tuple(map(make_hashable, x))
 
 
