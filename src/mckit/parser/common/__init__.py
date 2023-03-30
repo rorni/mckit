@@ -1,4 +1,6 @@
 # nopycln: file
+from __future__ import annotations
+
 from .cell_index import CellDummyIndex, CellNotFoundError, CellStrictIndex, DummyCell
 from .composition_index import (
     CompositionDummyIndex,

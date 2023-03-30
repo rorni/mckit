@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Iterable, Optional
 
 from mckit.body import GLOBAL_BOX, Body, Card

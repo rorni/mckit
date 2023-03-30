@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import mckit.parser.common.utils as cmn
 import sly
 
