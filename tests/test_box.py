@@ -474,7 +474,8 @@ def test_volume(box, case_no, expected):
 def test_random_points(box, case_no):
     points = box[case_no].generate_random_points(100)
     pt = box[case_no].test_points(points)
-    assert np.all(pt) is True
+    if not np.all(pt):
+        pytest.fail(f"Some points are not in the box #{case_no}")
 
 
 boxes = [

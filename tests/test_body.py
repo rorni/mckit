@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import typing as tp
-
 import numpy as np
 
 import pytest
@@ -41,10 +39,10 @@ def create_node(kind, args, surfs):
     new_args = []
     for g in args:
         if isinstance(g, tuple):
-            g = create_node(g[0], g[1], surfs)
+            _g = create_node(g[0], g[1], surfs)
         else:
-            g = surfs[g]
-        new_args.append(g)
+            _g = surfs[g]
+        new_args.append(_g)
     return Shape(kind, *new_args)
 
 
@@ -104,8 +102,7 @@ basic_geoms = [
 
 @pytest.fixture(scope="class")
 def geometry(surfaces):
-    geoms = [create_node(g[0], g[1], surfaces) for g in basic_geoms]
-    return geoms
+    return [create_node(g[0], g[1], surfaces) for g in basic_geoms]
 
 
 class TestShape:
@@ -113,10 +110,9 @@ class TestShape:
     def filter_arg(arg, surfs):
         if isinstance(arg, int):
             return surfs[arg]
-        elif isinstance(arg, tuple):
+        if isinstance(arg, tuple):
             return create_node(arg[0], arg[1], surfs)
-        else:
-            return arg
+        return arg
 
     @pytest.mark.parametrize(
         "opc, args, ans_opc, ans_args",
@@ -196,7 +192,7 @@ class TestShape:
     )
     def test_create_failure(self, surfaces, opc, args):
         args = [self.filter_arg(a, surfaces) for a in args]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="expected"):
             Shape(opc, *args)
 
     polish_cases = [
@@ -1910,8 +1906,7 @@ class TestShape:
 
     @pytest.fixture(scope="class")
     def box(self):
-        boxes = [Box(*b) for b in self.box_data]
-        return boxes
+        return [Box(*b) for b in self.box_data]
 
     @pytest.mark.parametrize("box_no", range(len(box_data)))
     @pytest.mark.parametrize(
@@ -1993,7 +1988,7 @@ class TestShape:
         ),
     )
     def test_get_surface(self, geometry, surfaces, case_no, expected):
-        expected = set(surfaces[s] for s in expected)
+        expected = {surfaces[s] for s in expected}
         surfs = geometry[case_no].get_surfaces()
         assert surfs == expected
 
@@ -2204,7 +2199,7 @@ class TestBody:
             )
         gb = Box([0, 0, 0], 100, 100, 100)
         split_bodies = body.split(min_volume=0.001, box=gb)
-        print(body.shape.get_stat_table())
+        body.shape.get_stat_table()
         assert len(split_bodies) == len(expected)
         split_shapes = {b.shape for b in split_bodies}
         assert split_shapes == expected
