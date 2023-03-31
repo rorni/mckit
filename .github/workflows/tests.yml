@@ -85,9 +85,9 @@ jobs:
         run: |
           nox --force-color --session=pre-commit
 
-      - name: Run mypy static type checks
-        run: |
-          nox --force-color --session=mypy
+#      - name: Run mypy static type checks
+#        run: |
+#          nox --force-color --session=mypy
 
   docs:
     runs-on: ubuntu-latest

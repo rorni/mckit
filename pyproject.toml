@@ -322,7 +322,7 @@ sort = "Cover"
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
 #     https://dev.to/tusharsadhwani/the-comprehensive-guide-to-mypy-561m
 [tool.mypy]
-python="3.11"
+python_version="3.11"
 # strict = true     # TODO dvp: uncomment this to get strict control
 follow_imports = "silent"
 # namespace_packages = true
@@ -364,6 +364,7 @@ module = [
 ]
 allow_redefinition = true
 disable_error_code = "no-redef"
+
 
 [tool.check-manifest]
 ignore = [
@@ -532,7 +533,7 @@ ignore = [
 ]
 
 unfixable = [
-    "F401",    # dont't remove unused imports
+    "F401",    # dont't remove unused imports - TODO add __all__ to  __init__.py files or clean them
 ]
 
 # Same as Black.
