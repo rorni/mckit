@@ -365,7 +365,6 @@ module = [
 allow_redefinition = true
 disable_error_code = "no-redef"
 
-
 [tool.check-manifest]
 ignore = [
     "tests/*",
