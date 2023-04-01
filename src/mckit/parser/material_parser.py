@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import mckit.parser.common.utils as cmn
 import sly
 
 from mckit.material import Composition, Element
-from mckit.parser.common.Lexer import Lexer as LexerBase
+from mckit.parser.common.lexer import Lexer as LexerBase
 from mckit.parser.common.utils import drop_comments
 
 
@@ -112,5 +114,4 @@ def parse(text):
     text = drop_comments(text)
     lexer = Lexer()
     parser = Parser()
-    result = parser.parse(lexer.tokenize(text))
-    return result
+    return parser.parse(lexer.tokenize(text))

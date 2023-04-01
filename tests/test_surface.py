@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 import numpy as np
@@ -1065,8 +1067,6 @@ class TestCylinder:
     )
     def test_mcnp_prety_repr(self, surface, answer):
         desc = surface.round().mcnp_repr(True)
-        print(surface.mcnp_repr())
-        print("{0:.15e}".format(surface._pt[0]))
         assert desc == answer
 
     @pytest.mark.parametrize(
@@ -1097,8 +1097,6 @@ class TestCylinder:
     )
     def test_mcnp_repr(self, surface, answer):
         desc = surface.mcnp_repr()
-        print(surface.mcnp_repr())
-        print("{0:.15e}".format(surface._pt[0]))
         if "\n" in desc:
             assert desc.split() == answer.split()
         else:
@@ -3072,8 +3070,6 @@ class TestBOX:
     @pytest.mark.parametrize("i2, s2", enumerate(surfs))
     def test_eq(self, i1, s1, i2, s2):
         result = s1 == s2
-        print(s1.get_params())
-        print(s2.get_params())
         assert result == bool(self.eq_matrix[i1][i2])
 
     @pytest.mark.parametrize("i1, s1", enumerate(surfs))
@@ -3131,8 +3127,6 @@ class TestRCC:
         c = transform.apply2point(center)
         a = transform.apply2vector(axis)
         ac, axc, rc = surf.get_params()
-        print(c, ac)
-        print(a, axc)
         np.testing.assert_array_almost_equal(c, ac)
         np.testing.assert_array_almost_equal(a, axc)
         np.testing.assert_almost_equal(radius, rc)
@@ -3255,8 +3249,6 @@ class TestRCC:
     @pytest.mark.parametrize("i2, s2", enumerate(surfs))
     def test_eq(self, i1, s1, i2, s2):
         result = s1 == s2
-        print(s1.get_params())
-        print(s2.get_params())
         assert result == bool(self.eq_matrix[i1][i2])
 
     @pytest.mark.parametrize("i1, s1", enumerate(surfs))

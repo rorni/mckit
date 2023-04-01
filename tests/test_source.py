@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from mckit.source import Distribution, Source, create_bin_distributions
@@ -14,7 +16,7 @@ class TestDistribution:
         ],
     )
     def test_create_failure(self, name, values, probs):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Inconsistent size of values."):
             Distribution(name, values, probs)
 
     @pytest.mark.parametrize(

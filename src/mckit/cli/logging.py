@@ -2,6 +2,8 @@
 
 See https://github.com/Delgan/loguru
 """
+from __future__ import annotations
+
 from typing import Final
 
 import logging

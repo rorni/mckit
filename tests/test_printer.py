@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from mckit.printer import pretty_float, print_card, separate

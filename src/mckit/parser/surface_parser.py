@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from __future__ import annotations
 
 import mckit.parser.common.utils as pu  # parse utils
 import sly
@@ -89,7 +89,7 @@ class Parser(sly.Parser):
         return self._transformations
 
     def build_surface(
-        self, name: int, kind: str, params: List[float], transform, modifier
+        self, name: int, kind: str, params: list[float], transform, modifier
     ) -> Surface:
         options = {"name": name}
         if transform is not None:
@@ -98,8 +98,7 @@ class Parser(sly.Parser):
                 options["transform"] = transformation
         if modifier is not None:
             options["modifier"] = modifier
-        _surface = create_surface(kind, *params, **options)
-        return _surface
+        return create_surface(kind, *params, **options)
 
     @_("MODIFIER  name surface_description")
     def surface(self, p):
@@ -124,11 +123,11 @@ class Parser(sly.Parser):
         return p.INTEGER
 
     @_("transform SURFACE_TYPE surface_params")
-    def surface_description(self, p) -> Tuple[str, List[float], Optional[int]]:
+    def surface_description(self, p) -> tuple[str, list[float], int | None]:
         return p.SURFACE_TYPE, p.surface_params, p.transform
 
     @_("SURFACE_TYPE surface_params")
-    def surface_description(self, p) -> Tuple[str, List[float], Optional[int]]:
+    def surface_description(self, p) -> tuple[str, list[float], int | None]:
         return p.SURFACE_TYPE, p.surface_params, None
 
     @_("INTEGER")
@@ -136,13 +135,13 @@ class Parser(sly.Parser):
         return p.INTEGER
 
     @_("surface_params float")
-    def surface_params(self, p) -> List[float]:
-        surface_params: List[float] = p.surface_params
+    def surface_params(self, p) -> list[float]:
+        surface_params: list[float] = p.surface_params
         surface_params.append(p.float)
         return surface_params
 
     @_("float")
-    def surface_params(self, p) -> List[float]:
+    def surface_params(self, p) -> list[float]:
         return [p.float]
 
     @_("FLOAT")
@@ -154,7 +153,7 @@ class Parser(sly.Parser):
         return float(p.INTEGER)
 
 
-def parse(text: str, transformations: Optional[Index] = None) -> Surface:
+def parse(text: str, transformations: Index | None = None) -> Surface:
     if transformations is None:
         transformations = TransformationStrictIndex()
     else:

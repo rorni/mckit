@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 from mckit.utils import get_decades, significant_digits

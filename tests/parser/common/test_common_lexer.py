@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import re
 
 import mckit.parser.common as cmn
 import pytest
 import sly
 
-from mckit.parser.common.Lexer import Lexer as LexerBase
-from mckit.parser.common.Lexer import LexError
+from mckit.parser.common.lexer import Lexer as LexerBase
+from mckit.parser.common.lexer import LexError
 
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences
@@ -36,9 +38,9 @@ class DerivedLexer(LexerBase):
 def test_derived_lexer(text, expected_types, expected_values):
     lexer = DerivedLexer()
     tokens = list(lexer.tokenize(text))
-    result = list(t.type for t in tokens)
+    result = [t.type for t in tokens]
     assert result == expected_types
-    result = list(t.value for t in tokens)
+    result = [t.value for t in tokens]
     assert result == expected_values
 
 
@@ -55,8 +57,7 @@ def test_derived_lexer(text, expected_types, expected_values):
 def test_bad_path(text, msg_contains):
     lexer = DerivedLexer()
     with pytest.raises(LexError, match=msg_contains):
-        for _ in lexer.tokenize(text):
-            pass
+        _ = list(lexer.tokenize(text))
 
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences
@@ -90,9 +91,9 @@ class MyLexer(LexerBase):
 def test_good_path(text, expected_types, expected_values):
     lexer = MyLexer()
     tokens = list(lexer.tokenize(text))
-    result = list(t.type for t in tokens)
+    result = [t.type for t in tokens]
     assert result == expected_types
-    result = list(t.value for t in tokens)
+    result = [t.value for t in tokens]
     assert result == expected_values
 
 

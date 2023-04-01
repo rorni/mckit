@@ -1,7 +1,7 @@
 """Code to build mckit geometry C-extension."""
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable
 
 import os
 import shlex
@@ -20,7 +20,7 @@ from setuptools import Extension as _Extension
 
 if not WIN:
 
-    def _make_full_names(lib_dir: Path, mkl_libs: Iterable[str]) -> List[str]:
+    def _make_full_names(lib_dir: Path, mkl_libs: Iterable[str]) -> list[str]:
         """Add library directory and extension to an MKL library name.
 
         According to the recommendation
@@ -44,7 +44,7 @@ if not WIN:
         else:
             if sys.platform != "linux":
                 msg = f"Unknown platform {sys.platform}"
-                raise EnvironmentError(msg)
+                raise OSError(msg)
             suffix = "so.2"
 
         lib_paths: list[Path] = [lib_dir / f"lib{_p}.{suffix}" for _p in mkl_libs]
@@ -52,7 +52,7 @@ if not WIN:
         for p in lib_paths:
             if not p.exists():
                 msg = f"{p} is not a valid path to an MKL library."
-                raise EnvironmentError(msg)
+                raise OSError(msg)
 
         return [str(_p) for _p in lib_paths]
 

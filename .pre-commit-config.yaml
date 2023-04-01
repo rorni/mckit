@@ -81,13 +81,14 @@ repos:
         entry: poetry run black
         language: system
         types: [python]
-     # TODO dvp: enable linting on precommit when flake8 become happy
-#    -   id: flake8
-#        name: flake8
-#        entry: poetry run flake8 noxfile.py src
-#        language: system
-#        types: [python]
-
+        exclude: ^notebooks
+    # Lint
+    -   id: ruff
+        name: ruff
+        entry: poetry run ruff --force-exclude --fix --config pyproject.toml
+        language: system
+        types: [python]
+        exclude: ^notebooks
 # Also code format the docs
 #    -   id: blacken-docs
 #        name: blacken-docs

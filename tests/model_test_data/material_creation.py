@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from mckit.material import Material
 
 # for testing _get_material function purposes

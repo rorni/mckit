@@ -1,4 +1,6 @@
-from typing import Iterable, Optional
+from __future__ import annotations
+
+from typing import Iterable
 
 from mckit.transformation import Transformation
 from mckit.utils.indexes import Index, NumberedItemNotFoundError
@@ -11,11 +13,11 @@ class DummyTransformation(Transformation):
         super().__init__(name=name, comment="dummy")
 
 
-def raise_on_absent_transformation_strategy(name: int) -> Optional[DummyTransformation]:
+def raise_on_absent_transformation_strategy(name: int) -> DummyTransformation | None:
     raise TransformationNotFoundError(name)
 
 
-def dummy_on_absent_transformation_strategy(name: int) -> Optional[DummyTransformation]:
+def dummy_on_absent_transformation_strategy(name: int) -> DummyTransformation | None:
     return DummyTransformation(name)
 
 
@@ -24,7 +26,7 @@ class TransformationStrictIndex(Index):
         super().__init__(raise_on_absent_transformation_strategy, **kwargs)
 
     @classmethod
-    def from_iterable(cls, items: Iterable[Transformation]) -> "TransformationStrictIndex":
+    def from_iterable(cls, items: Iterable[Transformation]) -> TransformationStrictIndex:
         index = cls()
         index.update((c.name(), c) for c in items)
         return index
