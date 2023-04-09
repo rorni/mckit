@@ -71,7 +71,7 @@ repos:
     # Black, the code formatter, natively supports pre-commit
     -   id: black
         name: black
-        entry: poetry run black
+        entry: poetry run black --config pyproject.toml
         language: system
         types: [python]
         exclude: ^notebooks

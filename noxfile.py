@@ -108,7 +108,6 @@ def activate_virtualenv_in_precommit_hooks(s: Session) -> None:
 @session(name="pre-commit")
 def precommit(s: Session) -> None:
     """Lint using pre-commit."""
-    args = s.posargs or ["run", "--all-files", "--show-diff-on-failure"]
     s.run(
         "poetry",
         "install",
@@ -117,6 +116,7 @@ def precommit(s: Session) -> None:
         "pre_commit,style,isort,black,ruff",
         external=True,
     )
+    args = s.posargs or ["run", "--all-files", "--show-diff-on-failure"]
     s.run("pre-commit", *args)
     if args and args[0] == "install":
         activate_virtualenv_in_precommit_hooks(s)
@@ -133,7 +133,8 @@ def tests(s: Session) -> None:
         external=True,
     )
     try:
-        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
+        args = s.posargs or ["-n", "2", "--benchmark-skip"]
+        s.run("coverage", "run", "--parallel", "-m", "pytest", *args)
     finally:
         if s.interactive and "--no-cov" not in s.posargs:
             s.notify("coverage", posargs=[])
@@ -146,8 +147,6 @@ def coverage(s: Session) -> None:
     To obtain html report run
         nox -rs coverage -- html
     """
-    args = s.posargs or ["report"]
-
     s.run(
         "poetry",
         "install",
@@ -160,6 +159,7 @@ def coverage(s: Session) -> None:
     if not s.posargs and any(Path().glob(".coverage.*")):
         s.run("coverage", "combine")
 
+    args = s.posargs or ["report"]
     s.run("coverage", *args)
 
 
@@ -216,7 +216,6 @@ def isort(s: Session) -> None:
 @session
 def black(s: Session) -> None:
     """Run black code formatter."""
-    args = s.posargs or locations
     s.run(
         "poetry",
         "install",
@@ -225,13 +224,13 @@ def black(s: Session) -> None:
         "black",
         external=True,
     )
+    args = s.posargs or locations
     s.run("black", *args)
 
 
 @session
 def lint(s: Session) -> None:
     """Lint using flake8."""
-    args = s.posargs or locations
     s.run(
         "poetry",
         "install",
@@ -240,13 +239,13 @@ def lint(s: Session) -> None:
         "flake8",
         external=True,
     )
+    args = s.posargs or locations
     s.run("flake8", *args)
 
 
 @session
 def mypy(s: Session) -> None:
     """Type-check using mypy."""
-    args = s.posargs or ["src", "docs/source/conf.py"]
     s.run(
         "poetry",
         "install",
@@ -255,6 +254,7 @@ def mypy(s: Session) -> None:
         "main,mypy",
         external=True,
     )
+    args = s.posargs or ["src", "docs/source/conf.py"]
     s.run("mypy", *args)
 
     # special case for noxfile.py: need to find `nox` itself in session
@@ -265,7 +265,6 @@ def mypy(s: Session) -> None:
 @session(python="3.11")
 def xdoctest(s: Session) -> None:
     """Run examples with xdoctest."""
-    args = s.posargs or ["--quiet", "-m", f"src/{package}"]
     s.run(
         "poetry",
         "install",
@@ -274,13 +273,13 @@ def xdoctest(s: Session) -> None:
         "main,xdoctest",
         external=True,
     )
+    args = s.posargs or ["--quiet", "-m", f"src/{package}"]
     s.run("python", "-m", "xdoctest", *args)
 
 
 @session(python="3.11")
 def ruff(s: Session) -> None:
     """Run ruff linter."""
-    args = s.posargs or ["src", "tests"]
     s.run(
         "poetry",
         "install",
@@ -289,13 +288,13 @@ def ruff(s: Session) -> None:
         "main,ruff",
         external=True,
     )
+    args = s.posargs or ["src", "tests"]
     s.run("ruff", *args)
 
 
 @session(name="docs-build", python="3.11")
 def docs_build(s: Session) -> None:
     """Build the documentation."""
-    args = s.posargs or ["docs/source", "docs/_build"]
     s.run(
         "poetry",
         "install",
@@ -307,13 +306,13 @@ def docs_build(s: Session) -> None:
     if build_dir.exists():
         shutil.rmtree(build_dir)
 
+    args = s.posargs or ["docs/source", "docs/_build"]
     s.run("sphinx-build", *args)
 
 
 @session(python="3.11")
 def docs(s: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
-    args = s.posargs or ["--open-browser", "docs/source", "docs/_build"]
     s.run(
         "poetry",
         "install",
@@ -325,4 +324,5 @@ def docs(s: Session) -> None:
     if build_dir.exists():
         shutil.rmtree(build_dir)
 
+    args = s.posargs or ["--open-browser", "docs/source", "docs/_build"]
     s.run("sphinx-autobuild", *args)

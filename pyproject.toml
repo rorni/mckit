@@ -596,7 +596,7 @@ exclude = [
 [tool.ruff.per-file-ignores]
 "**/__init__.py" = ["E402", "F401"]
 "benchmarks/*" = ["S101"]
-"noxfile.py" = ["ANN"]
+"noxfile.py" = ["ANN", "D202"]
 "tests/*" = ["ANN", "D100", "D101", "D102", "D103", "D104", "PLR2004", "S101"]
 "tools/*" = ["T201"]
 "src/mckit/cli/*" = [

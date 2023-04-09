@@ -76,7 +76,6 @@ class Transformation(Card, MaybeClose):
         inverted=False,
         **options: dict[str, Any],
     ):
-
         Card.__init__(self, **options)
 
         if translation is not ORIGIN:
