@@ -1,16 +1,20 @@
 """Utility methods to access a package data."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import sys
 
-from collections.abc import Callable
-from pathlib import Path
-
 if sys.version_info >= (3, 9):
-    from importlib.abc import Traversable
-    from importlib.resources import Package, files
+    from importlib.resources import files
 else:
-    from importlib_resources import files
+    from importlib_resources import files  # pragma: no cover
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from importlib.abc import Traversable
+    from importlib.resources import Package
+    from pathlib import Path
 
 
 def path_resolver(package: Package) -> Callable[[str], Path | Traversable]:

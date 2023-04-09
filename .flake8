@@ -59,6 +59,10 @@ exclude=
     .cache
     .eggs
     src/mckit/parser
+    notebooks/dvp/*.py
+    .nox
+    .idea
+
 per-file-ignores =
     **/__init__.py:F401
     noxfile.py:ANN,DAR101

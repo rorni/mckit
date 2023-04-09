@@ -77,13 +77,10 @@ jobs:
           poetry config --local cache-dir .cache/pypoetry
           poetry config --local virtualenvs.create false
 
-      - name: Run safety session
-        run: |
-          nox --force-color --session=safety
 
-      - name: Run pre commit checks
-        run: |
-          nox --force-color --session=pre-commit
+      # - name: Run pre commit checks
+      #   run: |
+      #     nox --force-color --session=pre-commit
 
 #      - name: Run mypy static type checks
 #        run: |

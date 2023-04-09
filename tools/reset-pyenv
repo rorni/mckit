@@ -3,23 +3,38 @@
 . ~/.bash-functions.rc
 
 # set -exu
+# set -e
 
-env=($(pyenv local))[1]
-last_python="3.11.2"
 
-eval "$(pyenv init -)"
-pyenv local "$last_python"
-pyenv virtualenv-delete -f  "$env"
-pyenv virtualenv "$last_python" "$env"
-pyenv rehash
-pyenv shell "$env"
-poetry env info
-poetry install
-pyenv shell --unset
-pyenv local "$env" "3.10.10" "3.9.16" "3.8.16"
-pyenv rehash
+reset() {
+    local envs=( $(pyenv local) )
+    local env="${envs[0]}"
 
-pkg=($(ls src))[1]
-python -c "import ${pkg}; print(${pkg}.__version__)" && success "Environment $env is reset"
+    [[ -z "$env" ]] && die "Cannot define target pyenv environment."
+
+    local pkgs=( $(ls src) )
+    local pkg=${pkgs[0]}
+    local last_python="3.11.3"
+
+    echo "Installing package $pkg to environment $env with python $last_python."
+
+    eval "$(pyenv init -)"
+    pyenv local "$last_python"
+    pyenv virtualenv-delete -f  "$env" && echo "Removed environment $env"
+    pyenv virtualenv "$last_python" "$env" && echo "Created environment $env"
+    pyenv rehash
+    pyenv shell "$env"
+    pyenv local "$env"
+    poetry env info
+    poetry install
+
+    python -c "import ${pkg}; print(${pkg}.__version__)" && success "Environment $env is reset"
+
+    pyenv shell --unset
+    pyenv local "$env" "3.10.11" "3.9.16" "3.8.16"
+    pyenv rehash
+}
+
+reset  "$@"
 
 # vim: set ts=4 sw=4 tw=92 ss=0 ft=sh et ai :

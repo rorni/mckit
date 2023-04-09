@@ -117,8 +117,6 @@ nox = ">=2022.1.7"
 # TODO dvp: apply yappi: https://coderzcolumn.com/tutorials/python/yappi-yet-another-python-profiler
 #yappi = ">=1.3.2"
 
-[tool.poetry.group.safety.dependencies]
-safety = ">=2.3.5"
 
 [tool.poetry.group.pre_commit.dependencies]
 pre-commit = ">=2.15.0"
@@ -133,11 +131,13 @@ isort = ">=5.9.3"
 pycln = {version = "^2.1.1", extras = ["click"]}
 
 [tool.poetry.group.test.dependencies]
-pytest = ">=7.0.1"
+pytest = ">=7.1"
 pytest-benchmark = ">=4.0.0"
 pytest-cache = ">=1.0"
-pytest-cov = ">=3.0.0"
-pytest-mock = ">=3.6.1"
+pytest-cov = ">=4.0"
+pytest-mock = ">=3.9"
+pytest-randomly = ">=3.12"
+pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
 coverage = { version = ">=6.1.2", extras = ["toml"] }
 
 [tool.poetry.group.coverage.dependencies]
@@ -147,10 +147,11 @@ coverage = { version = ">=6.1.2", extras = ["toml"] }
 xdoctest = {extras = ["colors"], version = ">=0.15.10"}
 
 [tool.poetry.group.typeguard.dependencies]
-typeguard = ">=2.13.0"
+typeguard = ">=2.13.3"
+# typeguard = ">=3.0.2"  - pygls, which is required by ruff-lsp, doesn't allow newer version
 
 [tool.poetry.group.mypy.dependencies]
-mypy = ">=0.931"
+mypy = ">=1.2.0"
 pep8-naming = ">=0.12.1"
 types-setuptools = ">=57.4.2"
 numpy = ">=1.23.2"
@@ -313,6 +314,7 @@ exclude_lines = [
     # Don't complain if non-runnable code isn't run:
     "if 0:",
     "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
 ]
 ignore_errors = true
 sort = "Cover"
@@ -322,7 +324,7 @@ sort = "Cover"
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
 #     https://dev.to/tusharsadhwani/the-comprehensive-guide-to-mypy-561m
 [tool.mypy]
-python_version="3.11"
+python_version = "3.11"
 # strict = true     # TODO dvp: uncomment this to get strict control
 follow_imports = "silent"
 # namespace_packages = true
@@ -427,31 +429,54 @@ deprecated-modules=["six"]
 [tool.ruff]
 target-version = "py38"
 #see full list: https://beta.ruff.rs/docs/rules/#pyflakes-f
+#or run 'ruff linter' to see a brief list
 select= [
-  "A",
-  "B",
-  "C",
-  "D",
-  "E",
-  "F",
-  "G",
-  "I",
-  "N",
-  "PIE",
-  "PT",
-  "PL",
-  "PLC",
-  "PLE",
-  "PLR",
-  "PLW",
-  "PYI",
-  "Q",
-  "R",
-  "S",
-  "T",
-  "U",
-  "W",
-  "YTT"
+    "A", # flake8-builtins
+    # "ANN", # flake8-annotations
+    # "ARG", # flake8-unused-arguments
+    "B", # flake8-bugbear
+    "BLE", # flake8-blind-except
+    "C4", # flake8-comprehensions
+    "C90", # mccabe
+    "COM", # flake8-commas
+    "DJ", # flake8-django
+    "D", # pydocstyle
+    # "DTZ", # flake8-datetimez
+    # "EM", # flake8-errmsg
+    # "ERA", # eradicate
+    "E", # pycodestyle
+    # "EXE", # flake8-executable
+    # "FBT", # flake8-boolean-trap
+    "F", # Pyflakes
+    "G", # flake8-logging-format
+    "ICN", # flake8-import-conventions
+    # "I", # isort
+    "INP", # flake8-no-pep420
+    # "ISC", # flake8-implicit-str-concat
+    "N", # pep8-naming
+    # "NPY", # NumPy-specific rules
+    "PD", # pandas-vet
+    # "PGH", # pygrep-hooks
+    "PIE", # flake8-pie
+    "PL", # Pylint
+    "PT", # flake8-pytest-style
+    # "PTH", # flake8-use-pathlib
+    "PYI", # flake8-pyi
+    # "Q", # flake8-quotes
+    "RET", # flake8-return
+    # "RSE", # flake8-raise
+    # "RUF", # Ruff-specific rules
+    "S", # flake8-bandit
+    # "SIM", # flake8-simplify
+    # "SLF", # flake8-self
+    "T10", # flake8-debugger
+    # "T20", # flake8-print
+    # "TCH", # flake8-type-checking
+    # "TID", # flake8-tidy-imports
+    "TRY", # tryceratops
+    # "UP", # pyupgrade
+    "W", # pycodestyle 2
+    "YTT", # flake8-2020
 ]
 
 # Ignore rules that currently fail on the codebase
@@ -463,10 +488,13 @@ ignore = [
     "ANN202", # ANN202 Missing return type annotation for protected function: ... dispatching
     "ANN204", # ANN204 Missing return type annotation for special method
 
+    "ARG001", # Unused function argument: `expected`
+
     "B905",   # B905 `zip()` without an explicit `strict=` parameter - ignore while support 3.8, 3.9
 
     # "C812",   # C812 Missing trailing comma: black compatibility
     "C901",   # too complex - ...
+    "COM812", #  [*] Trailing comma missing
 
     "D100",   # Missing docstring in public module
     "D101",   # Missing docstring in public class
@@ -478,10 +506,11 @@ ignore = [
     "D107",   # Missing docstring in __init__
 
 
-    # "E203",   # E203: Whitespace before ‘:'
+    # "E203",  # E203: Whitespace before ‘:'
     # "E401",  # Multiple imports on one line
-    "E402",  # Module level import not at top of file
-    "E501",  # Line too long (<LENGTH> > 100 characters)
+    "E402",    # Module level import not at top of file
+    "EM102",   # Exception must not use an f-string literal, assign to variable first
+    "E501",    # Line too long (<LENGTH> > 100 characters)
     # "E701",  # Multiple statements on one line (colon)
     # "E702",  # Multiple statements on one line (semicolon)
     # "E703",  # Statement ends with an unnecessary semicolon
@@ -513,6 +542,7 @@ ignore = [
     # "I101",
     # "I201",
     # "I202",
+    "INP001",  # File `tools/clear-prev-dist-info.py` is part of an implicit namespace package.
 
 # ignore some questionable pandas-vet warnings
     # "PD005", # use operator instead of method
@@ -522,12 +552,14 @@ ignore = [
     "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
     "PLR0912", # Too many branches (15 > 12)
     "PLR0913", # Too many arguments to function call (6 > 5)
-    "PLR2004", # magic number - don't want declare 0.0 as constant
     "PLR0915", # Too many statements (65 > 50)
+    "PLR2004", # magic number - don't want declare 0.0 as constant
     "PT019",   # Fixture `_bin` without value is injected as parameter (false positive?)
 
     "S101",    # Use of `assert` detected
 
+    "TCH001",  # Move application import `mckit.utils.named` into a type-checking block
+    "TRY003",  # Avoid specifying long messages outside the exception class
     # "W503",  # Line break before binary operator: for compatibility with black settings
 ]
 
