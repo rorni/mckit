@@ -117,7 +117,6 @@ nox = ">=2022.1.7"
 # TODO dvp: apply yappi: https://coderzcolumn.com/tutorials/python/yappi-yet-another-python-profiler
 #yappi = ">=1.3.2"
 
-
 [tool.poetry.group.pre_commit.dependencies]
 pre-commit = ">=2.15.0"
 rstcheck = ">=3.3.1"
@@ -211,7 +210,7 @@ ruff = ">=0.0.259"
 [tool.isort]
 atomic = true
 ensure_newline_before_comments = true
-known_first_party = "mckit"
+known_first_party = "src"
 known_third_party = "mpl_toolkits,matplotlib,numpy,scipy"
 known_typing = "typing,types,typing_extensions,mypy,mypy_extensions"
 sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
@@ -355,8 +354,8 @@ module = [
     "pandas",
     "pytest",
     "scipy.constants",
+    "tomli",
     "tomllib",
-    "tomli"
 ]
 ignore_missing_imports = true
 
@@ -486,6 +485,7 @@ ignore = [
     "ANN002", # ANN002 Missing type annotation for *drop_items: ... as above
     "ANN101", # ANN101 Missing type annotation for self in method
     "ANN102", # ANN102 Missing type annotation for cls in classmethod
+    # "ANN201", # Missing return type annotation for public function `mesh2com`
     "ANN202", # ANN202 Missing return type annotation for protected function: ... dispatching
     "ANN204", # ANN204 Missing return type annotation for special method
 
@@ -505,6 +505,7 @@ ignore = [
     "D104",   # Missing docstring in public package
     "D106",   # Missing docstring in public nested class
     "D107",   # Missing docstring in __init__
+    # "D417",   # Missing argument descriptions in the docstring: `config`, `ebins`, - TODO
 
 
     # "E203",  # E203: Whitespace before ‘:'
@@ -526,6 +527,9 @@ ignore = [
     # "E741",  # Ambiguous variable name: `<VARIABLE>`
     # "E743",  # Ambiguous function name: `<FUNCTION>`
 
+    # "EM101",   # Exception must not use a string literal, assign to variable first
+    # "EM102",   # Exception must not use an f-string literal, assign to variable first
+
     "N803",    # Argument name `R` should be lowercase
     "N806",    # Variable `D` in function should be lowercase
 
@@ -539,7 +543,11 @@ ignore = [
     # "F823",  # Local variable `VARIABLE` referenced before assignment
     # "F841",  # Local variable `VARIABLE` is assigned to but never used
 
-    "I001",  # import order is controlled by isort
+    # "FBT001",  # Boolean positional arg in function definition (TODO!)
+    # "FBT002",  # Boolean default value in function definition (TODO!)
+    # "FBT003",  # Boolean positional value in function call
+
+    "I001",    # import order is controlled by isort
     # "I101",
     # "I201",
     # "I202",
@@ -550,6 +558,8 @@ ignore = [
     # "PD008", # We use at() to access single values
     # "PD009", # And we use iat()
 
+    "PLE1205", # logging-too-many-args - with use logure with '{' style of placeholders
+
     "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
     "PLR0912", # Too many branches (15 > 12)
     "PLR0913", # Too many arguments to function call (6 > 5)
@@ -558,9 +568,14 @@ ignore = [
     "PT019",   # Fixture `_bin` without value is injected as parameter (false positive?)
 
     "S101",    # Use of `assert` detected
+    # "S301",    # `pickle` and modules that wrap... - TODO - use sql instead of pickle
+
+    # "SLF001",  # Private member accessed: `_geometry_spec`
 
     "TCH001",  # Move application import `mckit.utils.named` into a type-checking block
+
     "TRY003",  # Avoid specifying long messages outside the exception class
+
     # "W503",  # Line break before binary operator: for compatibility with black settings
 ]
 
