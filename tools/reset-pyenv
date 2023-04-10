@@ -2,24 +2,34 @@
 
 . ~/.bash-functions.rc
 
-# set -exu
+# set -exu# 
+set -e 
 
-env=($(pyenv local))[1]
-last_python="3.11.2"
 
-eval "$(pyenv init -)"
-pyenv local "$last_python"
-pyenv virtualenv-delete -f  "$env"
-pyenv virtualenv "$last_python" "$env"
-pyenv rehash
-pyenv shell "$env"
-poetry env info
-poetry install
-pyenv shell --unset
-pyenv local "$env" "3.10.10" "3.9.16" "3.8.16"
-pyenv rehash
+main() {
+    local envs=( $(pyenv local) )
+    local env="${envs[0]}"
+    local last_python="3.11.2"
 
-pkg=($(ls src))[1]
-python -c "import ${pkg}; print(${pkg}.__version__)" && success "Environment $env is reset"
+    eval "$(pyenv init -)"
+    pyenv local "$last_python"
+    pyenv virtualenv-delete -f  "$env"
+    pyenv virtualenv "$last_python" "$env"
+    pyenv rehash
+    pyenv shell "$env"
+    poetry env info
+    poetry install
+    pyenv shell --unset
+    pyenv local "$env" "3.10.10" "3.9.16" "3.8.16"
+    pyenv rehash
+
+    local pkgs=( $(ls src) )
+    local pkg=${pkgs[0]}
+    python -c "import ${pkg}; print(${pkg}.__version__)" && success "Environment $env is reset"
+
+    success "Environment $env is reset. Package $pkg is installed."
+}
+
+main  "$@"
 
 # vim: set ts=4 sw=4 tw=92 ss=0 ft=sh et ai :
