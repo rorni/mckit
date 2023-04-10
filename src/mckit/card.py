@@ -51,7 +51,9 @@ class Card(ABC):
 
     def name(
         self,
-    ) -> Name | None:  # TODO dvp: we'd better have special property name, don't use options for that
+    ) -> (
+        Name | None
+    ):  # TODO dvp: we'd better have special property name, don't use options for that
         """Returns card's name."""
         return self.options.get("name", None)
 

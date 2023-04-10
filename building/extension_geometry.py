@@ -61,7 +61,6 @@ class GeometryExtension(_Extension):
     """The :class:`_Extension` specialization for mckit geometry module."""
 
     def __init__(self) -> None:
-
         super().__init__(
             "mckit.geometry",
             sources=list(map(str, Path("src", "mckit", "src").glob("*.c"))),

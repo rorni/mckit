@@ -16,7 +16,6 @@ def execute_command(cmd: list[str], cwd: Path = None, env: dict[str, str] = os.e
 
 
 def build_nlopt(*, install_prefix: str = None, build_dir: Path = None, clean=True) -> Path:
-
     source_dir = Path(__file__).parent.parent.absolute() / "3rd-party" / "nlopt"
     if not source_dir.exists():
         execute_command(["git", "submodule", "update", "--init", "--recursive", "--depth=1"])

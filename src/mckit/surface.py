@@ -1099,7 +1099,6 @@ class Cone(Surface, _Cone):
         return self._hash
 
     def __eq__(self, other):
-
         # noinspection DuplicatedCode
         if self is other:
             return True

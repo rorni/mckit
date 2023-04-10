@@ -117,9 +117,6 @@ nox = ">=2022.1.7"
 # TODO dvp: apply yappi: https://coderzcolumn.com/tutorials/python/yappi-yet-another-python-profiler
 #yappi = ">=1.3.2"
 
-# Safety uses obsolete packaging module.
-# [tool.poetry.group.safety.dependencies]
-# safety = ">=2.3.5"
 
 [tool.poetry.group.pre_commit.dependencies]
 pre-commit = ">=2.15.0"
@@ -134,11 +131,13 @@ isort = ">=5.9.3"
 pycln = {version = "^2.1.1", extras = ["click"]}
 
 [tool.poetry.group.test.dependencies]
-pytest = ">=7.0.1"
+pytest = ">=7.1"
 pytest-benchmark = ">=4.0.0"
 pytest-cache = ">=1.0"
-pytest-cov = ">=3.0.0"
-pytest-mock = ">=3.6.1"
+pytest-cov = ">=4.0"
+pytest-mock = ">=3.9"
+pytest-randomly = ">=3.12"
+pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
 coverage = { version = ">=6.1.2", extras = ["toml"] }
 
 [tool.poetry.group.coverage.dependencies]
@@ -148,10 +147,11 @@ coverage = { version = ">=6.1.2", extras = ["toml"] }
 xdoctest = {extras = ["colors"], version = ">=0.15.10"}
 
 [tool.poetry.group.typeguard.dependencies]
-typeguard = ">=2.13.0"
+typeguard = ">=2.13.3"
+# typeguard = ">=3.0.2"  - pygls, which is required by ruff-lsp, doesn't allow newer version
 
 [tool.poetry.group.mypy.dependencies]
-mypy = ">=0.931"
+mypy = ">=1.2.0"
 pep8-naming = ">=0.12.1"
 types-setuptools = ">=57.4.2"
 numpy = ">=1.23.2"
@@ -278,7 +278,8 @@ filterwarnings = [
     'ignore:Implementing implicit namespace packages \(as specified in PEP 420\) is preferred to `pkg_resources.declare_namespace`',
     "ignore:.*not typechecking multipledispatch.dispatcher.*UserWarning",
     'ignore:.*io.FileIO \[closed\]',
-    'ignore:.*Deprecated call to `pkg_resources.declare_namespace'
+    'ignore:.*Deprecated call to `pkg_resources.declare_namespace',
+    'ignore:.*DeprecationWarning: Implicit None on return values'
 ]
 log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
@@ -314,6 +315,7 @@ exclude_lines = [
     # Don't complain if non-runnable code isn't run:
     "if 0:",
     "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
 ]
 ignore_errors = true
 sort = "Cover"
@@ -323,7 +325,7 @@ sort = "Cover"
 # See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
 #     https://dev.to/tusharsadhwani/the-comprehensive-guide-to-mypy-561m
 [tool.mypy]
-python_version="3.11"
+python_version = "3.11"
 # strict = true     # TODO dvp: uncomment this to get strict control
 follow_imports = "silent"
 # namespace_packages = true
@@ -365,7 +367,6 @@ module = [
 ]
 allow_redefinition = true
 disable_error_code = "no-redef"
-
 
 [tool.check-manifest]
 ignore = [
@@ -429,6 +430,7 @@ deprecated-modules=["six"]
 [tool.ruff]
 target-version = "py38"
 #see full list: https://beta.ruff.rs/docs/rules/#pyflakes-f
+#or run 'ruff linter' to see a brief list
 select= [
     "A", # flake8-builtins
     # "ANN", # flake8-annotations
@@ -486,6 +488,7 @@ ignore = [
     "ANN102", # ANN102 Missing type annotation for cls in classmethod
     "ANN202", # ANN202 Missing return type annotation for protected function: ... dispatching
     "ANN204", # ANN204 Missing return type annotation for special method
+
     "ARG001", # Unused function argument: `expected`
 
     "B905",   # B905 `zip()` without an explicit `strict=` parameter - ignore while support 3.8, 3.9
@@ -550,8 +553,8 @@ ignore = [
     "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
     "PLR0912", # Too many branches (15 > 12)
     "PLR0913", # Too many arguments to function call (6 > 5)
-    "PLR2004", # magic number - don't want declare 0.0 as constant
     "PLR0915", # Too many statements (65 > 50)
+    "PLR2004", # magic number - don't want declare 0.0 as constant
     "PT019",   # Fixture `_bin` without value is injected as parameter (false positive?)
 
     "S101",    # Use of `assert` detected
@@ -594,7 +597,7 @@ exclude = [
 [tool.ruff.per-file-ignores]
 "**/__init__.py" = ["E402", "F401"]
 "benchmarks/*" = ["S101"]
-"noxfile.py" = ["ANN"]
+"noxfile.py" = ["ANN", "D202"]
 "tests/*" = ["ANN", "D100", "D101", "D102", "D103", "D104", "PLR2004", "S101"]
 "tools/*" = ["T201"]
 "src/mckit/cli/*" = [
