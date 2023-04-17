@@ -133,8 +133,7 @@ def tests(s: Session) -> None:
         external=True,
     )
     try:
-        args = s.posargs or ["-n", "2", "--benchmark-skip"]
-        s.run("coverage", "run", "--parallel", "-m", "pytest", *args)
+        s.run("coverage", "run", "--parallel", "-m", "pytest", *s.posargs)
     finally:
         if s.interactive and "--no-cov" not in s.posargs:
             s.notify("coverage", posargs=[])

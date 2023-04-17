@@ -136,7 +136,6 @@ pytest-cache = ">=1.0"
 pytest-cov = ">=4.0"
 pytest-mock = ">=3.9"
 pytest-randomly = ">=3.12"
-pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
 coverage = { version = ">=6.1.2", extras = ["toml"] }
 
 [tool.poetry.group.coverage.dependencies]
@@ -278,7 +277,7 @@ filterwarnings = [
     "ignore:.*not typechecking multipledispatch.dispatcher.*UserWarning",
     'ignore:.*io.FileIO \[closed\]',
     'ignore:.*Deprecated call to `pkg_resources.declare_namespace',
-    'ignore:.*DeprecationWarning: Implicit None on return values'
+    'ignore:.*DeprecationWarning.*Implicit None on return values'
 ]
 log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
@@ -565,6 +564,8 @@ ignore = [
     "PLR0913", # Too many arguments to function call (6 > 5)
     "PLR0915", # Too many statements (65 > 50)
     "PLR2004", # magic number - don't want declare 0.0 as constant
+    # "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
+
     "PT019",   # Fixture `_bin` without value is injected as parameter (false positive?)
 
     "S101",    # Use of `assert` detected
