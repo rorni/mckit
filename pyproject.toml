@@ -494,6 +494,7 @@ ignore = [
 
     # "C812",   # C812 Missing trailing comma: black compatibility
     "C901",   # too complex - ...
+
     "COM812", #  [*] Trailing comma missing
 
     "D100",   # Missing docstring in public module
@@ -510,7 +511,6 @@ ignore = [
     # "E203",  # E203: Whitespace before ‘:'
     # "E401",  # Multiple imports on one line
     "E402",    # Module level import not at top of file
-    "EM102",   # Exception must not use an f-string literal, assign to variable first
     "E501",    # Line too long (<LENGTH> > 100 characters)
     # "E701",  # Multiple statements on one line (colon)
     # "E702",  # Multiple statements on one line (semicolon)
@@ -615,7 +615,6 @@ exclude = [
 "benchmarks/*" = ["S101"]
 "noxfile.py" = ["ANN", "D202"]
 "tests/*" = ["ANN", "D100", "D101", "D102", "D103", "D104", "PLR2004", "S101"]
-"tools/*" = ["T201"]
 "src/mckit/cli/*" = [
     "PLE1205", # Too many arguments for `logging` format string - we use loguru in CLI modules
 ]
@@ -638,6 +637,8 @@ exclude = [
     "N816",  # Variable `t_ANY_ignore` in global scope should not be mixedCase
     "T201",  # print found
 ]
+"tools/*" = ["T201", "INP001", "S603", "S607"]
+
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 15
