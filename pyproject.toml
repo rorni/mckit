@@ -277,8 +277,7 @@ filterwarnings = [
     "ignore:.*not typechecking multipledispatch.dispatcher.*UserWarning",
     'ignore:.*io.FileIO \[closed\]',
     'ignore:.*Deprecated call to `pkg_resources.declare_namespace',
-    'ignore:.*DeprecationWarning.*Implicit None on return values',
-    'ignore:Implicit None on return values is deprecated and will raise KeyErrors:DeprecationWarning'
+    'ignore:.*Implicit None on return values:DeprecationWarning'
 ]
 log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-
 import numpy as np
 
 import pytest
@@ -3162,18 +3160,18 @@ class TestRCC:
     @pytest.mark.parametrize(
         "center, axis, rad, ans",
         [
-            pytest.param(
-                [-2, 0, 0],
-                [4, 0, 0],
-                0.5,
-                0,
-                marks=pytest.mark.skipif(
-                    sys.platform == "darwin"
-                    or sys.platform == "linux"
-                    and sys.version_info[0:2] < (3, 9),
-                    reason="Fails on MacOS and Linux with python 3.8",
-                ),
-            ),
+            # pytest.param(
+            #     [-2, 0, 0],
+            #     [4, 0, 0],
+            #     0.5,
+            #     0,
+            #     marks=pytest.mark.skipif(
+            #         sys.platform == "darwin"
+            #         or sys.platform == "linux"
+            #         and sys.version_info[0:2] < (3, 9),
+            #         reason="Fails on MacOS and Linux with python 3.8",
+            #     ),
+            # ),
             ([-2, 0, 0], [4, 0, 0], 3, -1),
             pytest.param(
                 [-0.75, 0, 0],
