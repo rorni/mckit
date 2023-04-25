@@ -559,12 +559,11 @@ ignore = [
 
     "PLE1205", # logging-too-many-args - with use logure with '{' style of placeholders
 
-    "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
     "PLR0912", # Too many branches (15 > 12)
     "PLR0913", # Too many arguments to function call (6 > 5)
     "PLR0915", # Too many statements (65 > 50)
     "PLR2004", # magic number - don't want declare 0.0 as constant
-    # "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
+    "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
 
     "PT019",   # Fixture `_bin` without value is injected as parameter (false positive?)
 

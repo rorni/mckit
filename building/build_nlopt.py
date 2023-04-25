@@ -12,7 +12,7 @@ from building.extension_utils import WIN, create_directory
 def execute_command(cmd: list[str], cwd: Path = None, env: dict[str, str] = os.environ) -> None:
     if cwd is None:
         cwd = Path.cwd()
-    check_call(cmd, cwd=cwd, env=env)
+        check_call(cmd, cwd=cwd, env=env)  # noqa: S603
 
 
 def build_nlopt(*, install_prefix: str = None, build_dir: Path = None, clean=True) -> Path:
