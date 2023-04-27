@@ -41,6 +41,7 @@ classifiers = [
 [build-system]
 requires = [
     "poetry-core >= 1.5.2",
+    "cmake >= 3.26.3",
     "setuptools == 66.1.1",
     "wheel == 0.38.4",
     "mkl-devel == 2022.2.1",
