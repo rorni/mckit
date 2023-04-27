@@ -39,7 +39,14 @@ classifiers = [
 ]
 
 [build-system]
-requires = ["poetry-core >= 1.5.2"]
+requires = [
+    "poetry-core >= 1.5.2",
+    "setuptools == 66.1.1",
+    "wheel == 0.38.4",
+    "mkl-devel == 2022.2.1",
+    "tbb == 2021.7.1",
+    "numpy >= 1.24.2",
+]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.build]

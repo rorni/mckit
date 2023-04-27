@@ -1,3 +1,4 @@
+#!python
 from __future__ import annotations
 
 import os
@@ -6,16 +7,23 @@ import sys
 from pathlib import Path
 from subprocess import check_call
 
-from building.extension_utils import WIN, create_directory
+sys.path.append(str(Path(__file__).parent.parent))
+print(sys.path)
+
+from building.extension_utils import WIN, create_directory  # noqa: E402
 
 
-def execute_command(cmd: list[str], cwd: Path = None, env: dict[str, str] = os.environ) -> None:
+def execute_command(
+    cmd: list[str], cwd: Path | None = None, env: dict[str, str] = os.environ
+) -> None:
     if cwd is None:
         cwd = Path.cwd()
-        check_call(cmd, cwd=cwd, env=env)  # noqa: S603
+    check_call(cmd, cwd=cwd, env=env)  # noqa: S603
 
 
-def build_nlopt(*, install_prefix: str = None, build_dir: Path = None, clean=True) -> Path:
+def build_nlopt(
+    *, install_prefix: str | None = None, build_dir: Path | None = None, clean=True
+) -> Path:
     source_dir = Path(__file__).parent.parent.absolute() / "3rd-party" / "nlopt"
     if not source_dir.exists():
         execute_command(["git", "submodule", "update", "--init", "--recursive", "--depth=1"])
