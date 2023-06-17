@@ -140,10 +140,10 @@ pycln = {version = "^2.1.1", extras = ["click"]}
 [tool.poetry.group.test.dependencies]
 pytest = ">=7.1"
 pytest-benchmark = ">=4.0.0"
-pytest-cache = ">=1.0"
+# pytest-cache = ">=1.0"
 pytest-cov = ">=4.0"
-pytest-mock = ">=3.9"
-pytest-randomly = ">=3.12"
+# pytest-mock = ">=3.9"
+# pytest-randomly = ">=3.12"
 coverage = { version = ">=6.1.2", extras = ["toml"] }
 
 [tool.poetry.group.coverage.dependencies]
