@@ -45,10 +45,10 @@ jobs:
       !contains(github.event.head_commit.message, '[skip_ci]')
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
 
       - name: Set up Python 3.10  # on 3.11 pip install in unstable: "canonicalize" fails occasionally
-        uses: actions/setup-python@v4.6.0
+        uses: actions/setup-python@v4.6.1
         with:
           python-version: '3.10'
 
@@ -91,13 +91,13 @@ jobs:
     needs: lint
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
         with:
           fetch-depth: 1
           submodules: 'true'
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4.6.0
+        uses: actions/setup-python@v4.6.1
         with:
           python-version: '3.11'
 
@@ -144,12 +144,12 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
         with:
           fetch-depth: 1
           submodules: 'true'
 
-      - uses: actions/setup-python@v4.5.0
+      - uses: actions/setup-python@v4.6.1
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -195,10 +195,10 @@ jobs:
     steps:
 
       - name: Check out the repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4.6.0
+        uses: actions/setup-python@v4.6.1
         with:
           python-version: '3.11'
 
@@ -242,4 +242,4 @@ jobs:
           nox --force-color --session=coverage -- xml
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v3.1.3
+        uses: codecov/codecov-action@v3.1.4

@@ -319,9 +319,31 @@ def docs(s: Session) -> None:
         "main,docs,docs_auto",
         external=True,
     )
-    build_dir = Path("docs", "_build")
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
+    _clean_docs_build_folder()
 
     args = s.posargs or ["--open-browser", "docs/source", "docs/_build"]
     s.run("sphinx-autobuild", *args)
+
+
+@nox.session(python=False)
+def clean(_):
+    """Clean folders with reproducible content."""
+    to_clean = [
+        ".benchmarks",
+        ".eggs",
+        ".mypy_cache",
+        ".nox",
+        ".pytest_cache",
+        ".ruff_cache",
+        "build",
+        "htmlcov",
+    ]
+    for f in to_clean:
+        shutil.rmtree(f, ignore_errors=True)
+    _clean_docs_build_folder()
+
+
+def _clean_docs_build_folder():
+    build_dir = Path("docs", "_build")
+    if build_dir.exists():
+        shutil.rmtree(build_dir)

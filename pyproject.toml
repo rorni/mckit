@@ -128,7 +128,7 @@ nox = ">=2022.1.7"
 [tool.poetry.group.pre_commit.dependencies]
 pre-commit = ">=2.15.0"
 rstcheck = ">=3.3.1"
-pydocstringformatter = "^0.7.3"
+pydocstringformatter = ">=0.7.3"
 
 [tool.poetry.group.black.dependencies]
 black = ">=22.8.0"  #TODO dvp: update with safety and packaging
@@ -369,7 +369,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = [
     "tomllib",
-    "tomli"
+    "tomli",
 ]
 allow_redefinition = true
 disable_error_code = "no-redef"
@@ -432,6 +432,11 @@ summary-quotes-same-line = true
 good-names-rgxs=["."]  # a single character variable is okay
 logging-format-style="new"   # use {} in logging messages
 deprecated-modules=["six"]
+extension-pkg-allow-list=["duckdb"]
+disable=[
+    "wrong-import-order"  # this is `isort` responsibility
+]
+
 
 [tool.ruff]
 target-version = "py38"
