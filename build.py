@@ -97,12 +97,13 @@ def update_setup_requires(setup_kwargs: dict[str, Any]) -> None:
     setup_requires = setup_kwargs.get("setup_requires")  # type: Optional[List[str]]
     assert setup_requires is None, "Poetry has created setup_requires! Check the setup-generated.py"
     setup_requires = [
-        "poetry-core>=1.0.7",
-        "setuptools>=58.1",
-        "wheel",
-        # "cmake>=3.18.4",
-        # "numpy>=1.13",
-        # "mkl-devel",
+        "poetry-core >= 1.5.2",
+        "cmake >= 3.26.3",
+        "setuptools >= 67.8.0",
+        "wheel >= 0.40.0",
+        "mkl-devel == 2023.1.0",
+        "tbb == 2021.9.0",
+        "numpy >= 1.24.3",
     ]
     setup_kwargs["setup_requires"] = setup_requires
     save_generated_setup()

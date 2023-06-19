@@ -39,14 +39,14 @@ classifiers = [
 ]
 
 [build-system]
-requires = [
+requires = [  # Sync with build.py (see update_setup_requires())
     "poetry-core >= 1.5.2",
     "cmake >= 3.26.3",
-    "setuptools == 66.1.1",
-    "wheel == 0.38.4",
+    "setuptools >= 67.8.0",
+    "wheel >= 0.40.0",
     "mkl-devel == 2023.1.0",
     "tbb == 2021.9.0",
-    "numpy >= 1.24.2",
+    "numpy >= 1.24.3",
 ]
 build-backend = "poetry.core.masonry.api"
 
@@ -73,7 +73,7 @@ click = ">=8.0.1"
 colorama = ">=0.4.4"
 importlib-resources = {version = ">=5.12.0", python = "3.8"}
 loguru = ">=0.6.0"
-numpy = ">=1.24.2"
+numpy = ">=1.24.3"
 ply = ">=3.11"
 python-dotenv = ">=0.20.0"
 scipy = ">=1.10.1"
