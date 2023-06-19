@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 nox.options.sessions = (
     "pre-commit",
+    "ruff",
     "tests",
     "docs-build",
 )
@@ -326,7 +327,7 @@ def docs(s: Session) -> None:
 
 
 @nox.session(python=False)
-def clean(_):
+def clean(_: Session) -> None:
     """Clean folders with reproducible content."""
     to_clean = [
         ".benchmarks",
@@ -343,7 +344,7 @@ def clean(_):
     _clean_docs_build_folder()
 
 
-def _clean_docs_build_folder():
+def _clean_docs_build_folder() -> None:
     build_dir = Path("docs", "_build")
     if build_dir.exists():
         shutil.rmtree(build_dir)
