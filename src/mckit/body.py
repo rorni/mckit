@@ -300,12 +300,10 @@ class Shape(_Shape):
             args.append(a)
         return Shape(opc, *args)
 
-    def complexity(self):
+    def complexity(self) -> int:
         """Gets complexity of shape.
 
         Returns:
-        -------
-        complexity : int
             The complexity of the shape description. It is the number of
             surfaces needed to describe the shape. Repeats are taken into
             account.
