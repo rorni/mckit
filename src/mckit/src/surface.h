@@ -154,8 +154,17 @@ void surface_test_points(
     char * result            // The result - +1 if point has positive sense and -1 if negative.
 );
 
-// Tests if the surface intersects the box. 0 - surface intersects the box; +1 - box lies on the positive
-// side of surface; -1 - box lies on the negative side of surface.
+
+/**
+ * Tests if the surface intersects the box.
+ *
+ * @param surf - surface to test
+ * @param box  - box to test
+ *
+ * @return  0 - surface intersects the box;
+ *         +1 - box lies on the positive side of surface;
+ *         -1 - box lies on the negative side of surface.
+ */
 int surface_test_box(Surface * surf, const Box * box);
 
 #endif

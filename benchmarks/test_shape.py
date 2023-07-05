@@ -53,5 +53,14 @@ def test_universe_bounding_box(benchmark) -> None:
     assert box.dimensions == pytest.approx([3615.72265625, 1351.318359375, 4375.0])
 
 
+@pytest.mark.parametrize("complexity, cell", sample_by_complexity(clite_model))
+def test_cell_volume(benchmark, complexity, cell) -> None:
+    gb = Box([692.0, 27.0, -313.0], 3700.0, 1400.0, 4500.0)
+    benchmark.extra_info["complexity"] = complexity
+    benchmark.extra_info["cell"] = cell.name()
+    shape = cell.shape
+    benchmark.pedantic(Shape.volume, args=(shape,), kwargs={"box": gb, "min_volume": 10.0})
+
+
 if __name__ == "__main__":
     pytest.main(["--benchmark-enable", "--benchmark-autosave"])

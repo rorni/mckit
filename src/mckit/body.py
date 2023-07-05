@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as tp
 
-from typing import Iterable, List, NewType, Union
+from typing import TYPE_CHECKING, Iterable, List, NewType, Union
 
 import os
 
@@ -28,6 +28,9 @@ from .printer import CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .utils import filter_dict
+
+if TYPE_CHECKING:
+    from mckit import Universe
 
 __all__ = ["Shape", "Body", "simplify", "GLOBAL_BOX", "Card", "TGeometry", "TGeometry"]
 
@@ -444,21 +447,18 @@ class Shape(_Shape):
             c.sort()
         return cases
 
-    def replace_surfaces(self, replace_dict):
+    def replace_surfaces(self, replace_dict: dict[Surface, Surface]) -> Shape:
         """Creates new Shape instance by replacing surfaces.
 
         If shape's surface is in replace dict, it is replaced by surface in
         dictionary values. Otherwise, the original surface is used. But new
         shape is created anyway.
 
-        Parameters
-        ----------
-        replace_dict : dict
-            A dictionary of surfaces to be replaced.
+        Args:
+            replace_dict:
+                A dictionary of surfaces to be replaced.
 
         Returns:
-        -------
-        shape : Shape
             New Shape object obtained by replacing certain surfaces.
         """
         if self.opc == "C" or self.opc == "S":
@@ -471,7 +471,7 @@ class Shape(_Shape):
         return self
 
     @staticmethod
-    def from_polish_notation(polish):
+    def from_polish_notation(polish: list[Surface | Shape]) -> Shape:
         """Creates Shape instance from reversed Polish notation.
 
         Args:
@@ -710,48 +710,41 @@ class Body(Card):
 
     def simplify(
         self,
-        box=GLOBAL_BOX,
-        split_disjoint=False,
-        min_volume=MIN_BOX_VOLUME,
-        trim_size=1,
-    ):
+        box: Box = GLOBAL_BOX,
+        split_disjoint: bool = False,
+        min_volume: float = MIN_BOX_VOLUME,
+        trim_size: int = 1,
+    ) -> Body:
         """Simplifies this cell by removing unnecessary surfaces.
 
         The simplification procedure goes in the following way.
         # TODO: insert brief description!
 
-        Parameters
-        ----------
-        box : Box
-            Box where geometry should be simplified.
-        split_disjoint : bool
-            Whether to split disjoint geometries into separate geometries.
-        min_volume : float
-            The smallest value of box's volume when the process of box splitting
-            must be stopped.
-        trim_size : int
-            Max size of set to return. It is used to prevent unlimited growth
-            of the variant set.
+        Args:
+            box:
+                Box where geometry should be simplified.
+            split_disjoint:
+                Whether to split disjoint geometries into separate geometries.
+            min_volume:
+                The smallest value of box's volume when the process of box splitting must be stopped.
+            trim_size:
+                Max size of set to return. It is used to prevent unlimited growth
+                of the variant set.
 
         Returns:
-        -------
-        simple_cell : Cell
             Simplified version of this cell.
         """
-        # print('Collect stage...')
         self._shape.collect_statistics(box, min_volume)
-        # print('finding optimal solution...')
         variants = self._shape.get_simplest(trim_size)
-        # print(len(variants))
         options = filter_dict(self.options, "original")
+
         return Body(variants[0], **options)
 
-    def split(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME):
+    def split(self, box: Box = GLOBAL_BOX, min_volume: float = MIN_BOX_VOLUME) -> list[Body]:
         """Splits cell into disjoint cells.
 
         Returns:
-        -------
-        cells : list
+            cells list
         """
         self.shape.collect_statistics(box, min_volume)
         shape_groups = self.shape.split_shape()
@@ -760,7 +753,7 @@ class Body(Card):
     # noinspection PyShadowingNames
     def fill(
         self,
-        universe=None,
+        universe: Universe = None,
         recurrent: bool = False,
         simplify: bool = False,
         **kwargs: dict[str, any],

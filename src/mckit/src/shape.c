@@ -84,14 +84,20 @@ void shape_dealloc(Shape *shape) {
     }
 }
 
-// Tests box location with respect to the shape.
-// Returns BOX_INSIDE_SHAPE | BOX_CAN_INTERSECT_SHAPE | BOX_OUTSIDE_SHAPE
-//
+/**
+ * Tests box location with respect to the shape.
+ *
+ * @param shape Shape to test.
+ * @param box Box to test.
+ * @param collect Collect statistics about results.
+ * @param zero_surfaces The number of surfaces that was tested to be zero.
+ * @return  BOX_INSIDE_SHAPE | BOX_CAN_INTERSECT_SHAPE | BOX_OUTSIDE_SHAPE
+ */
 int shape_test_box(
-        Shape *shape,          // Shape to test.
-        const Box *box,        // Box to test.
-        char collect,           // Collect statistics about results.
-        int *zero_surfaces     // The number of surfaces that was tested to be zero.
+        Shape *shape,
+        const Box *box,
+        char collect,
+        int *zero_surfaces
 ) {
     if (shape->last_box != 0) {
         int bc = box_is_in(box, shape->last_box);
@@ -101,19 +107,29 @@ int shape_test_box(
 
         // It is inner box and test result is not 0: -1 or +1 i.e. won't change.
         char use_cache = (bc > 0 && shape->last_box_result != BOX_CAN_INTERSECT_SHAPE);
+
         // If collect < 0 - it means that we try to test different
         // combinations of the remaining surfaces. In this case caching is not
         // used if we test the same box again.
         use_cache = use_cache || (bc == 0 && collect >= 0);
-        if (use_cache) return shape->last_box_result;
+
+        if (use_cache)
+            return shape->last_box_result;
     }
 
     int result;
+
     if (is_final(shape->opc)) {
         char already = (box->subdiv == (shape->args.surface)->last_box);
+
         result = surface_test_box(shape->args.surface, box);
-        if (shape->opc == COMPLEMENT) result = geom_complement(result);
-        if (collect > 0 && result == 0 && !already) ++(*zero_surfaces);
+
+        if (shape->opc == COMPLEMENT)
+            result = geom_complement(result);
+
+        if (collect > 0 && result == 0 && !already)
+            ++(*zero_surfaces);
+
     } else if (shape->opc == UNIVERSE) {
         result = BOX_INSIDE_SHAPE;
     } else if (shape->opc == EMPTY) {
@@ -137,11 +153,13 @@ int shape_test_box(
             stat->arr = sub;
             stat->len = shape->alen;
             stat->vol = box->volume;
+
             if (rbtree_add(shape->stats, stat) != RBT_OK) {
                 free(stat);
                 free(sub);
             }
-        } else free(sub);
+        } else
+            free(sub);
     }
     // Cache test result;
     if (collect >= 0 && !(box->subdiv & HIGHEST_BIT)) {
