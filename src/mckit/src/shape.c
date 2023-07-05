@@ -40,6 +40,8 @@ static int stat_compare(const StatUnit *a, const StatUnit *b) {
   @param opc   Operation code
   @param alen  Length of arguments
   @param args  A surface or an array of Shapes
+
+  @return SHAPE_NO_MEMORY on memory allocation failure, SHAPE_SUCCESS otherwise
  */
 int shape_init(
         Shape *shape,
@@ -58,9 +60,14 @@ int shape_init(
         shape->args.surface = NULL;
     } else {
         shape->args.shapes = (Shape **) malloc(alen * sizeof(Shape *));
-        if (shape->args.shapes == NULL) return SHAPE_NO_MEMORY;
+
+        if (shape->args.shapes == NULL)
+            return SHAPE_NO_MEMORY;
+
         size_t i;
-        for (i = 0; i < alen; ++i) shape->args.shapes[i] = ((Shape **) args)[i];
+
+        for (i = 0; i < alen; ++i)
+            shape->args.shapes[i] = ((Shape **) args)[i];
     }
     return SHAPE_SUCCESS;
 }
