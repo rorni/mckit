@@ -390,33 +390,6 @@ context=5
 include = ["src"]
 experimental = true
 
-[tool.pycln]
-path = "src"
-exclude = '''
-(
-    \.egg-info
-  | \.eggs
-  | \.git
-  | \.mypy_cache
-  | \.pytest_cache
-  | \.nox
-  | \.venv
-  | \.idea
-  | _build
-  | 3rd-party
-  | build
-  | build_configs
-  | data
-  | dist
-  | notebooks
-  | htmlcov
-  | wrk
-  | [Pp]arser
-  | tab\.py
-)
-'''
-#silence = true
-
 
 [tool.pydocstringformatter]
 write = true
