@@ -621,7 +621,7 @@ class Body(Card):
 
     # TODO dvp: the method is used for printing, we'd better introduce virtual method print(self, out: TextIO)?
     # TODO dvp: in that case we could just return original text if available
-    def mcnp_words(self, pretty=False):
+    def mcnp_words(self, pretty=False) -> list[str]:
         words = [str(self.name()), " "]
         if "MAT" in self.options.keys():
             words.append(str(self.options["MAT"].composition.name()))
@@ -655,7 +655,7 @@ class Body(Card):
         return text
 
     @property
-    def shape(self):
+    def shape(self) -> Shape:
         """Gets body's shape."""
         return self._shape
 

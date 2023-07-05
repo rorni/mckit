@@ -23,8 +23,8 @@ class DummyCard(Card):
     ],
 )
 def test_eq(a, b, expected):
-    assert a == a
-    assert b == b
+    assert a == a  # noqa: PLR0124
+    assert b == b  # noqa: PLR0124
     da, db = DummyCard(**a), DummyCard(**b)
     actual = da == db
     assert actual == expected

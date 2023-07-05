@@ -33,19 +33,19 @@ static int stat_compare(const StatUnit * a, const StatUnit * b)
     return 0;
 }
 
-/**
- * Initializes Shape struct.
- *
- * @param shape Pointer to struct to be initialized
- * @param opc   Operation code
- * @param alen  Length of arguments
- * @param args  A surface or an array of Shapes
+/*!
+  Initializes Shape struct.
+
+  \param shape Pointer to struct to be initialized
+  \param opc   Operation code
+  \param alen  Length of arguments
+  \param args  A surface or an array of Shapes
  */
 int shape_init(
-        Shape * shape,
-        char opc,
-        size_t alen,
-        const void * args
+    Shape * shape,
+    char opc,
+    size_t alen,
+    const void * args
 )
 {
     shape->opc = opc;
