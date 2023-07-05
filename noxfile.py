@@ -129,8 +129,9 @@ def tests(s: Session) -> None:
     s.run(
         "poetry",
         "install",
+        "-v",  # more verbose to understand reasons for CI install failure on Darwin OS
         "--only",
-        "main,test,xdoctest,coverage",
+        "main,test,coverage",
         external=True,
     )
     try:
