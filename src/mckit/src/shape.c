@@ -33,13 +33,13 @@ static int stat_compare(const StatUnit *a, const StatUnit *b) {
     return 0;
 }
 
-/*!
+/**
   Initializes Shape struct.
 
-  \param shape Pointer to struct to be initialized
-  \param opc   Operation code
-  \param alen  Length of arguments
-  \param args  A surface or an array of Shapes
+  @param shape Pointer to struct to be initialized
+  @param opc   Operation code
+  @param alen  Length of arguments
+  @param args  A surface or an array of Shapes
  */
 int shape_init(
         Shape *shape,
@@ -248,12 +248,20 @@ int shape_test_points(
     return SHAPE_SUCCESS;
 }
 
-// Gets bounding box, that bounds the shape.
+/**
+    Compute a bounding box, that bounds the shape.
+
+    @param shape    Shape to de bound
+    @param box INOUT: Start box. It is modified to obtain bounding box.
+    @param tol Absolute tolerance. When change of box dimensions become smaller
+                than tol the process of box reduction finishes.
+
+    @return SHAPE_SUCCESS (always)
+ */
 int shape_bounding_box(
-        const Shape *shape,    // Shape to de bound
-        Box *box,              // INOUT: Start box. It is modified to obtain bounding box.
-        double tol              // Absolute tolerance. When change of box dimensions become smaller than tol
-        // the process of box reduction finishes.
+        const Shape *shape,
+        Box *box,
+        double tol
 ) {
     double lower, upper, ratio;
     int dim, tl;
@@ -266,8 +274,10 @@ int shape_bounding_box(
             box_split(box, &box1, &box2, dim, ratio);
             shape_reset_cache(shape);
             tl = shape_ultimate_test_box(shape, &box2, min_vol, 0);
-            if (tl == -1) box_copy(box, &box1);
-            else lower = box1.dims[dim];
+            if (tl == -1)
+                box_copy(box, &box1);
+            else
+                lower = box1.dims[dim];
         }
         upper = 0;
         while (box->dims[dim] - upper > tol) {
@@ -275,24 +285,39 @@ int shape_bounding_box(
             box_split(box, &box1, &box2, dim, ratio);
             shape_reset_cache(shape);
             tl = shape_ultimate_test_box(shape, &box1, min_vol, 0);
-            if (tl == -1) box_copy(box, &box2);
-            else upper = box2.dims[dim];
+            if (tl == -1)
+                box_copy(box, &box2);
+            else
+                upper = box2.dims[dim];
         }
     }
     box->subdiv = 1;
     return SHAPE_SUCCESS;
 }
 
-// Gets volume of the shape
+
+/**
+ Compute volume of a shape.
+
+ @param shape a Shape to compute volume for
+ @param box Box from which the process of volume finding starts
+ @param min_vol Minimum volume - when volume of the box become smaller than min_vol the process
+                of box splitting finishes.
+ @return computed volume
+ */
 double shape_volume(
-        const Shape *shape,    // Shape
-        const Box *box,        // Box from which the process of volume finding starts
-        double min_vol          // Minimum volume - when volume of the box become smaller than min_vol the process
-        // of box splitting finishes.
+        const Shape *shape,
+        const Box *box,
+        double min_vol
 ) {
     int result = shape_test_box(shape, box, 0, NULL);
-    if (result == BOX_INSIDE_SHAPE) return box->volume;   // Box totally belongs to the shape
-    if (result == BOX_OUTSIDE_SHAPE) return 0;             // Box don't belong to the shape
+
+    if (result == BOX_INSIDE_SHAPE)
+        return box->volume;   // Box totally belongs to the shape
+
+    if (result == BOX_OUTSIDE_SHAPE)
+        return 0;             // Box don't belong to the shape
+
     if (box->volume > min_vol) {            // Shape intersects the box
         Box box1, box2;
         box_split(box, &box1, &box2, BOX_SPLIT_AUTODIR, 0.5);
@@ -304,7 +329,11 @@ double shape_volume(
     }
 }
 
-// Resets cache of shape and all objects involved.
+/**
+ Resets cache of shape and all objects involved.
+
+ @param shape a Shape to reset cache members in: last_box in a surface or underlying shapes
+ */
 void shape_reset_cache(Shape *shape) {
     shape->last_box = 0;
     if (is_final(shape->opc)) {
@@ -316,7 +345,12 @@ void shape_reset_cache(Shape *shape) {
     }
 }
 
-// Resets collected statistics or initializes statistics storage
+
+/**
+ * Resets collected statistics or initializes statistics storage.
+ *
+ * @param shape a Shape to reset statistics members: stats and last_box.
+ */
 void shape_reset_stat(Shape *shape) {
     StatUnit *s;
     while ((s = rbtree_pop(shape->stats, NULL)) != NULL) {
