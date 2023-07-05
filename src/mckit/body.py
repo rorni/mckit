@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import typing as tp
-
-from typing import TYPE_CHECKING, Iterable, List, NewType, Union
+from typing import TYPE_CHECKING, Iterable, Iterator, List, NewType, Union
 
 import os
 
@@ -844,7 +842,9 @@ class Body(Card):
         return cell
 
 
-def simplify(cells: Iterable, box: Box = GLOBAL_BOX, min_volume: float = 1.0) -> tp.Generator:
+def simplify(
+    cells: Iterable[Body], box: Box = GLOBAL_BOX, min_volume: float = 1.0
+) -> Iterator[Body]:
     """Simplifies the cells.
 
     Args:
@@ -879,7 +879,7 @@ class Simplifier:
 
 def simplify_mp(
     cells: Iterable[Body], box: Box = GLOBAL_BOX, min_volume: float = 1.0, chunk_size=1
-) -> tp.Generator:
+) -> Iterator[Body]:
     """Simplifies the cells in multiprocessing mode.
 
     Parameters
@@ -905,7 +905,7 @@ def simplify_mpp(
     box: Box = GLOBAL_BOX,
     min_volume: float = 1.0,
     chunk_size: int = 1,
-) -> tp.Generator:
+) -> Iterator[Body]:
     """Simplifies the cells in multiprocessing mode with progress bar.
 
     Args:
