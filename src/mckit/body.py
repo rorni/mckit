@@ -911,11 +911,12 @@ def simplify_mpp(
     Args:
         cells:
             iterable over cells to simplify
-        box :
+        box:
             Box, from which simplification process starts. Default: GLOBAL_BOX.
-        min_volume : float
+        min_volume:
             Minimal volume of the box, when splitting process terminates.
-        chunk_size: size of chunks to pass to child processes
+        chunk_size:
+            size of chunks to pass to child processes
     """
 
     def fmt_fun(x):
