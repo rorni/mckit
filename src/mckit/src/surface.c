@@ -20,11 +20,11 @@ static double _max(double a, double b)
 }
 
 /*
- *  In all sufr_func functions the first argument is space dimension. This argument introduced
- *  for the purposes of compability with NLOPT library.
+ *  In all surf_func functions the first argument is space dimension. This argument introduced
+ *  for the purposes of compatibility with NLOPT library.
  */
 
-// Calculates deviation of point x from the plane.
+/// Calculates deviation of point x from the plane.
 double plane_func(
     unsigned int n,     // Space dimension (must be NDIM)
     const double * x,   // Point to be checked
@@ -397,7 +397,8 @@ int gq_init(
     surf->factor = factor;
     for (i = 0; i < NDIM; ++i) {
         surf->v[i] = v[i];
-        for (j = 0; j < NDIM; ++j) surf->m[i * NDIM + j] = m[i * NDIM + j];
+        for (j = 0; j < NDIM; ++j)
+            surf->m[i * NDIM + j] = m[i * NDIM + j];
     }
     return SURFACE_SUCCESS;
 }
