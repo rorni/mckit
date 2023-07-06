@@ -412,7 +412,12 @@ class Universe:
             self._cells.pop(i)
         self.add_cells(extra_cells, name_rule=name_rule)
 
-    def bounding_box(self, tol=100, box=GLOBAL_BOX):
+    def bounding_box(
+        self,
+        tol: float = 100.0,
+        box: Box = GLOBAL_BOX,
+        skip_graveyard_cells: bool = False,
+    ) -> Box:
         """Gets bounding box for the universe.
 
         It finds all bounding boxes for universe cells and then constructs
@@ -421,29 +426,28 @@ class Universe:
         transformation and surface objects for equality. It is recommended to
         choose tol value not too small to reduce computation time.
 
-        Parameters
-        ----------
-        tol : float
-            Linear tolerance for the bounding box. The distance [in cm] between
-            every box's surface and universe in every direction won't exceed
-            this value. Default: 100 cm.
-        box : Box
-            Starting box for the search. The user must be sure that box covers
-            all geometry, because cells, that already contains corners of the
-            box will be considered as infinite and will be excluded from
-            analysis.
+        Args:
+            tol:
+                Linear tolerance for the bounding box. The distance [in cm] between
+                every box's surface and universe in every direction won't exceed
+                this value. Default: 100 cm.
+            box:
+                Starting box for the search. The user must be sure that box covers
+                all geometry, because cells, that already contains corners of the
+                box will be considered as infinite and will be excluded from
+                analysis.
+            skip_graveyard_cells:
+                Don't compute boxes for 'graveyard' cells (with zero importance for all the kinds of particles).
 
         Returns:
-        -------
-        bbox : Box
             Universe bounding box.
         """
         boxes = []
         for c in self._cells:
-            test = c.shape.test_points(box.corners)
-            if np.any(test == +1):
-                continue
-            boxes.append(c.shape.bounding_box(tol=tol, box=box))
+            if not (skip_graveyard_cells and c.is_graveyard):
+                test = c.shape.test_points(box.corners)
+                if np.any(test != +1):
+                    boxes.append(c.shape.bounding_box(tol=tol, box=box))
         all_corners = np.empty((8 * len(boxes), 3))
         for i, b in enumerate(boxes):
             all_corners[i * 8 : (i + 1) * 8, :] = b.corners

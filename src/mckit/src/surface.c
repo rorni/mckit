@@ -39,7 +39,7 @@ double plane_func(
     return cblas_ddot(NDIM, x, 1, data->norm, 1) + data->offset;
 }
 
-// Calculates deviation of point x from the sphere.
+/// Calculates deviation of point x from the sphere.
 double sphere_func(
     unsigned int n,
     const double * x,

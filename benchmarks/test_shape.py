@@ -45,17 +45,19 @@ def test_bounding_box(benchmark, complexity, cell) -> None:
 
 
 def test_universe_bounding_box(benchmark) -> None:
-    gb = Box([692.0, 27.0, -313.0], 3700.0, 1400.0, 4500.0)
+    gb = Box([1500, 0, 0], 4000.0, 4000.0, 6000.0)
     box = benchmark.pedantic(
-        Universe.bounding_box, args=(clite_model,), kwargs={"box": gb, "tol": 20.0}
+        Universe.bounding_box,
+        args=(clite_model,),
+        kwargs={"box": gb, "tol": 20.0, "skip_graveyard_cells": True},
     )
-    assert box.center == pytest.approx([692.13867188, 27.46582031, -312.5])
-    assert box.dimensions == pytest.approx([3615.72265625, 1351.318359375, 4375.0])
+    assert box.center == pytest.approx([1744.0, -0.48828, 170.17], rel=1e-3)
+    assert box.dimensions == pytest.approx([3511.8, 1251.0, 3292.5], rel=1e-3)
 
 
 @pytest.mark.parametrize("complexity, cell", sample_by_complexity(clite_model))
 def test_cell_volume(benchmark, complexity, cell) -> None:
-    gb = Box([692.0, 27.0, -313.0], 3700.0, 1400.0, 4500.0)
+    gb = Box([692.0, 27.0, -313.0], 4000.0, 2000.0, 5000.0)
     benchmark.extra_info["complexity"] = complexity
     benchmark.extra_info["cell"] = cell.name()
     shape = cell.shape

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Iterator, List, NewType, Union
+from typing import TYPE_CHECKING, Iterable, Iterator, List, Literal, NewType, Union
 
 import os
 
@@ -605,6 +605,28 @@ class Body(Card):
     @property
     def transformation(self):
         return self.options.get("TRCL", None)
+
+    @property
+    def is_graveyard(self) -> bool:
+        """Is this cell a graveyard?
+
+        The graveyard cells have zero importance for all the kinds of particles.
+
+        Returns:
+            True, if all cell is of zero importance for all the kinds of particles, otherwise - False
+        """
+        return all(self.importance(c) == 0.0 for c in "NPE")
+
+    def importance(self, particle: Literal["N", "P", "E"] = "N") -> float:
+        """Retrieve importance of a cell for a particle kind.
+
+        Args:
+            particle: kind
+
+        Returns:
+            The importance value, if specified, zero otherwise.
+        """
+        return self.options.get(f"IMP{particle}", 0.0)
 
     def is_equivalent_to(self, other):
         result = self._shape == other._shape
