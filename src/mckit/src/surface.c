@@ -99,11 +99,11 @@ double RCC_func(
     double top_obj = plane_func(n, x, gtop, data->top);
     double bot_obj = plane_func(n, x, gbot, data->bot);
 
-    double tot_wgt = abs(top_obj + bot_obj);
-    double top_wgt = abs(top_obj) / tot_wgt;
-    double bot_wgt = abs(bot_obj) / tot_wgt;
+    double tot_wgt = fabs(top_obj + bot_obj);
+    double top_wgt = fabs(top_obj) / tot_wgt;
+    double bot_wgt = fabs(bot_obj) / tot_wgt;
 
-    double h = abs(data->top->offset + data->bot->offset);
+    double h = fabs(data->top->offset + data->bot->offset);
     if (grad != NULL) {
         cblas_daxpy(NDIM, top_wgt, gtop, 1, grad, 1);
         cblas_daxpy(NDIM, bot_wgt, gbot, 1, grad, 1);
