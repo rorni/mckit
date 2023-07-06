@@ -1,4 +1,6 @@
-from typing import Iterable, Optional
+from __future__ import annotations
+
+from typing import Iterable
 
 from mckit.body import GLOBAL_BOX, Body, Card
 from mckit.constants import MIN_BOX_VOLUME
@@ -48,11 +50,11 @@ class DummyCell(Body):
         raise NotImplementedError("The method is not available in dummy object")
 
 
-def raise_on_absent_cell_strategy(name: int) -> Optional[DummyCell]:
+def raise_on_absent_cell_strategy(name: int) -> DummyCell | None:
     raise CellNotFoundError(name)
 
 
-def dummy_on_absent_cell_strategy(name: int) -> Optional[DummyCell]:
+def dummy_on_absent_cell_strategy(name: int) -> DummyCell | None:
     return DummyCell(name)
 
 
@@ -61,7 +63,7 @@ class CellStrictIndex(Index):
         super().__init__(raise_on_absent_cell_strategy, **kwargs)
 
     @classmethod
-    def from_iterable(cls, items: Iterable[Body]) -> "CellStrictIndex":
+    def from_iterable(cls, items: Iterable[Body]) -> CellStrictIndex:
         index = cls()
         index.update((c.name(), c) for c in items)
         return index

@@ -1,22 +1,20 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import pytest
 
-from click.testing import CliRunner
 from mckit.cli.commands.common import get_default_output_directory
 from mckit.cli.runner import mckit
 from mckit.parser.mcnp_section_parser import is_comment
 from mckit.utils.io import MCNP_ENCODING
 from mckit.utils.resource import path_resolver
 
-
-@pytest.fixture
-def runner():
-    return CliRunner()
-
-
 data_path_resolver = path_resolver("tests")
-data_filename_resolver = lambda x: str(data_path_resolver(x))
+
+
+def data_filename_resolver(x):
+    return str(data_path_resolver(x))
 
 
 def test_when_there_is_no_args(runner):

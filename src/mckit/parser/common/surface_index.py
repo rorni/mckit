@@ -1,4 +1,6 @@
-from typing import Iterable, Optional
+from __future__ import annotations
+
+from typing import Iterable
 
 from mckit.surface import EX, Plane, Surface
 from mckit.utils.indexes import Index, NumberedItemNotFoundError
@@ -17,11 +19,11 @@ class DummySurface(Plane):
         return f"DummySurface({self.name()})"
 
 
-def raise_on_absent_surface_strategy(name: int) -> Optional[DummySurface]:
+def raise_on_absent_surface_strategy(name: int) -> DummySurface | None:
     raise SurfaceNotFoundError(name)
 
 
-def dummy_on_absent_surface_strategy(name: int) -> Optional[DummySurface]:
+def dummy_on_absent_surface_strategy(name: int) -> DummySurface | None:
     return DummySurface(name)
 
 
@@ -30,7 +32,7 @@ class SurfaceStrictIndex(Index):
         super().__init__(raise_on_absent_surface_strategy, **kwargs)
 
     @classmethod
-    def from_iterable(cls, items: Iterable[Surface]) -> "SurfaceStrictIndex":
+    def from_iterable(cls, items: Iterable[Surface]) -> SurfaceStrictIndex:
         index = cls()
         index.update((c.name(), c) for c in items)
         return index

@@ -1,5 +1,6 @@
-# -*- coding: utf-8 -*-
 """Apply transformation to a model."""
+from __future__ import annotations
+
 from pathlib import Path
 
 from mckit.cli.logging import logger

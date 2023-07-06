@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from itertools import product
 
 import numpy as np
@@ -202,9 +204,6 @@ class TestRectMesh:
         _bin = bins[mi]
         mesh = create_rmesh(_bin, tr)
         shape = mesh.shape
-        ex = EX
-        ey = EY
-        ez = EZ
         for i, j, k in product(range(shape[0]), range(shape[1]), range(shape[2])):
             vox = mesh.get_voxel(i, j, k)
             corners = []
@@ -243,8 +242,8 @@ class TestRectMesh:
     )
     def test_voxel_index(self, mi: int, ti: int, pi: int, local: bool):
         tr = transforms[ti]
-        bin = bins[mi]
-        mesh = create_rmesh(bin, tr)
+        _bin = bins[mi]
+        mesh = create_rmesh(_bin, tr)
         pt = self.points[pi]
         result = mesh.voxel_index(pt, local=local)
         if local is False and tr is not None:
@@ -252,15 +251,14 @@ class TestRectMesh:
 
         def check_one(r, pt):
             if r is not None:
-                print(r)
                 i, j, k = r
-                assert bin["xbins"][i] <= pt[0] <= bin["xbins"][i + 1]
-                assert bin["ybins"][j] <= pt[1] <= bin["ybins"][j + 1]
-                assert bin["zbins"][k] <= pt[2] <= bin["zbins"][k + 1]
+                assert _bin["xbins"][i] <= pt[0] <= _bin["xbins"][i + 1]
+                assert _bin["ybins"][j] <= pt[1] <= _bin["ybins"][j + 1]
+                assert _bin["zbins"][k] <= pt[2] <= _bin["zbins"][k + 1]
             else:
-                px = pt[0] <= bin["xbins"][0] or pt[0] >= bin["xbins"][-1]
-                py = pt[1] <= bin["ybins"][0] or pt[1] >= bin["ybins"][-1]
-                pz = pt[2] <= bin["zbins"][0] or pt[2] >= bin["zbins"][-1]
+                px = pt[0] <= _bin["xbins"][0] or pt[0] >= _bin["xbins"][-1]
+                py = pt[1] <= _bin["ybins"][0] or pt[1] >= _bin["ybins"][-1]
+                pz = pt[2] <= _bin["zbins"][0] or pt[2] >= _bin["zbins"][-1]
                 assert px or py or pz
 
         if np.array(pt).shape == (3,):
@@ -338,10 +336,13 @@ class TestRectMesh:
     )
     def test_slice_index(self, ti: int, mi: int, args, expected):
         tr = transforms[ti]
-        bin = bins[mi]
-        mesh = create_rmesh(bin, tr)
+        _bin = bins[mi]
+        mesh = create_rmesh(_bin, tr)
         if expected is None:
-            with pytest.raises(ValueError):
+            with pytest.raises(
+                ValueError,
+                match="Wrong number of fixed spatial variables|Specified point lies outside of the mesh",
+            ):
                 mesh.slice_axis_index(**args)
         else:
             axis, index, x, y = mesh.slice_axis_index(**args)
@@ -356,7 +357,7 @@ parser_test_data = path_resolver("tests")
 
 
 class TestFMesh:
-    @pytest.fixture
+    @pytest.fixture()
     def tallies(self):
         file_name = parser_test_data("parser_test_data/fmesh.m")
         return read_meshtal(file_name)
@@ -380,7 +381,7 @@ class TestFMesh:
         assert tallies[name].mesh.__class__ == meshclass
 
     @pytest.mark.parametrize(
-        "name, E, dir, value, x_ans, y_ans, data_ans, max_err",
+        "name, E, _dir, value, x_ans, y_ans, data_ans, max_err",
         [
             (
                 34,
@@ -613,8 +614,8 @@ class TestFMesh:
             ),
         ],
     )
-    def test_slice(self, tallies, name, E, dir, value, x_ans, y_ans, data_ans, max_err):
-        x, y, data, err = tallies[name].get_slice(E=E, **{dir: value})
+    def test_slice(self, tallies, name, E, _dir, value, x_ans, y_ans, data_ans, max_err):
+        x, y, data, err = tallies[name].get_slice(E=E, **{_dir: value})
         np.testing.assert_array_almost_equal(x, x_ans)
         np.testing.assert_array_almost_equal(y, y_ans)
         np.testing.assert_array_almost_equal(data, data_ans)
@@ -655,7 +656,7 @@ class TestFMesh:
     )
     def test_spectrum(self, tallies, name, point, ebins, flux, err):
         if ebins is None:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="lies outside of the mesh"):
                 tallies[name].get_spectrum(point)
         else:
             eb, fl, er = tallies[name].get_spectrum(point)

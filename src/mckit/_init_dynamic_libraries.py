@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Generator, List
+from typing import Generator
 
 import os
 import sys
@@ -34,14 +34,14 @@ else:  # Linux
         return f"{suffix}.{version}"  # .so.2
 
 
-def _iterate_suffixes_with_version(max_version: int = 2) -> Generator["str", None, None]:
+def _iterate_suffixes_with_version(max_version: int = 2) -> Generator[str, None, None]:
     while max_version >= 0:
         yield _combine_version_and_suffix(max_version, SUFFIX)
         max_version -= 1
     yield SUFFIX
 
 
-SHARED_LIBRARY_DIRECTORIES: List[Path] = []
+SHARED_LIBRARY_DIRECTORIES: list[Path] = []
 
 if WIN:
     SHARED_LIBRARY_DIRECTORIES.append(Path(sys.prefix, "Library", "bin"))
@@ -62,7 +62,7 @@ def _preload_library(lib_name: str, max_version: int = 2) -> None:
                 cdll.LoadLibrary(str(p))
                 _LOG.info("Found library: {}", p.absolute())
                 return
-    raise EnvironmentError(f"Cannot preload library {lib_name}")
+    raise OSError(f"Cannot preload library {lib_name}")
 
 
 def _init():
@@ -76,8 +76,6 @@ def _init():
 _init()
 
 # We have to import these libraries here, after preloading libraries.
-
-import mckit.geometry as geometry
-
+from mckit import geometry
 from mckit.body import Body, Shape
 from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface

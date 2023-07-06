@@ -1,4 +1,4 @@
-from typing import List
+from __future__ import annotations
 
 from io import StringIO
 
@@ -16,7 +16,7 @@ from mckit.parser.mcnp_section_parser import Card, Kind
         ("aaa\nbbb", ["aaa\nbbb"]),
     ],
 )
-def test_blank_line_pattern(text: str, expected: List[str]) -> None:
+def test_blank_line_pattern(text: str, expected: list[str]) -> None:
     actual = sp.BLANK_LINE_PATTERN.split(text)
     assert actual == expected
 

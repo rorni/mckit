@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -8,8 +10,6 @@ from mckit.utils import make_hashable
 
 
 class Box(_Box):
-    __doc__ = _Box.__doc__
-
     def __init__(self, center, wx, wy, wz, ex=EX, ey=EY, ez=EZ):
         _Box.__init__(self, center, wx, wy, wz, ex=ex, ey=ey, ez=ez)
 

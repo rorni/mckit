@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
 """Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации."""
 from __future__ import annotations
-
-from typing import Dict, List, Optional, Tuple, Union
 
 from functools import reduce
 from pathlib import Path
@@ -43,11 +40,11 @@ def compose(output, fill_descriptor_path, source, override):
     for k, v in universes.items():
         u, _ = v
         cps = u.get_compositions()
-        comps[k] = {c for c in cps}
+        comps[k] = set(cps)
 
     common = reduce(set.union, comps.values())
     envelopes.set_common_materials(common)
-    cells_index = dict((cell.name(), cell) for cell in envelopes)
+    cells_index = {cell.name(): cell for cell in envelopes}
 
     for i, spec in universes.items():
         universe, transformation = spec
@@ -91,9 +88,9 @@ def compose(output, fill_descriptor_path, source, override):
 
 def load_universes(
     fill_descriptor, universes_dir
-) -> Dict[int, Tuple[mk.Universe, Union[int, List[float]]]]:
-    filler_path_map: Dict[int, Tuple[Path, mk.Universe]] = dict()
-    cell_filler_map: Dict[int, Tuple[mk.Universe, Union[int, List[float]]]] = dict()
+) -> dict[int, tuple[mk.Universe, int | list[float]]]:
+    filler_path_map: dict[int, tuple[Path, mk.Universe]] = {}
+    cell_filler_map: dict[int, tuple[mk.Universe, int | list[float]]] = {}
 
     for k, v in fill_descriptor.items():
         if isinstance(v, dict) and "universe" in v:
@@ -129,7 +126,7 @@ def load_universes(
     return cell_filler_map
 
 
-def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transformation]]:
+def load_named_transformations(fill_descriptor) -> dict[int, Transformation] | None:
     transformations = fill_descriptor.get("named_transformations", None)
     if transformations:
         named_transformations = {}
@@ -146,5 +143,4 @@ def load_named_transformations(fill_descriptor) -> Optional[Dict[int, Transforma
             )
             named_transformations[name] = transform
         return named_transformations
-    else:
-        return None
+    return None

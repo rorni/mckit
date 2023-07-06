@@ -1,5 +1,6 @@
-# -*- coding: utf-8 -*-
-from typing import Dict, List, NoReturn
+from __future__ import annotations
+
+from typing import NoReturn
 
 import pytest
 
@@ -11,7 +12,7 @@ def dummy_strategy(c: int) -> int:
 
 
 @pytest.mark.parametrize("inp", [{1: 1, 2: 4}, {}])
-def test_index_with_dummy_strategy(inp: Dict[int, int]) -> None:
+def test_index_with_dummy_strategy(inp: dict[int, int]) -> None:
     dictionary = Index(dummy_strategy)
     dictionary.update(inp)
     for k in range(5):
@@ -39,14 +40,13 @@ def strict_strategy(c: int) -> NoReturn:
     [({1: 1, 2: 4}, [1, 2, 3], [True, True, False]), ({}, [1], [False])],
 )
 def test_index_with_strict_strategy(
-    inp: Dict[int, int], keys: List[int], success: List[bool]
+    inp: dict[int, int], keys: list[int], success: list[bool]
 ) -> None:
     dictionary = Index(strict_strategy)
     dictionary.update(inp)
     for k, s in zip(keys, success):
-        try:
-            _ = dictionary[k]
-            assert s is True
-        except MyKeyError as ex:
-            assert ex.key == k
-            assert s is False
+        if s:
+            assert dictionary[k]
+        else:
+            with pytest.raises(MyKeyError):
+                _ = dictionary[k]

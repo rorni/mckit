@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Разложение модели на составляющие юниверсы.
 
 Читает модель, извлекает юниверсы первого уровня и сохраняет их
@@ -7,6 +5,8 @@
 Также сохраняет общую модель (без юниверсов) под именем envelopes.i
 Создает спецификацию для последующей сборки модели в виде TOML файла.
 """
+from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
 
@@ -36,7 +36,7 @@ def move_universe_attribute_to_comments(universe):
 def decompose(output, fill_descriptor_path, source, override):
     logger.info("Running mckit decompose")
     logger.debug("Working dir {}", Path(".").absolute())
-    logger.info(f"Processing {source}")
+    logger.info("Processing {}", source)
     logger.debug("Loading model from {}", source)
     source = Path(source)
     if output is None:

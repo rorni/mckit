@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import NamedTuple
 
 import mckit.utils.named as nm
@@ -39,10 +41,9 @@ def test_index_of_named_happy_path(entities, expected):
 )
 def test_clashes(entities):
     with pytest.raises(NumberedItemDuplicateError, match="Something"):
-        actual = IndexOfNamed.from_iterable(
+        IndexOfNamed.from_iterable(
             entities, key=lambda x: x.name, on_duplicate=raise_on_duplicate_strategy
         )
-        assert not actual
 
 
 @pytest.mark.parametrize(
@@ -71,10 +72,9 @@ class Something2(NamedTuple):
 )
 def test_clashes_on_non_equal_items(entities):
     with pytest.raises(NumberedItemDuplicateError, match="Something2"):
-        actual = IndexOfNamed.from_iterable(
+        IndexOfNamed.from_iterable(
             entities, key=lambda x: x.name, on_duplicate=raise_on_duplicate_strategy
         )
-        assert not actual
 
 
 @pytest.mark.parametrize(

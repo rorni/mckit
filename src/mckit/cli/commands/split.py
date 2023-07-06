@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """Разложение текста модели на секции.
 
 Читает модель, извлекает и раскладывает в указанную директорию отедельно файлы для ячеек, поверхностей,
 материалов, трансформаций, sdef и прочие карты. Файлы соответственно: cells.txt, surfaces.txt,
 materials.txt, transformations.txt, sdef.txt, cards.txt
 """
-from typing import Iterable, Union
+from __future__ import annotations
+
+from typing import Iterable
 
 from pathlib import Path
 
@@ -39,9 +39,7 @@ def print_cards(
                 print(card.text, file=fid)
 
 
-def split(
-    output_dir: Path, mcnp_file_name: Union[str, Path], override: bool, separators=False
-) -> None:
+def split(output_dir: Path, mcnp_file_name: str | Path, override: bool, separators=False) -> None:
     logger.debug("Splitting model from {}", mcnp_file_name)
     if isinstance(mcnp_file_name, str):
         mcnp_file_name = Path(mcnp_file_name)

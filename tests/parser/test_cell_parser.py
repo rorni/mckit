@@ -1,7 +1,7 @@
 # Set output for parser debugging before importing Parser classes.
 # from sly import Parser as SlyParser
 # SlyParser.debugfile = "sly-debug.out"
-from typing import List, Optional
+from __future__ import annotations
 
 import mckit.parser.cell_parser as clp
 import pytest
@@ -24,13 +24,13 @@ from mckit.utils.indexes import Index
 
 def create_cell(
     cell_no: int,
-    geometry: List,
-    material: Optional[Material] = None,
-    transformation: Optional[Transformation] = None,
+    geometry: list,
+    material: Material | None = None,
+    transformation: Transformation | None = None,
     **options,
 ):
     if not options:
-        options = dict()
+        options = {}
     options["name"] = cell_no
 
     def convert_integers_to_surfaces(_geometry):
@@ -60,8 +60,8 @@ def create_cell(
 def test_cell_lexer(text, expected_types, expected_values):
     lexer = clp.Lexer()
     tokens = list(lexer.tokenize(text))
-    actual_types = list(f.type for f in tokens)
-    actual_values = list(f.value for f in tokens)
+    actual_types = [f.type for f in tokens]
+    actual_values = [f.value for f in tokens]
     assert actual_types == expected_types
     assert actual_values == expected_values
 
@@ -117,9 +117,9 @@ def test_parser_with_materials(text, expected, surfaces, compositions):
 @pytest.mark.parametrize(
     "text,expected,surfaces",
     [
-        ("1 0 1 IMP:n=1.0", create_cell(1, [1], **{"IMPN": 1.0}), [1]),
-        ("1 0 1 vol 1.0", create_cell(1, [1], **{"VOL": 1.0}), [1]),
-        ("1 0 1 U=200 PMT=0", create_cell(1, [1], **{"U": 200, "PMT": 0}), [1]),
+        ("1 0 1 IMP:n=1.0", create_cell(1, [1], IMPN=1.0), [1]),
+        ("1 0 1 vol 1.0", create_cell(1, [1], VOL=1.0), [1]),
+        ("1 0 1 U=200 PMT=0", create_cell(1, [1], U=200, PMT=0), [1]),
     ],
 )
 def test_parser_with_attributes(text, expected, surfaces):
@@ -134,9 +134,9 @@ def test_parser_with_attributes(text, expected, surfaces):
     [
         (
             "2 like 1 but imp:p=2.0",
-            create_cell(2, [1], **{"IMPN": 1.0, "IMPP": 2.0}),
+            create_cell(2, [1], IMPN=1.0, IMPP=2.0),
             [1],
-            [create_cell(1, [1], **{"IMPN": 1.0})],
+            [create_cell(1, [1], IMPN=1.0)],
         )
     ],
 )
@@ -172,11 +172,11 @@ def test_found_failures(text, expected):
     assert actual.name() == expected
 
 
-def create_dummy_surface_index(surfaces: List[int]) -> Index:
+def create_dummy_surface_index(surfaces: list[int]) -> Index:
     return SurfaceStrictIndex.from_iterable(map(DummySurface, surfaces))
 
 
-def create_dummy_composition_index(compositions: List[int]) -> Index:
+def create_dummy_composition_index(compositions: list[int]) -> Index:
     return CompositionStrictIndex.from_iterable(map(DummyComposition, compositions))
 
 

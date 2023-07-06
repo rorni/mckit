@@ -1,8 +1,6 @@
 """Code to load source distribution and print corresponding MCNP SDEF."""
 from __future__ import annotations
 
-from typing import Dict, Optional, Set, Tuple, Union
-
 import numpy as np
 
 from numpy.typing import ArrayLike
@@ -39,9 +37,9 @@ class Distribution:
     def __init__(
         self,
         name: int,
-        values: Union[ArrayLike, list["Distribution"]],
-        probs: Union[ArrayLike, "Distribution"],
-        distribution_variable: Optional[str] = None,
+        values: ArrayLike | list[Distribution],
+        probs: ArrayLike | Distribution,
+        distribution_variable: str | None = None,
         is_discrete: bool = False,
     ) -> None:
         self._name = name
@@ -50,7 +48,7 @@ class Distribution:
         self._is_discrete = is_discrete
         self._values = np.asarray(values)
         if isinstance(probs, Distribution):
-            self._probs: Union[ArrayLike, "Distribution"] = probs
+            self._probs: ArrayLike | Distribution = probs
         else:
             self._probs = np.asarray(probs)
         self._is_pdf = (
@@ -75,7 +73,7 @@ class Distribution:
         return len(self._probs)
 
     @property
-    def variable(self) -> Optional[str]:
+    def variable(self) -> str | None:
         """Gets distribution's source variable name."""
         return self._var
 
@@ -86,7 +84,7 @@ class Distribution:
 
     @staticmethod
     def check_distr(
-        bins_or_distrs: [Union[ArrayLike, list["Distribution"]]],
+        bins_or_distrs: [ArrayLike | list[Distribution]],
         size: int,
         is_discrete: bool,
     ) -> None:
@@ -119,7 +117,7 @@ class Distribution:
 
         return card
 
-    def get_inner(self) -> Set["Distribution"]:
+    def get_inner(self) -> set[Distribution]:
         """Gets nested distributions this one depends on.
 
         If values of this distribution are distributions themselves,
@@ -130,7 +128,7 @@ class Distribution:
         """
         return set(self._values) if self.has_nested_distributions else set()
 
-    def depends_on(self) -> Optional["Distribution"]:
+    def depends_on(self) -> Distribution | None:
         """Gets distribution this one depends on.
 
         Returns:
@@ -138,16 +136,14 @@ class Distribution:
         """
         if isinstance(self._probs, Distribution):
             return self._probs
-        else:
-            return None
+        return None
 
     def _mcnp_distribution_tag(self):
         if self._is_discrete:
             return "L"
-        elif self._is_pdf:
+        if self._is_pdf:
             return "A"
-        else:
-            return "H"
+        return "H"
 
     def _prob_tokens_repr(self, bin_tokens):
         if isinstance(self._probs, Distribution):
@@ -195,7 +191,7 @@ def _check_all_are_distributions_or_not(bins_or_distrs):
 
 def create_bin_distributions(
     bins: list[float], start_name: int = 1
-) -> Tuple[int, list["Distribution"]]:
+) -> tuple[int, list[Distribution]]:
     """Creates bin distributions for specified bins.
 
     A list of distributions created. Index in the list corresponds to the  index of bin.
@@ -224,7 +220,7 @@ class Source:
             can be either float (int) value or Distribution instance.
     """
 
-    def __init__(self, **variables: Dict[int, Union[int, float, Distribution]]) -> None:
+    def __init__(self, **variables: dict[int, int | float | Distribution]) -> None:
         self._variables = variables
 
     def mcnp_repr(self) -> str:

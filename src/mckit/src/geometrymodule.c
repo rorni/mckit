@@ -1210,6 +1210,7 @@ shapeobj_bounding_box(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
     PyObject * start_box = NULL;
     double tol = 100.0;
+    int status = SHAPE_FAILURE;
 
     static char * kwlist[] = {"tol", "box", NULL};
 
@@ -1225,10 +1226,16 @@ shapeobj_bounding_box(ShapeObject * self, PyObject * args, PyObject * kwds)
     BoxObject * box = (BoxObject *) boxobj_copy((BoxObject *) start_box);
     if (box == NULL) return NULL;
 
-    shape_reset_cache(&self->shape);
-    int status = shape_bounding_box(&self->shape, &box->box, tol);
 
-    if (status == SHAPE_SUCCESS) return (PyObject *) box;
+//    Py_BEGIN_ALLOW_THREADS
+
+    shape_reset_cache(&self->shape);
+    status = shape_bounding_box(&self->shape, &box->box, tol);
+
+//    Py_END_ALLOW_THREADS
+
+    if (status == SHAPE_SUCCESS)
+        return (PyObject *) box;
     else {
         Py_DECREF(box);
         // TODO: Probably some exception should be raised.
@@ -1241,6 +1248,7 @@ shapeobj_volume(ShapeObject * self, PyObject * args, PyObject * kwds)
 {
     PyObject * box = NULL;
     double min_vol = MIN_VOLUME;
+    double vol = -1.0;
 
     static char * kwlist[] = {"box", "min_volume", NULL};
 
@@ -1253,8 +1261,14 @@ shapeobj_volume(ShapeObject * self, PyObject * args, PyObject * kwds)
         return NULL;
     }
 
+
+//    Py_BEGIN_ALLOW_THREADS
+
     shape_reset_cache(&self->shape);
-    double vol = shape_volume(&self->shape, &((BoxObject *) box)->box, min_vol);
+    vol = shape_volume(&self->shape, &((BoxObject *) box)->box, min_vol);
+
+//    Py_END_ALLOW_THREADS
+
     return Py_BuildValue("d", vol);
 }
 

@@ -1,5 +1,7 @@
 # This is not real surface objects. They need only to test function.
 # String object utilizing here is acceptable.
+from __future__ import annotations
+
 surf_obj = {
     1: "S1",
     2: "S2",

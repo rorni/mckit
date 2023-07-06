@@ -6,8 +6,9 @@ Should be fixed in poetry 1.2, but it's not available yet.
 Run this if test_package() fails on pytest run
 (mckit of wrong version is found on python site).
 """
+from __future__ import annotations
 
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 import shutil
 import site
@@ -20,7 +21,7 @@ import tomli
 PathLike = TypeVar("PathLike", str, Path)
 
 
-def search_upwards_for_file(filename: PathLike) -> Optional[Path]:
+def search_upwards_for_file(filename: PathLike) -> Path | None:
     """Search upward from the current directory for a `filename`.
 
     Args:
@@ -52,7 +53,7 @@ def get_project_name() -> str:
     """
     pyproject_path = search_upwards_for_file("pyproject.toml")
     if pyproject_path is None:
-        raise EnvironmentError(
+        raise OSError(
             "Illegal directory: cannot find file pyproject.toml "
             f"from current directory: {Path.cwd()}"
         )

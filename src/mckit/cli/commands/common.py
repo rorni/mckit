@@ -1,4 +1,4 @@
-import typing as tp
+from __future__ import annotations
 
 from io import StringIO
 from pathlib import Path
@@ -12,7 +12,7 @@ from mckit.universe import Universe, UniverseAnalyser
 # This is the encoding swallowing non ascii (neither unicode) symbols happening in MCNP models code
 
 
-def check_if_path_exists(path: tp.Union[str, Path], override: bool):
+def check_if_path_exists(path: str | Path, override: bool):
     if isinstance(path, str):
         path = Path(path)
     if not override and path.exists():
@@ -23,7 +23,7 @@ def check_if_path_exists(path: tp.Union[str, Path], override: bool):
         raise click.UsageError(errmsg)
 
 
-def save_mcnp(model: Universe, path: tp.Union[str, Path], override: bool):
+def save_mcnp(model: Universe, path: str | Path, override: bool):
     check_if_path_exists(path, override)
     analyser = UniverseAnalyser(model)
     if analyser.we_are_all_clear():

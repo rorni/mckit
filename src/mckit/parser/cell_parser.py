@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 import mckit.parser.common.utils as pu
 import sly
@@ -222,8 +222,7 @@ class Parser(sly.Parser):
 
     @_("attribute")
     def attributes(self, p):
-        result = p[0]
-        return result
+        return p[0]
 
     @_(
         "fill_attribute",
@@ -297,13 +296,13 @@ class Parser(sly.Parser):
 
     @_("float float float")
     def translation(self, p):
-        return [f for f in p]
+        return list(p)
 
     @_("float float float float float float float float float INTEGER")
     def rotation(self, p):
         m = p[9]
         assert m == -1 or m == 1, f"Invalid value for transformation M parameter {m}"
-        return [f for f in p][:-1], m == -1
+        return list(p)[:-1], m == -1
 
     @_(
         "float float float float float float float float float",
@@ -312,7 +311,7 @@ class Parser(sly.Parser):
         "float float float",
     )
     def rotation(self, p):
-        return [f for f in p], False
+        return list(p), False
 
     #
     #  See MCNP, vol.I, p.3-7
@@ -324,8 +323,7 @@ class Parser(sly.Parser):
         if number_of_particles != len(p.float_list):
             while len(p.float_list) < number_of_particles:
                 p.float_list.append(p.float_list[-1])
-        result = dict(("IMP" + k, v) for k, v in zip(p.particle_list, p.float_list))
-        return result
+        return {"IMP" + k: v for k, v in zip(p.particle_list, p.float_list)}
 
     @_("float_list float")
     def float_list(self, p):
@@ -346,8 +344,7 @@ class Parser(sly.Parser):
 
     @_("N", "P", "E")
     def particle(self, p):
-        result = pu.ensure_upper(p[0])
-        return result
+        return pu.ensure_upper(p[0])
 
     @_("FLOAT_ATTR float")
     def float_attribute(self, p):
@@ -372,14 +369,14 @@ class Parser(sly.Parser):
 
 def parse(
     text: str,
-    cells: Optional[Index] = None,
-    surfaces: Optional[Index] = None,
-    transformations: Optional[Index] = None,
-    compositions: Optional[Index] = None,
+    cells: Index | None = None,
+    surfaces: Index | None = None,
+    transformations: Index | None = None,
+    compositions: Index | None = None,
 ) -> Body:
-    cells, surfaces, transformations, compositions = map(
-        lambda x: x[1]() if x[0] is None else x[0],
-        zip(
+    cells, surfaces, transformations, compositions = (
+        x[1]() if x[0] is None else x[0]
+        for x in zip(
             [cells, surfaces, transformations, compositions],
             [
                 CellStrictIndex,
@@ -387,7 +384,7 @@ def parse(
                 TransformationStrictIndex,
                 CompositionStrictIndex,
             ],
-        ),
+        )
     )
     original = text
     text = pu.drop_c_comments(text)
@@ -402,5 +399,4 @@ def parse(
         trailing_comments,
         original,
     )
-    result = parser.parse(lexer.tokenize(text))
-    return result
+    return parser.parse(lexer.tokenize(text))
