@@ -70,7 +70,7 @@ class Parser(sly.Parser):
     @_("float float float float float float float float float INTEGER")
     def rotation(self, p):
         m = p[9]
-        assert m == -1 or m == 1, f"Invalid M option value {m}"
+        assert m in {-1, 1}, f"Invalid M option value {m}"
         return list(p)[:-1], m == -1
 
     @_(

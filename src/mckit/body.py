@@ -161,7 +161,7 @@ class Shape(_Shape):
             return True
         if self.opc != other.opc:
             return False
-        if self.opc == "E" or self.opc == "R":
+        if self.opc in {"E", "R"}:  # empty or whole space
             return True
         if len(self.args) != len(other.args):
             return False
@@ -378,7 +378,7 @@ class Shape(_Shape):
         Returns:
             A list of shapes with minimal complexity.
         """
-        if self.opc != "I" and self.opc != "U":
+        if self.opc not in {"I", "U"}:  # not an intersection or a union
             return [self]
         node_cases = []
         complexities = []
@@ -459,11 +459,11 @@ class Shape(_Shape):
         Returns:
             New Shape object obtained by replacing certain surfaces.
         """
-        if self.opc == "C" or self.opc == "S":
+        if self.opc in {"C", "S"}:  # complement or 'no operation'
             arg = self.args[0]
             surf = replace_dict.get(arg, arg)
             return Shape(self.opc, surf)
-        if self.opc == "I" or self.opc == "U":
+        if self.opc in {"I", "U"}:  # intersection or union
             args = [arg.replace_surfaces(replace_dict) for arg in self.args]
             return Shape(self.opc, *args)
         return self
@@ -497,7 +497,7 @@ def _clean_args(opc, *args):
     """Clean input arguments."""
     args = [a.shape if isinstance(a, Body) else a for a in args]
     _verify_opc(opc, *args)
-    if opc == "I" or opc == "U":
+    if opc in {"I", "U"}:  # intersect or union
         args = [Shape("S", a) if isinstance(a, Surface) else a for a in args]
     if len(args) > 1:
         # Extend arguments
@@ -529,7 +529,7 @@ def _clean_args(opc, *args):
         if len(args) == 0:
             opc = "E" if opc == "U" else "R"
     if len(args) == 1 and isinstance(args[0], Shape):
-        if opc == "S" or opc == "I" or opc == "U":
+        if opc in {"S", "I", "U"}:
             return args[0].opc, args[0].args
         if opc == "C":
             item = args[0].complement()
@@ -539,11 +539,11 @@ def _clean_args(opc, *args):
 
 def _verify_opc(opc, *args):
     """Checks if such argument combination is valid."""
-    if (opc == "E" or opc == "R") and len(args) > 0:
+    if (opc in {"E", "R"}) and len(args) > 0:
         raise ValueError("No arguments are expected.")
-    if (opc == "S" or opc == "C") and len(args) != 1:
+    if (opc in {"S", "C"}) and len(args) != 1:
         raise ValueError("Only one operand is expected.")
-    if opc == "I" or opc == "U":
+    if opc in {"I", "U"}:
         if len(args) == 0:
             raise ValueError("Operands are expected.")
 

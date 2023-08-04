@@ -44,8 +44,8 @@ requires = [  # Sync with build.py (see update_setup_requires())
     "cmake >= 3.26.3",
     "setuptools >= 67.8.0",
     "wheel >= 0.40.0",
-    "mkl-devel == 2023.1.0",
-    "tbb == 2021.9.0",
+    "mkl-devel == 2023.2.0",
+    "tbb == 2021.10.0",
     "numpy >= 1.24.3",
 ]
 build-backend = "poetry.core.masonry.api"
@@ -65,7 +65,7 @@ mckit = "mckit.cli.runner:mckit"
 
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<3.12"  # TODO dvp: update upper limit with scipy
+python = ">=3.9,<3.12"  # TODO dvp: update upper limit with scipy
 DateTime = ">=4.3"
 atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"
@@ -82,8 +82,8 @@ tomli = {version = ">=2.0.1", python="<3.11"}
 tomli-w = ">=1.0.0"
 tqdm = ">=4.55.1"
 # mkl again has different versions for different platforms
-mkl-devel = "2023.1.0"
-tbb = "2021.9.0"
+mkl-devel = "2023.2.0"
+tbb = "2021.10.0"
 # The following works for linux and windows, but not for macos
 # besides we need to have the same versions on build (see [build-system]),
 # so, we use the most recent version compatbile to all the OS.
@@ -131,7 +131,7 @@ rstcheck = ">=3.3.1"
 pydocstringformatter = ">=0.7.3"
 
 [tool.poetry.group.black.dependencies]
-black = ">=22.8.0"  #TODO dvp: update with safety and packaging
+black = ">=22.8.0"
 
 [tool.poetry.group.isort.dependencies]
 isort = ">=5.9.3"
@@ -293,7 +293,6 @@ log_date_format = "%Y-%m-%d %H:%M:%S"
 quiet = true
 options = ""
 
-# [tool.coverage]
 [tool.coverage.paths]
 source = ["src", ".nox/*/site-packages"]
 
@@ -589,7 +588,7 @@ exclude = [
   "wrk",
   "*.egg-info",
   ".cache",
-  "notebooks/dvp/*.py"
+  "notebooks/dvp/*.py",
 ]
 # Assume Python 3.10.
 # target-version = "py310"

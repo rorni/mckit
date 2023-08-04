@@ -79,7 +79,7 @@ def separate(tokens: list[str], sep: str = " ") -> list[str]:
 def print_option(option: str, value: Any) -> list[str]:
     name = option[:3]
     par = option[3:]
-    if name == "IMP" and (par == "N" or par == "P" or par == "E"):
+    if name == "IMP" and (par in ("N", "P", "E")):
         return [f"IMP:{par}={IMPORTANCE_FORMAT.format(value)}"]
     if option == "VOL":
         return [f"VOL={value}"]
