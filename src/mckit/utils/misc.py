@@ -52,7 +52,7 @@ def significant_digits(
     return high
 
 
-def get_decades(value: int | float) -> int:
+def get_decades(value: float) -> int:
     """Compute number of digits needed to represent integer part of 'value' in fixed format.
 
     Args:
