@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray as ArrayLike
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import ORIGIN
@@ -41,7 +41,7 @@ class Transformation(Card, MaybeClose):
         corrected. Default: identity matrix - non rotation.
     indegrees : bool
         How rotation parameters should be treated. If True - rotation matrix
-        parameters are given in degrees. Otherwise rotation parameters are basis
+        parameters are given in degrees. Otherwise, rotation parameters are basis
         vectors of local coordinate system. Default: False.
     inverted : bool
         How translation vector should be interpreted. If True - it is the origin
@@ -62,7 +62,7 @@ class Transformation(Card, MaybeClose):
         Gets coordinates of point p in the global coordinate system.
     apply2vector(v)
         Gets coordinates of vector v in the global coordinate system.
-    apply2transform(tr)
+    apply2transform(initial)
         Gets resulting transformation.
     reverse()
         Reverses this transformation, and returns the result.
@@ -74,7 +74,7 @@ class Transformation(Card, MaybeClose):
         rotation=None,
         indegrees=False,
         inverted=False,
-        **options: dict[str, Any],
+        **options: Any,
     ):
         Card.__init__(self, **options)
 
@@ -201,22 +201,22 @@ class Transformation(Card, MaybeClose):
         # In contrast with apply2point - no translation is needed.
         return np.dot(v1, np.transpose(self._u))
 
-    def apply2transform(self, tr: Transformation) -> Transformation:
+    def apply2transform(self, initial: Transformation) -> Transformation:
         """Gets new transformation.
 
         Suppose there are three coordinate systems r, r1, r2. Transformation
-        tr: r2 -> r1; and this transformation: r1 -> r. Thus the resulting
+        initial: r2 -> r1; and this transformation: r1 -> r. Thus, the resulting
         transformation: r2 -> r. In other words the result is a sequence of
-        two transformations: `tr` and this. The `tr` is applied first.
+        two transformations: `initial` and this. The `initial` is applied first.
 
         Args:
-            tr: Transformation to be modified.
+            initial: Transformation to be modified.
 
         Returns:
             New transformation - the result.
         """
-        rot = np.dot(self._u, tr._u)
-        trans = self.apply2point(tr._t)
+        rot = np.dot(self._u, initial._u)
+        trans = self.apply2point(initial._t)
         return Transformation(translation=trans, rotation=rot)
 
     def reverse(self) -> Transformation:
@@ -241,7 +241,7 @@ class Transformation(Card, MaybeClose):
             return False
         return estimator((self._t, self._u), (other._t, other._u))
 
-    def _setup_rotation_matrix(self, u: ArrayLike | None) -> ArrayLike:
+    def _setup_rotation_matrix(self, u: ArrayLike) -> ArrayLike:
         zero_cosines_idx = np.abs(u) < ZERO_COS_TOLERANCE
         u[zero_cosines_idx] = 0.0
         # TODO: Implement creation from reduced rotation parameter set.

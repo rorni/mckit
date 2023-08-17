@@ -1,6 +1,8 @@
 """Сборка модели из конвертов и входяших в них юниверсов по заданной спецификации."""
 from __future__ import annotations
 
+import sys
+
 from functools import reduce
 from pathlib import Path
 
@@ -8,9 +10,9 @@ import numpy as np
 
 import mckit as mk
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ModuleNotFoundError:
+else:
     import tomli as tomllib
 
 from mckit import Transformation
