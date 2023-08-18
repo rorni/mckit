@@ -3,7 +3,7 @@
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Generator, Iterable, NewType, TextIO, Tuple, Union
+from typing import Callable, Iterable, Iterator, TextIO
 
 from itertools import repeat
 from pathlib import Path
@@ -32,12 +32,6 @@ from mckit.utils.indexes import Index
 
 from .mcnp_section_parser import Card as TextCard
 from .mcnp_section_parser import InputSections, Kind, distribute_cards, parse_sections_text
-
-T = NewType("T", Any)
-T1 = NewType("T1", Any)
-T2 = NewType("T2", Any)
-Pair = NewType("Pair", Tuple[T1, T2])
-YieldGenerator = NewType("YieldGenerator", Generator[T, None, None])
 
 
 @attrs
@@ -74,9 +68,9 @@ def from_text(text: str) -> ParseResult:
     sections: InputSections = parse_sections_text(text)
     if sections.data_cards:
         # fmt: off
-        text_compositions, text_transformations, _, _, _ = distribute_cards(
+        text_compositions, text_transformations, _1, _2, _3 = distribute_cards(
             sections.data_cards
-        )  # type: List[TextCard], List[TextCard], List[TextCard], List[TextCard], List[TextCard],
+        )  # type: list[TextCard], list[TextCard], list[TextCard], list[TextCard], list[TextCard],
         # fmt: on
         transformations = parse_transformations(text_transformations)
         transformations_index = TransformationStrictIndex.from_iterable(transformations)
@@ -88,8 +82,12 @@ def from_text(text: str) -> ParseResult:
         compositions = None
         compositions_index = None
 
-    surfaces = parse_surfaces(sections.surface_cards, transformations_index)
-    surfaces_index = SurfaceStrictIndex.from_iterable(surfaces)
+    surfaces = (
+        None
+        if sections.surface_cards is None
+        else parse_surfaces(sections.surface_cards, transformations_index)
+    )
+    surfaces_index = None if surfaces is None else SurfaceStrictIndex.from_iterable(surfaces)
     cells, cells_index = parse_cells(
         sections.cell_cards, surfaces_index, compositions_index, transformations_index
     )
@@ -108,12 +106,6 @@ def from_text(text: str) -> ParseResult:
         transformations_index=transformations_index,
         sections=sections,
     )
-
-
-TSectionGenerator = NewType(
-    "TSectionGenerator",
-    Generator[Union[Transformation, Composition, Surface], None, None],
-)
 
 
 def join_comments(text_cards: Iterable[TextCard]):
@@ -135,22 +127,19 @@ def join_comments(text_cards: Iterable[TextCard]):
 
 def parse_section(
     text_cards: Iterable[TextCard], expected_kind: Kind, parser: Callable[[str], Card]
-) -> TSectionGenerator:
+) -> Iterator[Card]:
     text_cards_with_comments = join_comments(text_cards)
 
-    def iterator() -> TSectionGenerator:
-        for text_card, comment in text_cards_with_comments:
-            assert text_card.kind is expected_kind
-            try:
-                card = parser(text_card.text)
-            except (ValueError, ParseError) as ex:
-                raise ValueError(f"Failed to parse card '{text_card}'") from ex
-            if comment:
-                card.options["comment_above"] = comment
-            # card.options['original'] = text_card.text
-            yield card
-
-    return iterator()
+    for text_card, comment in text_cards_with_comments:
+        assert text_card.kind is expected_kind
+        try:
+            card = parser(text_card.text)
+        except (ValueError, ParseError) as ex:
+            raise ValueError(f"Failed to parse card '{text_card}'") from ex
+        if comment:
+            card.options["comment_above"] = comment
+        # card.options['original'] = text_card.text
+        yield card
 
 
 def parse_transformations(text_cards: Iterable[TextCard]) -> list[Transformation]:
@@ -161,7 +150,7 @@ def parse_compositions(text_cards: Iterable[TextCard]) -> list[Composition]:
     return list(parse_section(text_cards, Kind.MATERIAL, parse_composition))
 
 
-def parse_surfaces(text_cards: Iterable[TextCard], transformations: Index) -> list[Surface]:
+def parse_surfaces(text_cards: Iterable[TextCard], transformations: Index) -> list[Surface] | None:
     def parser(text: str):
         return parse_surface(text, transformations=transformations)
 

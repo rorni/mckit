@@ -62,7 +62,7 @@ class Transformation(Card, MaybeClose):
         Gets coordinates of point p in the global coordinate system.
     apply2vector(v)
         Gets coordinates of vector v in the global coordinate system.
-    apply2transform(initial)
+    apply2transform(tr)
         Gets resulting transformation.
     reverse()
         Reverses this transformation, and returns the result.
@@ -201,22 +201,22 @@ class Transformation(Card, MaybeClose):
         # In contrast with apply2point - no translation is needed.
         return np.dot(v1, np.transpose(self._u))
 
-    def apply2transform(self, initial: Transformation) -> Transformation:
+    def apply2transform(self, tr: Transformation) -> Transformation:
         """Gets new transformation.
 
         Suppose there are three coordinate systems r, r1, r2. Transformation
-        initial: r2 -> r1; and this transformation: r1 -> r. Thus, the resulting
+        tr: r2 -> r1; and this transformation: r1 -> r. Thus, the resulting
         transformation: r2 -> r. In other words the result is a sequence of
-        two transformations: `initial` and this. The `initial` is applied first.
+        two transformations: `tr` and this. The `tr` is applied first.
 
         Args:
-            initial: Transformation to be modified.
+            tr: Transformation to be modified.
 
         Returns:
             New transformation - the result.
         """
-        rot = np.dot(self._u, initial._u)
-        trans = self.apply2point(initial._t)
+        rot = np.dot(self._u, tr._u)
+        trans = self.apply2point(tr._t)
         return Transformation(translation=trans, rotation=rot)
 
     def reverse(self) -> Transformation:
