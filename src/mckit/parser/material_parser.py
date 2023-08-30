@@ -38,7 +38,7 @@ class Lexer(LexerBase):
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
-    def build_composition(self, name, fractions, options=None):
+    def build_composition(self, name, fractions, options=None) -> Composition:
         atomic = []
         weight = []
 
@@ -110,7 +110,7 @@ class Parser(sly.Parser):
         return option, value
 
 
-def parse(text):
+def parse(text) -> Composition:
     text = drop_comments(text)
     lexer = Lexer()
     parser = Parser()

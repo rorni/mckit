@@ -64,7 +64,7 @@ class Composition(Card):
         Dictionary of composition options.
 
     Methods:
-    -------
+    --------
     molar_mass()
         Gets molar mass of the composition.
     get_atomic(isotope)
@@ -342,6 +342,35 @@ class Composition(Card):
             for elem, atom_frac in comp:
                 atomics.append((elem, atom_frac * frac))
         return Composition(atomic=atomics)
+
+
+def mixture_by_volume(
+    *fractions_spec: tuple[Composition, float, float],
+    number=0,
+) -> tuple[float, Composition]:
+    """Compute mix of compositions defined with densities and volume fractions.
+
+    Args:
+        fractions_spec: list of specs (Composition, density, volume_fraction)
+        number: ... to assign as composition 'name'
+
+    Returns:
+        Composition: the mix by atomic fractions
+    """
+    compositions = [t[0] for t in fractions_spec]
+    moles = np.fromiter(
+        (
+            density * volume_fraction / composition.molar_mass
+            for composition, density, volume_fraction in fractions_spec
+        ),
+        dtype=float,
+    )
+    total_moles = moles.sum()
+    atomic_fractions = moles / total_moles
+    mix = Composition.mixture(*zip(compositions, atomic_fractions))
+    mix.options["name"] = number
+    density = sum(density * volume_fraction for _, density, volume_fraction in fractions_spec)
+    return density, mix
 
 
 class Material:
