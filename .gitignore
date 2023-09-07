@@ -103,4 +103,8 @@ poetry_setup_kwargs.txt
 
 # benchmark resuls
 *uncommited-changes.json
+.benchmarks
+
+#cmake work folders
+cmake-build-debug
 
