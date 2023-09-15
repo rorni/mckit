@@ -1,3 +1,4 @@
+"""Classes and methods to work with MCNP universe."""
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, cast
@@ -44,16 +45,18 @@ _LOG = getLogger(__name__)
 
 
 class NameClashError(ValueError):
-    def __init__(self, result: str | dict[str, dict[int, set[Universe]]]) -> None:
-        if isinstance(result, str):
-            ValueError.__init__(self, result)
+    """Exception to present information on name clashes over universes."""
+
+    def __init__(self, clashes: str | dict[str, dict[int, set[Universe]]]) -> None:
+        if isinstance(clashes, str):
+            ValueError.__init__(self, clashes)
         else:
             msg = StringIO()
             msg.write("\n")
-            for kind, index in result.items():
-                for i, u in index.items():
-                    universes = reduce(lambda a, b: a.append(b) or a, map(Universe.name, u), [])
-                    msg.write(f"{kind} {i} is found in universes {universes}\n")
+            for kind, index in clashes.items():
+                for i, universes in index.items():
+                    universes_names = [u.name() for u in universes]
+                    msg.write(f"{kind} {i} is found in universes {universes_names}\n")
             ValueError.__init__(self, msg.getvalue())
 
 
@@ -177,10 +180,10 @@ class Universe:
         self,
         cells,
         name: Name = 0,
-        verbose_name: str = None,
-        comment: str = None,
+        verbose_name: str | None = None,
+        comment: str | None = None,
         name_rule: str = "keep",
-        common_materials: set[Composition] = None,
+        common_materials: set[Composition] | None = None,
     ):
         self._name = name
         self._comment = comment
@@ -900,10 +903,10 @@ def collect_transformations(universe: Universe, recursive=True) -> set[Transform
         if body_transformation and body_transformation.name():
             aggregator.add(body_transformation)
         if recursive:
-            fill = b.options.get("FILL", None)
+            fill = b.options.get("FILL")
             if fill:
                 fill_universe = fill["universe"]
-                fill_transformation = fill.get("transform", None)
+                fill_transformation = fill.get("transform")
                 if fill_transformation and fill_transformation.name():
                     aggregator.add(fill_transformation)
                 aggregator.update(collect_transformations(fill_universe))
@@ -975,7 +978,7 @@ def is_shared_between_universes(item: tuple[Name, dict[Name, int]]) -> bool:
     return 1 < len(universes_counts.keys())
 
 
-def make_universe_counter_map():
+def make_universe_counter_map() -> dict[Name, int]:
     return defaultdict(int)
 
 
@@ -1043,7 +1046,9 @@ class UniverseAnalyser:
             self.transformation_duplicates,
         )
 
-    def duplicates_maps(self):
+    def duplicates_maps(
+        self,
+    ) -> tuple[dict[int, int], dict[int, int], dict[int, int], dict[int, int]]:
         return (
             self.cell_to_universe_map,
             self.surface_to_universe_map,
