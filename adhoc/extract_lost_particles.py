@@ -77,6 +77,7 @@ class _Description:
     cell_fail: int
     surface: int
     cell_in: int
+    point: bool
     x: float
     y: float
     z: float
@@ -97,11 +98,16 @@ def _parse_description(lines: list[str]) -> _Description:
         raise ValueError("Cannot find lost history number")
     hist_no = int(match["hist_no"])
     surface = int(lines[2].split()[-3])
-    cell_fail = int(lines[3].split()[-1])
-    cell_in = int(lines[6].split()[-1])
+    cell_fail = int(lines[3].rsplit(maxsplit=2)[-1])
+    # line[6] may contain one of the following
+    # point (x,y,z) is in cell     1439
+    # the neutron  is in cell     1344.
+    line6 = lines[6].strip()
+    point = line6.startswith("point")
+    cell_in = int(lines[6].rsplit(maxsplit=2)[-1].rstrip("."))
     x, y, z = map(float, lines[8].split()[-3:])
     u, v, w = map(float, lines[9].split()[-3:])
-    return _Description(cell_fail, surface, cell_in, x, y, z, u, v, w, lp_no, hist_no)
+    return _Description(cell_fail, surface, cell_in, point, x, y, z, u, v, w, lp_no, hist_no)
 
 
 def _process_file(p: Path, cur: sq.Cursor) -> None:
@@ -205,10 +211,15 @@ def _analyze(db) -> None:
             (cell_fail_counts[0][0],),
         ).fetchone()
         coordinates_text = " ".join(map(str, coordinates_to_work))
-        comin_text = Path("comin").read_text()
-        comin_lines = comin_text.split("\n")
-        comin_lines[0] = "origin " + coordinates_text + " &"
-        new_comin_text = "\n".join(comin_lines)
+        origin_text = "origin " + coordinates_text + " &"
+        comin_path = Path("comin")
+        if comin_path.exists():
+            comin_text = Path("comin").read_text()
+            comin_lines = comin_text.split("\n")
+            comin_lines[0] = origin_text
+            new_comin_text = "\n".join(comin_lines)
+        else:
+            new_comin_text = origin_text[:-1]
         with open("comin", "w") as fid:
             print(new_comin_text, file=fid)
 

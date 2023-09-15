@@ -720,7 +720,7 @@ class Universe:
                     items.append(item)
         return items
 
-    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False, verbose=True):
+    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False, verbose=True) -> None:
         """Simplifies all cells of the universe.
 
         Modifies current universe.
@@ -732,7 +732,7 @@ class Universe:
         min_volume : float
             Minimal volume of the box, when splitting process terminates.
         split_disjoint : bool
-            Whether to split disjoint cells.
+            Whether to split disjoint cells (not implemented yet).
         verbose : bool
             Turns on verbose output. Default: True.
         """

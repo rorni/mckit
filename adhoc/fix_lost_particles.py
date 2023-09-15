@@ -54,19 +54,19 @@ cell2173: Body = model_parse.cells_index[2173]
 cell2173_box = cell2173.shape.bounding_box(tol=10, box=outer_box)
 
 con = sq.connect("lost-particles.sqlite")
-con.execute(
-    """
-    create table if not exists cell_bounding_box (
-        cell int primary key,
-        cx real not null,
-        cy real not null,
-        cz real not null,
-        wx real not null,
-        wy real not null,
-        wz real not null
-    )
-    """
-)
+# con.execute(
+#     """
+#     create table if not exists cell_bounding_box (
+#         cell int primary key,
+#         cx real not null,
+#         cy real not null,
+#         cz real not null,
+#         wx real not null,
+#         wy real not null,
+#         wz real not null
+#     )
+#     """
+# )
 
 
 def collect_bounding_boxes(
@@ -117,6 +117,45 @@ def define_cell_boxes_intersecting_with(box, cells_index, con) -> Iterator[int]:
 cells_potentially_intersecting_with_2173 = sorted(
     define_cell_boxes_intersecting_with(cell2173_box, model_parse.cells_index, con)
 )
+
+
+def load_cells_in(cell: int, con: sq.Connection) -> list[int]:
+    return [
+        x[0]
+        for x in con.cursor()
+        .execute(
+            """
+            select distinct cell_in cell from lost_particles
+            where cell_fail = ?
+            order by cell
+            """,
+            (cell,),
+        )
+        .fetchall()
+    ]
+
+
+def load_cells_in_for_leaking_cells(leaking_cells, con) -> dict[int, list[int]]:
+    return dict((c, load_cells_in(c, con)) for c in leaking_cells)
+
+
+cells_in_for_leaking_cells = load_cells_in_for_leaking_cells(leaking_cells, con)
+
+print("Fixing leaking cells")
+new_cells = []
+for c in tqdm(model):
+    if c in cells_in_for_leaking_cells:
+        cells_in = cells_in_for_leaking_cells[c]
+        for ci in cells_in:
+            ci_body = model_parse.cells_index[ci]
+            cint = c.intersection(ci_body).simplify(min_volume=1e-2, box=outer_box)
+            if cint.shape.is_empty():
+                continue
+            c = c.intersection(ci_body.complement()).simplify(min_volume=1e-2, box=outer_box)
+    new_cells.append(c)
+
+new_universe = Universe(new_cells)
+new_universe.save("trt-5.0-lp-2.i")
 
 
 def main():
