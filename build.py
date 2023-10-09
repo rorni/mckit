@@ -100,10 +100,10 @@ def update_setup_requires(setup_kwargs: dict[str, Any]) -> None:
         "poetry-core >= 1.5.2",
         "cmake >= 3.26.3",
         "setuptools >= 67.8.0",
+        "pip >= 23.2.1",
         "wheel >= 0.40.0",
-        "mkl-devel == 2023.1.0",
-        "tbb == 2021.9.0",
-        "numpy >= 1.24.3",
+        "mkl-devel == 2023.2.0",
+        "numpy >= 1.26.0",
     ]
     setup_kwargs["setup_requires"] = setup_requires
     save_generated_setup()

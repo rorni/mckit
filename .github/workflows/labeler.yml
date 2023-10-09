@@ -26,11 +26,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.1.0
 
       - name: Sync GitHub Issue Labels
-        uses: crazy-max/ghaction-github-labeler@v4
+        uses: crazy-max/ghaction-github-labeler@v5
         with:
           github-token: ${{ secrets.MCKIT_GITHUB_TOKEN }}
           skip-delete: true
-          dry-run: ${{ github.ref != 'refs/heads/master' }}
+          dry-run: ${{ github.event_name != 'pull_request' }}
+          exclude: |
+            help*
+            *issue

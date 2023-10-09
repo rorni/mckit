@@ -17,7 +17,7 @@ reset() {
     local env="${1:-}"
     local pkgs=( $(ls src) )
     local pkg=${pkgs[0]}
-    local last_python="3.11.4"
+    local last_python="3.11.6"  # h5py-3.9.0 has no wheels for python 3.12 yet, check on updates
     [[ -z "$env" ]] && env="${pkg//_/-}"
     echo "Installing package $pkg to environment $env with python $last_python."
     eval "$(pyenv init -)"
@@ -32,7 +32,7 @@ reset() {
     poetry install
     python -c "import ${pkg}; print(${pkg}.__version__)" && success "Environment $env is reset"
     pyenv shell --unset
-    pyenv local "$env" "3.10.12" "3.9.17" "3.8.17"
+    pyenv local "$env" "3.12.0" "3.10.13" "3.9.18"
     pyenv rehash
 }
 
