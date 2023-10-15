@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Self
+
 import numpy as np
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -14,7 +16,7 @@ class Box(_Box):
         _Box.__init__(self, center, wx, wy, wz, ex=ex, ey=ey, ez=ez)
 
     @classmethod
-    def from_geometry_box(cls, geometry_box: _Box):
+    def from_geometry_box(cls, geometry_box: _Box) -> Self:
         return cls(
             geometry_box.center,
             *geometry_box.dimensions,
@@ -22,6 +24,18 @@ class Box(_Box):
             geometry_box.ey,
             geometry_box.ez,
         )
+
+    @classmethod
+    def from_bounds(
+        cls, minx: float, maxx: float, miny: float, maxy: float, minz: float, maxz: float
+    ) -> Self:
+        min_vals = np.array([minx, miny, minz])
+        max_vals = np.array([maxx, maxy, maxz])
+        if not np.all(min_vals < max_vals):
+            raise ValueError("Unsorted boundaries values")
+        center = 0.5 * (min_vals + max_vals)
+        widths = max_vals - min_vals
+        return cls(center, *widths, ex=EX, ey=EY, ez=EZ)
 
     def __repr__(self):
         exm = "" if np.array_equal(self.ex, EX) else f"ex={self.ex}"

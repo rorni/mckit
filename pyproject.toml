@@ -167,7 +167,6 @@ numpy = ">=1.23.2"
 [tool.poetry.group.flake8.dependencies]
 darglint = ">=1.8.1"
 flake8 = ">=6.0.0"
-#flake8 = ">=6.0.0"
 flake8-adjustable-complexity = ">=0.0.6"
 flake8-annotations = ">=2.6.2"
 flake8-annotations-coverage = ">=0.0.6"
