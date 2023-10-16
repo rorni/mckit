@@ -65,20 +65,20 @@ repos:
     -   id: isort
         name: isort
         exclude: tools|\.idea|\.cache|^notebooks
-        entry: poetry run isort
+        entry: isort
         language: system
         types: [python]
     # Black, the code formatter, natively supports pre-commit
     -   id: black
         name: black
-        entry: poetry run black
+        entry: black
         language: system
         types: [python]
         exclude: ^notebooks
     # Lint
     -   id: ruff
         name: ruff
-        entry: poetry run ruff --force-exclude --fix --config pyproject.toml
+        entry: ruff --force-exclude --fix --config pyproject.toml
         language: system
         types: [python]
         exclude: ^notebooks
