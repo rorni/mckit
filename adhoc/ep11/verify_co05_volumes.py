@@ -178,7 +178,6 @@ def collect_model_info(model: Universe, conn: Connection):
                     min_vol,
                 ),
             )
-    conn.commit()
 
 
 def main():
