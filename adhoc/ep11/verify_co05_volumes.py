@@ -116,7 +116,6 @@ conn.executescript(
     """
     create table cell_geometry (
         cell int primary key,
-        material int,
         box_min_x real,
         box_max_x real,
         box_min_y real,
@@ -133,6 +132,47 @@ conn.executescript(
     );
     """
 )
+
+conn.executescript(
+    """
+    drop view material_mass;
+    create view material_mass as
+    select
+        a.material,
+        sum(volume * density) as mass
+    from
+        cell_material a
+        inner join cell_geometry b on a.cell = b.cell
+    group by
+        a.material
+"""
+)
+
+total_mass = (
+    conn.execute(
+        """
+    select sum(mass) from material_mass where material
+"""
+    ).fetchone()[0]
+    * 0.001
+)
+"""Total mass of materials in kg."""
+logger.info("Total mass of materials {:3g}kg", total_mass)
+
+mass_207302 = (
+    conn.execute(
+        """
+    select sum(mass) from material_mass where material == 207302
+"""
+    ).fetchone()[0]
+    * 0.001
+)
+"""Mass of m207302 in kg."""
+logger.info("Mass of material 207302 {:3g}kg", mass_207302)
+
+ratio = mass_207302 / total_mass
+
+logger.info("Ratio is {:3g}%", ratio * 100)
 
 
 def collect_model_info(model: Universe, conn: Connection):
@@ -183,7 +223,7 @@ def collect_model_info(model: Universe, conn: Connection):
 def main():
     """Collect information on a MCNP model."""
     init_logger(log_path=WRK_DIR / "model-info.log")
-    collect_model_info(model, conn)
+    # collect_model_info(model, conn)
 
 
 if __name__ == "__main__":
