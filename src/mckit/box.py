@@ -4,6 +4,8 @@ from typing import Self
 
 import numpy as np
 
+from numpy._typing import NDArray
+
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import EX, EY, EZ
 from mckit.geometry import GLOBAL_BOX as _GLOBAL_BOX
@@ -26,16 +28,20 @@ class Box(_Box):
         )
 
     @classmethod
-    def from_bounds(
-        cls, minx: float, maxx: float, miny: float, maxy: float, minz: float, maxz: float
-    ) -> Self:
-        min_vals = np.array([minx, miny, minz])
-        max_vals = np.array([maxx, maxy, maxz])
+    def from_corners(cls, min_vals: NDArray, max_vals: np.NDArray) -> Self:
         if not np.all(min_vals < max_vals):
             raise ValueError("Unsorted boundaries values")
         center = 0.5 * (min_vals + max_vals)
         widths = max_vals - min_vals
         return cls(center, *widths, ex=EX, ey=EY, ez=EZ)
+
+    @classmethod
+    def from_bounds(
+        cls, minx: float, maxx: float, miny: float, maxy: float, minz: float, maxz: float
+    ) -> Self:
+        min_vals = np.array([minx, miny, minz])
+        max_vals = np.array([maxx, maxy, maxz])
+        return cls.from_corners(min_vals, max_vals)
 
     def __repr__(self):
         exm = "" if np.array_equal(self.ex, EX) else f"ex={self.ex}"
