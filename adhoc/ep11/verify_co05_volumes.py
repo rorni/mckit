@@ -51,7 +51,7 @@ def init_logger(level="INFO", _format=LOG_FORMAT, log_path="model-info.log"):
         backtrace=True,
         diagnose=True,
     )
-    """Initalize logging to stderr and file."""
+    """Initialize logging to stderr and file."""
     logger.add(log_path, backtrace=True, diagnose=True)
 
 
@@ -133,46 +133,48 @@ conn.executescript(
     """
 )
 
-conn.executescript(
+
+def analyze(conn):
+    conn.executescript(
+        """
+        drop view material_mass;
+        create view material_mass as
+        select
+            a.material,
+            sum(volume * density) as mass
+        from
+            cell_material a
+            inner join cell_geometry b on a.cell = b.cell
+        group by
+            a.material
     """
-    drop view material_mass;
-    create view material_mass as
-    select
-        a.material,
-        sum(volume * density) as mass
-    from
-        cell_material a
-        inner join cell_geometry b on a.cell = b.cell
-    group by
-        a.material
-"""
-)
+    )
 
-total_mass = (
-    conn.execute(
-        """
-    select sum(mass) from material_mass where material
-"""
-    ).fetchone()[0]
-    * 0.001
-)
-"""Total mass of materials in kg."""
-logger.info("Total mass of materials {:3g}kg", total_mass)
+    total_mass = (
+        conn.execute(
+            """
+        select sum(mass) from material_mass
+    """
+        ).fetchone()[0]
+        * 0.001
+    )
+    """Total mass of materials in kg."""
+    logger.info("Total mass of materials {:3g}kg", total_mass)
 
-mass_207302 = (
-    conn.execute(
-        """
-    select sum(mass) from material_mass where material == 207302
-"""
-    ).fetchone()[0]
-    * 0.001
-)
-"""Mass of m207302 in kg."""
-logger.info("Mass of material 207302 {:3g}kg", mass_207302)
+    mass_207302 = (
+        conn.execute(
+            """
+        select sum(mass) from material_mass where material == 207302
+    """
+        ).fetchone()[0]
+        * 0.001
+    )
+    """Mass of m207302 in kg."""
+    logger.info("Mass of material 207302 {:3g}kg", mass_207302)
 
-ratio = mass_207302 / total_mass
+    ratio = mass_207302 / total_mass
 
-logger.info("Ratio is {:3g}%", ratio * 100)
+    logger.info("Ratio is {:3g}%", ratio * 100)
 
 
 def collect_model_info(model: Universe, conn: Connection):
@@ -191,13 +193,13 @@ def collect_model_info(model: Universe, conn: Connection):
                 """,
                 (cell, material, density),
             )
-            bounding_box = c.shape.bounding_box(box=global_box, tol=2.0)
+            bounding_box = c.shape.bounding_box(box=global_box, tol=1.0)
             (
                 (box_min_x, box_max_x),
                 (box_min_y, box_max_y),
                 (box_min_z, box_max_z),
             ) = bounding_box.bounds
-            min_vol = bounding_box.volume * relative_min_volume
+            min_vol = 1e-3
             volume = c.shape.volume(bounding_box, min_vol)
             conn.execute(
                 """
@@ -223,7 +225,7 @@ def collect_model_info(model: Universe, conn: Connection):
 def main():
     """Collect information on a MCNP model."""
     init_logger(log_path=WRK_DIR / "model-info.log")
-    # collect_model_info(model, conn)
+    collect_model_info(model, conn)
 
 
 if __name__ == "__main__":
