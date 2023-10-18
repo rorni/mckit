@@ -116,6 +116,7 @@ mkl-devel = "2023.2.0"
 # TODO dvp: check
 #      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 #
+typer = {version = ">=0.9.0", extras = ["all"]}
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
@@ -163,6 +164,7 @@ mypy = ">=1.2.0"
 pep8-naming = ">=0.12.1"
 types-setuptools = ">=57.4.2"
 numpy = ">=1.23.2"
+types-tqdm = ">=4.66.0.2"
 
 [tool.poetry.group.flake8.dependencies]
 darglint = ">=1.8.1"
@@ -353,7 +355,7 @@ module = [
     "click",
     "click.testing",
     "loguru",
-    "importlib_metadata",
+    "mckit.*",  # TODO (dvp, style): make everything typed including extension 'geometry'
     "multipledispatch",
     "nox",
     "numpy.testing",

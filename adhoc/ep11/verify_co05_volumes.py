@@ -12,19 +12,22 @@ and cannot affect SDDR value too much.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 import os
 import sqlite3 as sq
 import sys
 
 from pathlib import Path
+from time import time_ns
 
 import dotenv
 import numpy as np
 
 from loguru import logger
 from tqdm import tqdm
+
+import typer
 
 from mckit.geometry import EX, EY, EZ, Box
 from mckit.parser import ParseResult, from_file
@@ -36,16 +39,19 @@ if TYPE_CHECKING:
 
 dotenv.load_dotenv()
 
+__version__ = "0.0.1"
 
-DEBUG = True
-LOG_FORMAT = (
+DEBUG = os.getenv("MCKIT_DEBUG") is not None
+
+LOG_FORMAT = os.getenv(
+    "MCKIT_LOG_FORMAT",
     "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
     "<level>{level: <8}</level> | "
-    "<level>{message}</level>"
+    "<level>{message}</level>",
 )
 
 
-def init_logger(level="INFO", _format=LOG_FORMAT, log_path="model-info.log"):
+def _init_logger(level="INFO", _format=LOG_FORMAT, log_path=None) -> None:
     logger.remove()
     logger.add(
         sys.stderr,
@@ -55,7 +61,8 @@ def init_logger(level="INFO", _format=LOG_FORMAT, log_path="model-info.log"):
         diagnose=True,
     )
     """Initialize logging to stderr and file."""
-    logger.add(log_path, backtrace=True, diagnose=True)
+    if log_path:
+        logger.add(log_path, backtrace=True, diagnose=True)
 
 
 WRK_DIR = Path(os.getenv("MCKIT_MODEL", "~/dev/mcnp/ep11/wrk/pc/Co05-volumes")).expanduser()
@@ -67,7 +74,7 @@ if not MODEL_PATH.is_file():
     raise FileNotFoundError(MODEL_PATH)
 
 
-def from_bounds(
+def _from_bounds(
     minx: float, maxx: float, miny: float, maxy: float, minz: float, maxz: float
 ) -> Box:
     min_vals = np.array([minx, miny, minz])
@@ -79,7 +86,7 @@ def from_bounds(
     return Box(center, *widths, ex=EX, ey=EY, ez=EZ)
 
 
-def create_global_box():
+def create_global_box() -> Box:
     """Define the box surrounding the model.
 
     This cell 196000 with zero importance.
@@ -91,9 +98,11 @@ def create_global_box():
     206003 PY 1200
     206004 PZ -620
     206005 PZ 740
+
+    Returns:
+        Box: box with the given boundaries
     """
-    global_box = from_bounds(830.0, 3350, -1200.0, 1200.0, -620, 740)
-    logger.info("Global box: {}", global_box)
+    global_box = _from_bounds(830.0, 3350, -1200.0, 1200.0, -620, 740)
     logger.info("Global box volume: {}", global_box.volume)
     return global_box
 
@@ -114,14 +123,16 @@ def load_mcnp_model(model_path: Path = MODEL_PATH) -> ParseResult:
     return model_info
 
 
-def init_data_base(_conn: Connection) -> None:
-    _conn.executescript(
+def _init_data_base(con: Connection) -> None:
+    logger.info("Deleting the old tables")
+    con.executescript(
         """
         drop table if exists cell_geometry;
         drop table if exists cell_material;
         """
     )
-    _conn.executescript(
+    logger.info("Creating tables cell_geometry and cell_material")
+    con.executescript(
         """
         create table cell_geometry (
             cell int primary key,
@@ -131,8 +142,10 @@ def init_data_base(_conn: Connection) -> None:
             box_max_y real,
             box_min_z real,
             box_max_z real,
+            box_time  int,
             volume real,
-            min_vol real
+            min_vol real,
+            vol_time int
         );
         create table cell_material (
             cell int primary key,
@@ -141,7 +154,8 @@ def init_data_base(_conn: Connection) -> None:
         );
         """
     )
-    _conn.executescript(
+    logger.info("Creating view material_mass")
+    con.executescript(
         """
         drop view if exists material_mass;
         create view material_mass as
@@ -155,16 +169,18 @@ def init_data_base(_conn: Connection) -> None:
             a.material
         """
     )
+    logger.info("Database is initialized")
 
 
-def collect_model_info(model: Universe, _conn: Connection, global_box: Box, min_vol: float = 0.25):
-    for c in tqdm(model):
+def _collect_model_info(model: Universe, con: Connection, global_box: Box, min_vol: float = 0.25):
+    _init_data_base(con)
+    for i, c in enumerate(tqdm(model)):
         m: Material = c.material()
         if m is not None:
             cell = c.name()
             material = m.composition.name()
             density = m.density
-            _conn.execute(
+            con.execute(
                 """
                 insert into cell_material (
                     cell, material, density
@@ -173,19 +189,35 @@ def collect_model_info(model: Universe, _conn: Connection, global_box: Box, min_
                 """,
                 (cell, material, density),
             )
-            bounding_box = c.shape.bounding_box(box=global_box, tol=1.0)
+            box_time = -time_ns()
+            bounding_box = c.shape.bounding_box(box=global_box, tol=2.0)
+            box_time += time_ns()
             (
                 (box_min_x, box_max_x),
                 (box_min_y, box_max_y),
                 (box_min_z, box_max_z),
             ) = bounding_box.bounds
+            logger.debug(
+                "Added box for cell {}: {} {} {}, {}, {}",
+                cell,
+                box_min_x,
+                box_max_x,
+                box_min_y,
+                box_max_y,
+                box_min_z,
+                box_max_z,
+            )
+            vol_time = -time_ns()
             volume = c.shape.volume(bounding_box, min_vol)
-            _conn.execute(
+            vol_time += time_ns()
+            con.execute(
                 """
                 insert into cell_geometry (
-                    cell, box_min_x, box_max_x, box_min_y, box_max_y, box_min_z, box_max_z, volume, min_vol
+                    cell,
+                    box_min_x, box_max_x, box_min_y, box_max_y, box_min_z, box_max_z, box_time,
+                    volume, min_vol, vol_time
                 )
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     cell,
@@ -195,76 +227,120 @@ def collect_model_info(model: Universe, _conn: Connection, global_box: Box, min_
                     box_max_y,
                     box_min_z,
                     box_max_z,
+                    box_time,
                     volume,
                     min_vol,
+                    vol_time,
                 ),
             )
+            logger.debug(
+                "Added volume for cell {}: {}, rel: {}",
+                cell,
+                volume,
+                min_vol / volume if volume > 0 else 1.0,
+            )
+            con.commit()
+            if DEBUG and i > 2:
+                break
 
 
-def fill_data_base(_conn: Connection, model_path: Path) -> None:
-    """Collect information on a MCNP model."""
-    global_box = create_global_box()
-    model_parse = load_mcnp_model(model_path)
-    model = model_parse.universe
-    collect_model_info(model, _conn, global_box)
+app = typer.Typer()
 
 
-def analyze(_conn: Connection) -> None:
-    logger.info("Analyzing the MCNP model volumes.")
-    init_data_base(_conn)
-    _conn.executescript(
-        """
-        drop view if exists material_mass;
-        create view material_mass as
-        select
-            a.material,
-            sum(volume * density) as mass
-        from
-            cell_material a
-            inner join cell_geometry b on a.cell = b.cell
-        group by
-            a.material
-    """
-    )
-
-    total_mass = (
-        _conn.execute(
-            """
-        select sum(mass) from material_mass
-    """
-        ).fetchone()[0]
-        * 0.001
-    )
-    """Total mass of materials in kg."""
-    logger.info("Total mass of materials {:3g}kg", total_mass)
-
-    mass_207302 = (
-        _conn.execute(
-            """
-        select sum(mass) from material_mass where material == 207302
-    """
-        ).fetchone()[0]
-        * 0.001
-    )
-    """Mass of m207302 in kg."""
-    logger.info("Mass of material 207302 {:3g}kg", mass_207302)
-
-    ratio = mass_207302 / total_mass
-
-    logger.info("Ratio is {:3g}%", ratio * 100)
-
-
-def main():
-    init_logger(log_path=WRK_DIR / "model-info.log")
-    db_path = WRK_DIR / "model-info.sqlite"
+@app.command()
+def fill(
+    db_path: Annotated[
+        Path,
+        typer.Option(
+            help="Path to the sqlite database to be created",
+        ),
+    ] = WRK_DIR
+    / "model-info.sqlite",
+    model_path: Annotated[
+        Path,
+        typer.Option(
+            help="Path to the input MCNP model",
+        ),
+    ] = WRK_DIR
+    / "model-info.log",
+) -> None:
+    """Collect information from an MCNP model to database."""
     logger.info("Creating model info database {}", db_path)
-    conn = sq.connect(db_path)
+    con = sq.connect(db_path)
     try:
-        fill_data_base(conn, MODEL_PATH)
-        analyze(conn)
+        global_box = create_global_box()
+        model_parse = load_mcnp_model(model_path)
+        model = model_parse.universe
+        _collect_model_info(model, con, global_box)
     finally:
-        conn.close()
+        con.close()
+    logger.success("The database {} is created", db_path)
+
+
+@app.command()
+def analyze(
+    db_path: Annotated[
+        Path,
+        typer.Option(
+            help="Path to the sqlite database to be created",
+        ),
+    ] = WRK_DIR
+    / "model-info.sqlite",
+    suspicious: Annotated[
+        int, typer.Option(help="Material id to find the mass ratio to total")
+    ] = 207302,
+) -> None:
+    """Analyze the information on model.
+
+    - Define ratio of a given "suspicious" material to total mass.
+    """
+    logger.info("Analyzing the MCNP model volumes.")
+    con = sq.connect(db_path)
+    try:
+        total_mass = (
+            con.execute(
+                """
+                select sum(mass) from material_mass
+                """
+            ).fetchone()[0]
+            * 0.001
+        )
+        """Total mass of materials in kg."""
+        logger.info("Total mass of materials {:3g}kg", total_mass)
+
+        mass_207302_fetch = con.execute(
+            """
+            select sum(mass) from material_mass where material = ?
+            """,
+            (suspicious,),
+        ).fetchone()
+        if mass_207302_fetch:
+            mass_207302 = mass_207302_fetch[0] * 0.001
+            """Mass of m207302 in kg."""
+            logger.info("Mass of material 207302 {:3g}kg", mass_207302)
+
+            ratio = mass_207302 / total_mass
+
+            logger.info("Ratio is {:3g}%", ratio * 100)
+        else:
+            logger.warning("Cannot find material {}")
+    finally:
+        con.close()
+    logger.success("The database {} is analyzed", db_path)
+
+
+@app.callback()
+def start(
+    log_path: Annotated[
+        Path,
+        typer.Option(help="Path to log file."),
+    ] = WRK_DIR
+    / "model-info.log"
+) -> None:
+    """Present information on MCNP cells volumes and masses."""
+    _init_logger(log_path=log_path)
+    logger.info("{}, v{}", Path(__file__).name, __version__)
 
 
 if __name__ == "__main__":
-    main()
+    app()

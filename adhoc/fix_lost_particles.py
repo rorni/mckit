@@ -10,10 +10,11 @@ from pathlib import Path
 
 import numpy as np
 
+from tqdm import tqdm
+
 from mckit import Body, Universe
 from mckit.box import Box
 from mckit.parser import from_file
-from tqdm import tqdm
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
