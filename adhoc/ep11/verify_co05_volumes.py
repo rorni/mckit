@@ -1,4 +1,5 @@
 #!python
+# noinspection GrazieInspection
 """Find ratio of a volume fo steel with Co0.5 fraction to other steel volume.
 
 The model pc11_shields8_Co05.i is variant where the specific material was applied for
@@ -26,7 +27,7 @@ from loguru import logger
 from tqdm import tqdm
 
 from mckit.geometry import EX, EY, EZ, Box
-from mckit.parser import from_file
+from mckit.parser import ParseResult, from_file
 
 if TYPE_CHECKING:
     from sqlite3 import Connection
@@ -35,6 +36,8 @@ if TYPE_CHECKING:
 
 dotenv.load_dotenv()
 
+
+DEBUG = True
 LOG_FORMAT = (
     "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
     "<level>{level: <8}</level> | "
@@ -89,55 +92,58 @@ def create_global_box():
     206004 PZ -620
     206005 PZ 740
     """
-    return from_bounds(830.0, 3350, -1200.0, 1200.0, -620, 740)
+    global_box = from_bounds(830.0, 3350, -1200.0, 1200.0, -620, 740)
+    logger.info("Global box: {}", global_box)
+    logger.info("Global box volume: {}", global_box.volume)
+    return global_box
 
 
-relative_min_volume = 1e-5
-global_box = create_global_box()
-logger.info("Global box: {}", global_box)
-logger.info("Global box volume: {}", global_box.volume)
-logger.info("Processing with relative min. volume {}", relative_min_volume)
-logger.info("Loading model from {}", MODEL_PATH)
-model_info = from_file(MODEL_PATH)
-cells_index = model_info.cells_index
-model = model_info.universe
-logger.info("Loaded model with {} cells", len(model))
+def load_mcnp_model(model_path: Path = MODEL_PATH) -> ParseResult:
+    """Load MCNP model.
 
-db_path = WRK_DIR / "model-info.sqlite"
-logger.info("Creating model info database {}", db_path)
-conn = sq.connect(db_path)
-conn.executescript(
+    Args:
+        model_path: path to the model
+
+    Returns:
+        ParseResult: Universe and indexes for cells, surfaces transformations and materials
     """
-    drop table if exists cell_geometry;
-    drop table if exists cell_material;
-    """
-)
-conn.executescript(
-    """
-    create table cell_geometry (
-        cell int primary key,
-        box_min_x real,
-        box_max_x real,
-        box_min_y real,
-        box_max_y real,
-        box_min_z real,
-        box_max_z real,
-        volume real,
-        min_vol real
-    );
-    create table cell_material (
-        cell int primary key,
-        material int,
-        density real
-    );
-    """
-)
+    logger.info("Loading model from {}", model_path)
+    model_info = from_file(MODEL_PATH)
+    model = model_info.universe
+    logger.info("Loaded model with {} cells", len(model))
+    return model_info
 
 
-def analyze(conn):
-    conn.executescript(
+def init_data_base(_conn: Connection) -> None:
+    _conn.executescript(
         """
-        drop view material_mass;
+        drop table if exists cell_geometry;
+        drop table if exists cell_material;
+        """
+    )
+    _conn.executescript(
+        """
+        create table cell_geometry (
+            cell int primary key,
+            box_min_x real,
+            box_max_x real,
+            box_min_y real,
+            box_max_y real,
+            box_min_z real,
+            box_max_z real,
+            volume real,
+            min_vol real
+        );
+        create table cell_material (
+            cell int primary key,
+            material int,
+            density real
+        );
+        """
+    )
+    _conn.executescript(
+        """
+        drop view if exists material_mass;
         create view material_mass as
         select
             a.material,
@@ -147,44 +153,18 @@ def analyze(conn):
             inner join cell_geometry b on a.cell = b.cell
         group by
             a.material
-    """
+        """
     )
 
-    total_mass = (
-        conn.execute(
-            """
-        select sum(mass) from material_mass
-    """
-        ).fetchone()[0]
-        * 0.001
-    )
-    """Total mass of materials in kg."""
-    logger.info("Total mass of materials {:3g}kg", total_mass)
 
-    mass_207302 = (
-        conn.execute(
-            """
-        select sum(mass) from material_mass where material == 207302
-    """
-        ).fetchone()[0]
-        * 0.001
-    )
-    """Mass of m207302 in kg."""
-    logger.info("Mass of material 207302 {:3g}kg", mass_207302)
-
-    ratio = mass_207302 / total_mass
-
-    logger.info("Ratio is {:3g}%", ratio * 100)
-
-
-def collect_model_info(model: Universe, conn: Connection):
+def collect_model_info(model: Universe, _conn: Connection, global_box: Box, min_vol: float = 0.25):
     for c in tqdm(model):
         m: Material = c.material()
         if m is not None:
             cell = c.name()
             material = m.composition.name()
             density = m.density
-            conn.execute(
+            _conn.execute(
                 """
                 insert into cell_material (
                     cell, material, density
@@ -199,9 +179,8 @@ def collect_model_info(model: Universe, conn: Connection):
                 (box_min_y, box_max_y),
                 (box_min_z, box_max_z),
             ) = bounding_box.bounds
-            min_vol = 1e-3
             volume = c.shape.volume(bounding_box, min_vol)
-            conn.execute(
+            _conn.execute(
                 """
                 insert into cell_geometry (
                     cell, box_min_x, box_max_x, box_min_y, box_max_y, box_min_z, box_max_z, volume, min_vol
@@ -222,10 +201,69 @@ def collect_model_info(model: Universe, conn: Connection):
             )
 
 
-def main():
+def fill_data_base(_conn: Connection, model_path: Path) -> None:
     """Collect information on a MCNP model."""
+    global_box = create_global_box()
+    model_parse = load_mcnp_model(model_path)
+    model = model_parse.universe
+    collect_model_info(model, _conn, global_box)
+
+
+def analyze(_conn: Connection) -> None:
+    logger.info("Analyzing the MCNP model volumes.")
+    init_data_base(_conn)
+    _conn.executescript(
+        """
+        drop view if exists material_mass;
+        create view material_mass as
+        select
+            a.material,
+            sum(volume * density) as mass
+        from
+            cell_material a
+            inner join cell_geometry b on a.cell = b.cell
+        group by
+            a.material
+    """
+    )
+
+    total_mass = (
+        _conn.execute(
+            """
+        select sum(mass) from material_mass
+    """
+        ).fetchone()[0]
+        * 0.001
+    )
+    """Total mass of materials in kg."""
+    logger.info("Total mass of materials {:3g}kg", total_mass)
+
+    mass_207302 = (
+        _conn.execute(
+            """
+        select sum(mass) from material_mass where material == 207302
+    """
+        ).fetchone()[0]
+        * 0.001
+    )
+    """Mass of m207302 in kg."""
+    logger.info("Mass of material 207302 {:3g}kg", mass_207302)
+
+    ratio = mass_207302 / total_mass
+
+    logger.info("Ratio is {:3g}%", ratio * 100)
+
+
+def main():
     init_logger(log_path=WRK_DIR / "model-info.log")
-    collect_model_info(model, conn)
+    db_path = WRK_DIR / "model-info.sqlite"
+    logger.info("Creating model info database {}", db_path)
+    conn = sq.connect(db_path)
+    try:
+        fill_data_base(conn, MODEL_PATH)
+        analyze(conn)
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
