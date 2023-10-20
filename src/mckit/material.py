@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Tuple, Union, cast
 
+import importlib.resources as rs
 import math
-import os
-import sys
 
 from functools import reduce
 from operator import xor
@@ -17,27 +16,27 @@ __all__ = ["AVOGADRO", "Element", "Composition", "Material"]
 
 AVOGADRO = 6.0221408576e23
 MATERIAL_FRACTION_FORMAT = "{0:.6e}"
-_CHARGE_TO_NAME = {}
-_NAME_TO_CHARGE = {}
-_NATURAL_ABUNDANCE = {}
-_ISOTOPE_MASS = {}
-_path = os.path.dirname(sys.modules[__name__].__file__)
+_CHARGE_TO_NAME: dict[int, str] = {}
+_NAME_TO_CHARGE: dict[str, int] = {}
+_NATURAL_ABUNDANCE: dict[int, dict[int, float]] = {}
+_ISOTOPE_MASS: dict[int, dict[int, float]] = {}
 
-with open(_path + "/data/isotopes.dat") as f:
-    for line in f:
-        number, name, *data = line.split()
-        number = int(number)
-        name = name.upper()
-        _CHARGE_TO_NAME[number] = name
-        _NAME_TO_CHARGE[name] = number
-        _NATURAL_ABUNDANCE[number] = {}
-        _ISOTOPE_MASS[number] = {}
-        for i in range(len(data) // 3):
-            isotope = int(data[i * 3])
-            _ISOTOPE_MASS[number][isotope] = float(data[i * 3 + 1])
-            abundance = data[i * 3 + 2]
-            if abundance != "*":
-                _NATURAL_ABUNDANCE[number][isotope] = float(abundance) / 100.0
+with rs.as_file(rs.files(__package__).joinpath("data/isotopes.dat")) as p:
+    with p.open() as f:
+        for line in f:
+            str_number, name, *data = line.split()
+            number = int(str_number)
+            name = name.upper()
+            _CHARGE_TO_NAME[number] = name
+            _NAME_TO_CHARGE[name] = number
+            _NATURAL_ABUNDANCE[number] = {}
+            _ISOTOPE_MASS[number] = {}
+            for i in range(len(data) // 3):
+                isotope = int(data[i * 3])
+                _ISOTOPE_MASS[number][isotope] = float(data[i * 3 + 1])
+                abundance = data[i * 3 + 2]
+                if abundance != "*":
+                    _NATURAL_ABUNDANCE[number][isotope] = float(abundance) / 100.0
 
 
 TFraction = Tuple[Union["Element", int, str], float]
@@ -81,9 +80,11 @@ class Composition(Card):
     """Relative composition element concentration equality tolerance."""
 
     # TODO dvp: are there specs using both atomic and weight definitions?
-    def __init__(self, atomic: TFractions = None, weight: TFractions = None, **options: Any):
+    def __init__(
+        self, atomic: TFractions | None = None, weight: TFractions | None = None, **options: Any
+    ):
         Card.__init__(self, **options)
-        self._composition = {}  # type Dict[Element, float]
+        self._composition: dict[Element, float] = {}
         elem_w = []
         frac_w = []
 
@@ -424,11 +425,11 @@ class Material:
 
     def __init__(
         self,
-        atomic: TFractions = None,
-        weight: TFractions = None,
-        composition: Composition = None,
-        density: float = None,
-        concentration: float = None,
+        atomic: TFractions | None = None,
+        weight: TFractions | None = None,
+        composition: Composition | None = None,
+        density: float | None = None,
+        concentration: float | None = None,
         **options,
     ):
         # Attributes: _n - atomic density (concentration)
@@ -444,7 +445,7 @@ class Material:
         if concentration:
             self._n = concentration
         else:
-            self._n = density * AVOGADRO / self._composition.molar_mass
+            self._n = density * AVOGADRO / self._composition.molar_mass if density else None
         self._options = options
 
     def __eq__(self, other):
@@ -564,31 +565,35 @@ class Material:
 class Element:
     """Represents isotope or isotope mixture for natural abundance case.
 
-    Parameters
-    ----------
-    _name : str or int
-        Name of isotope. It can be ZAID = Z * 1000 + A, where Z - charge,
-        A - the number of protons and neutrons. If A = 0, then natural abundance
-        is used. Also it can be an atom_name optionally followed by '-' and A.
-        '-' can be omitted. If there is no A, then A is assumed to be 0.
-    comment : str, optional
-        Optional comment to the element.
-    lib : str
-        Data library ID. Usually it is MCNP library, like '31b' for FENDL31b.
-    isomer : int
-        Isomer level. Default 0. Usually may appear in FISPACT output.
+    Attributes:
+        _charge: Z of the element,
+        _mass_number: A of the element
+        _comment: Optional comment to the element.
+        _lib:  Data library ID. Usually it is MCNP library, like '31b' for FENDL31b.
+        _isomer: Isomer level. Default 0. Usually may appear in FISPACT output.
+        _molar: molar mass of the element
 
     Methods:
-    -------
-    expand()
-        Expands natural composition of this element.
-    fispact_repr()
-        Gets FISPACT representation of the element.
-    mcnp_repr()
-        Gets MCNP representation of the element.
+        expand()
+            Expands natural composition of this element.
+        fispact_repr()
+            Gets FISPACT representation of the element.
+        mcnp_repr()
+            Gets MCNP representation of the element.
     """
 
     def __init__(self, _name: str | int, lib=None, isomer=0, comment=None):
+        """Initialize an Element.
+
+        Args:
+            _name: Name of isotope. It can be ZAID = Z * 1000 + A, where Z - charge,
+            A - the number of protons and neutrons. If A = 0, then natural abundance
+            is used. Also, it can be an atom_name optionally followed by '-' and A.
+            '-' can be omitted. If there is no A, then A is assumed to be 0.
+            comment: Optional comment to the element.
+            lib:  Data library ID. Usually it is MCNP library, like '31b' for FENDL31b.
+            isomer: Isomer level. Default 0. Usually may appear in FISPACT output.
+        """
         if isinstance(_name, int):
             self._charge = _name // 1000
             self._mass_number = _name % 1000
@@ -686,14 +691,11 @@ class Element:
         """Gets isomer level."""
         return self._isomer
 
-    def expand(self):
+    def expand(self) -> dict[Element, float]:
         """Expands natural element into individual isotopes.
 
         Returns:
-        -------
-        elements : dict
-            A dictionary of elements that are comprised by this one.
-            Keys - elements - Element instances, values - atomic fractions.
+            A dictionary of elements that are comprised by the isotopes of this one and their fractions.
         """
         result = {}
         if self._mass_number > 0 and self._mass_number in _NATURAL_ABUNDANCE[self._charge].keys():
