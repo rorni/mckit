@@ -113,15 +113,15 @@ class Composition(Card):
             totals_diff = total_frac_a - total_frac_w
             sq_root = np.sqrt(totals_diff**2 + 4 * atoms_in_weight_spec * mass_in_atomic_spec)
             if totals_diff <= 0:
-                self._mu = 0.5 * (sq_root - totals_diff) / atoms_in_weight_spec
+                self._molar_mass: float = 0.5 * (sq_root - totals_diff) / atoms_in_weight_spec
             else:
-                self._mu = 2 * mass_in_atomic_spec / (sq_root + totals_diff)
+                self._molar_mass = 2 * mass_in_atomic_spec / (sq_root + totals_diff)
 
-            norm_factor = self._mu * atoms_in_weight_spec + total_frac_a
+            norm_factor = self._molar_mass * atoms_in_weight_spec + total_frac_a
             for el, frac in zip(elem_w, frac_w):
                 if el not in self._composition.keys():
                     self._composition[el] = 0.0
-                self._composition[el] += self._mu / norm_factor * frac / el.molar_mass
+                self._composition[el] += self._molar_mass / norm_factor * frac / el.molar_mass
             for el, frac in zip(elem_a, frac_a):
                 if el not in self._composition.keys():
                     self._composition[el] = 0.0
@@ -130,10 +130,12 @@ class Composition(Card):
             raise ValueError("Incorrect set of parameters.")
         self._hash = reduce(xor, map(hash, self._composition.keys()))
 
-    def copy(self):
+    def copy(self) -> Composition:
         return Composition(atomic=cast(TFractions, self._composition.items()), **self.options)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Composition):
+            return False
         if len(self._composition.keys()) != len(other._composition.keys()):
             return False
         for k1, v1 in self._composition.items():
@@ -201,19 +203,15 @@ class Composition(Card):
             item = Element(item)
         return item in self._composition
 
-    def get_atomic(self, isotope):
+    def get_atomic(self, isotope: str | Element) -> float:
         """Gets atomic fraction of the isotope.
 
         Raises KeyError if the composition doesn't contain the isotope.
 
-        Parameters
-        ----------
-        isotope : str or Element
-            Isotope. It can be either isotope name or Element instance.
+        Args:
+            isotope: Isotope. It can be either isotope name or Element instance.
 
         Returns:
-        -------
-        frac : float
             Atomic fraction of the specified isotope.
         """
         if not isinstance(isotope, Element):
@@ -225,35 +223,29 @@ class Composition(Card):
 
         Raises KeyError if the composition doesn't contain the isotope.
 
-        Parameters
-        ----------
-        isotope : str or Element
-            Isotope. It can be either isotope name or Element instance.
+        Args:
+            isotope : Isotope. It can be either isotope name or Element instance.
 
         Returns:
-        -------
-        frac : float
             Weight fraction of the specified isotope.
         """
         if not isinstance(isotope, Element):
             isotope = Element(isotope)
-        frac: float = self._composition[isotope] * isotope.molar_mass / self._mu
+        frac: float = self._composition[isotope] * isotope.molar_mass / self._molar_mass
         return frac
 
     @property
-    def molar_mass(self):
+    def molar_mass(self) -> float:
         """Gets composition's effective molar mass [g / mol]."""
-        return self._mu
+        return self._molar_mass
 
-    def expand(self):
+    def expand(self) -> Composition:
         """Expands elements with natural abundances into detailed isotope composition.
 
         Returns:
-        -------
-        new_comp : Composition
             New expanded composition or self.
         """
-        composition = {}
+        composition: dict[Element, float] = {}
         already = True
         for el, conc in self._composition.items():
             if el.mass_number == 0:
@@ -266,7 +258,7 @@ class Composition(Card):
             return self
         return Composition(atomic=composition.items(), **self.options)
 
-    def natural(self, tolerance=1.0e-8):
+    def natural(self, tolerance=1.0e-8) -> Composition | None:
         """Tries to replace detailed isotope composition by natural elements.
 
         Modifies current object.
@@ -284,11 +276,11 @@ class Composition(Card):
             composition cannot be reduced to natural.
         """
         already = True
-        by_charge = {}  # type: Dict[int, Dict[int, float]]
+        by_charge: dict[int, dict[int, float]] = {}
         for elem, fraction in self._composition.items():
             q = elem.charge
             if q not in by_charge.keys():
-                by_charge[q] = {}  # type: Dict[int, float]
+                by_charge[q] = {}
             a = elem.mass_number
             if a > 0:
                 already = False
@@ -299,7 +291,7 @@ class Composition(Card):
         if already:  # No need for further checking - only natural elements present.
             return self
 
-        composition = {}  # type: Dict[Element, float]
+        composition: dict[Element, float] = {}
         for q, isotopes in by_charge.items():
             frac_0 = isotopes.pop(0, None)
             tot_frac = sum(isotopes.values())
@@ -318,7 +310,7 @@ class Composition(Card):
                 composition[elem] += frac_0
         return Composition(atomic=cast(TFractions, composition.items()), **self.options)
 
-    def elements(self):
+    def elements(self) -> Iterable[Element]:
         """Gets iterator over composition's elements."""
         return iter(self._composition.keys())
 
@@ -442,10 +434,14 @@ class Material:
 
         if concentration and density or not concentration and not density:
             raise ValueError("Incorrect set of parameters.")
-        if concentration:
+        if concentration is not None:
             self._n = concentration
+            if density is not None:
+                raise ValueError("Both concentration and density are specified")
         else:
-            self._n = density * AVOGADRO / self._composition.molar_mass if density else None
+            if density is None:
+                raise ValueError("Neither concentration nor density is specified")
+            self._n = density * AVOGADRO / self._composition.molar_mass
         self._options = options
 
     def __eq__(self, other):
