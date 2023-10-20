@@ -35,7 +35,7 @@ from mckit.parser import ParseResult, from_file
 if TYPE_CHECKING:
     from sqlite3 import Connection
 
-    from mckit import Material, Universe
+    from mckit import Element, Material, Universe
 
 dotenv.load_dotenv()
 
@@ -244,7 +244,7 @@ def _collect_model_info(model: Universe, con: Connection, global_box: Box, min_v
                 break
 
 
-app = typer.Typer()
+app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
 @app.command()
@@ -294,58 +294,118 @@ def add_materials(
     ] = WRK_DIR
     / "pc11_shields8_Co05.i",
 ) -> None:
-    """Load material compositions to the database."""
+    """Load material compositions and nuclides to the database."""
     logger.info("Adding  materials info database {}", db_path)
     con = sq.connect(db_path)
     try:
         con.executescript(
             """
-            drop table if exists compositions;
-            create table compositions(
-                material_id int primary key,
+            drop table if exists nuclides;
+            create table nuclides(
                 charge int,
                 mass_number int,
-                lib text,
                 isomer int,
-                fraction real
+                molar_mass real,
+                primary key (charge, mass_number, isomer)
+            );
+            drop table if exists compositions;
+            create table compositions(
+                material_id int,
+                molar_mass  real,
+                primary key (material_id)
+            );
+            drop table if exists composition_nuclides;
+            create table composition_nuclides(
+                material_id int,
+                charge int,
+                mass_number int,
+                isomer int,
+                lib text,
+                fraction real,
+                primary key (material_id, charge, mass_number, isomer, lib),
+                foreign key (charge, mass_number, isomer) references nuclides (charge, mass_number, isomer),
+                foreign key (material_id) references compositions (material_id)
             );
         """
         )
         model_parse = load_mcnp_model(model_path)
         model = model_parse.universe
         compositions = model.get_compositions()
-
-        for composition in compositions:
-            material_id = composition.name()
-            if material_id is None:
-                raise ValueError("Material is not specified")
-            for element, fraction in composition:
-                con.execute(
-                    """
-                    insert into compositions (
-                        material_id,
-                        charge,
-                        mass_number,
-                        lib,
-                        isomer,
-                        fraction
-                    ) values (
-                        ?, ?, ?, ?, ?, ?
-                    )
-                    """,
-                    (
-                        material_id,
-                        element.charge,
-                        element.mass_number,
-                        element.lib,
-                        element.isomer,
-                        fraction,
-                    ),
+        con.executemany(
+            """
+            insert into compositions (
+                material_id,
+                molar_mass
+            ) values (
+                ?, ?
+            )
+            """,
+            (
+                (
+                    int(c.name()) if c.name() else 0,
+                    c.molar_mass,
                 )
+                for c in compositions
+            ),
+        )
+        con.commit()
+
+        elements: set[Element] = set()
+        elements.update(*(composition.elements() for composition in compositions))
+        con.executemany(
+            """
+            insert into nuclides (
+                charge,
+                mass_number,
+                isomer,
+                molar_mass
+            ) values (
+                ?, ?, ?, ?
+            )
+            """,
+            (
+                (
+                    element.charge,
+                    element.mass_number,
+                    element.isomer,
+                    element.molar_mass,
+                )
+                for element in elements
+            ),
+        )
+        con.commit()
+
+        con.executemany(
+            """
+            insert into composition_nuclides (
+                material_id,
+                charge,
+                mass_number,
+                lib,
+                isomer,
+                fraction
+            ) values (
+                ?, ?, ?, ?, ?, ?
+            )
+            """,
+            (
+                (
+                    int(composition.name()) if composition.name() else 0,
+                    element.charge,
+                    element.mass_number,
+                    element.lib,
+                    element.isomer,
+                    fraction,
+                )
+                for composition in compositions
+                for element, fraction in composition
+            ),
+        )
+        con.commit()
 
     finally:
         con.close()
-    logger.success("The database {} is created", db_path)
+    logger.success("The materials from {!r} are added to the database {!r}", model_path, db_path)
 
 
 @app.command()
@@ -371,7 +431,13 @@ def analyze(
         total_mass = (
             con.execute(
                 """
-                select sum(mass) from material_mass
+                select
+                    sum(mass) total
+                from
+                material_mass
+                where material in (
+                    select material_id from compositions where charge=27 and mass_number=59
+                )
                 """
             ).fetchone()[0]
             * 0.001
@@ -381,7 +447,7 @@ def analyze(
 
         mass_207302_fetch = con.execute(
             """
-            select sum(mass) from material_mass where material = ?
+            select mass from material_mass where material = ?
             """,
             (suspicious,),
         ).fetchone()
