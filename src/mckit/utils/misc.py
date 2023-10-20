@@ -20,7 +20,7 @@ MAX_DIGITS = np.finfo(float).precision
 
 
 def significant_digits(
-    value: float, reltol: float = FLOAT_TOLERANCE, resolution: float = None
+    value: float, reltol: float = FLOAT_TOLERANCE, resolution: float | None = None
 ) -> int:
     """The minimum number of significant digits to provide relative tolerance.
 
@@ -72,7 +72,7 @@ def get_decades(value: float) -> int:
 
 
 def significant_array(
-    array: ndarray, reltol: float = FLOAT_TOLERANCE, resolution: float = None
+    array: ndarray, reltol: float = FLOAT_TOLERANCE, resolution: float | None = None
 ) -> ndarray:
     """Compute the minimum numbers of significant digits to achieve desired tolerance."""
     result: ndarray = np.empty_like(array, dtype=int)
@@ -81,7 +81,7 @@ def significant_array(
     return result
 
 
-def round_scalar(value: float, digits: int = None) -> float:
+def round_scalar(value: float, digits: int | None = None) -> float:
     """Rounds scalar value to represent the value in minimal form.
 
     Args:
@@ -96,7 +96,7 @@ def round_scalar(value: float, digits: int = None) -> float:
     return round(value, digits)
 
 
-def round_array(array: ndarray, digits_array: ndarray = None) -> ndarray:
+def round_array(array: ndarray, digits_array: ndarray | None = None) -> ndarray:
     """Rounds array to desired precision.
 
     Args:

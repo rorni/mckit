@@ -369,7 +369,7 @@ class Universe:
         self,
         cell: Body | int = None,
         universe: Universe | int = None,
-        predicate: Callable[[Body], bool] = None,
+        predicate: Callable[[Body], bool] | None = None,
         name_rule: str = "new",
     ):
         """Applies fill operations to all or selected cells or universes.
@@ -511,14 +511,10 @@ class Universe:
     def get_compositions(self, exclude_common: bool = False) -> set[Composition]:
         """Gets all compositions of the universe.
 
-        Parameters
-        ----------
-        exclude_common : bool
-            Exclude common compositions from the result. Default: False.
+        Args:
+            exclude_common :  Exclude common compositions from the result. Default: False.
 
         Returns:
-        -------
-        comps : set
             A set of Composition objects.
         """
         compositions = set()
@@ -600,11 +596,11 @@ class Universe:
 
     def rename(
         self,
-        start_cell: int = None,
-        start_surf: int = None,
-        start_mat: int = None,
-        start_tr: int = None,
-        name: int = None,
+        start_cell: int | None = None,
+        start_surf: int | None = None,
+        start_mat: int | None = None,
+        start_tr: int | None = None,
+        name: int | None = None,
     ) -> None:
         """Renames all entities contained in the universe.
 

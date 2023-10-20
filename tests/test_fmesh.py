@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Final
+
 from itertools import product
 
 import numpy as np
@@ -125,7 +127,7 @@ class TestRectMesh:
         mesh = create_rmesh(bins[mi], transforms[ti])
         assert mesh.shape == ans
 
-    surfaces = {
+    surfaces: Final = {
         1: create_surface("PY", 3.5),
         2: create_surface("PY", -1.0),
         3: create_surface("PX", 3.0),
@@ -136,7 +138,7 @@ class TestRectMesh:
     }
 
     # noinspection PyTypeChecker
-    bodies = [
+    bodies: Final = [
         Body(
             [
                 surfaces[1],
@@ -217,7 +219,7 @@ class TestRectMesh:
                 corners = tr.apply2point(corners)
             np.testing.assert_array_almost_equal(vox.corners, corners)
 
-    points = [
+    points: Final = [
         [0.5, 0.9, 0],
         [-1.4, 0.5, 0.1],
         [3, 2.5, 1.9],

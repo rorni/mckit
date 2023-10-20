@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 
 import pytest
@@ -533,7 +535,7 @@ class TestPlane:
             np.testing.assert_almost_equal(surf._k, surf_un._k)
         assert surf.options == surf_un.options
 
-    surfs = [
+    surfs: Final = [
         create_surface("PX", 5.0, name=1),  # 0
         create_surface("PX", 5.0 + 1.0e-12, name=1),  # 1
         create_surface("PX", 5.0 - 1.0e-12, name=1),  # 2
@@ -553,7 +555,7 @@ class TestPlane:
         create_surface("P", 2, 2, 0, -8, name=5),  # 16
     ]
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
         [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
         [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
@@ -750,7 +752,7 @@ class TestSphere:
         np.testing.assert_almost_equal(surf._radius, surf_un._radius)
         assert surf.options == surf_un.options
 
-    surfs = [
+    surfs: Final = [
         create_surface("SO", 1.0, name=1),  # 0
         create_surface("SO", 1.0 + 5.0e-13, name=1),  # 1
         create_surface("SO", 2.0, name=1),  # 2
@@ -772,7 +774,7 @@ class TestSphere:
         ),  # 16
     ]
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -974,7 +976,7 @@ class TestCylinder:
         np.testing.assert_almost_equal(surf._radius, surf_un._radius)
         assert surf.options == surf_un.options
 
-    surfs = [
+    surfs: Final = [
         create_surface("CX", 1.0, name=1),  # 0
         create_surface("CX", 1.0 + 5.0e-13, name=1),  # 1
         create_surface("CY", 1.0, name=1),  # 2
@@ -998,7 +1000,7 @@ class TestCylinder:
         Cylinder([1, -2, 0], [1.0e-13, 1.0e-13, -2], 3, name=4),  # 20
     ]
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1365,7 +1367,7 @@ class TestCone:
         surf_un = pass_through_pickle(surf)
         self.assert_cone(surf, surf_un)
 
-    surfs = [
+    surfs: Final = [
         create_surface("KX", 4, 0.25, name=1),  # 0
         create_surface("KX", 4 - 1.0e-12, 0.25 + 1.0e-13, name=1),  # 1
         create_surface("KY", 4, 0.25, name=1),  # 2
@@ -1432,7 +1434,7 @@ class TestCone:
         new_test = new_surf.test_points(new_pts)
         np.testing.assert_array_equal(test, new_test)
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [
             1,
             1,
@@ -2662,7 +2664,7 @@ class TestTorus:
         surf_un = pass_through_pickle(surf)
         self.assert_torus(surf, surf_un)
 
-    surfs = [
+    surfs: Final = [
         Torus([1, 2, 3], [1, 0, 0], 4, 2, 1, name=1),
         Torus(
             [1 - 1.0e-13, 2 + 1.0e-12, 3 - 1.0e-12],
@@ -2695,7 +2697,7 @@ class TestTorus:
         Torus([1, 2, 3], [0, 0, -1], 4, 2, 1, name=3),
     ]
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 1, 0, 0, 0, 0, 0, 0],
         [1, 1, 1, 0, 0, 0, 0, 0, 0],
         [1, 1, 1, 0, 0, 0, 0, 0, 0],
@@ -2872,7 +2874,7 @@ class TestGQuadratic:
         surf_un = pass_through_pickle(surf)
         self.assert_gq(surf, surf_un)
 
-    surfs = [
+    surfs: Final = [
         GQuadratic(np.diag([1, 1, 1]), -2 * np.array([1, 1, 1]), 3, name=1),
         GQuadratic(
             np.diag([1, 1, 1]) + 1.0e-13,
@@ -2896,7 +2898,7 @@ class TestGQuadratic:
         ),
     ]
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0],
@@ -3044,7 +3046,7 @@ class TestBOX:
         np.testing.assert_array_almost_equal(dirz, adz)
         assert surf.options == surf_un.options
 
-    surfs = [
+    surfs: Final = [
         create_surface("RPP", -1, 1, -2, 2, -3, 3, name=1),  # 0
         create_surface("BOX", -1, -2, -3, 2, 0, 0, 0, 4, 0, 0, 0, 6, name=1),  # 1
         create_surface("BOX", 1, 2, 3, -2, 0, 0, 0, -4, 0, 0, 0, -6, name=2),  # 2
@@ -3053,7 +3055,7 @@ class TestBOX:
         create_surface("BOX", 1, 2, 3, -3, 0, 0, 0, -4, 0, 0, 0, -6, name=2),  # 5
     ]
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0],
@@ -3223,7 +3225,7 @@ class TestRCC:
         np.testing.assert_almost_equal(radius, r)
         assert surf.options == surf_un.options
 
-    surfs = [
+    surfs: Final = [
         create_surface("RCC", -1, 1, -2, 2, 0, 0, 4, name=1),  # 0
         create_surface("RCC", -1, 1, -2, 2, 0, 0, 4, name=1),  # 1
         create_surface("RCC", -1, 2, -2, 2, 0, 0, 4, name=2),  # 2
@@ -3232,7 +3234,7 @@ class TestRCC:
         create_surface("RCC", 1, 1, -2, -2, 0, 0, 3, name=2),  # 5
     ]
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0],

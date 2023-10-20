@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, Tuple, Union, cast
+from typing import Any, Iterable, Literal, Tuple, Union, cast
 
 import importlib.resources as rs
 import math
@@ -220,7 +220,7 @@ class Composition(Card):
             isotope = Element(isotope)
         return self._composition[isotope]
 
-    def get_weight(self, isotope):
+    def get_weight(self, isotope: int | Element) -> float:
         """Gets weight fraction of the isotope.
 
         Raises KeyError if the composition doesn't contain the isotope.
@@ -237,8 +237,8 @@ class Composition(Card):
         """
         if not isinstance(isotope, Element):
             isotope = Element(isotope)
-        at = self._composition[isotope]
-        return at * isotope.molar_mass / self._mu
+        frac: float = self._composition[isotope] * isotope.molar_mass / self._mu
+        return frac
 
     @property
     def molar_mass(self):
@@ -479,27 +479,30 @@ class Material:
         """Gets material's effective molar mass [g / mol]."""
         return self._composition.molar_mass
 
-    def correct(self, old_vol=None, new_vol=None, factor=None):
+    def correct(
+        self,
+        old_vol: float | None = None,
+        new_vol: float | None = None,
+        factor: float | None = None,
+    ) -> Material:
         """Creates new material with fixed density to keep cell's mass.
 
         Either old_vol and new_vol or factor must be specified.
 
-        Parameters
-        ----------
-        old_vol : float
-            Initial volume of the cell.
-        new_vol : float
-            New volume of the cell.
-        factor : float
-            By this factor density of material will be multiplied. If factor
-            is specified, then its value will be used.
+        Args:
+            old_vol: Initial volume of the cell.
+            new_vol: New volume of the cell.
+            factor : By this factor density of material will be multiplied. If factor
+                     is specified, then its value will be used, otherwise - old_vol/new_vol
 
         Returns:
-        -------
-        new_mat : Material
-            New material that takes into account new volume of the cell.
+            New material that takes with corrected density.
         """
         if factor is None:
+            if old_vol is None or new_vol is None:
+                raise ValueError("'old_vol' is not specified")
+            if new_vol is None:
+                raise ValueError("'new_vol' is not specified")
             factor = old_vol / new_vol
         return Material(
             composition=self._composition,
@@ -508,7 +511,10 @@ class Material:
         )
 
     @staticmethod
-    def mixture(*materials, fraction_type="weight"):
+    def mixture(
+        *materials: tuple[Material, float],
+        fraction_type: Literal["weight", "volume", "atomic"],
+    ) -> Material:
         """Creates new material as a mixture of others.
 
         Volume fractions are not needed to be normalized, but normalization has effect.
@@ -517,21 +523,16 @@ class Material:
         the effect of compression is taking place. But for weight and atomic fractions
         normalization will be done anyway.
 
-        Parameters
-        ----------
-        materials : list
-            A list of pairs material-fraction. material must be a Material class
-            instance because for mixture not only composition but density is
-            important.
-        fraction_type : str
-            Indicate how fraction should be interpreted.
-            'weight' - weight fractions (default);
-            'volume' - volume fractions;
-            'atomic' - atomic fractions.
+        Args:
+            materials: An Iterable of pairs material-fraction. material must be a Material class
+                instance because for mixture not only composition but density is
+                important.
+            fraction_type: Indicate how fraction should be interpreted.
+                'weight' - weight fractions (default);
+                'volume' - volume fractions;
+                'atomic' - atomic fractions.
 
         Returns:
-        -------
-        material : Material
             New material.
         """
         if not materials:

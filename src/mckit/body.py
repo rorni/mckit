@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Iterator, List, Literal, NewType, Union
+from typing import TYPE_CHECKING
 
 import os
 
@@ -28,7 +28,10 @@ from .transformation import Transformation
 from .utils import filter_dict
 
 if TYPE_CHECKING:
+    from typing import ClassVar, Iterable, Iterator, List, Literal, NewType, Union
+
     from mckit import Universe
+
 
 __all__ = ["Shape", "Body", "simplify", "GLOBAL_BOX", "Card", "TGeometry", "TGeometry"]
 
@@ -67,7 +70,7 @@ class Shape(_Shape):
             Creates a union of the shape with the others.
         intersection(*other)
             Creates an intersection of the shape with the others.
-        transform(tr)
+        transform(transformation)
             Gets transformed version of the shape.
         is_empty()
             Checks if this shape is empty - no space belong to it.
@@ -81,7 +84,7 @@ class Shape(_Shape):
             Creates new Shape object by replacing surfaces.
     """
 
-    _opc_hash = {
+    _opc_hash: ClassVar = {
         "I": hash("I"),
         "U": ~hash("I"),
         "E": hash("E"),
@@ -123,7 +126,7 @@ class Shape(_Shape):
     def __repr__(self):
         return f"Shape({self.opc}, {self.args})"
 
-    def _get_words(self, parent_opc: str = None) -> list[str]:
+    def _get_words(self, parent_opc: str | None = None) -> list[str]:
         """Gets list of words that describe the shape.
 
         Args:
@@ -249,14 +252,10 @@ class Shape(_Shape):
     def intersection(self, *other: Shape | Body) -> Shape:
         """Gets intersection with other shape.
 
-        Parameters
-        ----------
-        other : tuple
-            A list of Shape or Body objects, which must be intersected.
+        Args:
+            other: A list of Shape or Body objects, which must be intersected.
 
         Returns:
-        -------
-        result : Shape
             New shape.
         """
         return Shape("I", self, *other)
@@ -272,11 +271,11 @@ class Shape(_Shape):
         """
         return Shape("U", self, *other)
 
-    def transform(self, tr):
+    def transform(self, transformation: Transformation) -> Shape:
         """Transforms the shape.
 
         Args:
-            tr : Transformation to be applied.
+            transformation : Transformation to be applied.
 
         Returns:
             New shape.
@@ -284,7 +283,7 @@ class Shape(_Shape):
         opc = self.opc
         args = []
         for a in self.args:
-            a = a.transform(tr)  # noqa: PLW2901 - `a` is to be reassigned
+            a = a.transform(transformation)  # noqa: PLW2901 - `a` is to be reassigned
             if isinstance(a, Surface):
                 a = a.apply_transformation()  # noqa: PLW2901 `a` is to be reassigned
                 # TODO dvp: check if call of apply_transformation() should be moved to caller site
@@ -493,6 +492,11 @@ class Shape(_Shape):
         return operands.pop()
 
 
+if TYPE_CHECKING:
+    TOperation = NewType("TOperation", str)
+    TGeometry = NewType("TGeometry", Union[List[Union[Surface, TOperation]], Shape, "Body"])
+
+
 def _clean_args(opc, *args):
     """Clean input arguments."""
     args = [a.shape if isinstance(a, Body) else a for a in args]
@@ -548,9 +552,6 @@ def _verify_opc(opc, *args):
             raise ValueError("Operands are expected.")
 
 
-TOperation = NewType("TOperation", str)
-TGeometry = NewType("TGeometry", Union[List[Union[Surface, TOperation]], Shape, "Body"])
-
 # noinspection PyProtectedMember
 
 
@@ -573,8 +574,8 @@ class Body(Card):
         Fills this cell by universe.
     simplify(box, split_disjoint, min_volume)
         Simplifies cell description.
-    transform(tr)
-        Applies transformation 'tr' to this cell.
+    transform(transformation)
+        Applies transformation 'transformation' to this cell.
     union(other)
         Returns a union of this cell with the other.
     """
@@ -689,40 +690,32 @@ class Body(Card):
         assert composition is None or isinstance(composition, mm.Material)
         return composition
 
-    def intersection(self, other):
+    def intersection(self, other) -> Body:
         """Gets an intersection if this cell with the other.
 
         Other cell is a geometry that bounds this one. The resulting cell
         inherits all options of this one (the caller).
 
-        Parameters
-        ----------
-        other : Cell
-            Other cell.
+        Args:
+            other:  Other cell.
 
         Returns:
-        -------
-        cell : Cell
-            The result.
+            The cell representing the intersection.
         """
         geometry = self._shape.intersection(other)
         options = filter_dict(self.options, "original")
         return Body(geometry, **options)
 
-    def union(self, other):
+    def union(self, other: Body) -> Body:
         """Gets a union if this cell with the other.
 
         The resulting cell inherits all options of this one (the caller).
 
-        Parameters
-        ----------
-        other : Cell
-            Other cell.
+        Args:
+            other: Other cell.
 
         Returns:
-        -------
-        cell : Cell
-            The result.
+            cell: The result.
         """
         geometry = self._shape.union(other)
         options = filter_dict(self.options, "original")
@@ -823,26 +816,22 @@ class Body(Card):
             cells.append(new_cell)
         return cells
 
-    def transform(self, tr):
+    def transform(self, transformation: Transformation) -> Body:
         """Applies transformation to this cell.
 
-        Parameters
-        ----------
-        tr : Transform
-            Transformation to be applied.
+        Args:
+            transformation:Transformation to be applied.
 
         Returns:
-        -------
-        cell : Cell
             The result of this cell transformation.
         """
-        geometry = self._shape.transform(tr)
+        geometry = self._shape.transform(transformation)
         options = filter_dict(self.options, "original")
         cell = Body(geometry, **options)
         fill = cell.options.get("FILL", None)
         if fill:
             tr_in = fill.get("transform", Transformation())
-            new_tr = tr.apply2transform(tr_in)
+            new_tr = transformation.apply2transform(tr_in)
             fill["transform"] = new_tr
         return cell
 

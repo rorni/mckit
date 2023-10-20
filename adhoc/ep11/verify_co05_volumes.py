@@ -262,7 +262,7 @@ def fill(
             help="Path to the input MCNP model",
         ),
     ] = WRK_DIR
-    / "model-info.log",
+    / "pc11_shields8_Co05.i",
 ) -> None:
     """Collect information from an MCNP model to database."""
     logger.info("Creating model info database {}", db_path)
@@ -272,6 +272,77 @@ def fill(
         model_parse = load_mcnp_model(model_path)
         model = model_parse.universe
         _collect_model_info(model, con, global_box)
+    finally:
+        con.close()
+    logger.success("The database {} is created", db_path)
+
+
+@app.command()
+def add_materials(
+    db_path: Annotated[
+        Path,
+        typer.Option(
+            help="Path to the sqlite database to be created",
+        ),
+    ] = WRK_DIR
+    / "model-info.sqlite",
+    model_path: Annotated[
+        Path,
+        typer.Option(
+            help="Path to the input MCNP model",
+        ),
+    ] = WRK_DIR
+    / "pc11_shields8_Co05.i",
+) -> None:
+    """Load material compositions to the database."""
+    logger.info("Adding  materials info database {}", db_path)
+    con = sq.connect(db_path)
+    try:
+        con.executescript(
+            """
+            drop table if exists compositions;
+            create table compositions(
+                material_id int primary key,
+                charge int,
+                mass_number int,
+                lib text,
+                isomer int,
+                fraction real
+            );
+        """
+        )
+        model_parse = load_mcnp_model(model_path)
+        model = model_parse.universe
+        compositions = model.get_compositions()
+
+        for composition in compositions:
+            material_id = composition.name()
+            if material_id is None:
+                raise ValueError("Material is not specified")
+            for element, fraction in composition:
+                con.execute(
+                    """
+                    insert into compositions (
+                        material_id,
+                        charge,
+                        mass_number,
+                        lib,
+                        isomer,
+                        fraction
+                    ) values (
+                        ?, ?, ?, ?, ?, ?
+                    )
+                    """,
+                    (
+                        material_id,
+                        element.charge,
+                        element.mass_number,
+                        element.lib,
+                        element.isomer,
+                        fraction,
+                    ),
+                )
+
     finally:
         con.close()
     logger.success("The database {} is created", db_path)

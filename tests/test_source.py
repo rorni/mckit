@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Final
+
 import pytest
 
 from mckit.source import Distribution, Source, create_bin_distributions
@@ -151,7 +153,7 @@ def test_create_bin_distributions(free_number, bins, expected):
 
 
 class TestSource:
-    distrs = [
+    distrs: Final = [
         Distribution(1, [1, 2], [1]),
         Distribution(2, [2, 3], [1]),
         Distribution(3, [4, 5, 6], [1, 2, 3], "X", True),

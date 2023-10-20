@@ -155,8 +155,8 @@ class IndexOfNamed(Index[Key, Item]):
         items: Iterable[Item],
         *,
         key: Callable[[Item], Name] = default_name_key,
-        default_factory: Callable[[Key], Item] = None,
-        on_duplicate: Callable[[Key, Item, Item], None] = None,
+        default_factory: Callable[[Key], Item] | None = None,
+        on_duplicate: Callable[[Key, Item, Item], None] | None = None,
     ) -> IndexOfNamed:
         """Construct `IndexOfNamed` from `items`."""
         index = cls(default_factory)

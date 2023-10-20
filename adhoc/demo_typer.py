@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Annotated, Optional
 
+from pathlib import Path
+
 import typer
 
 from rich.console import Console
@@ -20,16 +22,31 @@ def version_callback(value: bool):
         raise typer.Exit()
 
 
+# @app.command()
+# def main(
+#     name: Annotated[str, typer.Option()] = "World",
+#     version: Annotated[Optional[bool], typer.Option("--version", callback=version_callback)] = None,
+# ):
+#     print(f"Hello {name}")
+
+# @app.command()
+# def main():
+#     print("Opening Typer's docs")
+#     typer.launch("https://typer.tiangolo.com")
+
+# APP_NAME = "my-super-cli-app"
+#
+# @app.command()
+# def main():
+#     app_dir = typer.get_app_dir(APP_NAME)
+#     app_dir_path = Path(app_dir)
+#     console.print(app_dir_path)
+
+
 @app.command()
-def main(
-    name: Annotated[str, typer.Option()] = "World",
-    version: Annotated[Optional[bool], typer.Option("--version", callback=version_callback)] = None,
-):
-    print(f"Hello {name}")
+def main(name: str = "morty"):
+    print(name + 3)
 
-
-if __name__ == "__main__":
-    typer.run(main)
 
 if __name__ == "__main__":
     app()

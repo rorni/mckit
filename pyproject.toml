@@ -450,7 +450,7 @@ select= [
     # "Q", # flake8-quotes
     "RET", # flake8-return
     # "RSE", # flake8-raise
-    # "RUF", # Ruff-specific rules
+    "RUF", # Ruff-specific rules
     "S", # flake8-bandit
     # "SIM", # flake8-simplify
     # "SLF", # flake8-self
@@ -459,7 +459,7 @@ select= [
     # "TCH", # flake8-type-checking
     # "TID", # flake8-tidy-imports
     "TRY", # tryceratops
-    # "UP", # pyupgrade
+    "UP", # pyupgrade
     "W", # pycodestyle 2
     "YTT", # flake8-2020
 ]

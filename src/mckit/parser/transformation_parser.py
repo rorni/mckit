@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import mckit.parser.common.utils as cmn
 import sly
 
@@ -7,10 +9,13 @@ from mckit.parser.common import Lexer as LexerBase
 from mckit.parser.common.utils import drop_c_comments, extract_comments
 from mckit.transformation import Transformation
 
+if TYPE_CHECKING:
+    from typing import ClassVar
+
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(LexerBase):
-    tokens = {NAME, FLOAT, INTEGER}
+    tokens: ClassVar = {NAME, FLOAT, INTEGER}
 
     NAME = r"\s{0,5}\*?tr\d+"
 

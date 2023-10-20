@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import mckit.parser.common.utils as pu
 import sly
 
@@ -24,11 +26,15 @@ def intern_cell_word(word: str):
     return word
 
 
+if TYPE_CHECKING:
+    from typing import ClassVar
+
+
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(LexerBase):
-    literals = {":", "(", ")", "*", "#"}
+    literals: ClassVar = {":", "(", ")", "*", "#"}
     ignore = "[ \t,=]"
-    tokens = {
+    tokens: ClassVar = {
         INT_ATTR,
         IMP,
         FLOAT_ATTR,
@@ -182,7 +188,7 @@ class Parser(sly.Parser):
 
     @_('"#" "(" expression ")"')
     def factor(self, p):
-        return p.expression + ["C"]
+        return [*p.expression, "C"]
 
     @_('"(" expression ")"')
     def factor(self, p):
@@ -327,7 +333,7 @@ class Parser(sly.Parser):
 
     @_("float_list float")
     def float_list(self, p):
-        return p.float_list + [p.float]
+        return [*p.float_list, p.float]
 
     @_("float")
     def float_list(self, p):

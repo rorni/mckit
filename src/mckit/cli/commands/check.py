@@ -14,16 +14,16 @@ from mckit.universe import collect_transformations
 
 def check_duplicates(iterable: Iterable[Any] | None, label: str, key: Callable[[Any], Any]) -> None:
     if iterable is None:
-        print(f"No {label}s are found")  # noqa: T201  - don't use logger here, should go to stdout
+        print(f"No {label}s are found")  # - don't use logger here, should go to stdout
     else:
         visited = set()
         for c in iterable:
             k = key(c)
             if k in visited:
-                print(f"Duplicate of {label} {k} is found")  # noqa: T201
+                print(f"Duplicate of {label} {k} is found")
             else:
                 visited.add(k)
-        print(f"Total of {label}s: {len(visited)}")  # noqa: T201
+        print(f"Total of {label}s: {len(visited)}")
 
 
 def check(source):

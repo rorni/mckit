@@ -104,7 +104,7 @@ def print_option(option: str, value: Any) -> list[str]:
     raise ValueError(f"Incorrect option name: {option}")
 
 
-def pretty_float(value: float, frac_digits: int = None) -> str:
+def pretty_float(value: float, frac_digits: int | None = None) -> str:
     """Pretty print of the float number.
 
     Args:
