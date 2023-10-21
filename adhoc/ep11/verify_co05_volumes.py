@@ -428,35 +428,104 @@ def analyze(
     logger.info("Analyzing the MCNP model volumes.")
     con = sq.connect(db_path)
     try:
-        total_mass = (
+        total_cobalt_mass = (
             con.execute(
                 """
+            select
+                sum(co_mass)
+            from (
                 select
-                    sum(mass) total
+                    c.material_id,
+                    m.mass * cn.fraction * n.molar_mass / c.molar_mass co_mass
                 from
-                material_mass
-                where material in (
-                    select material_id from compositions where charge=27 and mass_number=59
-                )
-                """
+                    material_mass m
+                    inner join compositions c on c.material_id = m.material
+                    inner join composition_nuclides cn on c.material_id = cn.material_id
+                    inner join nuclides n on
+                        cn.charge = n.charge and cn.mass_number = n.mass_number and cn.isomer = n.isomer
+                where
+                    n.charge = 27 and n.mass_number = 59 and n.isomer = 0
+                order by co_mass
+            );
+            """
             ).fetchone()[0]
             * 0.001
         )
-        """Total mass of materials in kg."""
-        logger.info("Total mass of materials {:3g}kg", total_mass)
+        """Total Co mass in materials in kg."""
 
-        mass_207302_fetch = con.execute(
+        #     select
+        #     sum(mass)
+        #     total
+        # from
+        # material_mass
+        # where
+        # material in (
+        #     select material_id from compositions where charge=27 and mass_number=59
+        #
+        #
+        # -- Co mass fraction in materials
+        # select
+        # cn.material_id,
+        # 100 * cn.fraction * n.molar_mass/c.molar_mass mass_fraction
+        # from
+        # compositions c
+        # inner join composition_nuclides cn on c.material_id = cn.material_id
+        # inner join nuclides n on
+        # cn.charge = n.charge and cn.mass_number = n.mass_number and cn.isomer = n.isomer
+        # where
+        # n.charge = 27 and n.mass_number = 59 and n.isomer = 0
+        # order by mass_fraction;
+        #
+        # select
+        # m.material,
+        # sum(m.mass * cn.fraction * n.molar_mass/c.molar_mass co_mass
+        # from
+        # material_mass m
+        # inner join compositions c on c.material_id = m.material
+        # inner join composition_nuclides cn on c.material_id = cn.material_id
+        # inner join nuclides n on
+        # cn.charge = n.charge and cn.mass_number = n.mass_number and cn.isomer = n.isomer
+        # where
+        # n.charge = 27 and n.mass_number = 59 and n.isomer = 0
+        # order by co_mass;
+
+        logger.info("Total mass of Co in materials {:3g}kg", total_cobalt_mass)
+
+        # mass_207302_fetch = con.execute(
+        #     """
+        #     select mass from material_mass where material = ?
+        #     """,
+        #     (suspicious,),
+        # ).fetchone()
+
+        mass_co_in_207302_fetch = con.execute(
             """
-            select mass from material_mass where material = ?
-            """,
-            (suspicious,),
+            select
+                sum(co_mass)
+            from (
+                select
+                    c.material_id,
+                    m.mass * cn.fraction * n.molar_mass / c.molar_mass co_mass
+                from
+                    material_mass m
+                    inner join compositions c on c.material_id = m.material
+                    inner join composition_nuclides cn on c.material_id = cn.material_id
+                    inner join nuclides n on
+                        cn.charge = n.charge and cn.mass_number = n.mass_number and cn.isomer = n.isomer
+                where
+                    n.charge = 27 and n.mass_number = 59 and n.isomer = 0
+                    and
+                    m.material = 207302
+                order by co_mass
+            );
+            """
         ).fetchone()
-        if mass_207302_fetch:
-            mass_207302 = mass_207302_fetch[0] * 0.001
+        if mass_co_in_207302_fetch:
+            mass_co_in_207302 = mass_co_in_207302_fetch[0] * 0.001
             """Mass of m207302 in kg."""
-            logger.info("Mass of material 207302 {:3g}kg", mass_207302)
+            logger.info("Mass of material 207302 {:3g}kg", mass_co_in_207302)
 
-            ratio = mass_207302 / total_mass
+            ratio = mass_co_in_207302 / total_cobalt_mass
 
             logger.info("Ratio is {:3g}%", ratio * 100)
         else:
