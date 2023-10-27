@@ -27,6 +27,7 @@ import numpy as np
 from loguru import logger
 from tqdm import tqdm
 
+import pandas as pd
 import typer
 
 from mckit.geometry import EX, EY, EZ, Box
@@ -129,11 +130,18 @@ def _init_data_base(con: Connection) -> None:
         """
         drop table if exists cell_geometry;
         drop table if exists cell_material;
+        drop table if exists material_mass;  -- use table not view, view is too slow
         """
     )
     logger.info("Creating tables cell_geometry and cell_material")
     con.executescript(
         """
+        create table cell_material (
+            cell int primary key,
+            material int,
+            density real,
+            stp_path text
+        );
         create table cell_geometry (
             cell int primary key,
             box_min_x real,
@@ -147,26 +155,47 @@ def _init_data_base(con: Connection) -> None:
             min_vol real,
             vol_time int
         );
-        create table cell_material (
-            cell int primary key,
-            material int,
-            density real
-        );
         """
+    )
+    logger.info("Creating compositions and nuclides table")
+    con.executescript(
+        """
+        drop table if exists nuclides;
+        create table nuclides(
+            charge int,
+            mass_number int,
+            isomer int,
+            molar_mass real,
+            primary key (charge, mass_number, isomer)
+        );
+        drop table if exists compositions;
+        create table compositions(
+            material_id int,
+            molar_mass  real,
+            total_mass  real,
+            primary key (material_id)
+        );
+        drop table if exists composition_nuclides;
+        create table composition_nuclides(
+            material_id int,
+            charge int,
+            mass_number int,
+            isomer int,
+            lib text,
+            fraction real,
+            primary key (material_id, charge, mass_number, isomer, lib),
+            foreign key (charge, mass_number, isomer) references nuclides (charge, mass_number, isomer),
+            foreign key (material_id) references compositions (material_id)
+        );
+    """
     )
     logger.info("Creating view material_mass")
     con.executescript(
         """
-        drop view if exists material_mass;
-        create view material_mass as
-        select
-            a.material,
-            sum(volume * density) as mass
-        from
-            cell_material a
-            inner join cell_geometry b on a.cell = b.cell
-        group by
-            a.material
+        create table material_mass (
+            material int primary key,
+            mass real
+        )
         """
     )
     logger.info("Database is initialized")
@@ -239,6 +268,39 @@ def _collect_model_info(model: Universe, con: Connection, global_box: Box, min_v
                 volume,
                 min_vol / volume if volume > 0 else 1.0,
             )
+            # con.execute(
+            #     """
+            #     insert into material_mass
+            #     select
+            #         a.material,
+            #         sum(volume * density) as mass
+            #     from
+            #     cell_material a
+            #     inner join cell_geometry b on a.cell = b.cell
+            #     group by
+            #         a.material
+            # """
+            # )
+            material_mass = pd.read_sql(
+                """
+                select
+                    material,
+                    sum(volume * density) mass
+                from cell_material a
+                inner join cell_geometry b
+                    on a.cell = b.cell
+                group by material
+                """,
+                con,
+            )
+            con.executemany(
+                """
+                update compositions
+                set total_mass = ?
+                where material_id = ?
+                """,
+                material_mass[["mass", "material"]].itertuples(index=False, name="mm"),
+            )
             con.commit()
             if DEBUG and i > 2:
                 break
@@ -298,36 +360,6 @@ def add_materials(
     logger.info("Adding  materials info database {}", db_path)
     con = sq.connect(db_path)
     try:
-        con.executescript(
-            """
-            drop table if exists nuclides;
-            create table nuclides(
-                charge int,
-                mass_number int,
-                isomer int,
-                molar_mass real,
-                primary key (charge, mass_number, isomer)
-            );
-            drop table if exists compositions;
-            create table compositions(
-                material_id int,
-                molar_mass  real,
-                primary key (material_id)
-            );
-            drop table if exists composition_nuclides;
-            create table composition_nuclides(
-                material_id int,
-                charge int,
-                mass_number int,
-                isomer int,
-                lib text,
-                fraction real,
-                primary key (material_id, charge, mass_number, isomer, lib),
-                foreign key (charge, mass_number, isomer) references nuclides (charge, mass_number, isomer),
-                foreign key (material_id) references compositions (material_id)
-            );
-        """
-        )
         model_parse = load_mcnp_model(model_path)
         model = model_parse.universe
         compositions = model.get_compositions()

@@ -128,7 +128,7 @@ def save_setup_kwargs(setup_kwargs: dict[str, Any]) -> None:
     """Save resulting setup_kwargs for examining."""
     kwargs_path = Path(__file__).parent / "poetry_setup_kwargs.txt"
     with kwargs_path.open(mode="w") as fid:
-        pprint(setup_kwargs, fid, indent=4)  # noqa: T203
+        pprint(setup_kwargs, fid, indent=4)
 
 
 def save_generated_setup() -> None:
