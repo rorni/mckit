@@ -117,6 +117,7 @@ mkl-devel = "2023.2.0"
 #      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 #
 typer = {extras = ["all"], version = ">=0.9.0"}
+poetry = "^1.6.1"
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
