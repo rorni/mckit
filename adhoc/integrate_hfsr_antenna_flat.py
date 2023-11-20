@@ -55,7 +55,7 @@ NJOBS = os.cpu_count()
 # set_loky_pickler()
 
 
-class BoundingBoxAdder(object):
+class BoundingBoxAdder:
     def __init__(self, tolerance: float):
         self.tolerance = tolerance
 

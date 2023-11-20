@@ -1,11 +1,12 @@
 """Split MCNP code to cards as text segments separating them by kind."""
 from __future__ import annotations
 
-from typing import Iterable, Iterator, TextIO
+from typing import TextIO
 
 import re
 import sys
 
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from enum import IntEnum
 

@@ -1,8 +1,9 @@
 """Classes to index MCNP objects on model file parsing."""
 from __future__ import annotations
 
-from typing import Callable, Dict, Iterable, NoReturn, Optional, TypeVar, cast
+from typing import Callable, Dict, NoReturn, Optional, TypeVar, cast
 
+from collections.abc import Iterable
 from functools import reduce
 
 from mckit.utils.named import Name, default_name_key
@@ -12,7 +13,7 @@ Item = TypeVar("Item")
 FactoryMethodWithKey = Callable[[Key], Optional[Item]]
 
 
-class Index(Dict[Key, Item]):
+class Index(dict[Key, Item]):
     """Like collections.defaultdict but the factory takes key as argument.
 
     The class redefines __missing__ method to use `key` on calling factory method.
@@ -121,7 +122,7 @@ def ignore_equal_objects_strategy(key: Key, prev: Item, curr: Item) -> None:
         raise NumberedItemDuplicateError(key, prev, curr)
 
 
-class StatisticsCollector(Dict[Key, int]):
+class StatisticsCollector(dict[Key, int]):
     """Duplicates counter."""
 
     def __init__(self, ignore_equal=False):

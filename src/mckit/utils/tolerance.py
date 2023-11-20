@@ -1,12 +1,13 @@
 """Code to estimate "closeness" of various objects."""
 from __future__ import annotations
 
-from typing import Callable, Iterable, Optional, Union
+from typing import Callable, Optional, Union
 
 import itertools
 import math
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 
 import numpy as np
 

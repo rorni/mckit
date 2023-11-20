@@ -1,9 +1,10 @@
 """Surface methods."""
 from __future__ import annotations
 
-from typing import Any, Callable, List, Sequence, Union
+from typing import Any, Callable, List, Union
 
 from abc import abstractmethod
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -60,7 +61,7 @@ __all__ = [
 ]
 
 
-VectorLike = Union[np.ndarray, List[float]]
+VectorLike = Union[np.ndarray, list[float]]
 
 
 # noinspection PyPep8Naming

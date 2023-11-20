@@ -6,8 +6,7 @@ materials.txt, transformations.txt, sdef.txt, cards.txt
 """
 from __future__ import annotations
 
-from typing import Iterable
-
+from collections.abc import Iterable
 from pathlib import Path
 
 import mckit.parser.mcnp_section_parser as sp

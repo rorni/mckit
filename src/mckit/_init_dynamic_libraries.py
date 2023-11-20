@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Generator
-
 import os
 import sys
 import sysconfig
 
+from collections.abc import Generator
 from ctypes import cdll
 from logging import getLogger
 from pathlib import Path

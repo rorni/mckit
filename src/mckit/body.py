@@ -28,7 +28,9 @@ from .transformation import Transformation
 from .utils import filter_dict
 
 if TYPE_CHECKING:
-    from typing import ClassVar, Iterable, Iterator, List, Literal, NewType, Union
+    from typing import ClassVar, List, Literal, NewType, Union
+
+    from collections.abc import Iterable, Iterator
 
     from mckit import Universe
 
@@ -494,7 +496,7 @@ class Shape(_Shape):
 
 if TYPE_CHECKING:
     TOperation = NewType("TOperation", str)
-    TGeometry = NewType("TGeometry", Union[List[Union[Surface, TOperation]], Shape, "Body"])
+    TGeometry = NewType("TGeometry", Union[list[Union[Surface, TOperation]], Shape, "Body"])
 
 
 def _clean_args(opc, *args):

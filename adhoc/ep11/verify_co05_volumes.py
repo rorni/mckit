@@ -1,4 +1,3 @@
-#!python
 # noinspection GrazieInspection
 """Find ratio of a volume fo steel with Co0.5 fraction to other steel volume.
 

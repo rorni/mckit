@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, Literal, Tuple, Union, cast
+from typing import Any, Literal, Tuple, Union, cast
 
 import importlib.resources as rs
 import math
 
+from collections.abc import Iterable
 from functools import reduce
 from operator import xor
 
@@ -39,7 +40,7 @@ with rs.as_file(rs.files(__package__).joinpath("data/isotopes.dat")) as p:
                     _NATURAL_ABUNDANCE[number][isotope] = float(abundance) / 100.0
 
 
-TFraction = Tuple[Union["Element", int, str], float]
+TFraction = tuple[Union["Element", int, str], float]
 TFractions = Iterable[TFraction]
 
 

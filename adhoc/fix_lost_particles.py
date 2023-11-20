@@ -1,11 +1,11 @@
-#!python
 """Fix lost particles in TRT v.7 model."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 import sqlite3 as sq
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import numpy as np
@@ -137,7 +137,7 @@ def load_cells_in(cell: int, con: sq.Connection) -> list[int]:
 
 
 def load_cells_in_for_leaking_cells(leaking_cells, con) -> dict[int, list[int]]:
-    return dict((c, load_cells_in(c, con)) for c in leaking_cells)
+    return {c: load_cells_in(c, con) for c in leaking_cells}
 
 
 cells_in_for_leaking_cells = load_cells_in_for_leaking_cells(leaking_cells, con)

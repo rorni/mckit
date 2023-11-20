@@ -1,4 +1,3 @@
-#!python
 """Extract lost particles from MCNP output.
 
 Create tables:
@@ -10,12 +9,13 @@ cell fail.
 """
 from __future__ import annotations
 
-from typing import Iterator, cast
+from typing import cast
 
 import re
 import sqlite3 as sq
 import sys
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 

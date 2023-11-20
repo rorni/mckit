@@ -1,8 +1,9 @@
 """Проверяет корректность модели и выдает статистику."""
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 
+from collections.abc import Iterable
 from pathlib import Path
 
 from mckit import Universe
