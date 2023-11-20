@@ -4,7 +4,7 @@ from typing import Self
 
 import numpy as np
 
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import EX, EY, EZ
@@ -28,7 +28,7 @@ class Box(_Box):
         )
 
     @classmethod
-    def from_corners(cls, min_vals: NDArray, max_vals: np.NDArray) -> Self:
+    def from_corners(cls, min_vals: NDArray, max_vals: NDArray) -> Self:
         if not np.all(min_vals < max_vals):
             raise ValueError("Unsorted boundaries values")
         center = 0.5 * (min_vals + max_vals)
