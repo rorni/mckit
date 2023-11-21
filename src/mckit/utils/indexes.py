@@ -1,7 +1,7 @@
 """Classes to index MCNP objects on model file parsing."""
 from __future__ import annotations
 
-from typing import Callable, Dict, NoReturn, Optional, TypeVar, cast
+from typing import Callable, Optional, TypeVar
 
 from collections.abc import Iterable
 from functools import reduce
@@ -25,7 +25,7 @@ class Index(dict[Key, Item]):
 
     def __init__(
         self,
-        default_factory: FactoryMethodWithKey = None,
+        default_factory: FactoryMethodWithKey | None = None,
         **kwargs: dict[Key, Item],
     ) -> None:
         """Create `Index`.
@@ -38,7 +38,7 @@ class Index(dict[Key, Item]):
         self._default_factory = default_factory
 
     @property
-    def default_factory(self) -> FactoryMethodWithKey:
+    def default_factory(self) -> FactoryMethodWithKey | None:
         """Public accessor to `self._default_factory`."""
         return self._default_factory
 
@@ -91,7 +91,7 @@ class NumberedItemDuplicateError(ValueError):
         )
 
 
-def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> NoReturn:
+def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> None:
     """Raise error on `key` duplicate found, regardless values.
 
     Args:
@@ -169,4 +169,4 @@ class IndexOfNamed(Index[Key, Item]):
             a[name] = b
             return a
 
-        return cast("IndexOfNamed[Key, Item]", reduce(_reducer, items, index))
+        return reduce(_reducer, items, index)

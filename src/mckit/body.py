@@ -28,7 +28,7 @@ from .transformation import Transformation
 from .utils import filter_dict
 
 if TYPE_CHECKING:
-    from typing import ClassVar, List, Literal, NewType, Union
+    from typing import ClassVar, Literal, NewType, Union
 
     from collections.abc import Iterable, Iterator
 

@@ -1,7 +1,7 @@
 """Surface methods."""
 from __future__ import annotations
 
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, Union
 
 from abc import abstractmethod
 from collections.abc import Sequence

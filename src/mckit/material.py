@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Tuple, Union, cast
+from typing import Any, Literal, Union, cast
 
 import importlib.resources as rs
 import math
