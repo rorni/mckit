@@ -104,6 +104,7 @@ def update_setup_requires(setup_kwargs: dict[str, Any]) -> None:
         "wheel >= 0.40.0",
         "mkl-devel == 2023.2.0",  # sync with dev dependencies and build system
         "intel-openmp == 2023.2.0",  # ...
+        "tbb == 2021.10.0",  # ...
         "numpy >= 1.26.0",
     ]
     setup_kwargs["setup_requires"] = setup_requires

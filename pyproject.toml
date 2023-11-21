@@ -50,6 +50,7 @@ requires = [  # Sync with build.py (see update_setup_requires())
     "wheel >= 0.40.0",
     "mkl-devel == 2023.2.0",  # sync with dev dependencies
     "intel-openmp == 2023.2.0", # ...
+    "tbb == 2021.10.0", # ...
     "numpy >= 1.26.0",
 ]
 build-backend = "poetry.core.masonry.api"
@@ -85,10 +86,11 @@ tomli = {version = ">=2.0.1", python="<3.11"}
 tomli-w = ">=1.0.0"
 tqdm = ">=4.55.1"
 # the last mkl version with wheels for Linux, Windows and MacOS, check on updates
-# the most recent version was 2024.0.0 (windows and linux only)
+# the most recent version was 2024.0.0 (windows and linux only).
+# Same for intel-openmp and tbb.
 mkl-devel = "=2023.2.0"
 intel-openmp = "=2023.2.0"
-# tbb = "2021.10.0"
+tbb = "=2021.10.0"
 
 # The following works for linux and windows, but not for macos
 # besides we need to have the same versions on build (see [build-system]),
