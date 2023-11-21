@@ -170,7 +170,7 @@ typeguard = ">=3.0.2"
 mypy = ">=1.2.0"
 pep8-naming = ">=0.12.1"
 types-setuptools = ">=57.4.2"
-numpy = ">=1.23.2"
+numpy = ">=1.26.2"
 types-tqdm = ">=4.66.0.2"
 
 [tool.poetry.group.flake8.dependencies]
