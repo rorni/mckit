@@ -70,8 +70,8 @@ def _init():
             os.add_dll_directory(str(_dir))
     _preload_library("mkl_rt", max_version=2)
     _preload_library("nlopt", max_version=0)
-    geometry_so = next(Path(sysconfig.get_paths()["purelib"], "mckit").glob("geometry*"))
-    cdll.LoadLibrary(str(geometry_so))
+    # geometry_so = next(Path(sysconfig.get_paths()["purelib"], "mckit").glob("geometry*"))
+    # cdll.LoadLibrary(str(geometry_so))
 
 
 _init()
