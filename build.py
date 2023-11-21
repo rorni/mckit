@@ -94,7 +94,7 @@ def build(setup_kwargs: dict[str, Any]) -> None:
 
 def update_setup_requires(setup_kwargs: dict[str, Any]) -> None:
     """Fix for poetry issue: it doesn't install setup requirements."""
-    setup_requires = setup_kwargs.get("setup_requires")  # type: Optional[List[str]]
+    setup_requires: list[str] | None = setup_kwargs.get("setup_requires")
     assert setup_requires is None, "Poetry has created setup_requires! Check the setup-generated.py"
     setup_requires = [
         "poetry-core >= 1.5.2",
@@ -136,23 +136,7 @@ def save_setup_kwargs(setup_kwargs: dict[str, Any]) -> None:
 def save_generated_setup() -> None:
     """Save generated setup.py.
 
-    Poetry ignores MANIFEST.in on command: ::
-
-        poetry build -f sdist.
-
-    So, 3rd-party code and build scripts are not included. Besides, output format is just default one.
-
-    However, command: ::
-
-        python setup-generated.py sdist --formats=gztar,xztar,zip
-
-    uses MANIFEST.in and creates proper sdist archives.
-    This is used in GitHub Action "Release" (see `.github/workflows/release.yml`).
-    Besides, the setup-generated.py script can be used for debugging of setup process.
-
-        Note: ::
-
-        This file is regenerated on every build, so, there's no reason to store it in Git.
+    May be used for build debugging.
     """
     my_dir = Path(__file__).parent
     src = my_dir / "setup.py"
