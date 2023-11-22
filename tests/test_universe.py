@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Set, Union
+from typing import Union
 
 import tempfile
 import textwrap
@@ -33,10 +33,10 @@ def data_filename_resolver(x):
     return str(data_path_resolver(x))
 
 
-TStatItem = Dict[
-    int, Union[List[int], Set[Universe]]
+TStatItem = dict[
+    int, Union[list[int], set[Universe]]
 ]  # TODO dvp: cool but isn't this too much freedom?
-TStat = Dict[str, TStatItem]
+TStat = dict[str, TStatItem]
 
 
 @pytest.fixture(scope="module")

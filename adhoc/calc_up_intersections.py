@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# coding: utf-8
 """Compute UP08 ISS/Portcell model intersection with envelopes for  UP08 ex-vessel components.
 ===================================================================================================
 
@@ -12,9 +10,9 @@ from functools import reduce
 from glob import glob
 from pathlib import Path
 
-import mckit as mk
-
 from tqdm import tqdm
+
+import mckit as mk
 
 working_dir = Path.cwd()
 print("Working dir: ", working_dir)

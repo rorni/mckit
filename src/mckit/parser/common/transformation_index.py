@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from mckit.transformation import Transformation
 from mckit.utils.indexes import Index, NumberedItemNotFoundError

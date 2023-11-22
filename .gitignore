@@ -100,3 +100,11 @@ setup-generated.py
 poetry_setup_kwargs.txt
 
 !.github
+
+# benchmark resuls
+*uncommited-changes.json
+.benchmarks
+
+#cmake work folders
+cmake-build-debug
+

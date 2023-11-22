@@ -18,7 +18,6 @@ from mckit.utils import round_array, round_scalar, significant_array, significan
         -4,
         8,
         0.0,
-        0.00000000000,
         3.48e-8,
         4.870001e6,
         0,

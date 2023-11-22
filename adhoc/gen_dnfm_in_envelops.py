@@ -25,7 +25,7 @@ dnfm_box: Universe = from_file(MODEL_DIR / "DNFM_box.i").universe
 dnfm: Universe = from_file(MODEL_DIR / "DNFM_NEW_LOC.i").universe
 envelopes: Universe = from_file(CMODEL_ROOT / "cmodel.universes/envelopes.i").universe
 dnfm_box.rename(start_surf=3300, start_cell=1100)
-new_cells: List[Card] = []
+new_cells: list[Card] = []
 box = dnfm_box[0].shape.complement()
 for c in envelopes:
     c.options.pop("FILL", None)

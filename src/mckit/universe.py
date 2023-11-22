@@ -1,11 +1,13 @@
+"""Classes and methods to work with MCNP universe."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, cast
+from typing import Any, Callable, Optional, cast
 
 import operator
 import sys
 
 from collections import defaultdict
+from collections.abc import Iterable
 from contextlib import contextmanager
 from functools import reduce
 from io import StringIO
@@ -44,16 +46,18 @@ _LOG = getLogger(__name__)
 
 
 class NameClashError(ValueError):
-    def __init__(self, result: str | dict[str, dict[int, set[Universe]]]) -> None:
-        if isinstance(result, str):
-            ValueError.__init__(self, result)
+    """Exception to present information on name clashes over universes."""
+
+    def __init__(self, clashes: str | dict[str, dict[int, set[Universe]]]) -> None:
+        if isinstance(clashes, str):
+            ValueError.__init__(self, clashes)
         else:
             msg = StringIO()
             msg.write("\n")
-            for kind, index in result.items():
-                for i, u in index.items():
-                    universes = reduce(lambda a, b: a.append(b) or a, map(Universe.name, u), [])
-                    msg.write(f"{kind} {i} is found in universes {universes}\n")
+            for kind, index in clashes.items():
+                for i, universes in index.items():
+                    universes_names = [u.name() for u in universes]
+                    msg.write(f"{kind} {i} is found in universes {universes_names}\n")
             ValueError.__init__(self, msg.getvalue())
 
 
@@ -177,10 +181,10 @@ class Universe:
         self,
         cells,
         name: Name = 0,
-        verbose_name: str = None,
-        comment: str = None,
+        verbose_name: str | None = None,
+        comment: str | None = None,
         name_rule: str = "keep",
-        common_materials: set[Composition] = None,
+        common_materials: set[Composition] | None = None,
     ):
         self._name = name
         self._comment = comment
@@ -366,7 +370,7 @@ class Universe:
         self,
         cell: Body | int = None,
         universe: Universe | int = None,
-        predicate: Callable[[Body], bool] = None,
+        predicate: Callable[[Body], bool] | None = None,
         name_rule: str = "new",
     ):
         """Applies fill operations to all or selected cells or universes.
@@ -412,7 +416,12 @@ class Universe:
             self._cells.pop(i)
         self.add_cells(extra_cells, name_rule=name_rule)
 
-    def bounding_box(self, tol=100, box=GLOBAL_BOX):
+    def bounding_box(
+        self,
+        tol: float = 100.0,
+        box: Box = GLOBAL_BOX,
+        skip_graveyard_cells: bool = False,
+    ) -> Box:
         """Gets bounding box for the universe.
 
         It finds all bounding boxes for universe cells and then constructs
@@ -421,29 +430,28 @@ class Universe:
         transformation and surface objects for equality. It is recommended to
         choose tol value not too small to reduce computation time.
 
-        Parameters
-        ----------
-        tol : float
-            Linear tolerance for the bounding box. The distance [in cm] between
-            every box's surface and universe in every direction won't exceed
-            this value. Default: 100 cm.
-        box : Box
-            Starting box for the search. The user must be sure that box covers
-            all geometry, because cells, that already contains corners of the
-            box will be considered as infinite and will be excluded from
-            analysis.
+        Args:
+            tol:
+                Linear tolerance for the bounding box. The distance [in cm] between
+                every box's surface and universe in every direction won't exceed
+                this value. Default: 100 cm.
+            box:
+                Starting box for the search. The user must be sure that box covers
+                all geometry, because cells, that already contains corners of the
+                box will be considered as infinite and will be excluded from
+                analysis.
+            skip_graveyard_cells:
+                Don't compute boxes for 'graveyard' cells (with zero importance for all the kinds of particles).
 
         Returns:
-        -------
-        bbox : Box
             Universe bounding box.
         """
         boxes = []
         for c in self._cells:
-            test = c.shape.test_points(box.corners)
-            if np.any(test == +1):
-                continue
-            boxes.append(c.shape.bounding_box(tol=tol, box=box))
+            if not (skip_graveyard_cells and c.is_graveyard):
+                test = c.shape.test_points(box.corners)
+                if np.any(test != +1):
+                    boxes.append(c.shape.bounding_box(tol=tol, box=box))
         all_corners = np.empty((8 * len(boxes), 3))
         for i, b in enumerate(boxes):
             all_corners[i * 8 : (i + 1) * 8, :] = b.corners
@@ -469,7 +477,7 @@ class Universe:
         Returns:
             A set of common materials.
         """
-        comp_count = defaultdict(lambda: 0)
+        comp_count = defaultdict(int)
         for u in self.get_universes():
             for c in u.get_compositions():
                 comp_count[c] += 1
@@ -504,14 +512,10 @@ class Universe:
     def get_compositions(self, exclude_common: bool = False) -> set[Composition]:
         """Gets all compositions of the universe.
 
-        Parameters
-        ----------
-        exclude_common : bool
-            Exclude common compositions from the result. Default: False.
+        Args:
+            exclude_common :  Exclude common compositions from the result. Default: False.
 
         Returns:
-        -------
-        comps : set
             A set of Composition objects.
         """
         compositions = set()
@@ -593,11 +597,11 @@ class Universe:
 
     def rename(
         self,
-        start_cell: int = None,
-        start_surf: int = None,
-        start_mat: int = None,
-        start_tr: int = None,
-        name: int = None,
+        start_cell: int | None = None,
+        start_surf: int | None = None,
+        start_mat: int | None = None,
+        start_tr: int | None = None,
+        name: int | None = None,
     ) -> None:
         """Renames all entities contained in the universe.
 
@@ -716,7 +720,7 @@ class Universe:
                     items.append(item)
         return items
 
-    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False, verbose=True):
+    def simplify(self, box=GLOBAL_BOX, min_volume=1, split_disjoint=False, verbose=True) -> None:
         """Simplifies all cells of the universe.
 
         Modifies current universe.
@@ -728,7 +732,7 @@ class Universe:
         min_volume : float
             Minimal volume of the box, when splitting process terminates.
         split_disjoint : bool
-            Whether to split disjoint cells.
+            Whether to split disjoint cells (not implemented yet).
         verbose : bool
             Turns on verbose output. Default: True.
         """
@@ -896,10 +900,10 @@ def collect_transformations(universe: Universe, recursive=True) -> set[Transform
         if body_transformation and body_transformation.name():
             aggregator.add(body_transformation)
         if recursive:
-            fill = b.options.get("FILL", None)
+            fill = b.options.get("FILL")
             if fill:
                 fill_universe = fill["universe"]
-                fill_transformation = fill.get("transform", None)
+                fill_transformation = fill.get("transform")
                 if fill_transformation and fill_transformation.name():
                     aggregator.add(fill_transformation)
                 aggregator.update(collect_transformations(fill_universe))
@@ -924,10 +928,10 @@ def collect_transformations(universe: Universe, recursive=True) -> set[Transform
 
 
 # TODO dvp: make names of cards not optional
-IU = Tuple[List[Optional[Name]], Name]
+IU = tuple[list[Optional[Name]], Name]
 """Entities, Universe name."""
 
-E2U = Dict[Name, Dict[Name, int]]
+E2U = dict[Name, dict[Name, int]]
 """Map Entity name -> Universe Name -> Count."""
 
 
@@ -971,7 +975,7 @@ def is_shared_between_universes(item: tuple[Name, dict[Name, int]]) -> bool:
     return 1 < len(universes_counts.keys())
 
 
-def make_universe_counter_map():
+def make_universe_counter_map() -> dict[Name, int]:
     return defaultdict(int)
 
 
@@ -1039,7 +1043,9 @@ class UniverseAnalyser:
             self.transformation_duplicates,
         )
 
-    def duplicates_maps(self):
+    def duplicates_maps(
+        self,
+    ) -> tuple[dict[int, int], dict[int, int], dict[int, int], dict[int, int]]:
         return (
             self.cell_to_universe_map,
             self.surface_to_universe_map,

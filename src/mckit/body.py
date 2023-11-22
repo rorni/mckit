@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import typing as tp
-
-from typing import Iterable, List, NewType, Union
+from typing import TYPE_CHECKING
 
 import os
 
@@ -28,6 +26,14 @@ from .printer import CELL_OPTION_GROUPS, print_option
 from .surface import Surface
 from .transformation import Transformation
 from .utils import filter_dict
+
+if TYPE_CHECKING:
+    from typing import ClassVar, Literal, NewType, Union
+
+    from collections.abc import Iterable, Iterator
+
+    from mckit import Universe
+
 
 __all__ = ["Shape", "Body", "simplify", "GLOBAL_BOX", "Card", "TGeometry", "TGeometry"]
 
@@ -66,7 +72,7 @@ class Shape(_Shape):
             Creates a union of the shape with the others.
         intersection(*other)
             Creates an intersection of the shape with the others.
-        transform(tr)
+        transform(transformation)
             Gets transformed version of the shape.
         is_empty()
             Checks if this shape is empty - no space belong to it.
@@ -80,7 +86,7 @@ class Shape(_Shape):
             Creates new Shape object by replacing surfaces.
     """
 
-    _opc_hash = {
+    _opc_hash: ClassVar = {
         "I": hash("I"),
         "U": ~hash("I"),
         "E": hash("E"),
@@ -122,7 +128,7 @@ class Shape(_Shape):
     def __repr__(self):
         return f"Shape({self.opc}, {self.args})"
 
-    def _get_words(self, parent_opc: str = None) -> list[str]:
+    def _get_words(self, parent_opc: str | None = None) -> list[str]:
         """Gets list of words that describe the shape.
 
         Args:
@@ -160,7 +166,7 @@ class Shape(_Shape):
             return True
         if self.opc != other.opc:
             return False
-        if self.opc == "E" or self.opc == "R":
+        if self.opc in {"E", "R"}:  # empty or whole space
             return True
         if len(self.args) != len(other.args):
             return False
@@ -248,14 +254,10 @@ class Shape(_Shape):
     def intersection(self, *other: Shape | Body) -> Shape:
         """Gets intersection with other shape.
 
-        Parameters
-        ----------
-        other : tuple
-            A list of Shape or Body objects, which must be intersected.
+        Args:
+            other: A list of Shape or Body objects, which must be intersected.
 
         Returns:
-        -------
-        result : Shape
             New shape.
         """
         return Shape("I", self, *other)
@@ -271,11 +273,11 @@ class Shape(_Shape):
         """
         return Shape("U", self, *other)
 
-    def transform(self, tr):
+    def transform(self, transformation: Transformation) -> Shape:
         """Transforms the shape.
 
         Args:
-            tr : Transformation to be applied.
+            transformation : Transformation to be applied.
 
         Returns:
             New shape.
@@ -283,7 +285,7 @@ class Shape(_Shape):
         opc = self.opc
         args = []
         for a in self.args:
-            a = a.transform(tr)  # noqa: PLW2901 - `a` is to be reassigned
+            a = a.transform(transformation)  # noqa: PLW2901 - `a` is to be reassigned
             if isinstance(a, Surface):
                 a = a.apply_transformation()  # noqa: PLW2901 `a` is to be reassigned
                 # TODO dvp: check if call of apply_transformation() should be moved to caller site
@@ -377,7 +379,7 @@ class Shape(_Shape):
         Returns:
             A list of shapes with minimal complexity.
         """
-        if self.opc != "I" and self.opc != "U":
+        if self.opc not in {"I", "U"}:  # not an intersection or a union
             return [self]
         node_cases = []
         complexities = []
@@ -444,34 +446,31 @@ class Shape(_Shape):
             c.sort()
         return cases
 
-    def replace_surfaces(self, replace_dict):
+    def replace_surfaces(self, replace_dict: dict[Surface, Surface]) -> Shape:
         """Creates new Shape instance by replacing surfaces.
 
         If shape's surface is in replace dict, it is replaced by surface in
         dictionary values. Otherwise, the original surface is used. But new
         shape is created anyway.
 
-        Parameters
-        ----------
-        replace_dict : dict
-            A dictionary of surfaces to be replaced.
+        Args:
+            replace_dict:
+                A dictionary of surfaces to be replaced.
 
         Returns:
-        -------
-        shape : Shape
             New Shape object obtained by replacing certain surfaces.
         """
-        if self.opc == "C" or self.opc == "S":
+        if self.opc in {"C", "S"}:  # complement or 'no operation'
             arg = self.args[0]
             surf = replace_dict.get(arg, arg)
             return Shape(self.opc, surf)
-        if self.opc == "I" or self.opc == "U":
+        if self.opc in {"I", "U"}:  # intersection or union
             args = [arg.replace_surfaces(replace_dict) for arg in self.args]
             return Shape(self.opc, *args)
         return self
 
     @staticmethod
-    def from_polish_notation(polish):
+    def from_polish_notation(polish: list[Surface | Shape]) -> Shape:
         """Creates Shape instance from reversed Polish notation.
 
         Args:
@@ -495,11 +494,16 @@ class Shape(_Shape):
         return operands.pop()
 
 
+if TYPE_CHECKING:
+    TOperation = NewType("TOperation", str)
+    TGeometry = NewType("TGeometry", Union[list[Union[Surface, TOperation]], Shape, "Body"])
+
+
 def _clean_args(opc, *args):
     """Clean input arguments."""
     args = [a.shape if isinstance(a, Body) else a for a in args]
     _verify_opc(opc, *args)
-    if opc == "I" or opc == "U":
+    if opc in {"I", "U"}:  # intersect or union
         args = [Shape("S", a) if isinstance(a, Surface) else a for a in args]
     if len(args) > 1:
         # Extend arguments
@@ -531,7 +535,7 @@ def _clean_args(opc, *args):
         if len(args) == 0:
             opc = "E" if opc == "U" else "R"
     if len(args) == 1 and isinstance(args[0], Shape):
-        if opc == "S" or opc == "I" or opc == "U":
+        if opc in {"S", "I", "U"}:
             return args[0].opc, args[0].args
         if opc == "C":
             item = args[0].complement()
@@ -541,17 +545,14 @@ def _clean_args(opc, *args):
 
 def _verify_opc(opc, *args):
     """Checks if such argument combination is valid."""
-    if (opc == "E" or opc == "R") and len(args) > 0:
+    if (opc in {"E", "R"}) and len(args) > 0:
         raise ValueError("No arguments are expected.")
-    if (opc == "S" or opc == "C") and len(args) != 1:
+    if (opc in {"S", "C"}) and len(args) != 1:
         raise ValueError("Only one operand is expected.")
-    if opc == "I" or opc == "U":
+    if opc in {"I", "U"}:
         if len(args) == 0:
             raise ValueError("Operands are expected.")
 
-
-TOperation = NewType("TOperation", str)
-TGeometry = NewType("TGeometry", Union[List[Union[Surface, TOperation]], Shape, "Body"])
 
 # noinspection PyProtectedMember
 
@@ -575,8 +576,8 @@ class Body(Card):
         Fills this cell by universe.
     simplify(box, split_disjoint, min_volume)
         Simplifies cell description.
-    transform(tr)
-        Applies transformation 'tr' to this cell.
+    transform(transformation)
+        Applies transformation 'transformation' to this cell.
     union(other)
         Returns a union of this cell with the other.
     """
@@ -608,6 +609,28 @@ class Body(Card):
     def transformation(self):
         return self.options.get("TRCL", None)
 
+    @property
+    def is_graveyard(self) -> bool:
+        """Is this cell a graveyard?
+
+        The graveyard cells have zero importance for all the kinds of particles.
+
+        Returns:
+            True, if all cell is of zero importance for all the kinds of particles, otherwise - False
+        """
+        return all(self.importance(c) == 0.0 for c in "NPE")
+
+    def importance(self, particle: Literal["N", "P", "E"] = "N") -> float:
+        """Retrieve importance of a cell for a particle kind.
+
+        Args:
+            particle: kind
+
+        Returns:
+            The importance value, if specified, zero otherwise.
+        """
+        return self.options.get(f"IMP{particle}", 0.0)
+
     def is_equivalent_to(self, other):
         result = self._shape == other._shape
         if result:
@@ -621,7 +644,7 @@ class Body(Card):
 
     # TODO dvp: the method is used for printing, we'd better introduce virtual method print(self, out: TextIO)?
     # TODO dvp: in that case we could just return original text if available
-    def mcnp_words(self, pretty=False):
+    def mcnp_words(self, pretty=False) -> list[str]:
         words = [str(self.name()), " "]
         if "MAT" in self.options.keys():
             words.append(str(self.options["MAT"].composition.name()))
@@ -655,7 +678,7 @@ class Body(Card):
         return text
 
     @property
-    def shape(self):
+    def shape(self) -> Shape:
         """Gets body's shape."""
         return self._shape
 
@@ -669,40 +692,32 @@ class Body(Card):
         assert composition is None or isinstance(composition, mm.Material)
         return composition
 
-    def intersection(self, other):
+    def intersection(self, other) -> Body:
         """Gets an intersection if this cell with the other.
 
         Other cell is a geometry that bounds this one. The resulting cell
         inherits all options of this one (the caller).
 
-        Parameters
-        ----------
-        other : Cell
-            Other cell.
+        Args:
+            other:  Other cell.
 
         Returns:
-        -------
-        cell : Cell
-            The result.
+            The cell representing the intersection.
         """
         geometry = self._shape.intersection(other)
         options = filter_dict(self.options, "original")
         return Body(geometry, **options)
 
-    def union(self, other):
+    def union(self, other: Body) -> Body:
         """Gets a union if this cell with the other.
 
         The resulting cell inherits all options of this one (the caller).
 
-        Parameters
-        ----------
-        other : Cell
-            Other cell.
+        Args:
+            other: Other cell.
 
         Returns:
-        -------
-        cell : Cell
-            The result.
+            cell: The result.
         """
         geometry = self._shape.union(other)
         options = filter_dict(self.options, "original")
@@ -710,48 +725,41 @@ class Body(Card):
 
     def simplify(
         self,
-        box=GLOBAL_BOX,
-        split_disjoint=False,
-        min_volume=MIN_BOX_VOLUME,
-        trim_size=1,
-    ):
+        box: Box = GLOBAL_BOX,
+        split_disjoint: bool = False,
+        min_volume: float = MIN_BOX_VOLUME,
+        trim_size: int = 1,
+    ) -> Body:
         """Simplifies this cell by removing unnecessary surfaces.
 
         The simplification procedure goes in the following way.
         # TODO: insert brief description!
 
-        Parameters
-        ----------
-        box : Box
-            Box where geometry should be simplified.
-        split_disjoint : bool
-            Whether to split disjoint geometries into separate geometries.
-        min_volume : float
-            The smallest value of box's volume when the process of box splitting
-            must be stopped.
-        trim_size : int
-            Max size of set to return. It is used to prevent unlimited growth
-            of the variant set.
+        Args:
+            box:
+                Box where geometry should be simplified.
+            split_disjoint:
+                Whether to split disjoint geometries into separate geometries.
+            min_volume:
+                The smallest value of box's volume when the process of box splitting must be stopped.
+            trim_size:
+                Max size of set to return. It is used to prevent unlimited growth
+                of the variant set.
 
         Returns:
-        -------
-        simple_cell : Cell
             Simplified version of this cell.
         """
-        # print('Collect stage...')
         self._shape.collect_statistics(box, min_volume)
-        # print('finding optimal solution...')
         variants = self._shape.get_simplest(trim_size)
-        # print(len(variants))
         options = filter_dict(self.options, "original")
+
         return Body(variants[0], **options)
 
-    def split(self, box=GLOBAL_BOX, min_volume=MIN_BOX_VOLUME):
+    def split(self, box: Box = GLOBAL_BOX, min_volume: float = MIN_BOX_VOLUME) -> list[Body]:
         """Splits cell into disjoint cells.
 
         Returns:
-        -------
-        cells : list
+            cells list
         """
         self.shape.collect_statistics(box, min_volume)
         shape_groups = self.shape.split_shape()
@@ -760,7 +768,7 @@ class Body(Card):
     # noinspection PyShadowingNames
     def fill(
         self,
-        universe=None,
+        universe: Universe = None,
         recurrent: bool = False,
         simplify: bool = False,
         **kwargs: dict[str, any],
@@ -810,26 +818,22 @@ class Body(Card):
             cells.append(new_cell)
         return cells
 
-    def transform(self, tr):
+    def transform(self, transformation: Transformation) -> Body:
         """Applies transformation to this cell.
 
-        Parameters
-        ----------
-        tr : Transform
-            Transformation to be applied.
+        Args:
+            transformation:Transformation to be applied.
 
         Returns:
-        -------
-        cell : Cell
             The result of this cell transformation.
         """
-        geometry = self._shape.transform(tr)
+        geometry = self._shape.transform(transformation)
         options = filter_dict(self.options, "original")
         cell = Body(geometry, **options)
         fill = cell.options.get("FILL", None)
         if fill:
             tr_in = fill.get("transform", Transformation())
-            new_tr = tr.apply2transform(tr_in)
+            new_tr = transformation.apply2transform(tr_in)
             fill["transform"] = new_tr
         return cell
 
@@ -851,7 +855,9 @@ class Body(Card):
         return cell
 
 
-def simplify(cells: Iterable, box: Box = GLOBAL_BOX, min_volume: float = 1.0) -> tp.Generator:
+def simplify(
+    cells: Iterable[Body], box: Box = GLOBAL_BOX, min_volume: float = 1.0
+) -> Iterator[Body]:
     """Simplifies the cells.
 
     Args:
@@ -886,7 +892,7 @@ class Simplifier:
 
 def simplify_mp(
     cells: Iterable[Body], box: Box = GLOBAL_BOX, min_volume: float = 1.0, chunk_size=1
-) -> tp.Generator:
+) -> Iterator[Body]:
     """Simplifies the cells in multiprocessing mode.
 
     Parameters
@@ -912,17 +918,18 @@ def simplify_mpp(
     box: Box = GLOBAL_BOX,
     min_volume: float = 1.0,
     chunk_size: int = 1,
-) -> tp.Generator:
+) -> Iterator[Body]:
     """Simplifies the cells in multiprocessing mode with progress bar.
 
     Args:
         cells:
             iterable over cells to simplify
-        box :
+        box:
             Box, from which simplification process starts. Default: GLOBAL_BOX.
-        min_volume : float
+        min_volume:
             Minimal volume of the box, when splitting process terminates.
-        chunk_size: size of chunks to pass to child processes
+        chunk_size:
+            size of chunks to pass to child processes
     """
 
     def fmt_fun(x):

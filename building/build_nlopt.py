@@ -10,7 +10,7 @@ from subprocess import check_call
 sys.path.append(str(Path(__file__).parent.parent))
 print(sys.path)
 
-from building.extension_utils import WIN, create_directory  # noqa: E402
+from building.extension_utils import WIN, create_directory
 
 
 def execute_command(

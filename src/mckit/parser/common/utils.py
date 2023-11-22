@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Iterable
-
 import re
+
+from collections.abc import Iterable
 
 C_COMMENT = r"(^|(?<=\n))\s{0,5}[cC]([ ][^\n]*)?\n?"
 RE_C_COMMENT = re.compile(C_COMMENT, re.MULTILINE)

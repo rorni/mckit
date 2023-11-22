@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, Tuple, Union, cast
+from typing import Any, Literal, Union, cast
 
+import importlib.resources as rs
 import math
-import os
-import sys
 
+from collections.abc import Iterable
 from functools import reduce
 from operator import xor
 
@@ -17,30 +17,30 @@ __all__ = ["AVOGADRO", "Element", "Composition", "Material"]
 
 AVOGADRO = 6.0221408576e23
 MATERIAL_FRACTION_FORMAT = "{0:.6e}"
-_CHARGE_TO_NAME = {}
-_NAME_TO_CHARGE = {}
-_NATURAL_ABUNDANCE = {}
-_ISOTOPE_MASS = {}
-_path = os.path.dirname(sys.modules[__name__].__file__)
+_CHARGE_TO_NAME: dict[int, str] = {}
+_NAME_TO_CHARGE: dict[str, int] = {}
+_NATURAL_ABUNDANCE: dict[int, dict[int, float]] = {}
+_ISOTOPE_MASS: dict[int, dict[int, float]] = {}
 
-with open(_path + "/data/isotopes.dat") as f:
-    for line in f:
-        number, name, *data = line.split()
-        number = int(number)
-        name = name.upper()
-        _CHARGE_TO_NAME[number] = name
-        _NAME_TO_CHARGE[name] = number
-        _NATURAL_ABUNDANCE[number] = {}
-        _ISOTOPE_MASS[number] = {}
-        for i in range(len(data) // 3):
-            isotope = int(data[i * 3])
-            _ISOTOPE_MASS[number][isotope] = float(data[i * 3 + 1])
-            abundance = data[i * 3 + 2]
-            if abundance != "*":
-                _NATURAL_ABUNDANCE[number][isotope] = float(abundance) / 100.0
+with rs.as_file(rs.files(__package__).joinpath("data/isotopes.dat")) as p:
+    with p.open() as f:
+        for line in f:
+            str_number, name, *data = line.split()
+            number = int(str_number)
+            name = name.upper()
+            _CHARGE_TO_NAME[number] = name
+            _NAME_TO_CHARGE[name] = number
+            _NATURAL_ABUNDANCE[number] = {}
+            _ISOTOPE_MASS[number] = {}
+            for i in range(len(data) // 3):
+                isotope = int(data[i * 3])
+                _ISOTOPE_MASS[number][isotope] = float(data[i * 3 + 1])
+                abundance = data[i * 3 + 2]
+                if abundance != "*":
+                    _NATURAL_ABUNDANCE[number][isotope] = float(abundance) / 100.0
 
 
-TFraction = Tuple[Union["Element", int, str], float]
+TFraction = tuple[Union["Element", int, str], float]
 TFractions = Iterable[TFraction]
 
 
@@ -64,7 +64,7 @@ class Composition(Card):
         Dictionary of composition options.
 
     Methods:
-    -------
+    --------
     molar_mass()
         Gets molar mass of the composition.
     get_atomic(isotope)
@@ -81,9 +81,11 @@ class Composition(Card):
     """Relative composition element concentration equality tolerance."""
 
     # TODO dvp: are there specs using both atomic and weight definitions?
-    def __init__(self, atomic: TFractions = None, weight: TFractions = None, **options: Any):
+    def __init__(
+        self, atomic: TFractions | None = None, weight: TFractions | None = None, **options: Any
+    ):
         Card.__init__(self, **options)
-        self._composition = {}  # type Dict[Element, float]
+        self._composition: dict[Element, float] = {}
         elem_w = []
         frac_w = []
 
@@ -112,15 +114,15 @@ class Composition(Card):
             totals_diff = total_frac_a - total_frac_w
             sq_root = np.sqrt(totals_diff**2 + 4 * atoms_in_weight_spec * mass_in_atomic_spec)
             if totals_diff <= 0:
-                self._mu = 0.5 * (sq_root - totals_diff) / atoms_in_weight_spec
+                self._molar_mass: float = 0.5 * (sq_root - totals_diff) / atoms_in_weight_spec
             else:
-                self._mu = 2 * mass_in_atomic_spec / (sq_root + totals_diff)
+                self._molar_mass = 2 * mass_in_atomic_spec / (sq_root + totals_diff)
 
-            norm_factor = self._mu * atoms_in_weight_spec + total_frac_a
+            norm_factor = self._molar_mass * atoms_in_weight_spec + total_frac_a
             for el, frac in zip(elem_w, frac_w):
                 if el not in self._composition.keys():
                     self._composition[el] = 0.0
-                self._composition[el] += self._mu / norm_factor * frac / el.molar_mass
+                self._composition[el] += self._molar_mass / norm_factor * frac / el.molar_mass
             for el, frac in zip(elem_a, frac_a):
                 if el not in self._composition.keys():
                     self._composition[el] = 0.0
@@ -129,10 +131,12 @@ class Composition(Card):
             raise ValueError("Incorrect set of parameters.")
         self._hash = reduce(xor, map(hash, self._composition.keys()))
 
-    def copy(self):
+    def copy(self) -> Composition:
         return Composition(atomic=cast(TFractions, self._composition.items()), **self.options)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Composition):
+            return False
         if len(self._composition.keys()) != len(other._composition.keys()):
             return False
         for k1, v1 in self._composition.items():
@@ -200,59 +204,49 @@ class Composition(Card):
             item = Element(item)
         return item in self._composition
 
-    def get_atomic(self, isotope):
+    def get_atomic(self, isotope: str | Element) -> float:
         """Gets atomic fraction of the isotope.
 
         Raises KeyError if the composition doesn't contain the isotope.
 
-        Parameters
-        ----------
-        isotope : str or Element
-            Isotope. It can be either isotope name or Element instance.
+        Args:
+            isotope: Isotope. It can be either isotope name or Element instance.
 
         Returns:
-        -------
-        frac : float
             Atomic fraction of the specified isotope.
         """
         if not isinstance(isotope, Element):
             isotope = Element(isotope)
         return self._composition[isotope]
 
-    def get_weight(self, isotope):
+    def get_weight(self, isotope: int | Element) -> float:
         """Gets weight fraction of the isotope.
 
         Raises KeyError if the composition doesn't contain the isotope.
 
-        Parameters
-        ----------
-        isotope : str or Element
-            Isotope. It can be either isotope name or Element instance.
+        Args:
+            isotope : Isotope. It can be either isotope name or Element instance.
 
         Returns:
-        -------
-        frac : float
             Weight fraction of the specified isotope.
         """
         if not isinstance(isotope, Element):
             isotope = Element(isotope)
-        at = self._composition[isotope]
-        return at * isotope.molar_mass / self._mu
+        frac: float = self._composition[isotope] * isotope.molar_mass / self._molar_mass
+        return frac
 
     @property
-    def molar_mass(self):
+    def molar_mass(self) -> float:
         """Gets composition's effective molar mass [g / mol]."""
-        return self._mu
+        return self._molar_mass
 
-    def expand(self):
+    def expand(self) -> Composition:
         """Expands elements with natural abundances into detailed isotope composition.
 
         Returns:
-        -------
-        new_comp : Composition
             New expanded composition or self.
         """
-        composition = {}
+        composition: dict[Element, float] = {}
         already = True
         for el, conc in self._composition.items():
             if el.mass_number == 0:
@@ -265,7 +259,7 @@ class Composition(Card):
             return self
         return Composition(atomic=composition.items(), **self.options)
 
-    def natural(self, tolerance=1.0e-8):
+    def natural(self, tolerance=1.0e-8) -> Composition | None:
         """Tries to replace detailed isotope composition by natural elements.
 
         Modifies current object.
@@ -283,11 +277,11 @@ class Composition(Card):
             composition cannot be reduced to natural.
         """
         already = True
-        by_charge = {}  # type: Dict[int, Dict[int, float]]
+        by_charge: dict[int, dict[int, float]] = {}
         for elem, fraction in self._composition.items():
             q = elem.charge
             if q not in by_charge.keys():
-                by_charge[q] = {}  # type: Dict[int, float]
+                by_charge[q] = {}
             a = elem.mass_number
             if a > 0:
                 already = False
@@ -298,7 +292,7 @@ class Composition(Card):
         if already:  # No need for further checking - only natural elements present.
             return self
 
-        composition = {}  # type: Dict[Element, float]
+        composition: dict[Element, float] = {}
         for q, isotopes in by_charge.items():
             frac_0 = isotopes.pop(0, None)
             tot_frac = sum(isotopes.values())
@@ -317,7 +311,7 @@ class Composition(Card):
                 composition[elem] += frac_0
         return Composition(atomic=cast(TFractions, composition.items()), **self.options)
 
-    def elements(self):
+    def elements(self) -> Iterable[Element]:
         """Gets iterator over composition's elements."""
         return iter(self._composition.keys())
 
@@ -342,6 +336,35 @@ class Composition(Card):
             for elem, atom_frac in comp:
                 atomics.append((elem, atom_frac * frac))
         return Composition(atomic=atomics)
+
+
+def mixture_by_volume(
+    *fractions_spec: tuple[Composition, float, float],
+    number=0,
+) -> tuple[float, Composition]:
+    """Compute mix of compositions defined with densities and volume fractions.
+
+    Args:
+        fractions_spec: list of specs (Composition, density, volume_fraction)
+        number: ... to assign as composition 'name'
+
+    Returns:
+        Composition: the mix by atomic fractions
+    """
+    compositions = [t[0] for t in fractions_spec]
+    moles = np.fromiter(
+        (
+            density * volume_fraction / composition.molar_mass
+            for composition, density, volume_fraction in fractions_spec
+        ),
+        dtype=float,
+    )
+    total_moles = moles.sum()
+    atomic_fractions = moles / total_moles
+    mix = Composition.mixture(*zip(compositions, atomic_fractions))
+    mix.options["name"] = number
+    density = sum(density * volume_fraction for _, density, volume_fraction in fractions_spec)
+    return density, mix
 
 
 class Material:
@@ -395,11 +418,11 @@ class Material:
 
     def __init__(
         self,
-        atomic: TFractions = None,
-        weight: TFractions = None,
-        composition: Composition = None,
-        density: float = None,
-        concentration: float = None,
+        atomic: TFractions | None = None,
+        weight: TFractions | None = None,
+        composition: Composition | None = None,
+        density: float | None = None,
+        concentration: float | None = None,
         **options,
     ):
         # Attributes: _n - atomic density (concentration)
@@ -412,9 +435,13 @@ class Material:
 
         if concentration and density or not concentration and not density:
             raise ValueError("Incorrect set of parameters.")
-        if concentration:
+        if concentration is not None:
             self._n = concentration
+            if density is not None:
+                raise ValueError("Both concentration and density are specified")
         else:
+            if density is None:
+                raise ValueError("Neither concentration nor density is specified")
             self._n = density * AVOGADRO / self._composition.molar_mass
         self._options = options
 
@@ -449,27 +476,30 @@ class Material:
         """Gets material's effective molar mass [g / mol]."""
         return self._composition.molar_mass
 
-    def correct(self, old_vol=None, new_vol=None, factor=None):
+    def correct(
+        self,
+        old_vol: float | None = None,
+        new_vol: float | None = None,
+        factor: float | None = None,
+    ) -> Material:
         """Creates new material with fixed density to keep cell's mass.
 
         Either old_vol and new_vol or factor must be specified.
 
-        Parameters
-        ----------
-        old_vol : float
-            Initial volume of the cell.
-        new_vol : float
-            New volume of the cell.
-        factor : float
-            By this factor density of material will be multiplied. If factor
-            is specified, then its value will be used.
+        Args:
+            old_vol: Initial volume of the cell.
+            new_vol: New volume of the cell.
+            factor : By this factor density of material will be multiplied. If factor
+                     is specified, then its value will be used, otherwise - old_vol/new_vol
 
         Returns:
-        -------
-        new_mat : Material
-            New material that takes into account new volume of the cell.
+            New material that takes with corrected density.
         """
         if factor is None:
+            if old_vol is None or new_vol is None:
+                raise ValueError("'old_vol' is not specified")
+            if new_vol is None:
+                raise ValueError("'new_vol' is not specified")
             factor = old_vol / new_vol
         return Material(
             composition=self._composition,
@@ -478,7 +508,10 @@ class Material:
         )
 
     @staticmethod
-    def mixture(*materials, fraction_type="weight"):
+    def mixture(
+        *materials: tuple[Material, float],
+        fraction_type: Literal["weight", "volume", "atomic"],
+    ) -> Material:
         """Creates new material as a mixture of others.
 
         Volume fractions are not needed to be normalized, but normalization has effect.
@@ -487,21 +520,16 @@ class Material:
         the effect of compression is taking place. But for weight and atomic fractions
         normalization will be done anyway.
 
-        Parameters
-        ----------
-        materials : list
-            A list of pairs material-fraction. material must be a Material class
-            instance because for mixture not only composition but density is
-            important.
-        fraction_type : str
-            Indicate how fraction should be interpreted.
-            'weight' - weight fractions (default);
-            'volume' - volume fractions;
-            'atomic' - atomic fractions.
+        Args:
+            materials: An Iterable of pairs material-fraction. material must be a Material class
+                instance because for mixture not only composition but density is
+                important.
+            fraction_type: Indicate how fraction should be interpreted.
+                'weight' - weight fractions (default);
+                'volume' - volume fractions;
+                'atomic' - atomic fractions.
 
         Returns:
-        -------
-        material : Material
             New material.
         """
         if not materials:
@@ -535,31 +563,35 @@ class Material:
 class Element:
     """Represents isotope or isotope mixture for natural abundance case.
 
-    Parameters
-    ----------
-    _name : str or int
-        Name of isotope. It can be ZAID = Z * 1000 + A, where Z - charge,
-        A - the number of protons and neutrons. If A = 0, then natural abundance
-        is used. Also it can be an atom_name optionally followed by '-' and A.
-        '-' can be omitted. If there is no A, then A is assumed to be 0.
-    comment : str, optional
-        Optional comment to the element.
-    lib : str
-        Data library ID. Usually it is MCNP library, like '31b' for FENDL31b.
-    isomer : int
-        Isomer level. Default 0. Usually may appear in FISPACT output.
+    Attributes:
+        _charge: Z of the element,
+        _mass_number: A of the element
+        _comment: Optional comment to the element.
+        _lib:  Data library ID. Usually it is MCNP library, like '31b' for FENDL31b.
+        _isomer: Isomer level. Default 0. Usually may appear in FISPACT output.
+        _molar: molar mass of the element
 
     Methods:
-    -------
-    expand()
-        Expands natural composition of this element.
-    fispact_repr()
-        Gets FISPACT representation of the element.
-    mcnp_repr()
-        Gets MCNP representation of the element.
+        expand()
+            Expands natural composition of this element.
+        fispact_repr()
+            Gets FISPACT representation of the element.
+        mcnp_repr()
+            Gets MCNP representation of the element.
     """
 
     def __init__(self, _name: str | int, lib=None, isomer=0, comment=None):
+        """Initialize an Element.
+
+        Args:
+            _name: Name of isotope. It can be ZAID = Z * 1000 + A, where Z - charge,
+            A - the number of protons and neutrons. If A = 0, then natural abundance
+            is used. Also, it can be an atom_name optionally followed by '-' and A.
+            '-' can be omitted. If there is no A, then A is assumed to be 0.
+            comment: Optional comment to the element.
+            lib:  Data library ID. Usually it is MCNP library, like '31b' for FENDL31b.
+            isomer: Isomer level. Default 0. Usually may appear in FISPACT output.
+        """
         if isinstance(_name, int):
             self._charge = _name // 1000
             self._mass_number = _name % 1000
@@ -657,14 +689,11 @@ class Element:
         """Gets isomer level."""
         return self._isomer
 
-    def expand(self):
+    def expand(self) -> dict[Element, float]:
         """Expands natural element into individual isotopes.
 
         Returns:
-        -------
-        elements : dict
-            A dictionary of elements that are comprised by this one.
-            Keys - elements - Element instances, values - atomic fractions.
+            A dictionary of elements that are comprised by the isotopes of this one and their fractions.
         """
         result = {}
         if self._mass_number > 0 and self._mass_number in _NATURAL_ABUNDANCE[self._charge].keys():

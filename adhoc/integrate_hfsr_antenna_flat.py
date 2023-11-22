@@ -17,9 +17,8 @@ import sys
 from functools import reduce
 from multiprocessing import Pool
 
-import numpy as np
-
 import dotenv
+import numpy as np
 
 from mckit.utils import check_if_all_paths_exist, get_root_dir
 
@@ -56,7 +55,7 @@ NJOBS = os.cpu_count()
 # set_loky_pickler()
 
 
-class BoundingBoxAdder(object):
+class BoundingBoxAdder:
     def __init__(self, tolerance: float):
         self.tolerance = tolerance
 

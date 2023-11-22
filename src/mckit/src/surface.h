@@ -23,11 +23,11 @@ typedef struct BOX          BOX;
 
 enum SurfType {PLANE=1, SPHERE, CYLINDER, CONE, TORUS, GQUADRATIC, MRCC, MBOX};
 
-// surface common data
+/// surface common data
 struct Surface {
-    char type;              // surface type
-    uint64_t last_box;      // subdivision code of last tested box
-    int last_box_result;    // last test_box result
+    char type;              ///< surface type
+    uint64_t last_box;      ///< subdivision code of last tested box
+    int last_box_result;    ///< last test_box result
 };
 
 struct Plane {
@@ -65,7 +65,7 @@ struct Torus {
     double a;
     double b;
     char degenerate;
-    double specpts[NDIM * 2];  // Special points, if present.
+    double specpts[NDIM * 2];  ///< Special points, if present.
 };
 
 struct GQuadratic {
@@ -146,16 +146,26 @@ int BOX_init(
     Plane ** planes
 );
 
-// Tests senses of points with respect to the surface.
+/// Tests senses of points with respect to the surface.
 void surface_test_points(
-    const Surface * surf,   // Surface
-    size_t npts,            // The number of points to be tested
-    const double * points,  // Points to be tested
-    char * result            // The result - +1 if point has positive sense and -1 if negative.
+    const Surface * surf,    ///< Surface
+    size_t npts,             ///< The number of points to be tested
+    const double * points,   ///< Points to be tested
+    char * result            ///< The result - +1 if point has positive sense and -1 if negative.
 );
 
-// Tests if the surface intersects the box. 0 - surface intersects the box; +1 - box lies on the positive
-// side of surface; -1 - box lies on the negative side of surface.
-int surface_test_box(Surface * surf, const Box * box);
+
+/**
+ * Tests if the surface intersects the box.
+ *
+ * @return
+ *     0 - surface intersects the box;
+ *    +1 - box lies on the positive side of surface;
+ *    -1 - box lies on the negative side of surface.
+ */
+int surface_test_box(
+    Surface * surf,  ///< surface to test
+    const Box * box  ///< box to test
+);
 
 #endif

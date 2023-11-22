@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.6.24"
+version = "0.6.25"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -18,7 +18,10 @@ packages = [
 ]
 include = [
     "src/mckit/data/isotopes.dat",
-    { path = "build.py", format="sdist"}
+    { path = "build.py", format="sdist"},
+    # C extensions must be included in the wheel distribution.
+    { path = "src/mckit/**/*.pyd", format = "wheel" },
+    { path = "src/mckit/**/*.so", format = "wheel" },
 ]
 exclude = [
     ".py[co]$",
@@ -43,10 +46,12 @@ requires = [  # Sync with build.py (see update_setup_requires())
     "poetry-core >= 1.5.2",
     "cmake >= 3.26.3",
     "setuptools >= 67.8.0",
+    "pip >= 23.2.1",
     "wheel >= 0.40.0",
-    "mkl-devel == 2023.1.0",
-    "tbb == 2021.9.0",
-    "numpy >= 1.24.3",
+    "mkl-devel == 2023.2.0",  # sync with dev dependencies
+    "intel-openmp == 2023.2.0", # ...
+    "tbb == 2021.10.0", # ...
+    "numpy >= 1.26.0",
 ]
 build-backend = "poetry.core.masonry.api"
 
@@ -65,15 +70,14 @@ mckit = "mckit.cli.runner:mckit"
 
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<3.12"  # TODO dvp: update upper limit with scipy
+python = ">=3.9,<3.13"
 DateTime = ">=4.3"
 atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"
 click = ">=8.0.1"
 colorama = ">=0.4.4"
-importlib-resources = {version = ">=5.12.0", python = "3.8"}
 loguru = ">=0.6.0"
-numpy = ">=1.24.3"
+numpy = ">=1.26.0"
 ply = ">=3.11"
 python-dotenv = ">=0.20.0"
 scipy = ">=1.10.1"
@@ -81,9 +85,13 @@ sly = ">=0.4"
 tomli = {version = ">=2.0.1", python="<3.11"}
 tomli-w = ">=1.0.0"
 tqdm = ">=4.55.1"
-# mkl again has different versions for different platforms
-mkl-devel = "2023.1.0"
-tbb = "2021.9.0"
+# the last mkl version with wheels for Linux, Windows and MacOS, check on updates
+# the most recent version was 2024.0.0 (windows and linux only).
+# Same for intel-openmp and tbb.
+mkl-devel = "2023.2.0"
+intel-openmp = "2023.2.0"
+tbb = "2021.10.0"
+
 # The following works for linux and windows, but not for macos
 # besides we need to have the same versions on build (see [build-system]),
 # so, we use the most recent version compatbile to all the OS.
@@ -113,6 +121,8 @@ tbb = "2021.9.0"
 # TODO dvp: check
 #      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 #
+typer = {extras = ["all"], version = ">=0.9.0"}
+poetry = "^1.6.1"
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
@@ -127,11 +137,12 @@ nox = ">=2022.1.7"
 
 [tool.poetry.group.pre_commit.dependencies]
 pre-commit = ">=2.15.0"
-rstcheck = ">=3.3.1"
+rstcheck = ">=6.1.2"
 pydocstringformatter = ">=0.7.3"
+pyupgrade = ">=3.15.0"
 
 [tool.poetry.group.black.dependencies]
-black = ">=22.8.0"  #TODO dvp: update with safety and packaging
+black = ">=22.8.0"
 
 [tool.poetry.group.isort.dependencies]
 isort = ">=5.9.3"
@@ -152,19 +163,19 @@ coverage = { version = ">=6.1.2", extras = ["toml"] }
 xdoctest = {extras = ["colors"], version = ">=0.15.10"}
 
 [tool.poetry.group.typeguard.dependencies]
-typeguard = ">=2.13.3"
+typeguard = ">=3.0.2"
 # typeguard = ">=3.0.2"  - pygls, which is required by ruff-lsp, doesn't allow newer version
 
 [tool.poetry.group.mypy.dependencies]
 mypy = ">=1.2.0"
 pep8-naming = ">=0.12.1"
 types-setuptools = ">=57.4.2"
-numpy = ">=1.23.2"
+numpy = ">=1.26.2"
+types-tqdm = ">=4.66.0.2"
 
 [tool.poetry.group.flake8.dependencies]
 darglint = ">=1.8.1"
 flake8 = ">=6.0.0"
-#flake8 = ">=6.0.0"
 flake8-adjustable-complexity = ">=0.0.6"
 flake8-annotations = ">=2.6.2"
 flake8-annotations-coverage = ">=0.0.6"
@@ -177,7 +188,7 @@ flake8-colors = ">=0.1.9"
 flake8-commas = ">=2.1.0"
 flake8-comprehensions = ">=3.10.0"
 flake8-docstrings = ">=1.6.0"
-# flake8-eradicate = ">=1.4.0"  #TODO dvp: return with  flake8-eradicate update
+flake8-eradicate = ">=1.5.0"
 flake8-expression-complexity = ">=0.0.11"
 flake8-functions = ">=0.0.7"
 flake8-import-order = ">=0.18.1"
@@ -208,7 +219,7 @@ pyls-isort = ">=0.2.2"
 python-lsp-black = ">=1.2.1"
 pyls-memestra = ">=0.0.16"
 pylsp-rope = ">=0.1.11"
-ruff-lsp = "^0.0.24"
+ruff-lsp = ">=0.0.35"
 
 [tool.poetry.group.ruff.dependencies]
 ruff = ">=0.0.259"
@@ -216,8 +227,8 @@ ruff = ">=0.0.259"
 [tool.isort]
 atomic = true
 ensure_newline_before_comments = true
-known_first_party = "src"
-known_third_party = "mpl_toolkits,matplotlib,numpy,scipy"
+known_first_party = "mckit"
+known_third_party = "mpl_toolkits,matplotlib,numpy,scipy,loguru,tqdm,dotenv"
 known_typing = "typing,types,typing_extensions,mypy,mypy_extensions"
 sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 default_section = "FIRSTPARTY"
@@ -270,7 +281,7 @@ exclude = '''
 minversion = "6.0"
 norecursedirs = ".* build dist *.egg-info data htmlcov notebooks tools wrk"
 python_functions = "test_*  profile_*"
-addopts = "-ra -q --tb=short --doctest-modules --strict-markers --ignore setup.py --failed-first"
+addopts = "-ra -q --tb=short --doctest-modules --strict-markers --ignore setup.py --failed-first --benchmark-autosave"
 doctest_optionflags = "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ALLOW_UNICODE ALLOW_BYTES"
 testpaths = ["tests"]
 markers = [
@@ -293,7 +304,6 @@ log_date_format = "%Y-%m-%d %H:%M:%S"
 quiet = true
 options = ""
 
-# [tool.coverage]
 [tool.coverage.paths]
 source = ["src", ".nox/*/site-packages"]
 
@@ -351,9 +361,8 @@ plugins = ["numpy.typing.mypy_plugin"]
 module = [
     "click",
     "click.testing",
-    "importlib_resources",
     "loguru",
-    "importlib_metadata",
+    "mckit.*",  # TODO (dvp, style): make everything typed including extension 'geometry'
     "multipledispatch",
     "nox",
     "numpy.testing",
@@ -389,34 +398,6 @@ context=5
 [tool.tryceratops]
 include = ["src"]
 experimental = true
-
-[tool.pycln]
-path = "src"
-exclude = '''
-(
-    \.egg-info
-  | \.eggs
-  | \.git
-  | \.mypy_cache
-  | \.pytest_cache
-  | \.nox
-  | \.venv
-  | \.idea
-  | _build
-  | 3rd-party
-  | build
-  | build_configs
-  | data
-  | dist
-  | notebooks
-  | htmlcov
-  | wrk
-  | [Pp]arser
-  | tab\.py
-)
-'''
-#silence = true
-
 
 [tool.pydocstringformatter]
 write = true
@@ -476,7 +457,7 @@ select= [
     # "Q", # flake8-quotes
     "RET", # flake8-return
     # "RSE", # flake8-raise
-    # "RUF", # Ruff-specific rules
+    "RUF", # Ruff-specific rules
     "S", # flake8-bandit
     # "SIM", # flake8-simplify
     # "SLF", # flake8-self
@@ -485,7 +466,7 @@ select= [
     # "TCH", # flake8-type-checking
     # "TID", # flake8-tidy-imports
     "TRY", # tryceratops
-    # "UP", # pyupgrade
+    "UP", # pyupgrade
     "W", # pycodestyle 2
     "YTT", # flake8-2020
 ]
@@ -616,7 +597,7 @@ exclude = [
   "wrk",
   "*.egg-info",
   ".cache",
-  "notebooks/dvp/*.py"
+  "notebooks/dvp/*.py",
 ]
 # Assume Python 3.10.
 # target-version = "py310"
@@ -654,6 +635,9 @@ exclude = [
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 15
 
+[tool.ruff.flake8-annotations]
+mypy-init-return = true  # skip return type for __init__() methods
+
 [tool.ruff.flake8-type-checking]
 strict = true
 
@@ -667,5 +651,4 @@ required-imports = ["from __future__ import annotations"]
 parametrize-names-type = "csv"
 
 [tool.ruff.pydocstyle]
-# Use Google-style docstrings.
-convention = "google"
+convention = "google"  # Use Google-style docstrings.

@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray as ArrayLike
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import ORIGIN
@@ -41,7 +41,7 @@ class Transformation(Card, MaybeClose):
         corrected. Default: identity matrix - non rotation.
     indegrees : bool
         How rotation parameters should be treated. If True - rotation matrix
-        parameters are given in degrees. Otherwise rotation parameters are basis
+        parameters are given in degrees. Otherwise, rotation parameters are basis
         vectors of local coordinate system. Default: False.
     inverted : bool
         How translation vector should be interpreted. If True - it is the origin
@@ -74,7 +74,7 @@ class Transformation(Card, MaybeClose):
         rotation=None,
         indegrees=False,
         inverted=False,
-        **options: dict[str, Any],
+        **options: Any,
     ):
         Card.__init__(self, **options)
 
@@ -205,7 +205,7 @@ class Transformation(Card, MaybeClose):
         """Gets new transformation.
 
         Suppose there are three coordinate systems r, r1, r2. Transformation
-        tr: r2 -> r1; and this transformation: r1 -> r. Thus the resulting
+        tr: r2 -> r1; and this transformation: r1 -> r. Thus, the resulting
         transformation: r2 -> r. In other words the result is a sequence of
         two transformations: `tr` and this. The `tr` is applied first.
 
@@ -241,7 +241,7 @@ class Transformation(Card, MaybeClose):
             return False
         return estimator((self._t, self._u), (other._t, other._u))
 
-    def _setup_rotation_matrix(self, u: ArrayLike | None) -> ArrayLike:
+    def _setup_rotation_matrix(self, u: ArrayLike) -> ArrayLike:
         zero_cosines_idx = np.abs(u) < ZERO_COS_TOLERANCE
         u[zero_cosines_idx] = 0.0
         # TODO: Implement creation from reduced rotation parameter set.

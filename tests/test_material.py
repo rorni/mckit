@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
 from copy import deepcopy
 
@@ -10,7 +10,7 @@ from mckit.material import Composition, Element, Material
 
 
 class TestElement:
-    cases = [
+    cases: Final = [
         ("H", {}),
         ("1000", {}),
         ("1001", {}),
@@ -37,7 +37,7 @@ class TestElement:
         (4009, {}),
     ]
 
-    hash_equality = [
+    hash_equality: Final = [
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -465,7 +465,7 @@ class TestElement:
         elem = Element(name, **options)
         assert expected == elem.fispact_repr()
 
-    equality = [
+    equality: Final = [
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -504,7 +504,7 @@ class TestElement:
 
 
 class TestComposition:
-    cases = [
+    cases: Final = [
         {"atomic": [("H", 1)], "name": 1, "lib": "21c"},
         {"atomic": [("O", 5)], "name": 2, "lib": "21c"},
         {"atomic": [("H", 2), ("O", 1)], "name": 3, "lib": "21c"},
@@ -588,7 +588,7 @@ class TestComposition:
         },
     ]
 
-    hash_eq_matrix = [
+    hash_eq_matrix: Final = [
         [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1406,7 +1406,7 @@ class TestComposition:
             ans = {k: pytest.approx(v, rel=1.0e-3) for k, v in Composition(**expected)}
             assert nat._composition == ans
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1473,7 +1473,7 @@ class TestComposition:
 
 
 class TestMaterial:
-    cases = [
+    cases: Final = [
         {
             "weight": [("N", 0.755465), ("O", 0.23148), ("AR", 0.012886)],
             "density": 1.2929e-3,
@@ -1602,7 +1602,7 @@ class TestMaterial:
             assert mat1.concentration == d
             assert mat2.concentration == d
 
-    hash_eq_matrix = [
+    hash_eq_matrix: Final = [
         [1, 1, 1, 1, 0, 0, 0],
         [1, 1, 1, 1, 0, 0, 0],
         [1, 1, 1, 1, 0, 0, 0],
@@ -1619,7 +1619,7 @@ class TestMaterial:
         mat2 = materials[case2]
         assert (hash(mat1) == hash(mat2)) == bool(self.hash_eq_matrix[case1][case2])
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 1, 1, 0, 0, 0],
         [1, 1, 1, 1, 0, 0, 0],
         [1, 1, 1, 1, 0, 0, 0],

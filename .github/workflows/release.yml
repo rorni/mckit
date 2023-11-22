@@ -27,12 +27,12 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 2    # need previous revision to define tag
 
       - name: Set up Python
-        uses: actions/setup-python@v4.6.1
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 

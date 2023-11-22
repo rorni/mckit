@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import mckit.parser.common.utils as cmn
 import sly
 
@@ -7,10 +9,13 @@ from mckit.material import Composition, Element
 from mckit.parser.common.lexer import Lexer as LexerBase
 from mckit.parser.common.utils import drop_comments
 
-
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
+if TYPE_CHECKING:
+    from typing import ClassVar
+
+
 class Lexer(LexerBase):
-    tokens = {NAME, FRACTION, OPTION}
+    tokens: ClassVar = {NAME, FRACTION, OPTION}
     ignore = " \t="
     OPTION = r"(?:(?:gas|estep|cond)\s*[ =]\s*\d+)|(?:(?:n|p|pn|e)lib\s*[ =]\s*\S+)"
 
@@ -38,7 +43,7 @@ class Lexer(LexerBase):
 class Parser(sly.Parser):
     tokens = Lexer.tokens
 
-    def build_composition(self, name, fractions, options=None):
+    def build_composition(self, name, fractions, options=None) -> Composition:
         atomic = []
         weight = []
 
@@ -110,7 +115,7 @@ class Parser(sly.Parser):
         return option, value
 
 
-def parse(text):
+def parse(text) -> Composition:
     text = drop_comments(text)
     lexer = Lexer()
     parser = Parser()

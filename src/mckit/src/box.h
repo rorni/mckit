@@ -95,16 +95,21 @@ int box_check_intersection(
     const Box * box2
 );
 
-/* Compares two boxes. Returns
- * +1 if in_box lies actually inside the out_box;
- *  0 if in_box equals out_box;
- * -1 if in_box lies outside of the out_box;
- *
- * out_subdiv - the code of subdivisions of outer box. The box struct itself is not used because
- * box itself may not exist when check is needed (because of cache purposes).
+/**
+ * Compare two boxes.
  *
  * subdiv denotes subdivision. It is 64 bit integer value. The elder bit marks the number of subdivision generations.
  * 0 means first half of the box, 1 - second half.
+ *
+ *
+ * @param in_box
+ * @param out_subdiv the code of subdivisions of outer box. The box struct itself is not used because
+ *                   box itself may not exist when check is needed (because of cache purposes).
+ *
+ * @return     +1 if in_box lies actually inside the out_box;
+ *              0 if in_box equals out_box;
+ *             -1 if in_box lies outside of the out_box;
+ *
  */
 int box_is_in(const Box * in_box, uint64_t out_subdiv);
 

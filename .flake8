@@ -70,6 +70,7 @@ per-file-ignores =
     tools/clear-prev-dist-info.py:S404,S603,S607
     tests/*:ANN,B950,DAR100,D100,D101,D102,D103,D104,DAR101,DAR103,S101
     src/mckit/_init_dynamic_libraries.py:F401,E402
+    adhoc/*:DAR101
 ignore-decorators=click,pytest
 docstring-convention = google
 rst-roles = class,const,func,meth,mod,ref

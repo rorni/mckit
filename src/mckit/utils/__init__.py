@@ -29,6 +29,7 @@ __all__ = [
     "deepcopy",
     "filter_dict",
     "get_decades",
+    "make_hashable",
     "path_resolver",
     "FLOAT_TOLERANCE",
     "MAX_DIGITS",

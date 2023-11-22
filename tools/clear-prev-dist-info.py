@@ -79,7 +79,7 @@ def clear_previous_distributions_info() -> None:
 def run_poetry_install() -> None:
     """Refresh installation of the package."""
     print("Running `poetry install`.")
-    subprocess.run(["poetry", "install"])
+    subprocess.run(["poetry", "install"], check=True)
 
 
 if __name__ == "__main__":

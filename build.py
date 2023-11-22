@@ -94,16 +94,18 @@ def build(setup_kwargs: dict[str, Any]) -> None:
 
 def update_setup_requires(setup_kwargs: dict[str, Any]) -> None:
     """Fix for poetry issue: it doesn't install setup requirements."""
-    setup_requires = setup_kwargs.get("setup_requires")  # type: Optional[List[str]]
+    setup_requires: list[str] | None = setup_kwargs.get("setup_requires")
     assert setup_requires is None, "Poetry has created setup_requires! Check the setup-generated.py"
     setup_requires = [
         "poetry-core >= 1.5.2",
         "cmake >= 3.26.3",
         "setuptools >= 67.8.0",
+        "pip >= 23.2.1",
         "wheel >= 0.40.0",
-        "mkl-devel == 2023.1.0",
-        "tbb == 2021.9.0",
-        "numpy >= 1.24.3",
+        "mkl-devel == 2023.2.0",  # sync with dev dependencies and build system
+        "intel-openmp == 2023.2.0",  # ...
+        "tbb == 2021.10.0",  # ...
+        "numpy >= 1.26.2",
     ]
     setup_kwargs["setup_requires"] = setup_requires
     save_generated_setup()
@@ -128,29 +130,13 @@ def save_setup_kwargs(setup_kwargs: dict[str, Any]) -> None:
     """Save resulting setup_kwargs for examining."""
     kwargs_path = Path(__file__).parent / "poetry_setup_kwargs.txt"
     with kwargs_path.open(mode="w") as fid:
-        pprint(setup_kwargs, fid, indent=4)  # noqa: T203
+        pprint(setup_kwargs, fid, indent=4)
 
 
 def save_generated_setup() -> None:
     """Save generated setup.py.
 
-    Poetry ignores MANIFEST.in on command: ::
-
-        poetry build -f sdist.
-
-    So, 3rd-party code and build scripts are not included. Besides, output format is just default one.
-
-    However, command: ::
-
-        python setup-generated.py sdist --formats=gztar,xztar,zip
-
-    uses MANIFEST.in and creates proper sdist archives.
-    This is used in GitHub Action "Release" (see `.github/workflows/release.yml`).
-    Besides, the setup-generated.py script can be used for debugging of setup process.
-
-        Note: ::
-
-        This file is regenerated on every build, so, there's no reason to store it in Git.
+    May be used for build debugging.
     """
     my_dir = Path(__file__).parent
     src = my_dir / "setup.py"

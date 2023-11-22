@@ -10,6 +10,7 @@ from operator import xor
 from mckit.utils.named import Name
 
 from .printer import print_card
+from .utils import make_hashable
 
 
 class Card(ABC):
@@ -85,7 +86,7 @@ class Card(ABC):
         self.options.setdefault("comment", []).extend(comment)
 
     def __hash__(self) -> int:
-        return reduce(xor, (hash(k) ^ hash(v) for k, v in self.options.items()), 0)
+        return reduce(xor, (hash(k) ^ hash(make_hashable(v)) for k, v in self.options.items()), 0)
 
     def __eq__(self, other) -> bool:
         return self is other or self.options == other.options

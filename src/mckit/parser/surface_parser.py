@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import mckit.parser.common.utils as pu  # parse utils
 import sly
 
@@ -8,6 +10,9 @@ from mckit.parser.common import TransformationStrictIndex
 from mckit.parser.common.utils import drop_c_comments, extract_comments
 from mckit.surface import Surface, create_surface
 from mckit.utils.indexes import Index
+
+if TYPE_CHECKING:
+    from typing import ClassVar
 
 SURFACE_TYPES = {
     "P",
@@ -55,7 +60,7 @@ def intern_surface_type(word: str):
 
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(LexerBase):
-    tokens = {MODIFIER, SURFACE_TYPE, FLOAT, INTEGER}
+    tokens: ClassVar = {MODIFIER, SURFACE_TYPE, FLOAT, INTEGER}
 
     MODIFIER = r"^\s{,5}(\*|\+)"
     SURFACE_TYPE = r"[a-z]+(?:/[a-z]+)?"

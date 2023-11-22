@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import mckit.parser.common.utils as pu
 import sly
 
@@ -24,11 +26,15 @@ def intern_cell_word(word: str):
     return word
 
 
+if TYPE_CHECKING:
+    from typing import ClassVar
+
+
 # noinspection PyPep8Naming,PyUnboundLocalVariable,PyUnresolvedReferences,SpellCheckingInspection
 class Lexer(LexerBase):
-    literals = {":", "(", ")", "*", "#"}
+    literals: ClassVar = {":", "(", ")", "*", "#"}
     ignore = "[ \t,=]"
-    tokens = {
+    tokens: ClassVar = {
         INT_ATTR,
         IMP,
         FLOAT_ATTR,
@@ -182,7 +188,7 @@ class Parser(sly.Parser):
 
     @_('"#" "(" expression ")"')
     def factor(self, p):
-        return p.expression + ["C"]
+        return [*p.expression, "C"]
 
     @_('"(" expression ")"')
     def factor(self, p):
@@ -301,7 +307,7 @@ class Parser(sly.Parser):
     @_("float float float float float float float float float INTEGER")
     def rotation(self, p):
         m = p[9]
-        assert m == -1 or m == 1, f"Invalid value for transformation M parameter {m}"
+        assert m in {-1, 1}, f"Invalid value for transformation M parameter {m}"
         return list(p)[:-1], m == -1
 
     @_(
@@ -323,11 +329,11 @@ class Parser(sly.Parser):
         if number_of_particles != len(p.float_list):
             while len(p.float_list) < number_of_particles:
                 p.float_list.append(p.float_list[-1])
-        return {"IMP" + k: v for k, v in zip(p.particle_list, p.float_list)}
+        return {"IMP" + k.upper(): v for k, v in zip(p.particle_list, p.float_list)}
 
     @_("float_list float")
     def float_list(self, p):
-        return p.float_list + [p.float]
+        return [*p.float_list, p.float]
 
     @_("float")
     def float_list(self, p):

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import re
 
 import sly
@@ -9,11 +11,14 @@ from sly.lex import LexError
 
 IS_INTEGER_REGEX = re.compile(r"[-+]?\d+$")
 
+if TYPE_CHECKING:
+    from typing import ClassVar
+
 
 # noinspection PyUnresolvedReferences,SpellCheckingInspection,PyTypeChecker
 class Lexer(sly.Lexer):
-    tokens = set()  # Should be defined in all subclasses of sly.Lexer
-    literals = {":", "(", ")"}  # ---
+    tokens: ClassVar = set()  # Should be defined in all subclasses of sly.Lexer
+    literals: ClassVar = {":", "(", ")"}  # ---
     ignore = " \t&"  # most common for MCNP text parsers
     reflags = re.IGNORECASE | re.MULTILINE  # ---
 

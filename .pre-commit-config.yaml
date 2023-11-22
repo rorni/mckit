@@ -10,7 +10,12 @@
 #
 #     pre-commit autoupdate
 #
-# See https://github.com/pre-commit/pre-commit
+# See:
+#     https://pre-commit.com/                   and
+#     https://github.com/pre-commit/pre-commit  for more information
+#     https://pre-commit.com/hooks.html         for more hooks
+default_language_version:
+    python: python3.11
 repos:
 # Standard hooks
 -   repo: https://github.com/pre-commit/pre-commit-hooks
@@ -19,13 +24,20 @@ repos:
     - id: check-added-large-files
     - id: check-case-conflict
 #    - id: check-docstring-first
+    - id: check-executables-have-shebangs
+    - id: check-json
     - id: check-merge-conflict
+    - id: check-shebang-scripts-are-executable
     - id: check-symlinks
     - id: check-toml
     - id: check-yaml
     - id: debug-statements
     - id: end-of-file-fixer
       exclude:  data|.ipynb$|^\.
+    - id: name-tests-test
+      args:
+      -  --pytest-test-first
+    - id: no-commit-to-branch
     - id: mixed-line-ending
     - id: requirements-txt-fixer
     - id: trailing-whitespace
@@ -33,7 +45,7 @@ repos:
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: "v1.3.1"
+  rev: "v1.5.4"
   hooks:
   - id: remove-tabs
 # Format doc strings
@@ -61,24 +73,33 @@ repos:
 #    -   id: rstcheck
 -   repo: local
     hooks:
+    # Upgrade Python code
+    -   id: pyupgrade
+        name: pyupgrade
+        exclude: \.idea|\.cache|^notebooks
+        entry: pyupgrade
+        args:
+        - --py39-plus
+        language: system
+        types: [python]
     # Nicely sort imports
     -   id: isort
         name: isort
         exclude: tools|\.idea|\.cache|^notebooks
-        entry: poetry run isort
+        entry: isort
         language: system
         types: [python]
     # Black, the code formatter, natively supports pre-commit
     -   id: black
         name: black
-        entry: poetry run black
+        entry: black
         language: system
         types: [python]
         exclude: ^notebooks
     # Lint
     -   id: ruff
         name: ruff
-        entry: poetry run ruff --force-exclude --fix --config pyproject.toml
+        entry: ruff --force-exclude --fix --config pyproject.toml
         language: system
         types: [python]
         exclude: ^notebooks
@@ -151,7 +172,7 @@ repos:
 
 # Check for common shell mistakes
 - repo: https://github.com/shellcheck-py/shellcheck-py
-  rev: "v0.9.0.2"
+  rev: "v0.9.0.6"
   hooks:
   - id: shellcheck
     stages: [manual]
@@ -171,3 +192,9 @@ repos:
 #  hooks:
 #  - id: clang-format
 #    types_or: [c++, c, cuda]
+
+# Automatic pre-commit check and updates with precommit.ci
+# See https://results.pre-commit.ci/
+ci:
+    autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
+    autoupdate_commit_msg: ⬆ [pre-commit.ci] pre-commit autoupdate

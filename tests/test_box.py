@@ -5,6 +5,8 @@ import pickle
 
 import numpy as np
 
+from numpy.testing import assert_array_equal
+
 import pytest
 
 from mckit.box import Box
@@ -534,3 +536,25 @@ def test_pickle(center, wx, wy, wz, ex, ey, ez):
         f.seek(0)
         box_unpickled = pickle.load(f)  # noqa: S301
     assert box == box_unpickled
+
+
+@pytest.mark.parametrize(
+    "minx, maxx, miny, maxy, minz, maxz, center, wx, wy, wz",
+    [(-0.5, 0.5, -1.0, 1.0, -1.5, 1.5, [0.0, 0.0, 0.0], 1.0, 2.0, 3.0)],
+)
+def test_from_bounds(minx, maxx, miny, maxy, minz, maxz, center, wx, wy, wz):
+    box = Box.from_bounds(minx, maxx, miny, maxy, minz, maxz)
+    assert_array_equal(center, box.center)
+    assert_array_equal([wx, wy, wz], box.dimensions)
+    assert_array_equal(EX, box.ex)
+    assert_array_equal(EY, box.ey)
+    assert_array_equal(EZ, box.ez)
+
+
+@pytest.mark.parametrize(
+    "minx, maxx, miny, maxy, minz, maxz, msg",
+    [(0.5, -0.5, -1.0, 1.0, -1.5, 1.5, "X values in wrong order")],
+)
+def test_from_bounds_failure(minx, maxx, miny, maxy, minz, maxz, msg):
+    with pytest.raises(ValueError, match="sort"):
+        Box.from_bounds(minx, maxx, miny, maxy, minz, maxz)

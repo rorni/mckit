@@ -1,3 +1,7 @@
 #!/bin/bash
-
-pytest benchmarks --benchmark-autosave $@
+if [[ 0 == $# ]]; then
+  what=benchmarks
+else
+  what=$@
+fi
+pytest -v --benchmark-autosave  $what

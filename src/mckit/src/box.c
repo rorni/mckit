@@ -289,11 +289,20 @@ int box_is_in(const Box * in_box, uint64_t out_subdiv)
 {
     uint64_t out = out_subdiv;
     uint64_t in = in_box->subdiv;
-    if (out == in) return 0;
+
+    if (out == in)
+        return 0;
+
     uint64_t mask = ~0;
     char out_stop = high_bit(out);
+
     mask >>= BIT_LEN + 1 - out_stop;
-    if ((in & (~mask)) == 0) return -1; // inner box actually is bigger one.
-    if (((out ^ in) & mask) == 0) return +1;
+
+    if ((in & (~mask)) == 0)
+        return -1; // inner box actually is bigger one.
+
+    if (((out ^ in) & mask) == 0)
+        return +1;
+
     return -1;
 }

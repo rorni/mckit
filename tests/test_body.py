@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Final
+
 import numpy as np
 
 import pytest
@@ -195,7 +197,7 @@ class TestShape:
         with pytest.raises(ValueError, match="expected"):
             Shape(opc, *args)
 
-    polish_cases = [
+    polish_cases: Final = [
         [2, "C", 3, "I", 1, "I", ("C", [5]), "I", 4, "C", "U"],
         [6, "C", 1, "C", "I"],
         [6, "C", 1, "C", "U"],
@@ -1898,7 +1900,7 @@ class TestShape:
     def test_complexity(self, geometry, case_no, expected):
         assert geometry[case_no].complexity() == expected
 
-    box_data = [
+    box_data: Final = [
         [[1.25, 1.75, 1.5], 2.5, 3.5, 3],
         [[-3.25, -1.5, 1.5], 2.5, 3, 3],
         [[5.5, -0.75, 0.75], 2, 1.5, 1.5],
@@ -2048,7 +2050,7 @@ class TestShape:
 
 
 class TestBody:
-    kwarg_data = [
+    kwarg_data: Final = [
         {"name": 1},
         {"name": 2, "MAT": Material(atomic=[("C-12", 1)], density=3.5)},
         {"name": 3, "U": 4},
@@ -2135,7 +2137,7 @@ class TestBody:
             assert simple_body.options[k] == v
         assert simple_body.material() == kwarg.get("MAT", None)
 
-    split_surfaces = {
+    split_surfaces: Final = {
         1: create_surface("SX", 4, 2, name=1),
         2: create_surface("SX", -1, 2, name=2),
         3: create_surface("SX", 5, 2, name=3),
