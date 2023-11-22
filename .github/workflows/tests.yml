@@ -120,7 +120,7 @@ jobs:
         with:
           path: |
             .cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ runner.os }}-${{ env.DEFAULT_PYTHON }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Poetry
         run: |
@@ -173,7 +173,7 @@ jobs:
         with:
           path: |
             .cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Poetry
         run: |
@@ -216,7 +216,7 @@ jobs:
         with:
           path: |
             .cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ runner.os }}-${{ env.DEFAULT_PYTHON }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Poetry
         run: |

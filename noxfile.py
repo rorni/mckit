@@ -127,11 +127,6 @@ def tests(s: Session) -> None:
     """Run the test suite."""
     s.run(
         "poetry",
-        "build",
-        external=True,
-    )
-    s.run(
-        "poetry",
         "install",
         "-v",  # more verbose to understand reasons for CI install failure on Darwin OS
         "--only",
