@@ -57,7 +57,7 @@ jobs:
 
       - name: Use frozen pip version
         run: |
-          python -m pip install --upgrade pip
+          pip install --constraint=.github/constraints.txt pip
           pip --version
 
       - name: Install Nox
@@ -104,10 +104,10 @@ jobs:
         with:
           python-version:  ${{ env.DEFAULT_PYTHON }}
 
-#      - name: Use frozen pip version
-#        run: |
-#          python -m pip install --upgrade pip
-#          pip --version
+      - name: Use frozen pip version
+        run: |
+          pip install --constraint=.github/constraints.txt pip
+          pip --version
 
       - name: Install Nox
         run: |
@@ -157,10 +157,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
-#      - name: Use frozen pip version
-#        run: |
-#          python -m pip install --upgrade pip
-#          pip --version
+      - name: Use frozen pip version
+        run: |
+          pip install --constraint=.github/constraints.txt pip virtualenv
+          pip --version
 
       - name: Install nox
         run: |
@@ -205,10 +205,10 @@ jobs:
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
 
-#      - name: Use frozen pip version
-#        run: |
-#          python -m pip install --upgrade pip
-#          pip --version
+      - name: Use frozen pip version
+        run: |
+          pip install --constraint=.github/constraints.txt pip
+          pip --version
 
       - name: Load poetry cache
         id: cached-poetry-dependencies
