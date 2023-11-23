@@ -6,10 +6,12 @@ project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
         DESCRIPTION "mckit geometry extension"
         LANGUAGES C)
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+include(CMakePrintHelpers)
+
 # Only do these if this is the main project, and not if it is included through add_subdirectory
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
-  list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
   # Set CMAKE_BUILD_TYPE to Release by default.
   # Must be done before calling project()
@@ -39,9 +41,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-message(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
-message(STATUS "Python root: ${Python_ROOT_DIR}")
-message(STATUS "Numpy: ${Python_NumPy_VERSION}")
+cmake_print_variables(PYTHON_EXECUTABLE)
 
 add_subdirectory(extern)
 
@@ -77,7 +77,10 @@ set(geometry_sources
 Python_add_library(geometry MODULE ${geometry_sources})
 target_include_directories(geometry PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src ${MKL_INCLUDE_DIR} ${Python_NumPy_INCLUDE_DIRS})
 target_link_libraries(geometry PUBLIC nlopt ${MKL_LIBRARIES})
-
+cmake_print_properties(
+    TARGETS geometry
+    PROPERTIES SOURCES
+)
 install(TARGETS geometry DESTINATION src/mckit)
 
 include(FeatureSummary)

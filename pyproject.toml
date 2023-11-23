@@ -595,7 +595,7 @@ exclude = [
   "__pycache__",
   "adhoc",
   "docs/source/conf.py",
-  "extra",
+  "extern",
   "notebooks/dvp/*.py",
   "wrk",
 ]
