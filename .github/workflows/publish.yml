@@ -19,7 +19,7 @@ jobs:
       matrix:
         # The ubuntu-20.04 is required to build wheels
         # compatible with older default gcc.
-        os: [ubuntu-20.04, ubuntu-latest, macos-latest] # windows-latest] TODO: temporarily skip windows builds
+        os: [ubuntu-20.04, ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.9', '3.10', '3.11']
     steps:
       - name: Check out the repository
@@ -46,6 +46,11 @@ jobs:
           pip install --constraint=.github/constraints.txt poetry
           poetry --version
           poetry version
+
+      - name: Install numpy if on Windows
+        if: matrix.os == 'windows-latest'  # poetry fails to install numpy on Windows, install numpy in advance
+        run: |
+          pip install numpy
 
       - name: Build wheel
         run: |
