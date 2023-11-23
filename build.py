@@ -100,8 +100,6 @@ def update_setup_requires(setup_kwargs: dict[str, Any]) -> None:
         "poetry-core >= 1.5.2",
         "cmake >= 3.26.3",
         "setuptools >= 67.8.0",
-        "pip >= 23.2.1",
-        "wheel >= 0.40.0",
         "mkl-devel == 2023.2.0",  # sync with dev dependencies and build system
         "intel-openmp == 2023.2.0",  # ...
         "tbb == 2021.10.0",  # ...
