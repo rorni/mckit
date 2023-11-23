@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.6.26"
+version = "0.6.27"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -46,7 +46,6 @@ requires = [  # Sync with build.py (see update_setup_requires())
     "poetry-core >= 1.5.2",
     "cmake >= 3.26.3",
     "setuptools >= 67.8.0",
-    "pip >= 23.2.1",
     "wheel >= 0.40.0",
     "mkl-devel == 2023.2.0",  # sync with dev dependencies
     "intel-openmp == 2023.2.0", # ...
@@ -266,7 +265,7 @@ exclude = '''
   | build
   | build_configs
   | dist
-  | 3rd-party
+  | extern
   | data
   | htmlcov
   | \.egg-info
@@ -596,7 +595,7 @@ exclude = [
   "__pycache__",
   "adhoc",
   "docs/source/conf.py",
-  "extra",
+  "extern",
   "notebooks/dvp/*.py",
   "wrk",
 ]
