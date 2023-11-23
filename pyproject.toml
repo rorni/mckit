@@ -265,7 +265,7 @@ exclude = '''
   | build
   | build_configs
   | dist
-  | 3rd-party
+  | extern
   | data
   | htmlcov
   | \.egg-info
