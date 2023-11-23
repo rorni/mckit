@@ -7,6 +7,6 @@ include .darglint
 include *.yml
 include .coveragerc
 include .pylintrc
-recursive-include 3rd-party *
-prune 3rd-party/nlopt/build
+recursive-include extern *
+prune extern/nlopt/build
 global-exclude *.py[cod]
