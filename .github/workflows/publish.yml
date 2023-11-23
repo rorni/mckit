@@ -47,11 +47,6 @@ jobs:
           poetry --version
           poetry version
 
-      - name: Install numpy if on Windows
-        if: matrix.os == 'windows-latest'  # poetry fails to install numpy on Windows, install numpy in advance
-        run: |
-          pip install numpy
-
       - name: Build wheel
         run: |
           poetry build -f wheel
