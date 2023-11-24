@@ -4,7 +4,14 @@ cmake_minimum_required(VERSION 3.19...3.27)
 # project(mckit VERSION ${mckit_version} LANGUAGES C CXX)
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
         DESCRIPTION "mckit geometry extension"
-        LANGUAGES C)
+        LANGUAGES C)  # TODO: upgrade to CXX
+
+#https://cliutils.gitlab.io/modern-cmake/chapters/packages/CUDA.html
+#include(CheckLanguage)
+#check_language(CUDA)
+#if(CMAKE_CUDA_COMPILER)
+#    enable_language(CUDA)
+#endif()
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakePrintHelpers)
@@ -44,11 +51,35 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   endif()
 endif()
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-cmake_print_variables(PYTHON_EXECUTABLE)
+execute_process(
+    COMMAND python -c "import sys; print(sys.prefix)"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE Python_ROOT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+cmake_print_variables(Python_ROOT)
+
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
+cmake_print_variables(
+    Python_SOABI
+    Python_SOSABI
+)
 
 add_subdirectory(extern)
 
+list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake)
+#list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake "${Python_ROOT}/lib/cmake" "${Python_ROOT}/Library/lib/cmake")
+#cmake_print_variables(CMAKE_PREFIX_PATH)
+
+set(MKLROOT ${Python_ROOT})
+set($ENV{MKLROOT} ${MKLROOT})
+set($ENV{MKL_ROOT} ${MKLROOT})
+#set(MKL_ARCH intel64)
+#set(MKL_THREADING intel_thread)
+#set(MKL_INTERFACE lp64)
+#find_package(MKL CONFIG REQUIRED)
+include(FindMKL)
 # ========================
 # MKL
 # https://gitlab.inria.fr/solverstack/test_fembem/-/blob/master/CMakeLists.txt
@@ -79,12 +110,17 @@ set(geometry_sources
 
 
 Python_add_library(geometry MODULE ${geometry_sources})
-target_include_directories(geometry PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src ${MKL_INCLUDE_DIR} ${Python_NumPy_INCLUDE_DIRS})
-target_link_libraries(geometry PUBLIC nlopt ${MKL_LIBRARIES})
-cmake_print_properties(
-    TARGETS geometry
-    PROPERTIES SOURCES
+target_include_directories(geometry
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src
+        ${MKL_INCLUDE_DIR}
+        ${Python_NumPy_INCLUDE_DIRS}
 )
+target_link_libraries(geometry PUBLIC nlopt ${MKL_LIBRARIES})
+#cmake_print_properties(
+#    TARGETS geometry
+#    PROPERTIES SOURCES
+#)
 install(TARGETS geometry DESTINATION src/mckit)
 
 include(FeatureSummary)
