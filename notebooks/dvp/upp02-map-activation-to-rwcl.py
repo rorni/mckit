@@ -21,7 +21,7 @@
 # In[1]:
 
 
-get_ipython().run_line_magic('config', 'Completer.use_jedi = False')
+get_ipython().run_line_magic("config", "Completer.use_jedi = False")
 
 
 # In[2]:
@@ -42,7 +42,8 @@ import os, sys
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-get_ipython().run_line_magic('matplotlib', 'inline')
+
+get_ipython().run_line_magic("matplotlib", "inline")
 
 
 # In[6]:
@@ -93,18 +94,22 @@ import r2s_rfda.launcher as r2sln
 
 
 # If exists local ".env" file, then load it to environment.
-dotenv.load_dotenv();
+dotenv.load_dotenv()
 
 
 # In[11]:
 
 
 def all_exist(*paths: Path) -> bool:
-    for p in paths: # type: Path
+    for p in paths:  # type: Path
         if not p.exists():
             raise FileNotFoundError(p)
+
+
 def all_are_files(*paths: Path) -> bool:
     return all(map(Path.is_file, paths))
+
+
 def all_are_dirs(*paths: Path) -> bool:
     return all(map(Path.is_dir, paths))
 
@@ -112,7 +117,7 @@ def all_are_dirs(*paths: Path) -> bool:
 # In[13]:
 
 
-ROOT: Path = Path(os.getenv("UP02_ACT_ROOT", r'd:\dvp\dev\mcnp\upp\wrk\up02'))
+ROOT: Path = Path(os.getenv("UP02_ACT_ROOT", r"d:\dvp\dev\mcnp\upp\wrk\up02"))
 r2swrk: Path = ROOT  # for UP02 computation were done in the root directory
 component_to_cell_json = ROOT / "json-3" / "component_to_cell3.json"
 inp_keys_json = ROOT / "json-3" / "inp-keys.json"
@@ -120,7 +125,9 @@ inp_iss_keys_json = ROOT / "json-3" / "inp-iss-keys.json"
 rwclinput: Path = ROOT / "Radwaste_Checklist_UPP02.xlsx"
 rwclinput_iss: Path = ROOT / "Radwaste_Checklist_UP02_ISS_PCSS.xlsx"
 
-all_exist(ROOT, r2swrk, component_to_cell_json, inp_keys_json, inp_iss_keys_json, rwclinput, rwclinput_iss)
+all_exist(
+    ROOT, r2swrk, component_to_cell_json, inp_keys_json, inp_iss_keys_json, rwclinput, rwclinput_iss
+)
 assert all_are_dirs(ROOT, r2swrk)
 assert all_are_files(pjson, rwclinput, rwclinput_iss)
 
@@ -168,9 +175,9 @@ r2s_result_conf = r2sft.load_result_config(r2swrk)
 # In[22]:
 
 
-time = r2sut.convert_time_literal('12d')
-time_labels = list(sorted(r2s_result_conf['gamma'].keys()))
-time += time_labels[r2s_launch_conf['zero']]
+time = r2sut.convert_time_literal("12d")
+time_labels = list(sorted(r2s_result_conf["gamma"].keys()))
+time += time_labels[r2s_launch_conf["zero"]]
 closest_lab = r2sut.find_closest(time, time_labels)
 # closest_lab
 
@@ -193,8 +200,8 @@ act_data = r2sft.load_data(r2swrk / activation_paths[closest_lab])
 
 
 # Estimate correction factor for tqdm progressbar total value.
-its=80625951000
-its/act_data._data.nnz
+its = 80625951000
+its / act_data._data.nnz
 
 
 # In[26]:
@@ -214,20 +221,19 @@ def load_cell_activity(cell_excel_path: Path):
         with tqdm(total=act_data._data.nnz * tqdm_correction) as pbar:
             for cnt, ((g, c, i, j, k), act) in enumerate(act_data.iter_nonzero()):
                 cell_activity[c] += act
-                #print(act_data.gbins[g], c, i, j, k, act)
-                #i += 1
-                #if i == 1000:
+                # print(act_data.gbins[g], c, i, j, k, act)
+                # i += 1
+                # if i == 1000:
                 #    break
                 if cnt % 1000 == 0:
                     pbar.update(cnt)
         cell_excel_path.parent.mkdir(parents=True, exist_ok=True)
         index = np.array(sorted(cell_activity.keys()), dtype=np.int32)
-        data  = np.fromiter((cell_activity[k] for k in index), dtype=float)
+        data = np.fromiter((cell_activity[k] for k in index), dtype=float)
         cell_activity_df = pd.DataFrame(data, columns=["activity"], index=index)
         with pd.ExcelWriter(cell_excel_path, engine="openpyxl") as excel:
             cell_activity_df.to_excel(excel, sheet_name="activity")
     return cell_activity_df
-
 
 
 # In[146]:
@@ -255,12 +261,11 @@ def load_cell_nuclide_activity(cell_excel_path: Path, act_data, nuclide: str):
                     pbar.update(cnt)
         cell_excel_path.parent.mkdir(parents=True, exist_ok=True)
         index = np.array(sorted(cell_activity.keys()), dtype=np.int32)
-        data  = np.fromiter((cell_activity[k] for k in index), dtype=float)
+        data = np.fromiter((cell_activity[k] for k in index), dtype=float)
         cell_activity_df = pd.DataFrame(data, columns=["activity"], index=index)
         with pd.ExcelWriter(cell_excel_path, engine="openpyxl", mode="a") as excel:
             cell_activity_df.to_excel(excel, sheet_name=label)
     return cell_activity_df
-
 
 
 # In[147]:
@@ -273,7 +278,9 @@ cell_activity_df
 # In[148]:
 
 
-cell_h3_activity_df = load_cell_nuclide_activity(Path.cwd().parent.parent / "wrk/up02/cell_h3_activity.xlsx", act_data, "H3")
+cell_h3_activity_df = load_cell_nuclide_activity(
+    Path.cwd().parent.parent / "wrk/up02/cell_h3_activity.xlsx", act_data, "H3"
+)
 cell_h3_activity_df
 
 
@@ -288,7 +295,11 @@ cell_activity_df.loc[320000]["activity"]
 # In[41]:
 
 
-rwclinput_df = pd.read_excel(rwclinput, sheet_name="UPP02", header=0, usecols=[2,3], index_col=0).iloc[3:]  # Yes, UPP02 for UPP08
+rwclinput_df = pd.read_excel(
+    rwclinput, sheet_name="UPP02", header=0, usecols=[2, 3], index_col=0
+).iloc[
+    3:
+]  # Yes, UPP02 for UPP08
 rwclinput_df
 
 
@@ -319,7 +330,9 @@ in_vessel_components["H3 Activity, Bq"] = np.zeros(len(in_vessel_components.inde
 # In[120]:
 
 
-def collect_cells_map(rwcl_key, inp_key_map, component_to_cell_map) -> tp.Optional[Dict[int, float]]:
+def collect_cells_map(
+    rwcl_key, inp_key_map, component_to_cell_map
+) -> tp.Optional[Dict[int, float]]:
     keys_in_cell_map = inp_key_map[rwcl_key]
     if keys_in_cell_map:
         cell_fraction_map = defaultdict(float)
@@ -341,7 +354,6 @@ def collect_cells_map(rwcl_key, inp_key_map, component_to_cell_map) -> tp.Option
 
 
 def compute_activity(cell_fraction_map: Dict[int, float], cell_activity: pd.DataFrame) -> float:
-
     def mapper(pair: tp.Tuple[int, float]) -> float:
         cell, fraction = pair
         assert isinstance(cell, int), f"Integer cell number is expected, {cell} is found"
@@ -370,7 +382,7 @@ for rwclid in in_vessel_components.index:
 # In[159]:
 
 
-cell_h3_activity_df.rename(columns={"H3 activity":"activity"}, inplace=True)
+cell_h3_activity_df.rename(columns={"H3 activity": "activity"}, inplace=True)
 
 
 # In[160]:
@@ -425,7 +437,7 @@ ivc1
 
 
 def create_msg(row):
-#     print("Row:", row)
+    #     print("Row:", row)
     activity = row["Activity, Bq"]
     unit_activity = row["Unit Activity, Bq/kg"]
     h3_activity = row["H3 Activity, Bq"]
@@ -434,7 +446,6 @@ def create_msg(row):
         return f"Activity {activity:.2g} Bq\n({unit_activity:.2g}, Bq/kg),\nH3 Activity {h3_activity:.2g} Bq\n({unit_h3_activity:.2g}, Bq/kg)"
     else:
         return ""
-
 
 
 # ## Interpolate missed values in in-vessel components (ivc1).
@@ -449,7 +460,7 @@ def create_msg(row):
 def update_missed_components(df, refkey, missed_keys):
     unit_activity = df.loc[refkey, ["Unit Activity, Bq/kg"]].values[0]
     unit_h3_activity = df.loc[refkey, ["Unit H3 Activity, Bq/kg"]].values[0]
-    df.loc[missed_keys, ["Unit Activity, Bq/kg"]] =  unit_activity
+    df.loc[missed_keys, ["Unit Activity, Bq/kg"]] = unit_activity
     df.loc[missed_keys, ["Unit H3 Activity, Bq/kg"]] = unit_h3_activity
     masses = df.loc[missed_keys, ["Mass, kg"]].values
     df.loc[missed_keys, ["Activity, Bq"]] = unit_activity * masses
@@ -461,9 +472,14 @@ def update_missed_components(df, refkey, missed_keys):
 
 
 def update_missed_pp_components():
-    missed_keys = ["PP Tubes", "PP Generics (pads, skids, gripping - 8 pieces)", "Generic Screws (50 pieces)"]
+    missed_keys = [
+        "PP Tubes",
+        "PP Generics (pads, skids, gripping - 8 pieces)",
+        "Generic Screws (50 pieces)",
+    ]
     refkey = "PP structure"
     return update_missed_components(ivc1, refkey, missed_keys)
+
 
 update_missed_pp_components()
 
@@ -475,6 +491,7 @@ def update_missed_rb_components():
     missed_keys = ["Rear box shielding plates (8 pieces)", "Rear frame shielding9"]
     refkey = "Rear frame shielding8"
     return update_missed_components(ivc1, refkey, missed_keys)
+
 
 update_missed_rb_components()
 
@@ -504,7 +521,9 @@ with pd.ExcelWriter(ROOT / "in-vessel.xlsx", engine="openpyxl", mode="w") as exc
 # In[273]:
 
 
-rwclinput_iss_df = pd.read_excel(rwclinput_iss, sheet_name="UPP02", header=0, usecols=[2,3], index_col=0).iloc[3:]
+rwclinput_iss_df = pd.read_excel(
+    rwclinput_iss, sheet_name="UPP02", header=0, usecols=[2, 3], index_col=0
+).iloc[3:]
 rwclinput_iss_df.rename(columns={mass_column: "Mass, kg"}, inplace=True)
 rwclinput_iss_df
 
@@ -567,7 +586,9 @@ iss_components
 
 
 iss_components["Unit Activity, Bq/kg"] = iss_components["Activity, Bq"] / iss_components["Mass, kg"]
-iss_components["Unit H3 Activity, Bq/kg"] = iss_components["H3 Activity, Bq"] / iss_components["Mass, kg"]
+iss_components["Unit H3 Activity, Bq/kg"] = (
+    iss_components["H3 Activity, Bq"] / iss_components["Mass, kg"]
+)
 iss_components
 
 
@@ -598,14 +619,18 @@ bioshield_mass
 # In[284]:
 
 
-bioshield_unit_activity = iss_components.loc[bioshield_components[0], ["Activity, Bq"]].values[0] / bioshield_mass
+bioshield_unit_activity = (
+    iss_components.loc[bioshield_components[0], ["Activity, Bq"]].values[0] / bioshield_mass
+)
 bioshield_unit_activity
 
 
 # In[285]:
 
 
-bioshield_unit_h3_activity = iss_components.loc[bioshield_components[0], ["H3 Activity, Bq"]].values[0] / bioshield_mass
+bioshield_unit_h3_activity = (
+    iss_components.loc[bioshield_components[0], ["H3 Activity, Bq"]].values[0] / bioshield_mass
+)
 bioshield_unit_h3_activity
 
 
@@ -628,8 +653,12 @@ iss_components
 
 # set total activity proportional to mass
 masses = iss_components.loc[bioshield_components, ["Mass, kg"]].values
-iss_components.loc[bioshield_components, ["Activity, Bq"]] =  iss_components.loc[bioshield_components, ["Unit Activity, Bq/kg"]].values * masses
-iss_components.loc[bioshield_components, ["H3 Activity, Bq"]] =  iss_components.loc[bioshield_components, ["Unit H3 Activity, Bq/kg"]].values * masses
+iss_components.loc[bioshield_components, ["Activity, Bq"]] = (
+    iss_components.loc[bioshield_components, ["Unit Activity, Bq/kg"]].values * masses
+)
+iss_components.loc[bioshield_components, ["H3 Activity, Bq"]] = (
+    iss_components.loc[bioshield_components, ["Unit H3 Activity, Bq/kg"]].values * masses
+)
 iss_components
 
 
@@ -641,12 +670,18 @@ iss_components
 
 
 def update_missed_iss_components():
-    missed_keys = ["IS Locking System", "IS Cable tubes", "IS Add Protection", "IS Protection Frame"]
+    missed_keys = [
+        "IS Locking System",
+        "IS Cable tubes",
+        "IS Add Protection",
+        "IS Protection Frame",
+    ]
     refkey = "IS Bogies"
     update_missed_components(iss_components, refkey, missed_keys)
     missed_keys = ["IS Walkways"]
     refkey = "IS Chasis"
     update_missed_components(iss_components, refkey, missed_keys)
+
 
 update_missed_iss_components()
 

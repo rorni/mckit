@@ -3,8 +3,9 @@
 """
 from __future__ import annotations
 
-from typing import Callable, Iterable, Iterator, TextIO
+from typing import Callable, TextIO
 
+from collections.abc import Iterable, Iterator
 from itertools import repeat
 from pathlib import Path
 

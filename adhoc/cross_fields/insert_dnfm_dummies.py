@@ -1,4 +1,3 @@
-#!python
 """Insert dummies of DNFM to stend model.
 
 Use cell 1000 as envelop.

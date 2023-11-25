@@ -23,8 +23,10 @@ class DummyCard(Card):
     ],
 )
 def test_eq(a, b, expected):
-    assert a == a
-    assert b == b
+    c = a
+    assert a == c  # need to execute __eq__ with comparison to itself
+    c = b
+    assert b == c
     da, db = DummyCard(**a), DummyCard(**b)
     actual = da == db
     assert actual == expected

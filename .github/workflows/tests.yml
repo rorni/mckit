@@ -37,6 +37,9 @@ concurrency:
   group: ci-tests-${{ github.ref }}-1
   cancel-in-progress: true
 
+env:
+  DEFAULT_PYTHON: "3.11"
+
 jobs:
 
   lint:
@@ -45,12 +48,12 @@ jobs:
       !contains(github.event.head_commit.message, '[skip_ci]')
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@v4.1.1
 
-      - name: Set up Python 3.10  # on 3.11 pip install in unstable: "canonicalize" fails occasionally
+      - name: Set up Python
         uses: actions/setup-python@v4.7.1
         with:
-          python-version: '3.10'
+          python-version: ${{ env.DEFAULT_PYTHON }}
 
       - name: Use frozen pip version
         run: |
@@ -64,7 +67,7 @@ jobs:
 
       - name: Load poetry cache
         id: cached-poetry-dependencies
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v3.3.2
         with:
           path: |
             .cache/pypoetry
@@ -91,15 +94,15 @@ jobs:
     needs: lint
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 1
           submodules: 'true'
 
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v4.7.1
         with:
-          python-version: '3.11'
+          python-version:  ${{ env.DEFAULT_PYTHON }}
 
       - name: Use frozen pip version
         run: |
@@ -113,11 +116,11 @@ jobs:
 
       - name: Load poetry cache
         id: cached-poetry-dependencies
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v3.3.2
         with:
           path: |
             .cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ runner.os }}-${{ env.DEFAULT_PYTHON }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Poetry
         run: |
@@ -144,7 +147,7 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 1
           submodules: 'true'
@@ -166,11 +169,11 @@ jobs:
 
       - name: Load poetry cache
         id: cached-poetry-dependencies
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v3.3.2
         with:
           path: |
             .cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Poetry
         run: |
@@ -195,12 +198,12 @@ jobs:
     steps:
 
       - name: Check out the repository
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@v4.1.1
 
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v4.7.1
         with:
-          python-version: '3.11'
+          python-version: ${{ env.DEFAULT_PYTHON }}
 
       - name: Use frozen pip version
         run: |
@@ -209,11 +212,11 @@ jobs:
 
       - name: Load poetry cache
         id: cached-poetry-dependencies
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v3.3.2
         with:
           path: |
             .cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ runner.os }}-${{ env.DEFAULT_PYTHON }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Poetry
         run: |

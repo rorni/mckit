@@ -1,12 +1,11 @@
 """Code to build mckit geometry C-extension."""
 from __future__ import annotations
 
-from typing import Iterable
-
 import os
 import shlex
 import sys
 
+from collections.abc import Iterable
 from pathlib import Path
 
 from building.extension_utils import MACOS, WIN, get_library_dir

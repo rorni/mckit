@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from mckit.body import GLOBAL_BOX, Body, Card
 from mckit.constants import MIN_BOX_VOLUME

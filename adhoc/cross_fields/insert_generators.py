@@ -1,4 +1,3 @@
-#!python
 """Insert generators NG14 and ING-07 into envelop 1000 in extended building model."""
 from __future__ import annotations
 

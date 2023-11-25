@@ -1,12 +1,13 @@
 """Classes and methods to work with MCNP universe."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, cast
+from typing import Any, Callable, Optional, cast
 
 import operator
 import sys
 
 from collections import defaultdict
+from collections.abc import Iterable
 from contextlib import contextmanager
 from functools import reduce
 from io import StringIO
@@ -476,7 +477,7 @@ class Universe:
         Returns:
             A set of common materials.
         """
-        comp_count = defaultdict(lambda: 0)
+        comp_count = defaultdict(int)
         for u in self.get_universes():
             for c in u.get_compositions():
                 comp_count[c] += 1
@@ -927,10 +928,10 @@ def collect_transformations(universe: Universe, recursive=True) -> set[Transform
 
 
 # TODO dvp: make names of cards not optional
-IU = Tuple[List[Optional[Name]], Name]
+IU = tuple[list[Optional[Name]], Name]
 """Entities, Universe name."""
 
-E2U = Dict[Name, Dict[Name, int]]
+E2U = dict[Name, dict[Name, int]]
 """Map Entity name -> Universe Name -> Count."""
 
 

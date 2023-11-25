@@ -1,8 +1,9 @@
 """Classes to index MCNP objects on model file parsing."""
 from __future__ import annotations
 
-from typing import Callable, Dict, Iterable, NoReturn, Optional, TypeVar, cast
+from typing import Callable, Optional, TypeVar
 
+from collections.abc import Iterable
 from functools import reduce
 
 from mckit.utils.named import Name, default_name_key
@@ -12,7 +13,7 @@ Item = TypeVar("Item")
 FactoryMethodWithKey = Callable[[Key], Optional[Item]]
 
 
-class Index(Dict[Key, Item]):
+class Index(dict[Key, Item]):
     """Like collections.defaultdict but the factory takes key as argument.
 
     The class redefines __missing__ method to use `key` on calling factory method.
@@ -24,7 +25,7 @@ class Index(Dict[Key, Item]):
 
     def __init__(
         self,
-        default_factory: FactoryMethodWithKey = None,
+        default_factory: FactoryMethodWithKey | None = None,
         **kwargs: dict[Key, Item],
     ) -> None:
         """Create `Index`.
@@ -37,7 +38,7 @@ class Index(Dict[Key, Item]):
         self._default_factory = default_factory
 
     @property
-    def default_factory(self) -> FactoryMethodWithKey:
+    def default_factory(self) -> FactoryMethodWithKey | None:
         """Public accessor to `self._default_factory`."""
         return self._default_factory
 
@@ -90,7 +91,7 @@ class NumberedItemDuplicateError(ValueError):
         )
 
 
-def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> NoReturn:
+def raise_on_duplicate_strategy(key: Key, prev: Item, curr: Item) -> None:
     """Raise error on `key` duplicate found, regardless values.
 
     Args:
@@ -121,7 +122,7 @@ def ignore_equal_objects_strategy(key: Key, prev: Item, curr: Item) -> None:
         raise NumberedItemDuplicateError(key, prev, curr)
 
 
-class StatisticsCollector(Dict[Key, int]):
+class StatisticsCollector(dict[Key, int]):
     """Duplicates counter."""
 
     def __init__(self, ignore_equal=False):
@@ -168,4 +169,4 @@ class IndexOfNamed(Index[Key, Item]):
             a[name] = b
             return a
 
-        return cast("IndexOfNamed[Key, Item]", reduce(_reducer, items, index))
+        return reduce(_reducer, items, index)

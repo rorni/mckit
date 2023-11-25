@@ -1,10 +1,9 @@
+"""Python subclass for geometry.Box."""
 from __future__ import annotations
-
-from typing import Self
 
 import numpy as np
 
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import EX, EY, EZ
@@ -14,34 +13,73 @@ from mckit.utils import make_hashable
 
 
 class Box(_Box):
+    """Extend geometry.Box."""
+
     def __init__(self, center, wx, wy, wz, ex=EX, ey=EY, ez=EZ):
         _Box.__init__(self, center, wx, wy, wz, ex=ex, ey=ey, ez=ez)
 
     @classmethod
-    def from_geometry_box(cls, geometry_box: _Box) -> Self:
+    def from_geometry_box(cls, geometry_box: _Box) -> Box:
+        """Initialize python Box from geometry.Box.
+
+        Args:
+            geometry_box: source
+
+        Returns:
+            The new Box.
+        """
+        wx, wy, wz = geometry_box.dimensions
         return cls(
             geometry_box.center,
-            *geometry_box.dimensions,
-            geometry_box.ex,
-            geometry_box.ey,
-            geometry_box.ez,
+            wx,
+            wy,
+            wz,
+            ex=geometry_box.ex,
+            ey=geometry_box.ey,
+            ez=geometry_box.ez,
         )
 
     @classmethod
-    def from_corners(cls, min_vals: NDArray, max_vals: np.NDArray) -> Self:
-        if not np.all(min_vals < max_vals):
+    def from_corners(cls, min_corner: NDArray, max_corner: NDArray) -> Box:
+        """Initialize from min and max corners.
+
+        Args:
+            min_corner: min corner
+            max_corner: max ...
+
+        Raises:
+            ValueError: if min and max corners are not in order
+
+        Returns:
+            The new Box.
+        """
+        if not np.all(min_corner < max_corner):
             raise ValueError("Unsorted boundaries values")
-        center = 0.5 * (min_vals + max_vals)
-        widths = max_vals - min_vals
-        return cls(center, *widths, ex=EX, ey=EY, ez=EZ)
+        center = 0.5 * (min_corner + max_corner)
+        widths = max_corner - min_corner
+        wx, wy, wz = widths
+        return cls(center, wx, wy, wz, ex=EX, ey=EY, ez=EZ)
 
     @classmethod
     def from_bounds(
         cls, minx: float, maxx: float, miny: float, maxy: float, minz: float, maxz: float
-    ) -> Self:
-        min_vals = np.array([minx, miny, minz])
-        max_vals = np.array([maxx, maxy, maxz])
-        return cls.from_corners(min_vals, max_vals)
+    ) -> Box:
+        """Initialize Box from bounds.
+
+        Args:
+            minx: min x
+            maxx: max x
+            miny: min y
+            maxy: max y
+            minz: min z
+            maxz: max z
+
+        Returns:
+            A new Box.
+        """
+        min_corner = np.array([minx, miny, minz])
+        max_corner = np.array([maxx, maxy, maxz])
+        return cls.from_corners(min_corner, max_corner)
 
     def __repr__(self):
         exm = "" if np.array_equal(self.ex, EX) else f"ex={self.ex}"

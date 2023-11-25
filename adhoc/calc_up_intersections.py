@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# coding: utf-8
 """Compute UP08 ISS/Portcell model intersection with envelopes for  UP08 ex-vessel components.
 ===================================================================================================
 

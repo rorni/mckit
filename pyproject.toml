@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.6.25a0"
+version = "0.6.28a0"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -46,9 +46,10 @@ requires = [  # Sync with build.py (see update_setup_requires())
     "poetry-core >= 1.5.2",
     "cmake >= 3.26.3",
     "setuptools >= 67.8.0",
-    "pip >= 23.2.1",
     "wheel >= 0.40.0",
-    "mkl-devel == 2023.2.0",
+    "mkl-devel == 2023.2.0",  # sync with dev dependencies
+    "intel-openmp == 2023.2.0", # ...
+    "tbb == 2021.10.0", # ...
     "numpy >= 1.26.0",
 ]
 build-backend = "poetry.core.masonry.api"
@@ -83,9 +84,12 @@ sly = ">=0.4"
 tomli = {version = ">=2.0.1", python="<3.11"}
 tomli-w = ">=1.0.0"
 tqdm = ">=4.55.1"
-# mkl again has different versions for different platforms
+# the last mkl version with wheels for Linux, Windows and MacOS, check on updates
+# the most recent version was 2024.0.0 (windows and linux only).
+# Same for intel-openmp and tbb.
 mkl-devel = "2023.2.0"
-# tbb = "2021.10.0"
+intel-openmp = "2023.2.0"
+tbb = "2021.10.0"
 
 # The following works for linux and windows, but not for macos
 # besides we need to have the same versions on build (see [build-system]),
@@ -134,6 +138,7 @@ nox = ">=2022.1.7"
 pre-commit = ">=2.15.0"
 rstcheck = ">=6.1.2"
 pydocstringformatter = ">=0.7.3"
+pyupgrade = ">=3.15.0"
 
 [tool.poetry.group.black.dependencies]
 black = ">=22.8.0"
@@ -164,7 +169,7 @@ typeguard = ">=3.0.2"
 mypy = ">=1.2.0"
 pep8-naming = ">=0.12.1"
 types-setuptools = ">=57.4.2"
-numpy = ">=1.23.2"
+numpy = ">=1.26.2"
 types-tqdm = ">=4.66.0.2"
 
 [tool.poetry.group.flake8.dependencies]
@@ -260,7 +265,7 @@ exclude = '''
   | build
   | build_configs
   | dist
-  | 3rd-party
+  | extern
   | data
   | htmlcov
   | \.egg-info
@@ -585,16 +590,15 @@ src = ["src", "test"]
 # dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 dummy-variable-rgx = "^_$"
 exclude = [
-  "docs/source/conf.py",
-  "__pycache__",
-  "adhoc",
-  "wrk",
   "*.egg-info",
   ".cache",
+  "__pycache__",
+  "adhoc",
+  "docs/source/conf.py",
+  "extern",
   "notebooks/dvp/*.py",
+  "wrk",
 ]
-# Assume Python 3.10.
-# target-version = "py310"
 
 [tool.ruff.per-file-ignores]
 "**/__init__.py" = ["E402", "F401"]
@@ -629,6 +633,9 @@ exclude = [
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 15
 
+[tool.ruff.flake8-annotations]
+mypy-init-return = true  # skip return type for __init__() methods
+
 [tool.ruff.flake8-type-checking]
 strict = true
 
@@ -642,5 +649,4 @@ required-imports = ["from __future__ import annotations"]
 parametrize-names-type = "csv"
 
 [tool.ruff.pydocstyle]
-# Use Google-style docstrings.
-convention = "google"
+convention = "google"  # Use Google-style docstrings.

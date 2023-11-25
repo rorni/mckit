@@ -1,4 +1,3 @@
-#!python
 """Try typer CLI."""
 from __future__ import annotations
 
