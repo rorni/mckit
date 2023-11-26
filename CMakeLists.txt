@@ -69,8 +69,15 @@ cmake_print_variables(
 add_subdirectory(extern)
 
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake)
-#list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake "${Python_ROOT}/lib/cmake" "${Python_ROOT}/Library/lib/cmake")
-#cmake_print_variables(CMAKE_PREFIX_PATH)
+
+if (NOT WIN32)
+    execute_process(
+        COMMAND python building/create_mkl_symlinks.py
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE CREATED_MKL_SYMLINKS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif ()
 
 set(MKLROOT ${Python_ROOT})
 set($ENV{MKLROOT} ${MKLROOT})

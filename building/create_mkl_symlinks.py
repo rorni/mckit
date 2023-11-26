@@ -12,7 +12,7 @@ I did that in our build scripts and this worked. But than I've found that we nee
 building framework. Goal: to enable work with both Python and C code in powerful IDEs
 and eventually migrate to pybind11 or nanobind.
 
-It appeared that CMake find_library function doesn't recognize the MKL libraries.
+It appeared, that CMake find_library function doesn't recognize the MKL libraries.
 
 The script creates the symbolic links with "correct" names to make both linker and cmake happy about MKL.
 Run this script from Cmake script before searching for MKL.
