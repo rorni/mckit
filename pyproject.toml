@@ -586,7 +586,7 @@ show-fixes = true
 # show source code snippets when reporting violations
 show-source = true
 
-src = ["src", "test"]
+src = ["src", "tests"]
 
 # Allow unused variables when underscore-prefixed.
 # dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
@@ -598,6 +598,7 @@ exclude = [
   "adhoc",
   "docs/source/conf.py",
   "extern",
+  "extern/nlopt/test/t_python.py",
   "notebooks/dvp/*.py",
   "wrk",
 ]
