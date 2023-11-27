@@ -41,9 +41,7 @@ def check_directories(*directories: str) -> None:
 
 
 def insert_directories(destination: list[str], value: str | list[str]) -> list[str]:
-    dirs = value
-    if not isinstance(value, list):
-        dirs = [dirs]
+    dirs = value if isinstance(value, list) else [value]
     for old in destination:
         if old not in dirs:
             dirs.append(old)
