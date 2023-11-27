@@ -17,12 +17,17 @@ It appeared, that CMake find_library function doesn't recognize the MKL librarie
 The script creates the symbolic links with "correct" names to make both linker and cmake happy about MKL.
 Run this script from Cmake script before searching for MKL.
 """
+from __future__ import annotations
 
 import sys
+import sysconfig
 
 from pathlib import Path
 
-from building.extension_utils import MACOS, WIN
+__version__ = "0.1.0"
+
+WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform()
+MACOS = sys.platform.startswith("darwin")
 
 if WIN:
     raise OSError("No need to create symlinks to MKL libraries on Windows")
@@ -50,8 +55,11 @@ def create_mkl_symlinks() -> None:
 
 
 if __name__ == "__main__":
-    if sys.argv[1] == "-h" or sys.argv[1] == "--help":
-        print(__doc__)
+    if 1 < len(sys.argv):
+        if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+            print(__doc__)
+        if sys.argv[1] == "-v" or sys.argv[1] == "--version":
+            print(__version__)
         sys.exit(0)
     create_mkl_symlinks()
 

@@ -51,12 +51,23 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   endif()
 endif()
 
+message("Looking for Python root")
 execute_process(
-    COMMAND python -c "import sys; print(sys.prefix)"
+    COMMAND python3 -c "import sys; print(sys.prefix)"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE Python_ROOT_FOUND
     OUTPUT_VARIABLE Python_ROOT
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+cmake_print_variables(
+    Python_ROOT_FOUND
+    Python_ROOT
+)
+
+#if (not Python_ROOT_FOUND)
+#    message(FATAL_ERROR "Cannot find Python root")
+#endif()
 
 cmake_print_variables(Python_ROOT)
 
@@ -81,22 +92,7 @@ endif ()
 
 set(MKLROOT ${Python_ROOT})
 set($ENV{MKLROOT} ${MKLROOT})
-set($ENV{MKL_ROOT} ${MKLROOT})
-#set(MKL_ARCH intel64)
-#set(MKL_THREADING intel_thread)
-#set(MKL_INTERFACE lp64)
-#find_package(MKL CONFIG REQUIRED)
 include(FindMKL)
-# ========================
-# MKL
-# https://gitlab.inria.fr/solverstack/test_fembem/-/blob/master/CMakeLists.txt
-# ========================
-# find_package(MKL REQUIRED)
-# if(MKL_FOUND)
-#   set(CMAKE_C_FLAGS "${MKL_COMPILER_FLAGS} ${CMAKE_C_FLAGS}")
-#   set(CMAKE_CXX_FLAGS "${MKL_COMPILER_FLAGS} ${CMAKE_CXX_FLAGS}")
-# endif()
-
 
 set(geometry_dir ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src/)
 
@@ -116,7 +112,7 @@ set(geometry_sources
 )
 
 
-Python_add_library(geometry MODULE ${geometry_sources})
+python_add_library(geometry MODULE ${geometry_sources} WITH_SOABI)
 target_include_directories(geometry
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src
@@ -124,10 +120,12 @@ target_include_directories(geometry
         ${Python_NumPy_INCLUDE_DIRS}
 )
 target_link_libraries(geometry PUBLIC nlopt ${MKL_LIBRARIES})
-#cmake_print_properties(
-#    TARGETS geometry
-#    PROPERTIES SOURCES
-#)
+if (NOT WIN32)
+    target_link_libraries(geometry PUBLIC pthread m dl)
+endif()
+
+#find_package(PythonExtensions REQUIRED)
+#python_extension_module(geometry)
 install(TARGETS geometry DESTINATION src/mckit)
 
 include(FeatureSummary)
