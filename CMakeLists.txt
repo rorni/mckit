@@ -124,9 +124,9 @@ if (NOT WIN32)
     target_link_libraries(geometry PUBLIC pthread m dl)
 endif()
 
-#find_package(PythonExtensions REQUIRED)
-#python_extension_module(geometry)
-install(TARGETS geometry DESTINATION src/mckit)
+install(TARGETS nlopt LIBRARY DESTINATION src/mckit)
+install(TARGETS geometry LIBRARY DESTINATION src/mckit)
+
 
 include(FeatureSummary)
 
