@@ -62,15 +62,15 @@ def _preload_library(lib_name: str, max_version: int = 2) -> None:
     raise OSError(f"Cannot preload library {lib_name}")
 
 
-def _init():
-    if WIN and hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
-        for _dir in SHARED_LIBRARY_DIRECTORIES:
-            os.add_dll_directory(str(_dir))
-    _preload_library("mkl_rt", max_version=2)
-    _preload_library("nlopt", max_version=0)
+# def _init():
+#     if WIN and hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
+#         for _dir in SHARED_LIBRARY_DIRECTORIES:
+#             os.add_dll_directory(str(_dir))
+#     _preload_library("mkl_rt", max_version=2)
+#     _preload_library("nlopt", max_version=0)
 
 
-_init()
+# _init()
 
 # We have to import these libraries here, after preloading libraries.
 from mckit import geometry
