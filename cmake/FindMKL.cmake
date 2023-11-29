@@ -40,9 +40,10 @@ find_path(MKL_INCLUDE_DIR
         ${MKL_DIR}/include
 )
 
+
 find_library(MKL_RT_LIBRARY
     NAMES
-        mkl_rt 
+        mkl_rt
     PATHS
         ${MKL_DIR}/lib
         ${MKL_DIR}/bin

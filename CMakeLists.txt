@@ -1,17 +1,16 @@
 cmake_minimum_required(VERSION 3.19...3.27)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakePrintHelpers)
+
 
 if (NOT SKBUILD_PROJECT_NAME)
   set(SKBUILD_PROJECT_NAME mckit)
-  set(SKBUILD_PROJECT_VERSION 0.9.0)
+  set(SKBUILD_PROJECT_VERSION 0.6.28)
 endif ()
 
-cmake_print_variables(SKBUILD_PROJECT_NAME, SKBUILD_PROJECT_VERSION)
+cmake_print_variables(SKBUILD_PROJECT_NAME SKBUILD_PROJECT_VERSION)
 
 # mckit_version=0.9.0 # TODO: retrieve from poetry
-# project(mckit VERSION ${mckit_version} LANGUAGES C CXX)
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
         DESCRIPTION "mckit geometry extension"
         LANGUAGES C)  # TODO: upgrade to CXX
@@ -26,7 +25,6 @@ project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
 
 # Only do these if this is the main project, and not if it is included through add_subdirectory
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-
 
   # Set CMAKE_BUILD_TYPE to Release by default.
   # Must be done before calling project()
@@ -59,6 +57,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   endif()
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 message("Looking for Python root")
 
 if (WIN32)
@@ -71,36 +72,35 @@ cmake_print_variables(
     Python_EXECUTABLE
     Python_LIBRARIES
     Python_LIBRARY_DIRS
-    Python_SABI_LIBRARIES
-    Python_SABI_LIBRARY_DIRS
     Python_NumPy_INCLUDE_DIRS
     Python_STDLIB
     Python_SITELIB
 )
 
-if (NOT PythonEnv_ROOT)
+if (NOT DEFINED PythonEnv_ROOT)
 
     execute_process(
         COMMAND ${Python_EXECUTABLE} -c "import sys; print(sys.prefix)"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         RESULT_VARIABLE Python_ROOT_FOUND
-        OUTPUT_VARIABLE Python_ROOT
+        OUTPUT_VARIABLE PythonEnv_ROOT
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+    if (NOT Python_ROOT_FOUND STREQUAL "0")
+        message(FATAL_ERROR "Cannot find python environment")
+    endif ()
 endif ()
 cmake_print_variables(PythonEnv_ROOT)
-
-
+list(APPEND CMAKE_PREFIX_PATH ${PythonEnv_ROOT})
 
 
 add_subdirectory(extern)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-cmake_print_variables(CMAKE_MODULE_PATH)
 
 if (NOT WIN32)
+    message("Creating symlinks in environment ${PythonEnv_ROOT}")
     execute_process(
-        COMMAND python building/create_mkl_symlinks.py
+        COMMAND ${Python_EXECUTABLE} building/create_mkl_symlinks.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OUTPUT_VARIABLE CREATED_MKL_SYMLINKS
         OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -108,14 +108,15 @@ if (NOT WIN32)
 endif ()
 
 if (WIN32)
-	set(MKL_DIR ${PythonEnv_ROOT}/Library)
+    set(MKL_DIR ${PythonEnv_ROOT}/Library)
 else ()
-	set(MKL_DIR ${PythonEnv_ROOT})
+    set(MKL_DIR ${PythonEnv_ROOT})
 endif ()
 
 cmake_print_variables(MKL_DIR)
+cmake_print_variables(CMAKE_MODULE_PATH CMAKE_PREFIX_PATH)
 
-find_package(MKL)
+find_package(MKL REQUIRED)
 
 set(geometry_dir ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src/)
 
