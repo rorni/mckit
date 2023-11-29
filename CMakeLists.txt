@@ -52,30 +52,40 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 
 message("Looking for Python root")
+
+if (WIN32)
+    set(Python_FIND_VIRTUALENV FIRST)
+endif ()
+
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
+cmake_print_variables(
+    Python_EXECUTABLE
+    Python_LIBRARIES
+    Python_LIBRARY_DIRS
+    Python_SABI_LIBRARIES
+    Python_SABI_LIBRARY_DIRS
+    Python_NumPy_INCLUDE_DIRS
+    Python_STDLIB
+    Python_SITELIB
+)
+
+
+
 execute_process(
-    COMMAND python3 -c "import sys; print(sys.prefix)"
+    COMMAND ${Python_EXECUTABLE} -c "import sys; print(sys.prefix)"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     RESULT_VARIABLE Python_ROOT_FOUND
     OUTPUT_VARIABLE Python_ROOT
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-cmake_print_variables(
-    Python_ROOT_FOUND
-    Python_ROOT
-)
+cmake_print_variables(Python_ROOT_FOUND Python_ROOT)
 
-#if (not Python_ROOT_FOUND)
-#    message(FATAL_ERROR "Cannot find Python root")
-#endif()
+if (NOT Python_ROOT_FOUND STREQUAL "0")
+    message(FATAL_ERROR "Cannot find Python root")
+endif()
 
-cmake_print_variables(Python_ROOT)
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
-cmake_print_variables(
-    Python_SOABI
-    Python_SOSABI
-)
 
 add_subdirectory(extern)
 
@@ -90,8 +100,14 @@ if (NOT WIN32)
     )
 endif ()
 
-set(MKLROOT ${Python_ROOT})
-set($ENV{MKLROOT} ${MKLROOT})
+if (WIN32)
+	set(MKL_DIR ${Python_ROOT}/Library)
+else ()
+	set(MKL_DIR ${Python_ROOT})
+endif ()
+
+cmake_print_variables(Python_ROOT MKL_DIR)
+
 include(FindMKL)
 
 set(geometry_dir ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src/)
@@ -120,9 +136,12 @@ target_include_directories(geometry
         ${Python_NumPy_INCLUDE_DIRS}
 )
 target_link_libraries(geometry PUBLIC nlopt ${MKL_LIBRARIES})
-if (NOT WIN32)
+if (WIN32)
+    target_link_libraries(geometry PUBLIC Python::Module)
+else ()
     target_link_libraries(geometry PUBLIC pthread m dl)
-endif()
+endif ()
+
 
 install(TARGETS nlopt LIBRARY DESTINATION src/mckit)
 install(TARGETS geometry LIBRARY DESTINATION src/mckit)

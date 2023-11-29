@@ -110,3 +110,6 @@ cmake-build-debug
 
 #scibuild work folders
 _skbuild
+
+# Visual studio
+.vs

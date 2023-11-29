@@ -16,7 +16,7 @@
 #  MKL_INCLUDE_DIRS - MKL include files directories
 #  MKL_LIBRARIES - The MKL libraries
 #
-#  The environment variable MKLROOT is used to find the library.
+#  The environment variable MKL_DIR is used to find the library.
 #  Everything else is ignored.
 #  If MKL is found "-DMKL_ILP64" is added to
 #  CMAKE_C_FLAGS and CMAKE_CXX_FLAGS.
@@ -37,15 +37,18 @@ find_path(MKL_INCLUDE_DIR
     NAMES
         mkl.h
     HINTS
-        $ENV{MKLROOT}/include
-        ${MKLROOT}/include
+        ${MKL_DIR}/include
 )
 
 find_library(MKL_RT_LIBRARY
     NAMES
-        mkl_rt
+        mkl_rt 
+        mkl_rt.2
+        mkl_rt.lib
+        mkl_rt.2.dll
     PATHS
-        ${MKLROOT}/lib
+        ${MKL_DIR}/lib
+        ${MKL_DIR}/bin
     REQUIRED
 )
 
