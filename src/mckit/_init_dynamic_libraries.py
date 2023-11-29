@@ -1,3 +1,8 @@
+"""The module fixes issues on loading MKL shared libraries using mkl_rt.
+
+This requires preloading of the library on all the systems.
+"""
+
 from __future__ import annotations
 
 import os
@@ -66,9 +71,7 @@ def _init():
     if WIN:
         for _dir in SHARED_LIBRARY_DIRECTORIES:
             os.add_dll_directory(str(_dir))
-    else:
-        _preload_library("mkl_rt", max_version=2)
-    # _preload_library("nlopt", max_version=0)
+    _preload_library("mkl_rt", max_version=2)
 
 
 _init()
