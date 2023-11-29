@@ -43,9 +43,6 @@ find_path(MKL_INCLUDE_DIR
 find_library(MKL_RT_LIBRARY
     NAMES
         mkl_rt 
-        mkl_rt.2
-        mkl_rt.lib
-        mkl_rt.2.dll
     PATHS
         ${MKL_DIR}/lib
         ${MKL_DIR}/bin

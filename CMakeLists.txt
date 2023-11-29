@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.19...3.27)
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+include(CMakePrintHelpers)
+
+if (NOT SKBUILD_PROJECT_NAME)
+  set(SKBUILD_PROJECT_NAME mckit)
+  set(SKBUILD_PROJECT_VERSION 0.9.0)
+endif ()
+
+cmake_print_variables(SKBUILD_PROJECT_NAME, SKBUILD_PROJECT_VERSION)
+
 # mckit_version=0.9.0 # TODO: retrieve from poetry
 # project(mckit VERSION ${mckit_version} LANGUAGES C CXX)
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
@@ -13,8 +23,6 @@ project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
 #    enable_language(CUDA)
 #endif()
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-include(CMakePrintHelpers)
 
 # Only do these if this is the main project, and not if it is included through add_subdirectory
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -58,6 +66,7 @@ if (WIN32)
 endif ()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
+
 cmake_print_variables(
     Python_EXECUTABLE
     Python_LIBRARIES
@@ -69,27 +78,25 @@ cmake_print_variables(
     Python_SITELIB
 )
 
+if (NOT PythonEnv_ROOT)
 
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -c "import sys; print(sys.prefix)"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        RESULT_VARIABLE Python_ROOT_FOUND
+        OUTPUT_VARIABLE Python_ROOT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif ()
+cmake_print_variables(PythonEnv_ROOT)
 
-execute_process(
-    COMMAND ${Python_EXECUTABLE} -c "import sys; print(sys.prefix)"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    RESULT_VARIABLE Python_ROOT_FOUND
-    OUTPUT_VARIABLE Python_ROOT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-cmake_print_variables(Python_ROOT_FOUND Python_ROOT)
-
-if (NOT Python_ROOT_FOUND STREQUAL "0")
-    message(FATAL_ERROR "Cannot find Python root")
-endif()
 
 
 
 add_subdirectory(extern)
 
-list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+cmake_print_variables(CMAKE_MODULE_PATH)
 
 if (NOT WIN32)
     execute_process(
@@ -101,14 +108,14 @@ if (NOT WIN32)
 endif ()
 
 if (WIN32)
-	set(MKL_DIR ${Python_ROOT}/Library)
+	set(MKL_DIR ${PythonEnv_ROOT}/Library)
 else ()
-	set(MKL_DIR ${Python_ROOT})
+	set(MKL_DIR ${PythonEnv_ROOT})
 endif ()
 
-cmake_print_variables(Python_ROOT MKL_DIR)
+cmake_print_variables(MKL_DIR)
 
-include(FindMKL)
+find_package(MKL)
 
 set(geometry_dir ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src/)
 
