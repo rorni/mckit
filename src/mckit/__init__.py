@@ -1,6 +1,8 @@
 """The mckit package code root."""
 from __future__ import annotations
 
+import mckit._init_dynamic_libraries
+
 from mckit.body import Body, Shape
 from mckit.fmesh import FMesh
 from mckit.material import AVOGADRO, Composition, Element, Material
