@@ -68,7 +68,7 @@ int box_generate_random_points(
  * @param box
  * @param npts the number of points
  * @param points Points to be checked
- * @param result rray of results: 1 point lies inside the box; 0 - otherwise.
+ * @param result array of results: 1 point lies inside the box; 0 - otherwise.
  */
 void box_test_points(const Box *box, size_t npts, const double *points, int *result);
 
@@ -83,15 +83,17 @@ int box_split(
     double ratio // Ratio of splitting along splitting direction. 0 < ratio < 1.
 );
 
-/// Boundary conditions for surface test_box methods.
-void box_ieqcons(
-    unsigned int m,  // The number of constraints - must be 6.
-    double *result,  //
-    unsigned int n,  // The number of dimensions - must be NDIM.
-    const double *x, // Point to be tested
-    double *grad,    // Gradient of constraint function - only if not NULL.
-    void *f_data     // Box structure
-);
+/**
+ * Boundary conditions for surface test_box methods.
+ *
+ * @param m The number of constraints - must be 6.
+ * @param result
+ * @param n The number of dimensions - must be NDIM.
+ * @param x Point to be tested
+ * @param grad Gradient of constraint function - only if not NULL.
+ * @param f_data Box structure
+ */
+void box_ieqcons(unsigned int m, double *result, unsigned int n, const double *x, double *grad, void *f_data);
 
 /**
  * Checks if the box intersects with another one.
