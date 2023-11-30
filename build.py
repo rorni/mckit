@@ -24,7 +24,7 @@ __all__ = ["build"]
 
 WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform()
 MACOS = sys.platform.startswith("darwin")
-DEBUG = False
+DEBUG = True
 
 
 def build(setup_kwargs: dict[str, Any]) -> None:
@@ -32,15 +32,20 @@ def build(setup_kwargs: dict[str, Any]) -> None:
     distutils_log.info("*** Running skbuild.setup")
     skbuild.setup(**setup_kwargs, script_args=["build_ext"])
 
-    src_dir = Path(skbuild.constants.CMAKE_INSTALL_DIR()) / "src/mckit"
-    dest_dir = Path("src/mckit")
+    pkg = setup_kwargs["name"]
+    distutils_log.info(f"Load extensions and their dependencies to {pkg}")
+    install_dir = Path(skbuild.constants.CMAKE_INSTALL_DIR())
+    src_dirs = (install_dir / x for x in (f"src/{pkg}", "bin"))
+    dest_dir = Path(f"src/{pkg}")
 
-    distutils_log.info(f"*** Copying libraries {src_dir} -> {dest_dir}")
     # Delete C-extensions copied in previous runs, just in case.
-    for suffix in ("so", "dylib", "pyd"):
+    for suffix in ("so", "dylib", "pyd", "dll"):
         remove_files(dest_dir, f"**/*.{suffix}")
-        # Copy built C-extensions back to the project.
-        copy_files(src_dir, dest_dir, f"**/*.{suffix}")
+    for src_dir in src_dirs:
+        distutils_log.info(f"*** Copying libraries {src_dir} -> {dest_dir}")
+        for suffix in ("so", "dylib", "pyd", "dll"):
+            # Copy built C-extensions and dependent libs back to the project.
+            copy_files(src_dir, dest_dir, f"**/*.{suffix}")
 
     if DEBUG:
         save_setup_kwargs(setup_kwargs)

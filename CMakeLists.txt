@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.19...3.27)
 include(CMakePrintHelpers)
 
 
-if (NOT SKBUILD_PROJECT_NAME)
+if (NOT DEFINED SKBUILD_PROJECT_NAME)
   set(SKBUILD_PROJECT_NAME mckit)
   set(SKBUILD_PROJECT_VERSION 0.6.28)
 endif ()
@@ -60,13 +60,13 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-message("Looking for Python root")
 
 if (WIN32)
     set(Python_FIND_VIRTUALENV FIRST)
 endif ()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
+
 
 cmake_print_variables(
     Python_EXECUTABLE
@@ -76,6 +76,8 @@ cmake_print_variables(
     Python_STDLIB
     Python_SITELIB
 )
+
+# TODO dvp: check if CLI varriable provided by scibuid are sufficient instead of own search
 
 if (NOT DEFINED PythonEnv_ROOT)
 
@@ -91,6 +93,7 @@ if (NOT DEFINED PythonEnv_ROOT)
     endif ()
 endif ()
 cmake_print_variables(PythonEnv_ROOT)
+
 list(APPEND CMAKE_PREFIX_PATH ${PythonEnv_ROOT})
 
 
@@ -106,6 +109,7 @@ if (NOT WIN32)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 endif ()
+
 
 if (WIN32)
     set(MKL_DIR ${PythonEnv_ROOT}/Library)

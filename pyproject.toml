@@ -52,10 +52,9 @@ requires = [  # Sync with build.py (see update_setup_requires())
     "cmake >= 3.26.3",
     "ninja; platform_system!='Windows'",
     "setuptools >= 67.8.0",
-#    "wheel >= 0.40.0",
-    "mkl-devel == 2023.2.0",  # sync with dev dependencies
-    "intel-openmp == 2023.2.0", # ...
-    "tbb == 2021.10.0", # ...
+#    "mkl-devel == 2023.2.0",  # sync with dev dependencies
+#    "intel-openmp == 2023.2.0", # ...
+#    "tbb == 2021.10.0", # ...
     "numpy >= 1.26.0",
     "scikit-build"
 ]

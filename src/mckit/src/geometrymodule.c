@@ -1,5 +1,14 @@
 #define PY_SSIZE_T_CLEAN // https://docs.python.org/3/extending/extending.html
+// dvp: to avoid using the unavailable pythonxx_d.lib on Windows
+#if defined(_DEBUG) && defined(_MSC_VER)
+# define _DEBUG_DEFINED _DEBUG
+# undef _DEBUG
+#endif
 #include <Python.h>
+#if defined(_DEBUG_DEFINED)
+# define _DEBUG _DEBUG_DEFINED
+# undef _DEBUG_DEFINED
+#endif
 #include <string.h>
 #include <structmember.h>
 
