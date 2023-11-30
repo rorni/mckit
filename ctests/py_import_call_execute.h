@@ -3,7 +3,8 @@
 
 /** Organize debugging of C calls from Python code.
  *
- * Example: https://pythonextensionpatterns.readthedocs.io/en/latest/debugging/debug_in_ide.html
+ * Example:
+ * https://pythonextensionpatterns.readthedocs.io/en/latest/debugging/debug_in_ide.html
  */
 
 #ifdef __cplusplus
@@ -16,7 +17,7 @@ extern "C" {
  *
  * return 0 on success, non-zero on failure.
  */
-int add_path_to_sys_module(const char *path);
+int add_path_to_sys_module(const char* path);
 
 /** This imports a Python module and calls a specific function in it.
  *
@@ -35,11 +36,10 @@ int add_path_to_sys_module(const char *path);
  *
  * \return 0 on success, non-zero on failure.
  */
-int import_call_execute(int argc, const char *argv[]);
+int import_call_execute(int argc, const char* argv[]);
 
 #ifdef __cplusplus
 //    extern "C" {
 #endif
-
 
 #endif // __PY_IMPORT_CALL_EXECUTE_H

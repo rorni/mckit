@@ -12,15 +12,14 @@ extern "C" {
  *
  * Returns 0 on success, non-zero on failure.
  */
-int add_path_to_sys_module(const char *path) {
+int add_path_to_sys_module(const char* path)
+{
     int ret = 0;
-    const char *prefix = "import sys\nsys.path.append(\"";
-    const char *suffix = "\")\n";
-    char *command = (char*)malloc(strlen(prefix)
-                                  + strlen(path)
-                                  + strlen(suffix)
-                                  + 1);
-    if (! command) {
+    const char* prefix = "import sys\nsys.path.append(\"";
+    const char* suffix = "\")\n";
+    char* command =
+      (char*)malloc(strlen(prefix) + strlen(path) + strlen(suffix) + 1);
+    if (!command) {
         return -1;
     }
     strcpy(command, prefix);
@@ -53,16 +52,18 @@ int add_path_to_sys_module(const char *path) {
  *
  * This returns 0 on success, non-zero on failure.
  */
-int import_call_execute(int argc, const char *argv[]) {
+int import_call_execute(int argc, const char* argv[])
+{
     int return_value = 0;
-    PyObject *pModule   = NULL;
-    PyObject *pFunc     = NULL;
-    PyObject *pResult   = NULL;
+    PyObject* pModule = NULL;
+    PyObject* pFunc = NULL;
+    PyObject* pResult = NULL;
 
     if (argc != 4) {
         fprintf(stderr,
-                "Wrong arguments!"
-                " Usage: %s package_path module function\n", argv[0]);
+          "Wrong arguments!"
+          " Usage: %s package_path module function\n",
+          argv[0]);
         return_value = -1;
         goto except;
     }
@@ -73,27 +74,25 @@ int import_call_execute(int argc, const char *argv[]) {
         goto except;
     }
     pModule = PyImport_ImportModule(argv[2]);
-    if (! pModule) {
-        fprintf(stderr,
-                "%s: Failed to load module \"%s\"\n", argv[0], argv[2]);
+    if (!pModule) {
+        fprintf(stderr, "%s: Failed to load module \"%s\"\n", argv[0], argv[2]);
         return_value = -3;
         goto except;
     }
     pFunc = PyObject_GetAttrString(pModule, argv[3]);
-    if (! pFunc) {
-        fprintf(stderr,
-                "%s: Can not find function \"%s\"\n", argv[0], argv[3]);
+    if (!pFunc) {
+        fprintf(stderr, "%s: Can not find function \"%s\"\n", argv[0], argv[3]);
         return_value = -4;
         goto except;
     }
-    if (! PyCallable_Check(pFunc)) {
-        fprintf(stderr,
-                "%s: Function \"%s\" is not callable\n", argv[0], argv[3]);
+    if (!PyCallable_Check(pFunc)) {
+        fprintf(
+          stderr, "%s: Function \"%s\" is not callable\n", argv[0], argv[3]);
         return_value = -5;
         goto except;
     }
     pResult = PyObject_CallObject(pFunc, NULL);
-    if (! pResult) {
+    if (!pResult) {
         fprintf(stderr, "%s: Function call failed\n", argv[0]);
         return_value = -6;
         goto except;
@@ -101,7 +100,7 @@ int import_call_execute(int argc, const char *argv[]) {
 #ifdef DEBUG
     printf("%s: PyObject_CallObject() succeeded\n", argv[0]);
 #endif
-    assert(! PyErr_Occurred());
+    assert(!PyErr_Occurred());
     goto finally;
 except:
     assert(PyErr_Occurred());
