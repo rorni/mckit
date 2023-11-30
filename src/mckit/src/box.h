@@ -37,40 +37,42 @@ struct Box
 
 extern char enable_box_cache;
 
-// Initializes box structure.
+/// Initializes box structure.
 int box_init(
-    Box *box,             // Pointer to box structure being initialized
-    const double *center, // Center of the box
-    const double *ex,     //
-    const double *ey,     // Directions of box's edges
-    const double *ez,     //
-    double xdim,          //
-    double ydim,          // Dimensions of the box
-    double zdim           //
+    Box *box,             /// Pointer to box structure being initialized
+    const double *center, /// Center of the box
+    const double *ex,     ///
+    const double *ey,     /// Directions of box's edges
+    const double *ez,     ///
+    double xdim,          ///
+    double ydim,          /// Dimensions of the box
+    double zdim           ///
 );
 
-// Deallocates memory created for box's random generator if necessary.
+/// Deallocates memory created for box's random generator if necessary.
 void box_dispose(Box *box);
 
-// Copies content of src box to the dst box.
+/// Copies content of src box to the dst box.
 void box_copy(Box *dst, const Box *src);
 
-// Generates random points inside the box.
+/// Generates random points inside the box.
 int box_generate_random_points(
-    Box *box,      // Box
-    size_t npts,   // IN: the number of points to be generated
-    double *points // OUT: generated points
+    Box *box,
+    size_t npts,   /// IN: the number of points to be generated
+    double *points /// OUT: generated points
 );
 
-// Checks if points lie inside the box.
-void box_test_points(
-    const Box *box,       // Box
-    size_t npts,          // the number of points
-    const double *points, // Points to be checked
-    int *result           // array of results: 1 point lies inside the box; 0 - otherwise.
-);
+/**
+ * Checks if points lie inside the box.
+ *
+ * @param box
+ * @param npts the number of points
+ * @param points Points to be checked
+ * @param result rray of results: 1 point lies inside the box; 0 - otherwise.
+ */
+void box_test_points(const Box *box, size_t npts, const double *points, int *result);
 
-// Splits box into two parts.
+/// Splits box into two parts.
 int box_split(
     const Box *box, // Box to be split
     Box *box1,      // First part box - with smaller coordinates.
@@ -81,7 +83,7 @@ int box_split(
     double ratio // Ratio of splitting along splitting direction. 0 < ratio < 1.
 );
 
-// Boundary conditions for surface test_box methods.
+/// Boundary conditions for surface test_box methods.
 void box_ieqcons(
     unsigned int m,  // The number of constraints - must be 6.
     double *result,  //
@@ -91,7 +93,13 @@ void box_ieqcons(
     void *f_data     // Box structure
 );
 
-// Checks if the box intersects with another one.
+/**
+ * Checks if the box intersects with another one.
+ *
+ * @param box1
+ * @param box2
+ * @return
+ */
 int box_check_intersection(const Box *box1, const Box *box2);
 
 /**
