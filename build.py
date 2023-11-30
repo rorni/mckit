@@ -26,6 +26,13 @@ WIN = sys.platform.startswith("win32") and "mingw" not in sysconfig.get_platform
 MACOS = sys.platform.startswith("darwin")
 DEBUG = True
 
+if WIN:
+    suffixes = ("pyd", "dll")
+elif MACOS:
+    suffixes = ("dylib",)
+else:
+    suffixes = ("so",)
+
 
 def build(setup_kwargs: dict[str, Any]) -> None:
     """Build C-extensions."""

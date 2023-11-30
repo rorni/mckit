@@ -3,6 +3,9 @@
 This requires preloading of the library on all the systems.
 """
 
+# pylint: disable=wrong-import-position,unused-import
+
+
 from __future__ import annotations
 
 import os
@@ -72,12 +75,6 @@ def _init():
         for _dir in SHARED_LIBRARY_DIRECTORIES:
             os.add_dll_directory(str(_dir))
     _preload_library("mkl_rt", max_version=2)
-    # _preload_library("nlopt")
 
 
 _init()
-
-# We have to import these libraries here, after preloading libraries.
-from mckit import geometry
-from mckit.body import Body, Shape
-from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface
