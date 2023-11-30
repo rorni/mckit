@@ -21,7 +21,8 @@ typedef struct GQuadratic GQuadratic;
 typedef struct RCC RCC;
 typedef struct BOX BOX;
 
-enum SurfType {
+enum SurfType
+{
     PLANE = 1,
     SPHERE,
     CYLINDER,
@@ -33,32 +34,37 @@ enum SurfType {
 };
 
 /// surface common data
-struct Surface {
+struct Surface
+{
     char type;           ///< surface type
     uint64_t last_box;   ///< subdivision code of last tested box
     int last_box_result; ///< last test_box result
 };
 
-struct Plane {
+struct Plane
+{
     Surface base;
     double norm[NDIM];
     double offset;
 };
 
-struct Sphere {
+struct Sphere
+{
     Surface base;
     double center[NDIM];
     double radius;
 };
 
-struct Cylinder {
+struct Cylinder
+{
     Surface base;
     double point[NDIM];
     double axis[NDIM];
     double radius;
 };
 
-struct Cone {
+struct Cone
+{
     Surface base;
     double apex[NDIM];
     double axis[NDIM];
@@ -66,7 +72,8 @@ struct Cone {
     int sheet;
 };
 
-struct Torus {
+struct Torus
+{
     Surface base;
     double center[NDIM];
     double axis[NDIM];
@@ -77,7 +84,8 @@ struct Torus {
     double specpts[NDIM * 2]; ///< Special points, if present.
 };
 
-struct GQuadratic {
+struct GQuadratic
+{
     Surface base;
     double m[NDIM * NDIM];
     double v[NDIM];
@@ -85,46 +93,45 @@ struct GQuadratic {
     double factor;
 };
 
-struct RCC {
+struct RCC
+{
     Surface base;
-    Cylinder* cyl;
-    Plane* top;
-    Plane* bot;
+    Cylinder *cyl;
+    Plane *top;
+    Plane *bot;
 };
 
-struct BOX {
+struct BOX
+{
     Surface base;
-    Plane* planes[BOX_PLANE_NUM];
+    Plane *planes[BOX_PLANE_NUM];
 };
 
 // Methods //
 
-int plane_init(Plane* surf, const double* norm, double offset);
+int plane_init(Plane *surf, const double *norm, double offset);
 
-int sphere_init(Sphere* surf, const double* center, double radius);
+int sphere_init(Sphere *surf, const double *center, double radius);
 
-int cylinder_init(
-  Cylinder* surf, const double* point, const double* axis, double radius);
+int cylinder_init(Cylinder *surf, const double *point, const double *axis, double radius);
 
-int cone_init(
-  Cone* surf, const double* apex, const double* axis, double ta, int sheet);
+int cone_init(Cone *surf, const double *apex, const double *axis, double ta, int sheet);
 
-int torus_init(Torus* surf, const double* center, const double* axis,
-  double radius, double a, double b);
+int torus_init(Torus *surf, const double *center, const double *axis, double radius, double a, double b);
 
-int gq_init(
-  GQuadratic* surf, const double* m, const double* v, double k, double factor);
+int gq_init(GQuadratic *surf, const double *m, const double *v, double k, double factor);
 
-int RCC_init(RCC* surf, Cylinder* cyl, Plane* top, Plane* bot);
+int RCC_init(RCC *surf, Cylinder *cyl, Plane *top, Plane *bot);
 
-int BOX_init(BOX* surf, Plane** planes);
+int BOX_init(BOX *surf, Plane **planes);
 
 /// Tests senses of points with respect to the surface.
-void surface_test_points(const Surface* surf, ///< Surface
-  size_t npts,          ///< The number of points to be tested
-  const double* points, ///< Points to be tested
-  char* result          ///< The result - +1 if point has positive
-                        ///< sense and -1 if negative.
+void surface_test_points(
+    const Surface *surf,  ///< Surface
+    size_t npts,          ///< The number of points to be tested
+    const double *points, ///< Points to be tested
+    char *result          ///< The result - +1 if point has positive
+                          ///< sense and -1 if negative.
 );
 
 /**
@@ -135,8 +142,9 @@ void surface_test_points(const Surface* surf, ///< Surface
  *    +1 - box lies on the positive side of surface;
  *    -1 - box lies on the negative side of surface.
  */
-int surface_test_box(Surface* surf, ///< surface to test
-  const Box* box                    ///< box to test
+int surface_test_box(
+    Surface *surf, ///< surface to test
+    const Box *box ///< box to test
 );
 
 #endif
