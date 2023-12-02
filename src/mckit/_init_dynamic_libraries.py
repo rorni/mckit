@@ -1,3 +1,11 @@
+"""The module fixes issues on loading MKL shared libraries using mkl_rt.
+
+This requires preloading of the library on all the systems.
+"""
+
+# pylint: disable=wrong-import-position,unused-import
+
+
 from __future__ import annotations
 
 import os
@@ -63,16 +71,10 @@ def _preload_library(lib_name: str, max_version: int = 2) -> None:
 
 
 def _init():
-    if WIN and hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
+    if WIN:
         for _dir in SHARED_LIBRARY_DIRECTORIES:
             os.add_dll_directory(str(_dir))
     _preload_library("mkl_rt", max_version=2)
-    _preload_library("nlopt", max_version=0)
 
 
 _init()
-
-# We have to import these libraries here, after preloading libraries.
-from mckit import geometry
-from mckit.body import Body, Shape
-from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface

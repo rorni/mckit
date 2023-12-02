@@ -558,3 +558,7 @@ def test_from_bounds(minx, maxx, miny, maxy, minz, maxz, center, wx, wy, wz):
 def test_from_bounds_failure(minx, maxx, miny, maxy, minz, maxz, msg):
     with pytest.raises(ValueError, match="sort"):
         Box.from_bounds(minx, maxx, miny, maxy, minz, maxz)
+
+
+if __name__ == "__main__":
+    pytest.main(["--color=no", __file__])

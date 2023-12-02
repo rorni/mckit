@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 3.19...3.27)
 
+include(CMakePrintHelpers)
+
+
+if (NOT DEFINED SKBUILD_PROJECT_NAME)
+  set(SKBUILD_PROJECT_NAME mckit)
+  set(SKBUILD_PROJECT_VERSION 0.6.28)
+endif ()
+
+cmake_print_variables(SKBUILD_PROJECT_NAME SKBUILD_PROJECT_VERSION)
+
 # mckit_version=0.9.0 # TODO: retrieve from poetry
-# project(mckit VERSION ${mckit_version} LANGUAGES C CXX)
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
         DESCRIPTION "mckit geometry extension"
         LANGUAGES C)  # TODO: upgrade to CXX
@@ -13,12 +22,9 @@ project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
 #    enable_language(CUDA)
 #endif()
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-include(CMakePrintHelpers)
 
 # Only do these if this is the main project, and not if it is included through add_subdirectory
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-
 
   # Set CMAKE_BUILD_TYPE to Release by default.
   # Must be done before calling project()
@@ -51,52 +57,70 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   endif()
 endif()
 
-execute_process(
-    COMMAND python -c "import sys; print(sys.prefix)"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE Python_ROOT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-cmake_print_variables(Python_ROOT)
+
+if (WIN32)
+    set(Python_FIND_VIRTUALENV FIRST)
+endif ()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
+
+
 cmake_print_variables(
-    Python_SOABI
-    Python_SOSABI
+    Python_EXECUTABLE
+    Python_LIBRARIES
+    Python_LIBRARY_DIRS
+    Python_NumPy_INCLUDE_DIRS
+    Python_STDLIB
+    Python_SITELIB
 )
+
+# TODO dvp: check if CLI varriable provided by scibuid are sufficient instead of own search
+
+if (NOT DEFINED PythonEnv_ROOT)
+
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -c "import sys; print(sys.prefix)"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        RESULT_VARIABLE Python_ROOT_FOUND
+        OUTPUT_VARIABLE PythonEnv_ROOT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (NOT Python_ROOT_FOUND STREQUAL "0")
+        message(FATAL_ERROR "Cannot find python environment")
+    endif ()
+endif ()
+cmake_print_variables(PythonEnv_ROOT)
+
+list(APPEND CMAKE_PREFIX_PATH ${PythonEnv_ROOT})
+
 
 add_subdirectory(extern)
 
-list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 if (NOT WIN32)
+    message("Creating symlinks in environment ${PythonEnv_ROOT}")
     execute_process(
-        COMMAND python building/create_mkl_symlinks.py
+        COMMAND ${Python_EXECUTABLE} building/create_mkl_symlinks.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OUTPUT_VARIABLE CREATED_MKL_SYMLINKS
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 endif ()
 
-set(MKLROOT ${Python_ROOT})
-set($ENV{MKLROOT} ${MKLROOT})
-set($ENV{MKL_ROOT} ${MKLROOT})
-#set(MKL_ARCH intel64)
-#set(MKL_THREADING intel_thread)
-#set(MKL_INTERFACE lp64)
-#find_package(MKL CONFIG REQUIRED)
-include(FindMKL)
-# ========================
-# MKL
-# https://gitlab.inria.fr/solverstack/test_fembem/-/blob/master/CMakeLists.txt
-# ========================
-# find_package(MKL REQUIRED)
-# if(MKL_FOUND)
-#   set(CMAKE_C_FLAGS "${MKL_COMPILER_FLAGS} ${CMAKE_C_FLAGS}")
-#   set(CMAKE_CXX_FLAGS "${MKL_COMPILER_FLAGS} ${CMAKE_CXX_FLAGS}")
-# endif()
 
+if (WIN32)
+    set(MKL_DIR ${PythonEnv_ROOT}/Library)
+else ()
+    set(MKL_DIR ${PythonEnv_ROOT})
+endif ()
+
+cmake_print_variables(MKL_DIR)
+cmake_print_variables(CMAKE_MODULE_PATH CMAKE_PREFIX_PATH)
+
+find_package(MKL REQUIRED)
 
 set(geometry_dir ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src/)
 
@@ -116,7 +140,7 @@ set(geometry_sources
 )
 
 
-Python_add_library(geometry MODULE ${geometry_sources})
+python_add_library(geometry MODULE ${geometry_sources} WITH_SOABI)
 target_include_directories(geometry
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src
@@ -124,11 +148,16 @@ target_include_directories(geometry
         ${Python_NumPy_INCLUDE_DIRS}
 )
 target_link_libraries(geometry PUBLIC nlopt ${MKL_LIBRARIES})
-#cmake_print_properties(
-#    TARGETS geometry
-#    PROPERTIES SOURCES
-#)
-install(TARGETS geometry DESTINATION src/mckit)
+if (WIN32)
+    target_link_libraries(geometry PUBLIC Python::Module)
+else ()
+    target_link_libraries(geometry PUBLIC pthread m dl)
+endif ()
+
+
+install(TARGETS nlopt LIBRARY DESTINATION src/mckit)
+install(TARGETS geometry LIBRARY DESTINATION src/mckit)
+
 
 include(FeatureSummary)
 
