@@ -1,7 +1,9 @@
 #define BOX_DOC                                                                                                        \
-    "Box object"                                                                                                       \
+    "Box object."                                                                                                      \
+    ""                                                                                                                 \
     "Parameters"                                                                                                       \
     "----------"                                                                                                       \
+    ""                                                                                                                 \
     "center : array_like[float]"                                                                                       \
     "    Center of the box being created."                                                                             \
     "xdim, ydim, zdim : float"                                                                                         \
@@ -13,6 +15,7 @@
     ""                                                                                                                 \
     "Methods"                                                                                                          \
     "-------"                                                                                                          \
+    ""                                                                                                                 \
     "generate_random_points(n)"                                                                                        \
     "    Generates n random points inside the box."                                                                    \
     "split(dim, ratio)"                                                                                                \
@@ -24,6 +27,7 @@
     ""                                                                                                                 \
     "Properties"                                                                                                       \
     "----------"                                                                                                       \
+    ""                                                                                                                 \
     "center"                                                                                                           \
     "    Box's center"                                                                                                 \
     "volume"                                                                                                           \
@@ -40,6 +44,7 @@
     ""                                                                                                                 \
     "Parameters"                                                                                                       \
     "----------"                                                                                                       \
+    ""                                                                                                                 \
     "p : array_like[float]"                                                                                            \
     "    Coordinates of point(s) to be checked. If it is the only one point,"                                          \
     "    then p.shape=(3,). If it is an array of points, then"                                                         \
@@ -47,6 +52,7 @@
     ""                                                                                                                 \
     "Returns"                                                                                                          \
     "-------"                                                                                                          \
+    ""                                                                                                                 \
     "result : numpy.ndarray[int]"                                                                                      \
     "    If the point lies inside the box, then 1 value is returned."                                                  \
     "    If the point lies outside of the box False is returned."
@@ -56,6 +62,7 @@
     ""                                                                                                                 \
     "Parameters"                                                                                                       \
     "----------"                                                                                                       \
+    ""                                                                                                                 \
     "dir : str"                                                                                                        \
     "    Dimension along which splitting must take place. \"x\" - ex, \"y\" "                                          \
     "- "                                                                                                               \
@@ -69,6 +76,7 @@
     ""                                                                                                                 \
     "Returns"                                                                                                          \
     "-------"                                                                                                          \
+    ""                                                                                                                 \
     "box1, box2 : Box"                                                                                                 \
     "    Resulting boxes. box1 contains parent box base point."
 
