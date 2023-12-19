@@ -52,9 +52,6 @@ requires = [  # Sync with build.py (see update_setup_requires())
     "cmake >= 3.26.3",
     "ninja; platform_system!='Windows'",
     "setuptools >= 67.8.0",
-#    "mkl-devel == 2023.2.0",  # sync with dev dependencies
-#    "intel-openmp == 2023.2.0", # ...
-#    "tbb == 2021.10.0", # ...
     "numpy >= 1.26.0",
     "scikit-build"
 ]
@@ -80,7 +77,6 @@ mckit = "mckit.cli.runner:mckit"
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 DateTime = ">=4.3"
-atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"
 click = ">=8.0.1"
 colorama = ">=0.4.4"
