@@ -10,10 +10,13 @@ endif ()
 
 cmake_print_variables(SKBUILD_PROJECT_NAME SKBUILD_PROJECT_VERSION)
 
-# mckit_version=0.9.0 # TODO: retrieve from poetry
-project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
-        DESCRIPTION "mckit geometry extension"
-        LANGUAGES C)  # TODO: upgrade to CXX
+# TODO: setup SKBUILD variables in build.py - retrieve from poetry
+project(
+    ${SKBUILD_PROJECT_NAME}
+    VERSION ${SKBUILD_PROJECT_VERSION}
+    DESCRIPTION "mckit geometry extension"
+    LANGUAGES C  # TODO: upgrade to CXX
+)
 
 #https://cliutils.gitlab.io/modern-cmake/chapters/packages/CUDA.html
 #include(CheckLanguage)
@@ -77,7 +80,7 @@ cmake_print_variables(
     Python_SITELIB
 )
 
-# TODO dvp: check if CLI varriable provided by scibuid are sufficient instead of own search
+# TODO dvp: check if CLI variable provided by sci-build are sufficient instead of own search
 
 if (NOT DEFINED PythonEnv_ROOT)
 
@@ -126,17 +129,10 @@ set(geometry_dir ${CMAKE_CURRENT_SOURCE_DIR}/src/mckit/src/)
 
 set(geometry_sources
    ${geometry_dir}box.c
-   ${geometry_dir}box.h
-   ${geometry_dir}box_doc.h
    ${geometry_dir}geometrymodule.c
    ${geometry_dir}rbtree.c
-   ${geometry_dir}rbtree.h
    ${geometry_dir}shape.c
-   ${geometry_dir}shape.h
    ${geometry_dir}surface.c
-   ${geometry_dir}surface.h
-   ${geometry_dir}surf_doc.h
-   ${geometry_dir}shape.h
 )
 
 
