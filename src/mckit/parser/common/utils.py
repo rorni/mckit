@@ -45,19 +45,19 @@ def drop_comments(text):
     return drop_eol_comments(drop_c_comments(text))
 
 
-def extract_comments(text):
+def extract_comments(text) -> tuple[str, dict[int, str] | None, list[str] | None]:
     lines = text.split("\n")
-    cleaned_text = []
-    comments = []
-    trailing_comment = []
+    cleaned_text: list[str] = []
+    comments: list[tuple[int, list[str]]] = []
+    trailing_comment: list[str] = []
 
     def add_trailing_to_previous_item():
         nonlocal comments, trailing_comment
         if trailing_comment:
-            assert 0 < len(
-                comments
-            ), "The comments should not be empty on this call: at least card name is read"
-            comments[-1][1].extend(trailing_comment)
+            if 0 == len(comments):
+                comments.append((1, trailing_comment))
+            else:
+                comments[-1][1].extend(trailing_comment)
             trailing_comment = []
 
     for i, line in enumerate(lines):
@@ -81,14 +81,14 @@ def extract_comments(text):
     assert cleaned_text, "There should be some  text in a card"
 
     if comments:
-        comments = {k: tuple(v) for k, v in comments}
+        res_comments = {k: tuple(v) for k, v in comments}
     else:
-        comments = None
+        res_comments = None
 
     if not trailing_comment:
         trailing_comment = None
 
-    return "\n".join(cleaned_text), comments, trailing_comment
+    return "\n".join(cleaned_text), res_comments, trailing_comment
 
 
 class ParseError(ValueError):

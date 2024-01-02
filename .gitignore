@@ -108,3 +108,8 @@ poetry_setup_kwargs.txt
 #cmake work folders
 cmake-build-debug
 
+#scibuild work folders
+_skbuild
+
+# Visual studio
+.vs

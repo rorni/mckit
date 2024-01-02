@@ -1,3 +1,11 @@
+"""The module fixes issues on loading MKL shared libraries using mkl_rt.
+
+This requires preloading of the library on all the systems.
+"""
+
+# pylint: disable=wrong-import-position,unused-import
+
+
 from __future__ import annotations
 
 import os
@@ -40,7 +48,7 @@ def _iterate_suffixes_with_version(max_version: int = 2) -> Generator[str, None,
     yield SUFFIX
 
 
-SHARED_LIBRARY_DIRECTORIES: list[Path] = []
+SHARED_LIBRARY_DIRECTORIES: list[Path] = [HERE]
 
 if WIN:
     SHARED_LIBRARY_DIRECTORIES.append(Path(sys.prefix, "Library", "bin"))
@@ -49,8 +57,6 @@ else:
     if ld_library_path:
         SHARED_LIBRARY_DIRECTORIES.extend(map(Path, ld_library_path.split(":")))
     SHARED_LIBRARY_DIRECTORIES.append(Path(sys.prefix, "lib"))
-
-SHARED_LIBRARY_DIRECTORIES.append(HERE)
 
 
 def _preload_library(lib_name: str, max_version: int = 2) -> None:
@@ -65,18 +71,10 @@ def _preload_library(lib_name: str, max_version: int = 2) -> None:
 
 
 def _init():
-    if WIN and hasattr(os, "add_dll_directory"):  # Python 3.7 doesn't have this method
+    if WIN:
         for _dir in SHARED_LIBRARY_DIRECTORIES:
             os.add_dll_directory(str(_dir))
     _preload_library("mkl_rt", max_version=2)
-    _preload_library("nlopt", max_version=0)
-    # geometry_so = next(Path(sysconfig.get_paths()["purelib"], "mckit").glob("geometry*"))
-    # cdll.LoadLibrary(str(geometry_so))
 
 
 _init()
-
-# We have to import these libraries here, after preloading libraries.
-from mckit import geometry
-from mckit.body import Body, Shape
-from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface

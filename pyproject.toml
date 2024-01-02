@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.6.27"
+version = "0.6.28"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -14,7 +14,7 @@ packages = [
     { include = "mckit", from = "src" },
     { include = "building", format="sdist", from = "."},
     { include = "tests", format="sdist", from = "."},
-    { include = "benchmarks", format="sdist", from = "."},
+#    { include = "benchmarks", format="sdist", from = "."},
 ]
 include = [
     "src/mckit/data/isotopes.dat",
@@ -36,27 +36,33 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
-    "Programming Language :: C",
-    "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Physics",
+    "Programming Language :: C",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Development Status :: 4 - Beta",
 ]
 
 [build-system]
 requires = [  # Sync with build.py (see update_setup_requires())
     "poetry-core >= 1.5.2",
     "cmake >= 3.26.3",
+    "ninja; platform_system!='Windows'",
     "setuptools >= 67.8.0",
-    "wheel >= 0.40.0",
-    "mkl-devel == 2023.2.0",  # sync with dev dependencies
-    "intel-openmp == 2023.2.0", # ...
-    "tbb == 2021.10.0", # ...
     "numpy >= 1.26.0",
+    "scikit-build"
 ]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.build]
 script = "build.py"
 generate-setup-file = true
+
+#[tool.skikit-build]
+#cmake.verbose = true
 
 [tool.poetry.scripts]
 mckit = "mckit.cli.runner:mckit"
@@ -71,7 +77,6 @@ mckit = "mckit.cli.runner:mckit"
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 DateTime = ">=4.3"
-atomicwrites = ">=1.4.0"
 attrs = ">=21.2.0"
 click = ">=8.0.1"
 colorama = ">=0.4.4"
@@ -121,18 +126,11 @@ tbb = "2021.10.0"
 #      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 #
 typer = {extras = ["all"], version = ">=0.9.0"}
-poetry = "^1.6.1"
 
 [tool.poetry.group.dev.dependencies]
 Pygments = ">=2.10.0"
 nox = ">=2022.1.7"
-
-#[tool.poetry.group.profile]
-#optional = true
-
-#[tool.poetry.group.profile.dependencies]
-# TODO dvp: apply yappi: https://coderzcolumn.com/tutorials/python/yappi-yet-another-python-profiler
-#yappi = ">=1.3.2"
+scikit-build = ">=0.17.6"
 
 [tool.poetry.group.pre_commit.dependencies]
 pre-commit = ">=2.15.0"
@@ -584,7 +582,7 @@ show-fixes = true
 # show source code snippets when reporting violations
 show-source = true
 
-src = ["src", "test"]
+src = ["src", "tests"]
 
 # Allow unused variables when underscore-prefixed.
 # dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
@@ -596,6 +594,7 @@ exclude = [
   "adhoc",
   "docs/source/conf.py",
   "extern",
+  "extern/nlopt/test/t_python.py",
   "notebooks/dvp/*.py",
   "wrk",
 ]
