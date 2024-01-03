@@ -36,9 +36,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
-      - name: Use frozen pip version
+      - name: Use the recent pip version
         run: |
-          pip install -constraint=.github/constraints.txt pip
+          pip install --upgrade pip wheel
           pip --version
 
       - name: Install poetry
