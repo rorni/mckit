@@ -10,7 +10,7 @@ on:
   push:
     tags:
       - 'v*'
-
+  workflow_dispatch:  # TODO: debug only
 
 jobs:
   publish:
@@ -38,12 +38,12 @@ jobs:
 
       - name: Use frozen pip version
         run: |
-          pip install --constraint=.github/constraints.txt pip
+          pip install -constraint=.github/constraints.txt pip
           pip --version
 
       - name: Install poetry
         run: |
-          pipx install --constraint=.github/constraints.txt poetry
+          pipx install poetry  # as recomended on https://python-poetry.org/docs/#installation
           poetry --version
           poetry config --local virtualenvs.create false
           poetry version
