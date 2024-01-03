@@ -48,6 +48,10 @@ jobs:
           poetry config --local virtualenvs.create false
           poetry version
 
+      - name: Install this package
+        run: |
+          poetry install
+
       - name: Build wheel
         run: |
           poetry build -f wheel
