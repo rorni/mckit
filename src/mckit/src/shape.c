@@ -330,7 +330,7 @@ int shape_test_points(
 
     @return SHAPE_SUCCESS (always)
  */
-int shape_bounding_box(const Shape *shape, Box *box, double tol)
+check_inter int shape_bounding_box(const Shape *shape, Box *box, double tol)
 {
     double lower, upper, ratio;
     int dim, tl;
