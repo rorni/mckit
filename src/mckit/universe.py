@@ -1,4 +1,5 @@
 """Classes and methods to work with MCNP universe."""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Optional, cast

@@ -7,6 +7,7 @@ Create tables:
 Create comin from MCNP plot by template replacing coordinates with coordinates of the most frequent
 cell fail.
 """
+
 from __future__ import annotations
 
 from typing import cast

@@ -1,4 +1,5 @@
 """Surface methods."""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Union
@@ -351,7 +352,7 @@ class Surface(Card, MaybeClose):
         """Checks if this surface is close to other one with the given tolerance values."""
 
     @abstractmethod
-    def round(self) -> Surface:  # noqa: A003
+    def round(self) -> Surface:
         """Returns rounded version of self."""
 
     def mcnp_words(self, pretty: bool = False) -> list[str]:
@@ -647,7 +648,7 @@ class Plane(Surface, _Plane):
         self._hash = compute_hash(self._k, self._v, self.transformation)
 
     # noinspection PyTypeChecker
-    def round(self):  # noqa: A003
+    def round(self):
         result = self.apply_transformation()
         k_digits = significant_digits(
             result._k, constants.FLOAT_TOLERANCE, constants.FLOAT_TOLERANCE
@@ -801,7 +802,7 @@ class Sphere(Surface, _Sphere):
             (other._radius, other._center, other.transformation),
         )
 
-    def round(self) -> Surface:  # noqa: A003
+    def round(self) -> Surface:
         temp = self.apply_transformation()
         center_digits = significant_array(
             temp._center,
@@ -927,7 +928,7 @@ class Cylinder(Surface, _Cylinder):
             (other._radius, other._pt, other._axis, other.transformation),
         )
 
-    def round(self):  # noqa: A003
+    def round(self):
         temp = self.apply_transformation()
         pt = round_array(temp._pt)
         axis = round_array(temp._axis)
@@ -1062,7 +1063,7 @@ class Cone(Surface, _Cone):
         options = self.clean_options()
         return Cone(apex, axis, self._t2, sheet, assume_normalized=True, **options)
 
-    def round(self) -> Surface:  # noqa: A003
+    def round(self) -> Surface:
         res = self.apply_transformation()
         apex = round_array(res._apex)
         axis = round_array(res._axis)
@@ -1214,7 +1215,7 @@ class GQuadratic(Surface, _GQuadratic):
         options = self.clean_options()
         return GQuadratic(m, v, k, **options)
 
-    def round(self) -> Surface:  # noqa: A003
+    def round(self) -> Surface:
         temp: Surface = self.apply_transformation()
         m, v = map(round_array, [temp._m, temp._v])
         k = round_scalar(temp._k)
@@ -1323,7 +1324,7 @@ class Torus(Surface, _Torus):
         _Torus.__init__(self, center, axis, r, a, b)
         self._hash = compute_hash(self._center, self._axis, self._R, self._a, self._b)
 
-    def round(self) -> Surface:  # noqa: A003
+    def round(self) -> Surface:
         temp = self.apply_transformation()
         center, axis = map(round_array, [temp._center, temp._axis])
 

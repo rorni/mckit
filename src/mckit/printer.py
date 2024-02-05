@@ -1,4 +1,5 @@
 """Functions for MCNP model text printing."""
+
 from __future__ import annotations
 
 from typing import Any
