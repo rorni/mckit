@@ -362,6 +362,8 @@ plugins = ["numpy.typing.mypy_plugin"]
 
 [[tool.mypy.overrides]]
 module = [
+    "IPython.core.magic",
+    "IPython.core.magic_arguments",
     "click",
     "click.testing",
     "loguru",
@@ -372,6 +374,7 @@ module = [
     "pandas",
     "pytest",
     "scipy.constants",
+    "scipy.sparse",
     "tomli",
     "tomllib",
 ]
