@@ -578,7 +578,7 @@ lint.ignore = [
     # "W503",  # Line break before binary operator: for compatibility with black settings
 ]
 
-unfixable = [
+lint.unfixable = [
     "F401",    # dont't remove unused imports - TODO add __all__ to  __init__.py files or clean them
 ]
 
