@@ -63,7 +63,7 @@ def get_decades(value: float) -> int:
         Number of decades.
     """
     if value != 0:
-        decimal_power = np.log10(abs(value))
+        decimal_power = np.log10(abs(float(value)))
     else:
         decimal_power = 0
     decades = np.trunc(decimal_power)
