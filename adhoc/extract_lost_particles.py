@@ -21,9 +21,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 __appname__ = "extract_lost_particles"
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
-DESCRIPTION_START_RE = re.compile(r"^1\s+lost particle no.\s*(?P<lp_no>\d+)")
+DESCRIPTION_START_RE = re.compile(r"^1\s+lost particle no.\s*(?P<lp_no>(\d+|\*\*\*))")
 HISTORY_NO_RE = re.compile(r"history no.\s+(?P<hist_no>\d+)$")
 
 
@@ -101,11 +101,15 @@ def _parse_description(lines: list[str]) -> _Description:
     """Extract information on lost particle from the text lines."""
     match = DESCRIPTION_START_RE.search(lines[0])
     if match is None:
-        raise ValueError("Cannot find lost particle number")
-    lp_no = int(match["lp_no"])
+        raise ParseError("Cannot find lost particle number")
+    lp_no_str = match["lp_no"]
+    if lp_no_str == "***":
+        lp_no = 9999
+    else:
+        lp_no = int(lp_no_str)
     match = HISTORY_NO_RE.search(lines[0])
     if match is None:
-        raise ValueError("Cannot find lost history number")
+        raise ParseError("Cannot find lost history number")
     hist_no = int(match["hist_no"])
 
     if "no cell found" in lines[0]:
@@ -133,7 +137,7 @@ def _parse_description(lines: list[str]) -> _Description:
 
 
 def _process_file(p: Path, cur: sq.Cursor) -> None:
-    with open("lp-details.txt", "w") as fid:
+    with open("lp-details.txt", "a") as fid:
         out_file_name = str(p)
         for start_line, lines in extract_descriptions(p):
             print("-" * 20, file=fid)
