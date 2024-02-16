@@ -1098,7 +1098,7 @@ def test_save_exception(tmp_path, universe, case, rename):
     for uname, ren_dict in rename.items():
         universes_idx[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save(tmp_path)
+        u.save(tmp_path / f"{case}.i")
 
 
 @pytest.mark.xfail(reason="Check this renaming")
@@ -1115,7 +1115,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
     for uname, ren_dict in rename.items():
         universes_idx[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save(tmp_path)
+        u.save(tmp_path / f"{case}.i")
 
 
 @pytest.mark.parametrize(
