@@ -166,10 +166,9 @@ class Transformation(Card, MaybeClose):
                 system.
 
         Returns:
-            v, k
-            - v: A vector of size 3 which defines vector, normal to the plane surface
-                 in the main coordinate system.
-            - k: Free term of plane surface equation in the main coordinate system.
+            - v, A vector of size 3 which defines vector,
+                 normal to the plane surface in the main coordinate system.
+            - k, Free term of plane surface equation in the main coordinate system.
         """
         v = np.dot(self._u, v1)
         k = k1 - np.dot(v, self._t)

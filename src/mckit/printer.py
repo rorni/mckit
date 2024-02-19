@@ -114,12 +114,13 @@ def pretty_float(value: float, frac_digits: int | None = None) -> str:
         frac_digits :
             The number of digits after decimal point.
     """
+    if value == -0.0:
+        value = 0.0
+
     if frac_digits is None:
         frac_digits = significant_digits(
             value, constants.FLOAT_TOLERANCE, resolution=constants.FLOAT_TOLERANCE
         )
-    if value == abs(value):
-        value = abs(value)
     decades = get_decades(value)
     format_f = f"{{0:.{max(frac_digits, 0)}f}}"
     format_e = f"{{0:.{max(frac_digits + decades, 0)}e}}"

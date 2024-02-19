@@ -25,6 +25,9 @@ from mckit.utils.resource import path_resolver
 from mckit.utils.tolerance import FLOAT_TOLERANCE
 
 __all__ = [
+    "FLOAT_TOLERANCE",
+    "MAX_DIGITS",
+    "MCNP_ENCODING",
     "are_equal",
     "compute_hash",
     "deepcopy",
@@ -32,7 +35,8 @@ __all__ = [
     "get_decades",
     "make_hashable",
     "path_resolver",
-    "FLOAT_TOLERANCE",
-    "MAX_DIGITS",
-    "MCNP_ENCODING",
+    "round_array",
+    "round_scalar",
+    "significant_array",
+    "significant_digits",
 ]
