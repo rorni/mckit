@@ -281,12 +281,7 @@ class Shape(_Shape):
         opc = self.opc
         args = []
         for a in self.args:
-            a = a.transform(transformation)  # noqa: PLW2901 - `a` is to be reassigned
-            if isinstance(a, Surface):
-                a = a.apply_transformation()  # noqa: PLW2901 `a` is to be reassigned
-                # TODO dvp: check if call of apply_transformation() should be moved to caller site
-                #           it would be better to change only transformations instead of the surfaces
-            args.append(a)
+            args.append(a.transform(transformation))
         return Shape(opc, *args)
 
     def apply_transformation(self):
@@ -353,7 +348,7 @@ class Shape(_Shape):
         return shape_groups
 
     @staticmethod
-    def _find_groups(result: npt.NDArray[int]):
+    def _find_groups(result: npt.NDArray):
         groups = [result[i, :] for i in range(result.shape[0])]
         while True:
             index = len(groups) - 1
@@ -850,7 +845,7 @@ class Body(Card):
         """Applies transformation to this cell.
 
         Args:
-            transformation:Transformation to be applied.
+            transformation: Transformation to be applied.
 
         Returns:
             The result of this cell transformation.
