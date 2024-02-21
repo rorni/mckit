@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any, Callable, Optional, cast
 
 from abc import abstractmethod
 
@@ -154,14 +154,14 @@ def _create_surface_by_spec(axis, kind, options, params) -> Surface | None:  # n
     return None
 
 
-def _create_rcc(options, params):
+def _create_rcc(options, params) -> RCC:
     center = params[:3]
     axis = params[3:6]
     radius = params[6]
     return RCC(center, axis, radius, **options)
 
 
-def _create_box(options, params):
+def _create_box(options, params) -> BOX:
     center = params[:3]
     dir_x = params[3:6]
     dir_y = params[6:9]
@@ -169,7 +169,7 @@ def _create_box(options, params):
     return BOX(center, dir_x, dir_y, dir_z, **options)
 
 
-def _create_rpp(options, params):
+def _create_rpp(options, params) -> BOX:
     x_min, x_max, y_min, y_max, z_min, z_max = params
     center = [x_min, y_min, z_min]
     dir_x = [x_max - x_min, 0, 0]
@@ -178,19 +178,19 @@ def _create_rpp(options, params):
     return BOX(center, dir_x, dir_y, dir_z, **options)
 
 
-def _create_torus(axis, options, params):
+def _create_torus(axis, options, params) -> Torus:
     x0, y0, z0, R, a, b = params
     return Torus([x0, y0, z0], axis, R, a, b, **options)
 
 
-def _create_gquadratic(options, params):
+def _create_gquadratic(options, params) -> GQuadratic:
     A, B, C, D, E, F, G, H, J, k = params
     m = np.array([[A, 0.5 * D, 0.5 * F], [0.5 * D, B, 0.5 * E], [0.5 * F, 0.5 * E, C]])
     v = np.array([G, H, J])
     return GQuadratic(m, v, k, **options)
 
 
-def _create_cone(axis, kind, options, params):
+def _create_cone(axis, kind, options, params) -> Cone:
     if kind[1] == "/":
         r0 = np.array(params[:3], dtype=float)
         ta = params[3]
@@ -201,7 +201,7 @@ def _create_cone(axis, kind, options, params):
     return Cone(r0, axis, ta, sheet, **options)
 
 
-def _create_cylinder(axis, kind, options, params):
+def _create_cylinder(axis, kind, options, params) -> Cylinder:
     A = 1 - axis
     if kind[1] == "/":
         Ax, Az = np.dot(A, EX), np.dot(A, EZ)
@@ -212,7 +212,7 @@ def _create_cylinder(axis, kind, options, params):
     return Cylinder(r0, axis, R, **options)
 
 
-def _create_sphere(axis, kind, options, params):
+def _create_sphere(axis, kind, options, params) -> Sphere:
     if kind == "S":
         r0 = np.array(params[:3])
     elif kind == "SO":
@@ -268,7 +268,7 @@ def create_replace_dictionary(
     for s in surfaces:
         for us in unique_surfaces:
             # noinspection PyUnresolvedReferences
-            t = s.equals(us, box=box, tol=tol)
+            t = s.equals(us, box=box, tol=tol)  # type: ignore[attr-defined]
             if t != 0:
                 replace[s] = (us, t)
                 break
@@ -311,7 +311,7 @@ class Surface(Card, MaybeClose):
 
     @property
     def transformation(self) -> Transformation | None:
-        return self.options.get("transform", None)
+        return cast(Optional[Transformation], self.options.get("transform", None))
 
     @abstractmethod
     def apply_transformation(self) -> Surface:
@@ -323,7 +323,7 @@ class Surface(Card, MaybeClose):
         """
 
     def combine_transformations(self, tr: Transformation) -> Transformation:
-        my_transformation: Transformation = self.transformation
+        my_transformation: Transformation | None = self.transformation
         if my_transformation:
             return tr.apply2transform(my_transformation)
         return tr
@@ -448,7 +448,7 @@ class RCC(Surface, _RCC):
         return RCC(center, direction, radius, transform=tr)
 
     def apply_transformation(self) -> Surface:
-        pass
+        return self
 
     def is_close_to(
         self, other: Surface, estimator: Callable[[Any, Any], bool] = DEFAULT_TOLERANCE_ESTIMATOR
@@ -984,7 +984,7 @@ class Cylinder(Surface, _Cylinder):
         return instance
 
     def __repr__(self):
-        return f"Cylinder({self._pt}, {self._axis}, {self._radius} {(', ' + self.options) if self.options else ''})"
+        return f"Cylinder({self._pt}, {self._axis}, {self._radius}, {self.options if self.options else ''})"
 
     def __hash__(self):
         result = hash(self._get_radius())
@@ -1439,7 +1439,7 @@ class GQuadratic(Surface, _GQuadratic):
 
     def round(self) -> Surface:
         temp: Surface = self.apply_transformation()
-        m, v = map(round_array, [temp._m, temp._v])
+        m, v = map(round_array, [temp._m, temp._v])  # type: ignore[attr-defined]
         k = round_scalar(temp._k)
         # TODO dvp: handle cases when the surface can be represented with specialized quadratic surface: Cone etc.
         return GQuadratic(m, v, k, **self.clean_options())
@@ -1588,12 +1588,12 @@ class Torus(Surface, _Torus):
 
     def round(self) -> Surface:
         temp = self.apply_transformation()
-        center, axis = map(round_array, [temp._center, temp._axis])
+        center, axis = map(round_array, [temp._center, temp._axis])  # type: ignore[attr-defined]
 
         def r(x):
             return round_scalar(x, significant_digits(x, FLOAT_TOLERANCE))
 
-        r, a, b = map(r, [temp._R, temp._a, temp._b])
+        r, a, b = map(r, [temp._R, temp._a, temp._b])  # type: ignore[attr-defined]
         options = temp.clean_options()
         return Torus(center, axis, r, a, b, **options)
 
