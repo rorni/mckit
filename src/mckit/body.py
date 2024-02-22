@@ -550,7 +550,7 @@ def _clean_args(opc: str, *_args: Shape | Surface | Body) -> tuple[str, list[Sha
                         return "E", []
                     return "R", []
             i += 1
-        args = list(set(args))
+        # TODO dvp: make args unique: args = list(set(args))
         args.sort(key=hash)
         if len(args) == 0:
             opc = "E" if opc == "U" else "R"
