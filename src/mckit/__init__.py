@@ -7,8 +7,8 @@ import mckit._init_dynamic_libraries
 from mckit.body import Body, Shape
 from mckit.fmesh import FMesh
 from mckit.material import AVOGADRO, Composition, Element, Material
+from mckit.parser import ParseResult, from_file, from_stream, from_text, read_meshtal
 from mckit.parser.mctal_parser import read_mctal
-from mckit.parser.meshtal_parser import read_meshtal
 from mckit.surface import Cone, Cylinder, GQuadratic, Plane, Sphere, Torus, create_surface
 from mckit.transformation import Transformation
 from mckit.universe import Universe
@@ -31,6 +31,7 @@ __all__: list[str] = [
     "FMesh",
     "GQuadratic",
     "Material",
+    "ParseResult",
     "Plane",
     "Shape",
     "Sphere",
@@ -45,6 +46,9 @@ __all__: list[str] = [
     "__version__",
     "__version__",
     "create_surface",
+    "from_file",
+    "from_stream",
+    "from_text",
     "read_mctal",
     "read_meshtal",
 ]
