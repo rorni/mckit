@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.7.1"
+version = "0.7.2"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -43,7 +43,6 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
