@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mckit"
-version = "0.7.2"
+version = "0.8.0"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
@@ -43,6 +43,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
@@ -344,7 +345,7 @@ omit = ["*_tab.py", "**/__init__.py"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 85  # TODO dvp: increase limit to 100 with code maturing
+fail_under = 90  # TODO dvp: increase limit to 100 with code maturing
 omit = ["*_tab.py", "**/__init__.py"]
 # Regexes for lines to exclude from consideration
 exclude_lines = [
