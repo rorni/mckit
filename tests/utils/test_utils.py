@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import numpy as np
 
 import pytest
 
 from mckit.utils import (
-    get_decades,
-    significant_digits,
+    FLOAT_TOLERANCE,
     are_equal,
+    compute_hash,
     filter_dict,
-    make_hash,
+    get_decades,
     prettify_float,
+    significant_digits,
 )
-from mckit.utils import FLOAT_TOLERANCE
 
 
 @pytest.mark.parametrize(
@@ -84,7 +86,7 @@ def test_are_equal(a, b, expected):
     "dictionary, drop_items, expected",
     [
         ({"a": 1, "b": 2}, "b", {"a": 1}),
-        ({"a": 1, "b": 2, "c": 3}, frozenset("b c".split()), {"a": 1}),
+        ({"a": 1, "b": 2, "c": 3}, frozenset(("b", "c")), {"a": 1}),
         ({"a": 1, "b": {"c": 3}}, "c", {"a": 1, "b": {}}),
         ({"a": 1, "b": {"c": 3}}, lambda x: x == "a", {"b": {"c": 3}}),
     ],
@@ -96,7 +98,7 @@ def test_deep_copy_dict(dictionary, drop_items, expected):
 
 @pytest.mark.parametrize("values", [("abc",), ({1: {"a": 2}}, np.arange(10)), (None,)])
 def test_make_hash(values):
-    make_hash(*values)
+    compute_hash(*values)
 
 
 @pytest.mark.parametrize(

@@ -1,15 +1,21 @@
-import pytest
-import numpy as np
+from __future__ import annotations
+
+from typing import Final
+
 from itertools import product
 
-from mckit.fmesh import RectMesh, CylMesh
-from mckit.transformation import Transformation
-from mckit.geometry import EX, EY, EZ
-from mckit.surface import create_surface
-from mckit.body import Body
-from mckit.material import Material
+import numpy as np
+
+import pytest
+
 from mckit import read_meshtal
-from mckit.utils.resource import filename_resolver
+from mckit.body import Body
+from mckit.fmesh import CylMesh, RectMesh
+from mckit.geometry import EX, EY, EZ
+from mckit.material import Material
+from mckit.surface import create_surface
+from mckit.transformation import Transformation
+from mckit.utils.resource import path_resolver
 
 transforms = [
     None,
@@ -57,14 +63,14 @@ class TestRectMesh:
         ],
     )
     def test_creation(self, mi: int, ti: int):
-        bin = bins[mi]
+        _bin = bins[mi]
         tr = transforms[ti]
-        mesh = create_rmesh(bin, tr)
-        np.testing.assert_array_almost_equal(mesh._xbins, bin["xbins"])
-        np.testing.assert_array_almost_equal(mesh._ybins, bin["ybins"])
-        np.testing.assert_array_almost_equal(mesh._zbins, bin["zbins"])
+        mesh = create_rmesh(_bin, tr)
+        np.testing.assert_array_almost_equal(mesh._xbins, _bin["xbins"])
+        np.testing.assert_array_almost_equal(mesh._ybins, _bin["ybins"])
+        np.testing.assert_array_almost_equal(mesh._zbins, _bin["zbins"])
 
-        origin = [bin["xbins"][0], bin["ybins"][0], bin["zbins"][0]]
+        origin = [_bin["xbins"][0], _bin["ybins"][0], _bin["zbins"][0]]
         ex = EX
         ey = EY
         ez = EZ
@@ -82,19 +88,19 @@ class TestRectMesh:
     @pytest.mark.parametrize("mi", range(3))
     def test_bounding_box(self, mi: int, ti: int):
         tr = transforms[ti]
-        bin = bins[mi]
-        mesh = create_rmesh(bin, tr)
+        _bin = bins[mi]
+        mesh = create_rmesh(_bin, tr)
         box = mesh.bounding_box()
         corners = box.corners
         ans_corners = [
-            [bin["xbins"][0], bin["ybins"][0], bin["zbins"][0]],
-            [bin["xbins"][0], bin["ybins"][0], bin["zbins"][-1]],
-            [bin["xbins"][0], bin["ybins"][-1], bin["zbins"][0]],
-            [bin["xbins"][0], bin["ybins"][-1], bin["zbins"][-1]],
-            [bin["xbins"][-1], bin["ybins"][0], bin["zbins"][0]],
-            [bin["xbins"][-1], bin["ybins"][0], bin["zbins"][-1]],
-            [bin["xbins"][-1], bin["ybins"][-1], bin["zbins"][0]],
-            [bin["xbins"][-1], bin["ybins"][-1], bin["zbins"][-1]],
+            [_bin["xbins"][0], _bin["ybins"][0], _bin["zbins"][0]],
+            [_bin["xbins"][0], _bin["ybins"][0], _bin["zbins"][-1]],
+            [_bin["xbins"][0], _bin["ybins"][-1], _bin["zbins"][0]],
+            [_bin["xbins"][0], _bin["ybins"][-1], _bin["zbins"][-1]],
+            [_bin["xbins"][-1], _bin["ybins"][0], _bin["zbins"][0]],
+            [_bin["xbins"][-1], _bin["ybins"][0], _bin["zbins"][-1]],
+            [_bin["xbins"][-1], _bin["ybins"][-1], _bin["zbins"][0]],
+            [_bin["xbins"][-1], _bin["ybins"][-1], _bin["zbins"][-1]],
         ]
         if tr:
             ans_corners = tr.apply2point(ans_corners)
@@ -121,7 +127,7 @@ class TestRectMesh:
         mesh = create_rmesh(bins[mi], transforms[ti])
         assert mesh.shape == ans
 
-    surfaces = {
+    surfaces: Final = {
         1: create_surface("PY", 3.5),
         2: create_surface("PY", -1.0),
         3: create_surface("PX", 3.0),
@@ -132,7 +138,7 @@ class TestRectMesh:
     }
 
     # noinspection PyTypeChecker
-    bodies = [
+    bodies: Final = [
         Body(
             [
                 surfaces[1],
@@ -194,31 +200,26 @@ class TestRectMesh:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        "mi, ti", product(range(len(bins)), range(len(transforms)))
-    )
+    @pytest.mark.parametrize("mi, ti", product(range(len(bins)), range(len(transforms))))
     def test_get_voxel(self, mi: int, ti: int):
         tr = transforms[ti]
-        bin = bins[mi]
-        mesh = create_rmesh(bin, tr)
+        _bin = bins[mi]
+        mesh = create_rmesh(_bin, tr)
         shape = mesh.shape
-        ex = EX
-        ey = EY
-        ez = EZ
         for i, j, k in product(range(shape[0]), range(shape[1]), range(shape[2])):
             vox = mesh.get_voxel(i, j, k)
             corners = []
             for pr in product(
-                bin["xbins"][i : i + 2],
-                bin["ybins"][j : j + 2],
-                bin["zbins"][k : k + 2],
+                _bin["xbins"][i : i + 2],
+                _bin["ybins"][j : j + 2],
+                _bin["zbins"][k : k + 2],
             ):
                 corners.append(list(pr))
             if tr is not None:
                 corners = tr.apply2point(corners)
             np.testing.assert_array_almost_equal(vox.corners, corners)
 
-    points = [
+    points: Final = [
         [0.5, 0.9, 0],
         [-1.4, 0.5, 0.1],
         [3, 2.5, 1.9],
@@ -239,14 +240,12 @@ class TestRectMesh:
 
     @pytest.mark.parametrize(
         "mi, ti, pi, local",
-        product(
-            range(len(bins)), range(len(transforms)), range(len(points)), [False, True]
-        ),
+        product(range(len(bins)), range(len(transforms)), range(len(points)), [False, True]),
     )
     def test_voxel_index(self, mi: int, ti: int, pi: int, local: bool):
         tr = transforms[ti]
-        bin = bins[mi]
-        mesh = create_rmesh(bin, tr)
+        _bin = bins[mi]
+        mesh = create_rmesh(_bin, tr)
         pt = self.points[pi]
         result = mesh.voxel_index(pt, local=local)
         if local is False and tr is not None:
@@ -254,15 +253,14 @@ class TestRectMesh:
 
         def check_one(r, pt):
             if r is not None:
-                print(r)
                 i, j, k = r
-                assert bin["xbins"][i] <= pt[0] <= bin["xbins"][i + 1]
-                assert bin["ybins"][j] <= pt[1] <= bin["ybins"][j + 1]
-                assert bin["zbins"][k] <= pt[2] <= bin["zbins"][k + 1]
+                assert _bin["xbins"][i] <= pt[0] <= _bin["xbins"][i + 1]
+                assert _bin["ybins"][j] <= pt[1] <= _bin["ybins"][j + 1]
+                assert _bin["zbins"][k] <= pt[2] <= _bin["zbins"][k + 1]
             else:
-                px = pt[0] <= bin["xbins"][0] or pt[0] >= bin["xbins"][-1]
-                py = pt[1] <= bin["ybins"][0] or pt[1] >= bin["ybins"][-1]
-                pz = pt[2] <= bin["zbins"][0] or pt[2] >= bin["zbins"][-1]
+                px = pt[0] <= _bin["xbins"][0] or pt[0] >= _bin["xbins"][-1]
+                py = pt[1] <= _bin["ybins"][0] or pt[1] >= _bin["ybins"][-1]
+                pz = pt[2] <= _bin["zbins"][0] or pt[2] >= _bin["zbins"][-1]
                 assert px or py or pz
 
         if np.array(pt).shape == (3,):
@@ -340,10 +338,13 @@ class TestRectMesh:
     )
     def test_slice_index(self, ti: int, mi: int, args, expected):
         tr = transforms[ti]
-        bin = bins[mi]
-        mesh = create_rmesh(bin, tr)
+        _bin = bins[mi]
+        mesh = create_rmesh(_bin, tr)
         if expected is None:
-            with pytest.raises(ValueError):
+            with pytest.raises(
+                ValueError,
+                match="Wrong number of fixed spatial variables|Specified point lies outside of the mesh",
+            ):
                 mesh.slice_axis_index(**args)
         else:
             axis, index, x, y = mesh.slice_axis_index(**args)
@@ -353,12 +354,12 @@ class TestRectMesh:
             np.testing.assert_array_almost_equal(y, expected["y"])
 
 
-parser_test_data = filename_resolver("tests")
+parser_test_data = path_resolver("tests")
 # dvp: On Linux access to package should be organized with resource name resolver.
 
 
 class TestFMesh:
-    @pytest.fixture
+    @pytest.fixture()
     def tallies(self):
         file_name = parser_test_data("parser_test_data/fmesh.m")
         return read_meshtal(file_name)
@@ -382,7 +383,7 @@ class TestFMesh:
         assert tallies[name].mesh.__class__ == meshclass
 
     @pytest.mark.parametrize(
-        "name, E, dir, value, x_ans, y_ans, data_ans, max_err",
+        "name, E, _dir, value, x_ans, y_ans, data_ans, max_err",
         [
             (
                 34,
@@ -611,14 +612,12 @@ class TestFMesh:
                         [0.00000000e00, 0.00000000e00, 0.00000000e00, 0.00000000e00],
                     ]
                 ),
-                np.array(
-                    [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]]
-                ),
+                np.array([[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0]]),
             ),
         ],
     )
-    def test_slice(self, tallies, name, E, dir, value, x_ans, y_ans, data_ans, max_err):
-        x, y, data, err = tallies[name].get_slice(E=E, **{dir: value})
+    def test_slice(self, tallies, name, E, _dir, value, x_ans, y_ans, data_ans, max_err):
+        x, y, data, err = tallies[name].get_slice(E=E, **{_dir: value})
         np.testing.assert_array_almost_equal(x, x_ans)
         np.testing.assert_array_almost_equal(y, y_ans)
         np.testing.assert_array_almost_equal(data, data_ans)
@@ -659,7 +658,7 @@ class TestFMesh:
     )
     def test_spectrum(self, tallies, name, point, ebins, flux, err):
         if ebins is None:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="lies outside of the mesh"):
                 tallies[name].get_spectrum(point)
         else:
             eb, fl, er = tallies[name].get_spectrum(point)

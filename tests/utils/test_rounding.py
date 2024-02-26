@@ -1,6 +1,10 @@
-import pytest
+from __future__ import annotations
+
 import numpy as np
-from mckit.utils import significant_digits, round_scalar, significant_array, round_array
+
+import pytest
+
+from mckit.utils import round_array, round_scalar, significant_array, significant_digits
 
 
 @pytest.mark.parametrize("res", [None, 1.0e-2, 1.0e-4, 1.0e-6, 1.0e-8])
@@ -14,7 +18,6 @@ from mckit.utils import significant_digits, round_scalar, significant_array, rou
         -4,
         8,
         0.0,
-        0.00000000000,
         3.48e-8,
         4.870001e6,
         0,
@@ -34,7 +37,6 @@ def test_significant_digits(value, tol, res):
         rel = abs(value - approx) / max(abs(value), abs(approx))
         assert rel <= tol
         wrong = round(value, precision - 1)
-        print(approx, wrong, precision)
         rel = abs(value - wrong) / max(abs(value), abs(wrong))
         assert rel > tol
 
@@ -86,17 +88,13 @@ def test_round_scalar(value, reltol, resolution, answer):
             np.array([5.4320, 5.4320, 1.0e-12, -5.4320, -5.4320, -1.0e-12]),
         ),
         (
-            np.array(
-                [[5.4320000, 5.4320001, 1.0e-12], [-5.4320000, -5.4320001, -1.0e-12]]
-            ),
+            np.array([[5.4320000, 5.4320001, 1.0e-12], [-5.4320000, -5.4320001, -1.0e-12]]),
             1.0e-4,
             None,
             np.array([[5.4320, 5.4320, 1.0e-12], [-5.4320, -5.4320, -1.0e-12]]),
         ),
         (
-            np.array(
-                [[5.4320000, 5.4320001], [1.0e-12, -5.4320000], [-5.4320001, -1.0e-12]]
-            ),
+            np.array([[5.4320000, 5.4320001], [1.0e-12, -5.4320000], [-5.4320001, -1.0e-12]]),
             1.0e-4,
             1.0e-14,
             np.array([[5.4320, 5.4320], [1.0e-12, -5.4320], [-5.4320, -1.0e-12]]),

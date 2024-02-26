@@ -1,15 +1,16 @@
-import pickle
-import typing as tp
+from __future__ import annotations
+
+from typing import Final
 
 import numpy as np
+
 import pytest
 
-from mckit.body import Shape, Body
+from mckit.body import Body, Shape
 from mckit.box import Box
 from mckit.material import Material
 from mckit.surface import create_surface
 from mckit.transformation import Transformation
-
 from tests import pass_through_pickle
 
 
@@ -40,10 +41,10 @@ def create_node(kind, args, surfs):
     new_args = []
     for g in args:
         if isinstance(g, tuple):
-            g = create_node(g[0], g[1], surfs)
+            _g = create_node(g[0], g[1], surfs)
         else:
-            g = surfs[g]
-        new_args.append(g)
+            _g = surfs[g]
+        new_args.append(_g)
     return Shape(kind, *new_args)
 
 
@@ -103,8 +104,7 @@ basic_geoms = [
 
 @pytest.fixture(scope="class")
 def geometry(surfaces):
-    geoms = [create_node(g[0], g[1], surfaces) for g in basic_geoms]
-    return geoms
+    return [create_node(g[0], g[1], surfaces) for g in basic_geoms]
 
 
 class TestShape:
@@ -112,10 +112,9 @@ class TestShape:
     def filter_arg(arg, surfs):
         if isinstance(arg, int):
             return surfs[arg]
-        elif isinstance(arg, tuple):
+        if isinstance(arg, tuple):
             return create_node(arg[0], arg[1], surfs)
-        else:
-            return arg
+        return arg
 
     @pytest.mark.parametrize(
         "opc, args, ans_opc, ans_args",
@@ -195,10 +194,10 @@ class TestShape:
     )
     def test_create_failure(self, surfaces, opc, args):
         args = [self.filter_arg(a, surfaces) for a in args]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="expected"):
             Shape(opc, *args)
 
-    polish_cases = [
+    polish_cases: Final = [
         [2, "C", 3, "I", 1, "I", ("C", [5]), "I", 4, "C", "U"],
         [6, "C", 1, "C", "I"],
         [6, "C", 1, "C", "U"],
@@ -1897,13 +1896,11 @@ class TestShape:
         result = geometry[geom_no].test_points(point)
         np.testing.assert_array_equal(result, ans)
 
-    @pytest.mark.parametrize(
-        "case_no, expected", enumerate([5, 2, 2, 13, 4, 6, 4, 4, 3, 2])
-    )
+    @pytest.mark.parametrize("case_no, expected", enumerate([5, 2, 2, 13, 4, 6, 4, 4, 3, 2]))
     def test_complexity(self, geometry, case_no, expected):
         assert geometry[case_no].complexity() == expected
 
-    box_data = [
+    box_data: Final = [
         [[1.25, 1.75, 1.5], 2.5, 3.5, 3],
         [[-3.25, -1.5, 1.5], 2.5, 3, 3],
         [[5.5, -0.75, 0.75], 2, 1.5, 1.5],
@@ -1911,23 +1908,18 @@ class TestShape:
 
     @pytest.fixture(scope="class")
     def box(self):
-        boxes = [Box(*b) for b in self.box_data]
-        return boxes
+        return [Box(*b) for b in self.box_data]
 
     @pytest.mark.parametrize("box_no", range(len(box_data)))
     @pytest.mark.parametrize(
         "case_no, expected",
-        enumerate(
-            [(0, 0, -1), (-1, -1, 0), (0, -1, 0), (0, 0, -1), (0, 0, 0), (0, 0, 0)]
-        ),
+        enumerate([(0, 0, -1), (-1, -1, 0), (0, -1, 0), (0, 0, -1), (0, 0, 0), (0, 0, 0)]),
     )
-    def test_box(
-        self, geometry, box, box_no: int, case_no: int, expected: tp.Tuple[int]
-    ):
+    def test_box(self, geometry, box, box_no: int, case_no: int, expected: tuple[int]):
         result = geometry[case_no].test_box(box[box_no])
         assert result == expected[box_no]
 
-    @pytest.mark.slow
+    @pytest.mark.slow()
     @pytest.mark.parametrize("tol", [0.2, None])
     @pytest.mark.parametrize(
         "case_no, expected",
@@ -1959,7 +1951,7 @@ class TestShape:
             assert bb.center[j] + bbd_halves_of_dimensions >= high
             assert bb.center[j] + bbd_halves_of_dimensions <= high + tol
 
-    @pytest.mark.slow
+    @pytest.mark.slow()
     @pytest.mark.parametrize("box_no", range(len(box_data)))
     @pytest.mark.parametrize(
         "case_no, expected",
@@ -1998,7 +1990,7 @@ class TestShape:
         ),
     )
     def test_get_surface(self, geometry, surfaces, case_no, expected):
-        expected = set(surfaces[s] for s in expected)
+        expected = {surfaces[s] for s in expected}
         surfs = geometry[case_no].get_surfaces()
         assert surfs == expected
 
@@ -2052,14 +2044,13 @@ class TestShape:
         new_surfs = new_shape.get_surfaces()
         ids = {id(s) for s in new_surfs}
         ids_ans = {
-            id(s) if n not in replace_names else id(replace_dict[s])
-            for n, s in surfs.items()
+            id(s) if n not in replace_names else id(replace_dict[s]) for n, s in surfs.items()
         }
         assert ids == ids_ans
 
 
 class TestBody:
-    kwarg_data = [
+    kwarg_data: Final = [
         {"name": 1},
         {"name": 2, "MAT": Material(atomic=[("C-12", 1)], density=3.5)},
         {"name": 3, "U": 4},
@@ -2085,12 +2076,7 @@ class TestBody:
     @pytest.mark.parametrize("kwargs", kwarg_data)
     @pytest.mark.parametrize(
         "no1, no2",
-        [
-            (i, j)
-            for i in range(len(basic_geoms))
-            for j in range(len(basic_geoms))
-            if i != j
-        ],
+        [(i, j) for i in range(len(basic_geoms)) for j in range(len(basic_geoms)) if i != j],
     )
     def test_intersection(self, geometry, no1, no2, kwargs):
         body1 = Body(geometry[no1], **kwargs)
@@ -2103,12 +2089,7 @@ class TestBody:
     @pytest.mark.parametrize("kwargs", kwarg_data)
     @pytest.mark.parametrize(
         "no1, no2",
-        [
-            (i, j)
-            for i in range(len(basic_geoms))
-            for j in range(len(basic_geoms))
-            if i != j
-        ],
+        [(i, j) for i in range(len(basic_geoms)) for j in range(len(basic_geoms)) if i != j],
     )
     def test_union(self, geometry, no1, no2, kwargs):
         body1 = Body(geometry[no1], **kwargs)
@@ -2118,7 +2099,7 @@ class TestBody:
         for k, v in kwargs.items():
             assert body.options[k] == v
 
-    @pytest.mark.slow
+    @pytest.mark.slow()
     @pytest.mark.parametrize("kwarg", kwarg_data)
     @pytest.mark.parametrize(
         "case_no, expected",
@@ -2154,9 +2135,11 @@ class TestBody:
         assert simple_body.shape == expected_shape
         for k, v in kwarg.items():
             assert simple_body.options[k] == v
-        assert simple_body.material() == kwarg.get("MAT", None)
+        assert simple_body.material() == kwarg.get(
+            "MAT", None
+        ), "Material value should be preserved on simplification"
 
-    split_surfaces = {
+    split_surfaces: Final = {
         1: create_surface("SX", 4, 2, name=1),
         2: create_surface("SX", -1, 2, name=2),
         3: create_surface("SX", 5, 2, name=3),
@@ -2170,7 +2153,7 @@ class TestBody:
         11: create_surface("CX", 1, name=11),
     }
 
-    @pytest.mark.slow
+    @pytest.mark.slow()
     @pytest.mark.parametrize("kwarg", kwarg_data)
     @pytest.mark.parametrize(
         "case_no, geometry, ans_geometry",
@@ -2220,7 +2203,7 @@ class TestBody:
             )
         gb = Box([0, 0, 0], 100, 100, 100)
         split_bodies = body.split(min_volume=0.001, box=gb)
-        print(body.shape.get_stat_table())
+        body.shape.get_stat_table()
         assert len(split_bodies) == len(expected)
         split_shapes = {b.shape for b in split_bodies}
         assert split_shapes == expected
@@ -2302,11 +2285,3 @@ class TestBody:
         new_results = new_body.shape.test_points(points2)
         # TODO: Check testing of FILL without 'transform' case
         np.testing.assert_array_equal(results, new_results)
-
-    @pytest.mark.skip
-    def test_print(self):
-        raise NotImplementedError
-
-    @pytest.mark.skip
-    def test_fill(self):
-        raise NotImplementedError

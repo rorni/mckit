@@ -1,8 +1,11 @@
-import pytest
+from __future__ import annotations
+
 import numpy as np
 
-from mckit.transformation import Transformation, IDENTITY_ROTATION
+import pytest
+
 from mckit.geometry import ORIGIN
+from mckit.transformation import IDENTITY_ROTATION, Transformation
 
 
 @pytest.mark.parametrize(
@@ -33,11 +36,7 @@ from mckit.geometry import ORIGIN
             {"name": 1},
         ),
         (
-            {
-                "rotation": np.cos(
-                    np.array([30, 60, 90, 120, 30, 90, 90, 90, 0]) * np.pi / 180
-                )
-            },
+            {"rotation": np.cos(np.array([30, 60, 90, 120, 30, 90, 90, 90, 0]) * np.pi / 180)},
             np.cos(np.array([[30, 120, 90], [60, 30, 90], [90, 90, 0]]) * np.pi / 180),
             ORIGIN,
             {},
@@ -103,7 +102,7 @@ def test_creation(args, rot, offset, options):
     ],
 )
 def test_creation_failure(args):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="wrong|is greater"):
         Transformation(**args)
 
 
@@ -275,10 +274,10 @@ def test_plane_transformation(transforms, norm, point):
 def test_gq_transformation(transforms, point, radius):
     m1 = IDENTITY_ROTATION
     v1 = -2 * point
-    k1 = np.linalg.norm(point) ** 2 - radius ** 2
+    k1 = np.linalg.norm(point) ** 2 - radius**2
     m, v, k = transforms.apply2gq(m1, v1, k1)
     v_ref = -2 * transforms.apply2point(point)
-    k_ref = np.linalg.norm(-0.5 * v_ref) ** 2 - radius ** 2
+    k_ref = np.linalg.norm(-0.5 * v_ref) ** 2 - radius**2
     np.testing.assert_array_almost_equal(m, m1)
     np.testing.assert_array_almost_equal(v, v_ref)
     np.testing.assert_array_almost_equal(k, k_ref)
@@ -305,10 +304,9 @@ tr_tr_cases = [
 ]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def trtr():
-    tr = [Transformation(**tdata) for tdata in tr_tr_cases]
-    return tr
+    return [Transformation(**tdata) for tdata in tr_tr_cases]
 
 
 @pytest.mark.parametrize("tr1_no", range(len(tr_tr_cases)))

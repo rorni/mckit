@@ -1,14 +1,12 @@
+from __future__ import annotations
+
 import numpy as np
+
 import pytest
-from mckit.utils.tolerance import tolerance_estimator
 
+from mckit.utils.tolerance import DEFAULT_TOLERANCE_ESTIMATOR
 
-@pytest.fixture
-def default_estimator():
-    return tolerance_estimator()
-
-
-SOME_ARRAY = np.arange(3, dtype=np.float)
+SOME_ARRAY = np.arange(3, dtype=float)
 
 
 @pytest.mark.parametrize(
@@ -32,8 +30,8 @@ SOME_ARRAY = np.arange(3, dtype=np.float)
         (1, 1, True, "#6 Integers"),
     ],
 )
-def test_tolerance_estimator(default_estimator, a, b, expected, msg):
-    actual = default_estimator(a, b)
+def test_tolerance_estimator(a, b, expected, msg):
+    actual = DEFAULT_TOLERANCE_ESTIMATOR(a, b)
     assert actual == expected, msg
 
 

@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+from typing import Union
+
 import tempfile
 import textwrap
-from typing import Dict, List, Set, Union
+
+from copy import deepcopy
 
 import numpy as np
+
 import pytest
 
 from mckit.body import Body, Card, Shape
@@ -18,14 +24,19 @@ from mckit.universe import (
     collect_transformations,
     surface_selector,
 )
-from mckit.utils.resource import filename_resolver
+from mckit.utils.resource import path_resolver
 
-data_filename_resolver = filename_resolver("tests")
+data_path_resolver = path_resolver("tests")
 
-TStatItem = Dict[
-    int, Union[List[int], Set[Universe]]
+
+def data_filename_resolver(x):
+    return str(data_path_resolver(x))
+
+
+TStatItem = dict[
+    int, Union[list[int], set[Universe]]
 ]  # TODO dvp: cool but isn't this too much freedom?
-TStat = Dict[str, TStatItem]
+TStat = dict[str, TStatItem]
 
 
 @pytest.fixture(scope="module")
@@ -289,9 +300,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "keep",
             [7],
@@ -303,9 +312,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "new",
             [5],
@@ -317,9 +324,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "clash",
             [7],
@@ -331,9 +336,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=6), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=6), density=2.0),
             ),
             "clash",
             [7],
@@ -612,7 +615,7 @@ def test_copy(universe, case):
         assert copy_surfaces_idx[k] == v
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 @pytest.mark.parametrize("tol", [0.2, None])
 @pytest.mark.parametrize("case, expected", [(1, [[-10, 10], [-10, 10], [-6.5, 13.5]])])
 def test_bounding_box(universe, tol, case, expected):
@@ -648,9 +651,9 @@ def test_bounding_box(universe, tol, case, expected):
 )
 def test_select(universe, case, condition, inner, answer):
     u = universe(case)
-    result = u.select(condition, inner=inner)
-    assert len(result) == len(answer)
-    for r, (cls, name) in zip(result, answer):
+    selection = u.select(condition, inner=inner)
+    assert len(selection) == len(answer)
+    for r, (cls, name) in zip(selection, answer):
         assert isinstance(r, cls)
         assert r.name() == name
 
@@ -708,11 +711,13 @@ def test_get_universes(universe, case, answer):
 def test_name_clashes(
     universe,
     case: int,
-    rename: Dict[int, Dict[str, int]],
+    rename: dict[int, dict[str, int]],
     stat: TStat,
 ):
+    rename = deepcopy(rename)
+    stat = deepcopy(stat)
     u: Universe = universe(case)
-    universes_index: Dict[int, Universe] = {x.name(): x for x in u.get_universes()}
+    universes_index: dict[int, Universe] = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
         universes_index[uname].rename(**ren_dict)
     for stat_item in stat.values():
@@ -790,24 +795,17 @@ def test_name_clashes(
 def test_name_clashes_with_common_materials(
     universe,
     case: int,
-    common_mat: Set[Composition],
+    common_mat: set[Composition],
     stat: TStat,
 ):
+    stat = deepcopy(stat)
     u = universe(case)
     universes_idx = {x.name(): x for x in u.get_universes()}
     u.set_common_materials(common_mat)
     for stat_item in stat.values():
         for kind, universes_names in stat_item.items():
-            stat_item[kind] = {
-                universes_idx[uname] if uname else None for uname in universes_names
-            }
+            stat_item[kind] = {universes_idx[uname] if uname else None for uname in universes_names}
     s = u.name_clashes()
-    for c in u._common_materials:
-        print(c.mcnp_repr())
-    for name, un in universes_idx.items():
-        print(name)
-        for c in un.get_compositions():
-            print(c.mcnp_repr())
     assert s == stat
 
 
@@ -859,7 +857,7 @@ def test_set_common_materials(universe, case, common_mat):
                     assert comp is cm[comp]
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 @pytest.mark.parametrize(
     "case, condition, answer_case, box",
     [
@@ -870,7 +868,7 @@ def test_set_common_materials(universe, case, common_mat):
         (2, {"universe": 2}, 1012, Box([0, 0, 0], 20, 20, 20)),
         (
             2,
-            {"predicate": lambda c: "transform" in c.options["FILL"].keys()},
+            {"predicate": lambda c: "transform" in c.options["FILL"]},
             1022,
             Box([0, 0, 0], 20, 20, 20),
         ),
@@ -988,7 +986,7 @@ def test_alone(universe, case):
     u = universe(case)
     current_universe = u.alone()
     assert current_universe is not u
-    assert 0 == current_universe.name()
+    assert current_universe.name() == 0
     assert u.verbose_name == current_universe.verbose_name
     assert len(u._cells) == len(current_universe._cells)
     for c, cc in zip(u, current_universe):
@@ -1047,7 +1045,7 @@ def test_rename_when_common_mat(universe, case, common, start, answer):
     assert composition_names == answer
 
 
-@pytest.mark.slow
+@pytest.mark.slow()
 @pytest.mark.parametrize("verbose", [False, True])
 @pytest.mark.parametrize(
     "case, complexities", [(1, {1: 1, 2: 3, 3: 5, 4: 1}), (3, {1: 1, 2: 3, 4: 5, 5: 1})]
@@ -1100,10 +1098,9 @@ def test_save_exception(tmp_path, universe, case, rename):
     for uname, ren_dict in rename.items():
         universes_idx[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save(tmp_path)
+        u.save(tmp_path / f"{case}.i")
 
 
-@pytest.mark.xfail(reason="Check this renaming")
 @pytest.mark.parametrize(
     "case, rename",
     [
@@ -1117,7 +1114,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
     for uname, ren_dict in rename.items():
         universes_idx[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save(tmp_path)
+        u.save(tmp_path / f"{case}.i", check_clashes=True)
 
 
 @pytest.mark.parametrize(
@@ -1133,7 +1130,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
 
                 TR1 1 1 1
             """,
-            [1],
+            [],
         ),
         (
             """\
@@ -1145,7 +1142,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
 
             TR1 1 1 1
             """,
-            [1],
+            [],
         ),
         (
             """\
@@ -1159,7 +1156,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
             TR1 1 1 1
             TR2 -1 -1 -1
             """,
-            [1, 2],
+            [],
         ),
         (
             """\
@@ -1176,11 +1173,12 @@ def test_save_exception2(tmp_path, universe, case, rename):
             TR2 -1 -1 -1
             TR3  0 1 0
             """,
-            [1, 2, 3],
+            [3],
         ),
     ],
 )
-def test_collect_transformations(case: str, expected: List[int]) -> None:
+def test_collect_transformations(case: str, expected: list[int]) -> None:
+    """Only transformations to filling universes should remain in the model."""
     case = textwrap.dedent(case)
     u = from_text(case).universe
     actual = sorted(map(int, map(Card.name, collect_transformations(u))))

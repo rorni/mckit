@@ -95,6 +95,21 @@ poetry.toml
 
 
 dist/
-!/setup.py
 wrk/
-*.dll
+setup-generated.py
+poetry_setup_kwargs.txt
+
+!.github
+
+# benchmark resuls
+*uncommited-changes.json
+.benchmarks
+
+#cmake work folders
+cmake-build-debug
+
+#scibuild work folders
+_skbuild
+
+# Visual studio
+.vs

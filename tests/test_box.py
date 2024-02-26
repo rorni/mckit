@@ -1,17 +1,23 @@
-import pytest
+from __future__ import annotations
+
 import io
 import pickle
+
 import numpy as np
+
+from numpy.testing import assert_array_equal
+
+import pytest
+
+from mckit.box import Box
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from mckit.geometry import EX, EY, EZ
-from mckit.box import Box
 
 
 @pytest.fixture(scope="module")
 def box():
-    boxes = [Box([0.5, 1, 1.5], 1, 2, 3), Box([0.5, -1, 1.5], 3, 2, 1)]
-    return boxes
+    return [Box([0.5, 1, 1.5], 1, 2, 3), Box([0.5, -1, 1.5], 3, 2, 1)]
 
 
 @pytest.mark.parametrize(
@@ -453,9 +459,7 @@ def test_corners(box, case_no, expected):
 
 @pytest.mark.parametrize(
     "case_no, expected",
-    enumerate(
-        [[[0.0, 1.0], [0.0, 2.0], [0.0, 3.0]], [[-1.0, 2.0], [-2.0, 0.0], [1.0, 2.0]]]
-    ),
+    enumerate([[[0.0, 1.0], [0.0, 2.0], [0.0, 3.0]], [[-1.0, 2.0], [-2.0, 0.0], [1.0, 2.0]]]),
 )
 def test_bounds(box, case_no, expected):
     bounds = box[case_no].bounds
@@ -472,7 +476,8 @@ def test_volume(box, case_no, expected):
 def test_random_points(box, case_no):
     points = box[case_no].generate_random_points(100)
     pt = box[case_no].test_points(points)
-    assert np.all(pt) == True
+    if not np.all(pt):
+        pytest.fail(f"Some points are not in the box #{case_no}")
 
 
 boxes = [
@@ -507,6 +512,20 @@ def test_check_intersection(case1, case2):
     assert result == answer
 
 
+def test_repr():
+    box = Box([0, 0, 0], 2, 2, 2)
+    assert f"{box!r}" == "Box([0. 0. 0.], 2.0, 2.0, 2.0)"
+
+
+def test_eq_and_hash():
+    box1 = Box([0, 0, 0], 2, 2, 2)
+    box2 = Box([0, 0, 0], 2, 2, 2)
+    assert box1 == box2
+    assert hash(box1) == hash(box2)
+    box3 = Box([0, 0, 0.0001], 2, 2, 2)
+    assert box1 != box3
+
+
 @pytest.mark.parametrize(
     "center, wx, wy, wz, ex, ey, ez", [([0.0, 0.0, 0.0], 1.0, 2.0, 3.0, EX, EY, EZ)]
 )
@@ -515,5 +534,31 @@ def test_pickle(center, wx, wy, wz, ex, ey, ez):
     with io.BytesIO() as f:
         pickle.dump(box, f)
         f.seek(0)
-        box_unpickled = pickle.load(f)
+        box_unpickled = pickle.load(f)  # noqa: S301
     assert box == box_unpickled
+
+
+@pytest.mark.parametrize(
+    "minx, maxx, miny, maxy, minz, maxz, center, wx, wy, wz",
+    [(-0.5, 0.5, -1.0, 1.0, -1.5, 1.5, [0.0, 0.0, 0.0], 1.0, 2.0, 3.0)],
+)
+def test_from_bounds(minx, maxx, miny, maxy, minz, maxz, center, wx, wy, wz):
+    box = Box.from_bounds(minx, maxx, miny, maxy, minz, maxz)
+    assert_array_equal(center, box.center)
+    assert_array_equal([wx, wy, wz], box.dimensions)
+    assert_array_equal(EX, box.ex)
+    assert_array_equal(EY, box.ey)
+    assert_array_equal(EZ, box.ez)
+
+
+@pytest.mark.parametrize(
+    "minx, maxx, miny, maxy, minz, maxz, msg",
+    [(0.5, -0.5, -1.0, 1.0, -1.5, 1.5, "X values in wrong order")],
+)
+def test_from_bounds_failure(minx, maxx, miny, maxy, minz, maxz, msg):
+    with pytest.raises(ValueError, match="sort"):
+        Box.from_bounds(minx, maxx, miny, maxy, minz, maxz)
+
+
+if __name__ == "__main__":
+    pytest.main(["--color=no", __file__])

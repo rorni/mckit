@@ -1,7 +1,4 @@
-"""
-"""
-import sys
-import os
+""""""
 
 # import matplotlib.pyplot as plt
 # import seaborn as sb
@@ -10,29 +7,34 @@ import os
 # import scipy as sp
 # import scipy.constants as sc
 import typing as tp
+
 from typing import NoReturn
-from multiprocessing import Pool
+
+import os
+import sys
 
 # from multiprocessing.pool import ThreadPool
 # from multiprocessing.dummy import Pool as ThreadPool
-import toolz
+from functools import reduce
+from multiprocessing import Pool
+
+import dotenv
+import numpy as np
+
+from mckit.utils import check_if_all_paths_exist, get_root_dir
 
 # from joblib import (
 #     Memory,
 #     # Parallel, delayed, wrap_non_picklable_objects, effective_n_jobs
 # )
 
-import dotenv
-import numpy as np
-
-from mckit.utils import assert_all_paths_exist, get_root_dir
 
 sys.path.append("..")
 
 import mckit as mk
 
 from mckit.box import Box
-from mckit.utils.logging import logger as LOG
+from mckit.cli.logging import logger as LOG
 
 
 def select_from(cell: mk.Body, to_select: np.ndarray) -> bool:
@@ -46,7 +48,7 @@ HFSR_ROOT = get_root_dir("HFSR_ROOT", "~/dev/mcnp/hfsr")
 CMODEL_ROOT = get_root_dir("CMODEL_ROOT", "~/dev/mcnp/c-model")
 LOG.info("HFSR_ROOT=%s", HFSR_ROOT)
 LOG.info("CMODEL_ROOT=%s", CMODEL_ROOT)
-assert_all_paths_exist(HFSR_ROOT, CMODEL_ROOT)
+check_if_all_paths_exist(HFSR_ROOT, CMODEL_ROOT)
 universes_dir = CMODEL_ROOT / "simple_cubes.universes"
 # assert universes_dir.is_dir()
 NJOBS = os.cpu_count()
@@ -54,7 +56,7 @@ NJOBS = os.cpu_count()
 # set_loky_pickler()
 
 
-class BoundingBoxAdder(object):
+class BoundingBoxAdder:
     def __init__(self, tolerance: float):
         self.tolerance = tolerance
 
@@ -124,9 +126,7 @@ def subtract_model_from_model(
     return new_universe
 
 
-def subtract_model_from_cell(
-    cell: mk.Body, model: mk.Universe, simplify: bool = True
-) -> mk.Body:
+def subtract_model_from_cell(cell: mk.Body, model: mk.Universe, simplify: bool = True) -> mk.Body:
     new_cell = cell
     cbb = cell.bounding_box
     for b_cell in model:
@@ -139,13 +139,9 @@ def subtract_model_from_cell(
     return new_cell
 
 
-def set_common_materials(*universes) -> tp.NoReturn:
-    universes_collection = toolz.reduce(
-        set.union, map(mk.Universe.get_universes, universes)
-    )
-    common_materials = toolz.reduce(
-        set.union, map(mk.Universe.get_compositions, universes_collection)
-    )
+def set_common_materials(*universes) -> None:
+    universes_collection = reduce(set.union, map(mk.Universe.get_universes, universes))
+    common_materials = reduce(set.union, map(mk.Universe.get_compositions, universes_collection))
     for u in universes_collection:
         u.set_common_materials(common_materials)
 
@@ -167,9 +163,7 @@ def main():
     cells_to_fill_indexes = [c - 1 for c in cells_to_fill]
 
     LOG.info("Attaching bounding boxes to c-model envelopes %s", cells_to_fill)
-    attach_bounding_boxes(
-        [envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1
-    )
+    attach_bounding_boxes([envelopes[i] for i in cells_to_fill_indexes], tolerance=5.0, chunksize=1)
     # attach_bounding_boxes((envelopes), tolerance=10.0, chunksize=5)
     LOG.info("Backing up original envelopes")
     envelopes_original = envelopes.copy()

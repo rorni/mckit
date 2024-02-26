@@ -1,20 +1,19 @@
-#!/usr/bin/env python3
-# coding: utf-8
-"""
-Compute UP08 ISS/Portcell model intersection with envelopes for  UP08 ex-vessel components.
+"""Compute UP08 ISS/Portcell model intersection with envelopes for  UP08 ex-vessel components.
 ===================================================================================================
 
 We don't use bounding boxes here, because the number of cells in the model is much more (about 1000 times)
 than number of GA envelopes. The complexity is not reduced significantly using bounding box.
-
 """
-from glob import glob
+
 import typing as tp
-from tqdm import tqdm
+
 from functools import reduce
-import mckit as mk
+from glob import glob
 from pathlib import Path
-import click
+
+from tqdm import tqdm
+
+import mckit as mk
 
 working_dir = Path.cwd()
 print("Working dir: ", working_dir)

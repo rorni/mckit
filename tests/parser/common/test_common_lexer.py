@@ -1,15 +1,23 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import re
 
+import mckit.parser.common as cmn
 import pytest
 import sly
 
-import mckit.parser.common as cmn
-from mckit.parser.common.Lexer import Lexer as LexerBase, LexError
+from mckit.parser.common.lexer import Lexer as LexerBase
+from mckit.parser.common.lexer import LexError
+
+if TYPE_CHECKING:
+    from typing import ClassVar
 
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences
 class DerivedLexer(LexerBase):
-    tokens = {FRACTION, FLOAT, INTEGER, ZERO}
+    tokens: ClassVar = {FRACTION, FLOAT, INTEGER, ZERO}
 
     FRACTION = r"\d+(?:\.\d+[a-z])"
 
@@ -35,9 +43,9 @@ class DerivedLexer(LexerBase):
 def test_derived_lexer(text, expected_types, expected_values):
     lexer = DerivedLexer()
     tokens = list(lexer.tokenize(text))
-    result = list(t.type for t in tokens)
+    result = [t.type for t in tokens]
     assert result == expected_types
-    result = list(t.value for t in tokens)
+    result = [t.value for t in tokens]
     assert result == expected_values
 
 
@@ -54,17 +62,16 @@ def test_derived_lexer(text, expected_types, expected_values):
 def test_bad_path(text, msg_contains):
     lexer = DerivedLexer()
     with pytest.raises(LexError, match=msg_contains):
-        for _ in lexer.tokenize(text):
-            pass
+        _ = list(lexer.tokenize(text))
 
 
 # noinspection PyUnboundLocalVariable,PyPep8Naming,PyUnresolvedReferences
 class MyLexer(LexerBase):
-    literals = {":", "(", ")"}
+    literals: ClassVar = {":", "(", ")"}
     ignore = " \t"
     reflags = re.IGNORECASE | re.MULTILINE
 
-    tokens = {NAME, FLOAT, INTEGER, ZERO}
+    tokens: ClassVar = {NAME, FLOAT, INTEGER, ZERO}
 
     NAME = r"\d?[A-Za-z-]+"
 
@@ -89,9 +96,9 @@ class MyLexer(LexerBase):
 def test_good_path(text, expected_types, expected_values):
     lexer = MyLexer()
     tokens = list(lexer.tokenize(text))
-    result = list(t.type for t in tokens)
+    result = [t.type for t in tokens]
     assert result == expected_types
-    result = list(t.value for t in tokens)
+    result = [t.value for t in tokens]
     assert result == expected_values
 
 

@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-import pytest
 import mckit.parser.transformation_parser as trp
+import pytest
+
 from mckit.transformation import Transformation
 
 
@@ -22,7 +23,7 @@ from mckit.transformation import Transformation
 )
 def test_transformation_lexer(text, expected_types, expected_values):
     lexer = trp.Lexer()
-    tokens = [t for t in lexer.tokenize(text)]
+    tokens = list(lexer.tokenize(text))
     actual_types = [t.type for t in tokens]
     assert actual_types == expected_types
     actual_values = [t.value for t in tokens]
@@ -41,6 +42,15 @@ def test_transformation_lexer(text, expected_types, expected_values):
                 rotation=[45, 45, 90, 135, 45, 90, 90, 90, 0],
                 indegrees=True,
                 name=2,
+            ),
+        ),
+        (
+            "*tr1 0. 0. 0. 3.62 86.38 90. 93.62 3.62 90. 90. 90. 0.",
+            Transformation(
+                translation=[0.0, 0.0, 0.0],
+                rotation=[3.62, 86.38, 90.0, 93.62, 3.62, 90.0, 90.0, 90.0, 0.0],
+                indegrees=True,
+                name=1,
             ),
         ),
     ],

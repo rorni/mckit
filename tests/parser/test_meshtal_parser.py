@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import numpy as np
 
 import pytest
 
 from mckit.parser.meshtal_parser import meshtal_lexer, meshtal_parser
-from mckit.utils import filename_resolver
+from mckit.utils import path_resolver
 
-file_resolver = filename_resolver("tests")
+file_resolver = path_resolver("tests")
 
 
 @pytest.mark.parametrize(
@@ -159,9 +161,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -1089,9 +1089,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -1448,9 +1446,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -4194,9 +4190,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -4779,9 +4773,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [

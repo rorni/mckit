@@ -1,21 +1,20 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
 
-from mckit.utils.resource import filename_resolver
-from mckit.cli.runner import mckit
 from mckit.cli.commands.common import get_default_output_directory
+from mckit.cli.runner import mckit
 from mckit.parser.mcnp_section_parser import is_comment
 from mckit.utils.io import MCNP_ENCODING
+from mckit.utils.resource import path_resolver
+
+data_path_resolver = path_resolver("tests")
 
 
-@pytest.fixture
-def runner():
-    return CliRunner()
-
-
-data_filename_resolver = filename_resolver("tests")
+def data_filename_resolver(x):
+    return str(data_path_resolver(x))
 
 
 def test_when_there_is_no_args(runner):
@@ -26,9 +25,7 @@ def test_when_there_is_no_args(runner):
 
 
 def test_not_existing_mcnp_file(runner):
-    result = runner.invoke(
-        mckit, args=["split", "not-existing.imcnp"], catch_exceptions=False
-    )
+    result = runner.invoke(mckit, args=["split", "not-existing.imcnp"], catch_exceptions=False)
     assert result.exit_code > 0
     assert "Path 'not-existing.imcnp' does not exist" in result.output
 
@@ -46,9 +43,7 @@ def test_not_existing_mcnp_file(runner):
 def test_when_output_dir_is_specified(runner, source, out, expected):
     source = data_filename_resolver(source)
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            mckit, args=["split", "-o", out, source], catch_exceptions=False
-        )
+        result = runner.invoke(mckit, args=["split", "-o", out, source], catch_exceptions=False)
         assert result.exit_code == 0, "Should success without output directory"
         out = Path(out)
         assert out.is_dir()

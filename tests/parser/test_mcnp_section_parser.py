@@ -1,11 +1,11 @@
-from io import StringIO
-from typing import List
+from __future__ import annotations
 
-import pytest
+from io import StringIO
 
 import mckit.parser.mcnp_section_parser as sp
-from mckit.parser.mcnp_section_parser import Card
-from mckit.parser.mcnp_section_parser import Kind
+import pytest
+
+from mckit.parser.mcnp_section_parser import Card, Kind
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,7 @@ from mckit.parser.mcnp_section_parser import Kind
         ("aaa\nbbb", ["aaa\nbbb"]),
     ],
 )
-def test_blank_line_pattern(text: str, expected: List[str]) -> None:
+def test_blank_line_pattern(text: str, expected: list[str]) -> None:
     actual = sp.BLANK_LINE_PATTERN.split(text)
     assert actual == expected
 
@@ -27,9 +27,7 @@ def test_blank_line_pattern(text: str, expected: List[str]) -> None:
         ("1 0 1\n", ("1 0 1\n", 0)),
         ("1 0 1 $bla bla bla\n", ("1 0 1\n", 1)),
         (
-            "1 0 1 $bla bla bla\n"
-            + "c the comment with the space before c\n"
-            + "   2 -3",
+            "1 0 1 $bla bla bla\n" + "c the comment with the space before c\n" + "   2 -3",
             ("1 0 1\n" + "   2 -3", 2),
         ),
     ],

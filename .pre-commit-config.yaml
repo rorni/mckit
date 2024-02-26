@@ -1,9 +1,117 @@
+# To use:
+#
+#     pre-commit run -a
+#
+# Or:
+#
+#     pre-commit install  # (runs every time you commit in git)
+#
+# To update this file:
+#
+#     pre-commit autoupdate
+#
+# See:
+#     https://pre-commit.com/                   and
+#     https://github.com/pre-commit/pre-commit  for more information
+#     https://pre-commit.com/hooks.html         for more hooks
+default_language_version:
+  python: python3.11
+
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+
+  # Standard hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v4.5.0"
     hooks:
-    -   id: check-yaml
--   repo: https://github.com/psf/black
-    rev: 20.8b1
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+        exclude: notebooks
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: end-of-file-fixer
+        exclude: data|.ipynb$|^\.
+      - id: name-tests-test
+        args:
+          - --pytest-test-first
+      - id: mixed-line-ending
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+        exclude: data|.ipynb$
+
+  # Changes tabs to spaces
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: "v1.5.4"
     hooks:
-    -   id: black
+      - id: remove-tabs
+
+  # Format doc strings
+  - repo: https://github.com/DanielNoord/pydocstringformatter
+    rev: "v0.7.3"
+    hooks:
+      - id: pydocstringformatter
+        exclude: _parser\.py$|_tab\.py|extern
+
+  - repo: local
+    hooks:
+      # Upgrade Python code
+      - id: pyupgrade
+        name: pyupgrade
+        exclude: \.idea|\.cache|^notebooks|^extern
+        entry: pyupgrade
+        args:
+          - --py39-plus
+        language: system
+        types: [ python ]
+
+      # Nicely sort imports
+      - id: isort
+        name: isort
+        exclude: tools|\.idea|\.cache|^notebooks|^extern
+        entry: isort
+        language: system
+        types: [ python ]
+
+      # Black, the code formatter, natively supports pre-commit
+      - id: black
+        name: black
+        entry: black
+        language: system
+        types: [ python ]
+        exclude: ^notebooks|^extern
+
+      # Lint and fix Python code
+      - id: ruff
+        name: ruff
+        entry: ruff --force-exclude --fix --config pyproject.toml
+        language: system
+        types: [ python ]
+        exclude: ^notebooks|^extern
+
+  # CMake formatting
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: "v0.6.13"
+    hooks:
+      - id: cmake-format
+        additional_dependencies: [ pyyaml ]
+        types: [ file ]
+        files: (\.cmake|CMakeLists.txt)(.in)?$
+
+  # Check for common shell mistakes
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: "v0.9.0.6"
+    hooks:
+      - id: shellcheck
+        stages: [ manual ]
+
+  # Clang format the codebase automatically
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: "v17.0.6"
+    hooks:
+      - id: clang-format
+        types_or: [ c++, c, cuda ]

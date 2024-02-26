@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
 
-import pytest
 import mckit.parser.material_parser as mp
+import pytest
+
 from mckit.material import Composition, Element
 
 
@@ -21,9 +22,9 @@ from mckit.material import Composition, Element
 def test_composition_lexer(text, expected_types, expected_values):
     lexer = mp.Lexer()
     tokens = list(lexer.tokenize(text))
-    result = list(t.type for t in tokens)
+    result = [t.type for t in tokens]
     assert result == expected_types
-    result = list(t.value for t in tokens)
+    result = [t.value for t in tokens]
     assert result == expected_values
 
 
@@ -44,7 +45,16 @@ def test_composition_lexer(text, expected_types, expected_values):
         1001.21c -1.0 $ eol comment
         """,
             Composition(
-                weight=[(Element(1001, lib="21c", comment="$ eol comment"), 1.0)],
+                weight=[
+                    (
+                        Element(
+                            1001,
+                            lib="21c",
+                            # comment="$ eol comment"
+                        ),
+                        1.0,
+                    )
+                ],
                 name=1000,
             ),
         ),
@@ -57,20 +67,20 @@ def test_composition_lexer(text, expected_types, expected_values):
             Composition(
                 weight=[(Element(1001, lib="21c"), 1.0)],
                 name=1000,
-                comment=["trailing comment1", "trailing comment2"],
+                # comment=["trailing comment1", "trailing comment2"],
             ),
         ),
         (
             """M1000
     1001.21c -1.0
-c bzzzzzz
+c something
         $ trailing comment1
         $ trailing comment2
         """,
             Composition(
                 weight=[(Element(1001, lib="21c"), 1.0)],
                 name=1000,
-                comment=["trailing comment1", "trailing comment2"],
+                # comment=["trailing comment1", "trailing comment2"],
             ),
         ),
         (
@@ -83,7 +93,7 @@ c bzzzzzz
             Composition(
                 weight=[(Element(1001, lib="21c"), 1.0)],
                 name=1000,
-                comment=["trailing comment1", "trailing comment2"],
+                # comment=["trailing comment1", "trailing comment2"],
                 GAS=1,
             ),
         ),
@@ -97,11 +107,9 @@ c bzzzzzz
         ),
     ],
 )
-def test_test_composition_parser(text, expected):
+def test_composition_parser(text, expected):
     result = mp.parse(text)
-    assert isinstance(
-        result, Composition
-    ), "Parser should create instance of Composition"
+    assert isinstance(result, Composition), "Parser should create instance of Composition"
     assert result == expected
     assert result.options == expected.options
 

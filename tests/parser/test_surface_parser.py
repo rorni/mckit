@@ -1,9 +1,11 @@
-import pytest
+from __future__ import annotations
 
 import mckit.parser.common.transformation_index as ti
 import mckit.parser.surface_parser as srp
+import pytest
+
 from mckit.surface import create_surface
-from mckit.utils.Index import IgnoringIndex
+from mckit.utils.indexes import IgnoringIndex
 
 
 @pytest.mark.parametrize(

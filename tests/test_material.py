@@ -1,10 +1,16 @@
-from typing import Dict, Any
+from __future__ import annotations
+
+from typing import Any, Final
+
+from copy import deepcopy
+
 import pytest
-from mckit.material import Element, Composition, Material
+
+from mckit.material import Composition, Element, Material
 
 
 class TestElement:
-    cases = [
+    cases: Final = [
         ("H", {}),
         ("1000", {}),
         ("1001", {}),
@@ -31,7 +37,7 @@ class TestElement:
         (4009, {}),
     ]
 
-    hash_equality = [
+    hash_equality: Final = [
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -459,7 +465,7 @@ class TestElement:
         elem = Element(name, **options)
         assert expected == elem.fispact_repr()
 
-    equality = [
+    equality: Final = [
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -498,7 +504,7 @@ class TestElement:
 
 
 class TestComposition:
-    cases = [
+    cases: Final = [
         {"atomic": [("H", 1)], "name": 1, "lib": "21c"},
         {"atomic": [("O", 5)], "name": 2, "lib": "21c"},
         {"atomic": [("H", 2), ("O", 1)], "name": 3, "lib": "21c"},
@@ -582,7 +588,7 @@ class TestComposition:
         },
     ]
 
-    hash_eq_matrix = [
+    hash_eq_matrix: Final = [
         [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -609,8 +615,7 @@ class TestComposition:
 
     @pytest.fixture(scope="class")
     def compositions(self):
-        comp = [Composition(**params) for params in self.cases]
-        return comp
+        return [Composition(**params) for params in self.cases]
 
     @pytest.mark.parametrize("case_no", range(len(cases)))
     def test_name(self, case_no: int):
@@ -670,12 +675,8 @@ class TestComposition:
         ans = {Element(k): pytest.approx(v, rel=1.0e-3) for k, v in expected.items()}
         assert comp._composition == ans
         inp2 = {
-            "atomic": [
-                (Element(k), v) for k, v in self.cases[case_no].get("atomic", [])
-            ],
-            "weight": [
-                (Element(k), v) for k, v in self.cases[case_no].get("weight", [])
-            ],
+            "atomic": [(Element(k), v) for k, v in self.cases[case_no].get("atomic", [])],
+            "weight": [(Element(k), v) for k, v in self.cases[case_no].get("weight", [])],
         }
         comp2 = Composition(**inp2)
         assert comp2._composition == ans
@@ -684,7 +685,7 @@ class TestComposition:
         "_input", [{"atomic": [], "weight": []}, {"atomic": []}, {"weight": []}, {}]
     )
     def test_create_failure(self, _input):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Incorrect set of parameters."):
             Composition(**_input)
 
     @pytest.mark.parametrize(
@@ -1069,6 +1070,7 @@ class TestComposition:
             if v == 0:
                 with pytest.raises(KeyError):
                     comp.get_atomic(k)
+                with pytest.raises(KeyError):
                     comp.get_atomic(Element(k))
             else:
                 assert comp.get_atomic(k) == pytest.approx(v, rel=1.0e-3)
@@ -1252,6 +1254,7 @@ class TestComposition:
             if v == 0:
                 with pytest.raises(KeyError):
                     comp.get_weight(k)
+                with pytest.raises(KeyError):
                     comp.get_weight(Element(k))
             else:
                 assert comp.get_weight(k) == pytest.approx(v, rel=1.0e-3)
@@ -1403,7 +1406,7 @@ class TestComposition:
             ans = {k: pytest.approx(v, rel=1.0e-3) for k, v in Composition(**expected)}
             assert nat._composition == ans
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1448,7 +1451,6 @@ class TestComposition:
     )
     def test_get_option(self, compositions, case_no, name, expected_kw):
         comp = compositions[case_no]
-        print(comp.name(), name)
         assert comp.name() == name
         for key, value in expected_kw.items():
             assert comp[key] == value
@@ -1471,7 +1473,7 @@ class TestComposition:
 
 
 class TestMaterial:
-    cases = [
+    cases: Final = [
         {
             "weight": [("N", 0.755465), ("O", 0.23148), ("AR", 0.012886)],
             "density": 1.2929e-3,
@@ -1506,8 +1508,7 @@ class TestMaterial:
 
     @pytest.fixture(scope="class")
     def materials(self):
-        mats = [Material(**c) for c in self.cases]
-        return mats
+        return [Material(**c) for c in self.cases]
 
     @pytest.mark.parametrize(
         "data",
@@ -1569,18 +1570,25 @@ class TestMaterial:
             },
         ],
     )
-    def test_creation_failure(self, data: Dict[str, Any]):
+    def test_creation_failure(self, data: dict[str, Any]):
+        data = deepcopy(data)  # this fixes pytest strange behavior (see below)"
         if "composition" in data.keys():
-            data["composition"] = Composition(**data["composition"])
-        with pytest.raises(ValueError):
-            Material(**data)
+            composition_params = data.pop("composition")
+            assert not isinstance(
+                composition_params, Composition
+            ), "Check some strange behavior on 'pytest test/*.py': arriving params are already Composition"
+            composition = Composition(**composition_params)
+        else:
+            composition = None
+        with pytest.raises(ValueError, match="Incorrect set of parameters."):
+            Material(**data, composition=composition)
 
     @pytest.mark.parametrize("case", cases)
     def test_creation(self, case):
         mat1 = Material(**case)
         data = case.copy()
-        atomic = data.pop("atomic", tuple())
-        weight = data.pop("weight", tuple())
+        atomic = data.pop("atomic", ())
+        weight = data.pop("weight", ())
         comp = Composition(atomic=atomic, weight=weight)
         mat2 = Material(composition=comp, **data)
         assert mat1.composition == comp
@@ -1594,7 +1602,7 @@ class TestMaterial:
             assert mat1.concentration == d
             assert mat2.concentration == d
 
-    hash_eq_matrix = [
+    hash_eq_matrix: Final = [
         [1, 1, 1, 1, 0, 0, 0],
         [1, 1, 1, 1, 0, 0, 0],
         [1, 1, 1, 1, 0, 0, 0],
@@ -1611,7 +1619,7 @@ class TestMaterial:
         mat2 = materials[case2]
         assert (hash(mat1) == hash(mat2)) == bool(self.hash_eq_matrix[case1][case2])
 
-    eq_matrix = [
+    eq_matrix: Final = [
         [1, 1, 1, 1, 0, 0, 0],
         [1, 1, 1, 1, 0, 0, 0],
         [1, 1, 1, 1, 0, 0, 0],

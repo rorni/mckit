@@ -1,0 +1,42 @@
+#!/bin/bash
+
+. $HOME/.bash-functions.rc
+# set -o nounset
+# set -o errexit
+# set -o verbose
+# set -o xtrace
+
+#
+# Reset pyenv environment
+#
+# Args:
+#    environment: optional, if not provided uses first package name
+#    from underlying `src` directory
+#
+reset() {
+    local env="${1:-}"
+    local pkgs=( $(ls src) )
+    local pkg=${pkgs[0]}
+    local last_python="3.11.8"
+    [[ -z "$env" ]] && env="${pkg//_/-}"
+    echo "Installing package $pkg to environment $env with python $last_python."
+    eval "$(pyenv init -)"
+    pyenv local "$last_python"
+    pyenv virtualenv-delete -f  "$env" && echo "Removed environment $env"
+    pyenv virtualenv "$last_python" "$env" && echo "Created environment $env"
+    pyenv local "$env"
+    pyenv rehash
+    pyenv shell "$env"
+    poetry config virtualenvs.prefer-active-python true
+    poetry env info
+    poetry lock --no-update
+    poetry install
+    python -c "import ${pkg}; print(${pkg}.__version__)" && success "Environment $env is reset"
+    pyenv shell --unset
+    pyenv local "$env" "3.12.2" "3.10.13" "3.9.18"
+    pyenv rehash
+}
+
+reset  "$@"
+
+# vim: set ts=4 sw=4 tw=92 ss=0 ft=sh et ai :

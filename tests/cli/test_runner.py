@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 from io import StringIO
 
 import pytest
-from mckit.utils.logging import logger
 
-from mckit.cli.runner import mckit, VERSION, meta
+from mckit.cli.logging import logger
+from mckit.cli.runner import VERSION, mckit, meta
 
 
 def test_version_command(runner):
     result = runner.invoke(mckit, args=["--version"], catch_exceptions=False)
-    assert result.exit_code == 0, (
-        "Should success on '--version' option: " + result.output
-    )
+    assert result.exit_code == 0, "Should success on '--version' option: " + result.output
     assert VERSION in result.output, "print version on 'version' command"
 
 
@@ -30,9 +30,7 @@ def test_fails_on_unknown_command(runner):
 def test_writes_to_logger_on_errors(runner):
     sink = StringIO()
     logger.add(sink)
-    result = runner.invoke(
-        mckit, args=["check", "not_existing.i"], catch_exceptions=False
-    )
+    result = runner.invoke(mckit, args=["check", "not_existing.i"], catch_exceptions=False)
     assert result.exit_code != 0, "Does not_existing.i exist?"
 
 

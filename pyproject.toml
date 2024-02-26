@@ -1,130 +1,245 @@
 [tool.poetry]
 name = "mckit"
-version = "0.5.1-alpha.0"
+version = "0.8.0"
 description = "Tools to process MCNP models and results"
 authors = ["rrn <r.rodionov@iterrf.ru>"]
 maintainers = ["dpv2015 <dmitri_portnov@yahoo.com>"]
-homepage = "https://github.com/rorni/mckit"
-repository = "https://github.com/rorni/mckit"
-license = "MIT"
-keywords = ["mckit", "MCNP"]
-build = "build.py"
+homepage = "https://github.com/MC-kit/mckit"
+repository = "https://github.com/MC-kit/mckit"
 documentation = "https://mckit.readthedocs.io"
+license = "GPL3"
+keywords = ["mckit", "MCNP"]
+readme = "README.rst"
+packages = [
+    { include = "mckit", from = "src" },
+    { include = "building", format="sdist", from = "."},
+    { include = "tests", format="sdist", from = "."},
+#    { include = "benchmarks", format="sdist", from = "."},
+]
+include = [
+    "src/mckit/data/isotopes.dat",
+    { path = "build.py", format="sdist"},
+    # C extensions must be included in the wheel distribution.
+    { path = "src/mckit/**/*.pyd", format = "wheel" },
+    { path = "src/mckit/**/*.so", format = "wheel" },
+]
+exclude = [
+    ".py[co]$",
+    "setup.py"
+]
 # Select from PyPI classifiers: https://pypi.org/classifiers/
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "Operating System :: OS Independent",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Scientific/Engineering :: Physics",
     "Programming Language :: C",
-    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.7"
-DateTime = "^4.3"
-Pygments = "^2.7.2"
-atomicwrites = "^1.4.0"
-attrs = "^20.2.0"
-click = "^7.1.2"
-click-loguru = "^1.3.4"
-colorama = "^0.4.4"
-importlib-metadata = {version = "^2.0.0", python = "<3.8"}
-numpy = "^1.19.4"
-numpydoc = "^1.1.0"
-ply = "^3.11"
-scipy = "^1.5.3"
-sly = "^0.4"
-tomlkit = "^0.7.0"
-toolz = "^0.11.1"
-tqdm = "^4.53.0"
-asyncio = "^3.4.3"
-aiofile = "^3.3.3"
-isort = "^5.6.4"
-mkl-devel = "^2021.1.1"
-mkl = "^2021.1.1"
-mkl-include = "^2021.1.1"
-python-dotenv = "^0.15.0"
-jupyterlab = "^2.2.9"
-
-[tool.poetry.dev-dependencies]
-Pygments = "^2.7.2"
-Sphinx = "^3.3.0"
-black = "^20.8b1"
-codecov = "^2.1.10"
-coverage = "^5.3"
-darglint = "^1.5.5"
-flake8 = "^3.8.4"
-flake8-annotations = "^2.4.1"
-flake8-bandit = "^2.1.2"
-flake8-black = "^0.2.1"
-flake8-bugbear = "^20.1.4"
-flake8-docstrings = "^1.5.0"
-flake8-import-order = "^0.18.1"
-mypy = "^0.790"
-nox = "^2020.8.22"
-numpydoc = "^1.1.0"
-pre-commit = "^2.8.2"
-pytest = "^6.1.2"
-pytest-benchmark = "^3.2.3"
-pytest-cov = "^2.10.1"
-pytest-mock = "^3.3.1"
-safety = "^1.9.0"
-sphinx-autodoc-typehints = "^1.11.1"
-sphinx-autorun = "^1.1.1"
-sphinx-rtd-theme = "^0.5.0"
-sphinxcontrib-napoleon = "^0.7"
-xdoctest = "^0.15.0"
-wheel = "^0.35.1"
-sphinx-autobuild = "^2020.9.1"
-jupyterlab = "^2.2.9"
-cmake = "3.18.4"
-
 [build-system]
-build-backend = "poetry.core.masonry.api"
 requires = [
-    "poetry-core>=1.0.0",
-    "setuptools>=41.0",
-    "wheel",
-    "cmake",
-    "numpy",
-    "mkl-devel",
+    "poetry-core >= 1.5.2",
+    "cmake >= 3.26.3",
+    "ninja; platform_system!='Windows'",
+    "setuptools >= 67.8.0",
+    "numpy >= 1.26.0",
+    "mkl-devel == 2023.2.0",
+    "intel-openmp == 2023.2.0",
+    "tbb == 2021.10.0",
+    "scikit-build"
 ]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = true
+
+#[tool.skikit-build]
+#cmake.verbose = true
 
 [tool.poetry.scripts]
 mckit = "mckit.cli.runner:mckit"
 
-[tool.coverage.paths]
-source = ["mckit", "*/site-packages"]
-
-[tool.coverage.run]
-branch = true
-source = ["mckit"]
-
-[tool.coverage.report]
-show_missing = true
-# fail_under = 100  # So far, this is just a dream.
-
 [tool.poetry.urls]
-"Repository" = "https://github.com/rorni/mckit"
-"Bug Tracker" = "https://github.com/rorni/mckit/issues"
+"Repository" = "https://github.com/MC-kit/mckit"
+"Bug Tracker" = "https://github.com/MC-kit/mckit/issues"
 # "Documentation" TODO
 
+
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+DateTime = ">=4.3"
+attrs = ">=21.2.0"
+click = ">=8.0.1"
+colorama = ">=0.4.4"
+loguru = ">=0.6.0"
+numpy = ">=1.26.0"
+ply = ">=3.11"
+python-dotenv = ">=0.20.0"
+scipy = ">=1.10.1"
+sly = ">=0.4"
+tomli = {version = ">=2.0.1", python="<3.11"}
+tomli-w = ">=1.0.0"
+tqdm = ">=4.55.1"
+# the last mkl version with wheels for Linux, Windows and MacOS, check on updates
+# the most recent version was 2024.0.0 (windows and linux only).
+# Same for intel-openmp and tbb.
+mkl-devel = "2023.2.0"
+intel-openmp = "2023.2.0"
+tbb = "2021.10.0"
+
+# The following works for linux and windows, but not for macos
+# besides we need to have the same versions on build (see [build-system]),
+# so, we use the most recent version compatbile to all the OS.
+#mkl-devel = [
+#    {version = "2023.0.0", markers = "sys_platform == 'linux'"},
+#    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
+#    {version = "2022.2.1", markers = "sys_platform == 'win32'"}
+#]
+#intel-openmp = [
+#    {version = "2023.0.0", markers = "sys_platform == 'linux'"},
+#    {version = "2023.0.0", markers = "sys_platform == 'darvin'"},
+#    {version = "2022.2.1", markers = "sys_platform == 'win32'"}
+#]
+#tbb = [
+#    {version = "2021.8.0", markers = "sys_platform == 'linux'"},
+#    {version = "2021.8.0", markers = "sys_platform == 'darvin'"},
+#    {version = "2021.7.1", markers = "sys_platform == 'win32'"}
+#]
+# Check MKL wheels availablility:
+#   https://pypi.org/simple/mkl-devel/
+#   https://pypi.org/simple/intel-openmp/
+#   https://pypi.org/simple/tbb/
+# Also interesting: https://pypistats.org/packages/mkl - no visible MacOS downloads
+# As for 2022.01.12 for MacOS only version 10.15 is supported
+# TODO dvp: automate the check above
+#
+# TODO dvp: check
+#      https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
+#
+typer = {extras = ["all"], version = ">=0.9.0"}
+
+[tool.poetry.group.dev.dependencies]
+Pygments = ">=2.10.0"
+nox = ">=2022.1.7"
+scikit-build = ">=0.17.6"
+
+[tool.poetry.group.pre_commit.dependencies]
+pre-commit = ">=2.15.0"
+rstcheck = ">=6.1.2"
+pydocstringformatter = ">=0.7.3"
+pyupgrade = ">=3.15.0"
+
+[tool.poetry.group.black.dependencies]
+black = ">=22.8.0"
+
+[tool.poetry.group.isort.dependencies]
+isort = ">=5.9.3"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=7.1"
+pytest-benchmark = ">=4.0.0"
+# pytest-cache = ">=1.0"
+pytest-cov = ">=4.0"
+# pytest-mock = ">=3.9"
+# pytest-randomly = ">=3.12"
+coverage = { version = ">=6.1.2", extras = ["toml"] }
+
+[tool.poetry.group.coverage.dependencies]
+coverage = { version = ">=6.1.2", extras = ["toml"] }
+
+[tool.poetry.group.xdoctest.dependencies]
+xdoctest = { extras = ["colors"], version = ">=0.15.10" }
+
+[tool.poetry.group.typeguard.dependencies]
+typeguard = ">=4.1.5"
+
+[tool.poetry.group.mypy.dependencies]
+mypy = ">=1.2.0"
+pep8-naming = ">=0.12.1"
+types-setuptools = ">=57.4.2"
+numpy = ">=1.26.2"
+types-tqdm = ">=4.66.0.2"
+
+[tool.poetry.group.flake8.dependencies]
+darglint = ">=1.8.1"
+flake8 = ">=6.0.0"
+flake8-adjustable-complexity = ">=0.0.6"
+flake8-annotations = ">=2.6.2"
+flake8-annotations-coverage = ">=0.0.6"
+flake8-bandit = ">=4.1.1"
+flake8-bugbear = ">=23.3.23"
+flake8-builtins = ">=1.5.3"
+flake8-class-attributes-order = ">=0.1.3"
+flake8-cognitive-complexity = ">=0.1.0"
+flake8-colors = ">=0.1.9"
+flake8-commas = ">=2.1.0"
+flake8-comprehensions = ">=3.10.0"
+flake8-docstrings = ">=1.6.0"
+flake8-eradicate = ">=1.5.0"
+flake8-expression-complexity = ">=0.0.11"
+flake8-functions = ">=0.0.7"
+flake8-import-order = ">=0.18.1"
+flake8-pie = ">=0.16.0"
+flake8-print = ">=5.0.0"
+flake8-rst-docstrings = ">=0.2.7"
+flake8-scream = ">=0.1.0"
+flake8-simplify = ">=0.19.3"
+flake8-use-fstring = ">=1.4"
+flake8-use-pathlib = ">=0.3.0"
+pylint = ">=2.15.10"
+flake8-pylint = ">=0.1.3"
+# TODO dvp: check/use flake8-pyprojecttoml plugin
+# https://gitlab.com/durko/flake8-pyprojecttoml/-/blob/master/pyproject.toml
+
+[tool.poetry.group.docs.dependencies]
+sphinx = ">=6.1.3"
+sphinx-autodoc-typehints = ">=1.19.5"
+sphinx-click = ">=4.4.0"
+
+[tool.poetry.group.docs_auto.dependencies]
+sphinx-autobuild = ">=2021.3.14"
+
+
+[tool.poetry.group.pylsp.dependencies]
+pylsp-mypy = ">=0.6.6"
+pyls-isort = ">=0.2.2"
+python-lsp-black = ">=1.2.1"
+pyls-memestra = ">=0.0.16"
+pylsp-rope = ">=0.1.11"
+ruff-lsp = ">=0.0.35"
+
+[tool.poetry.group.ruff.dependencies]
+ruff = ">=0.0.259"
 
 [tool.isort]
 atomic = true
 ensure_newline_before_comments = true
 known_first_party = "mckit"
+known_third_party = "mpl_toolkits,matplotlib,numpy,scipy,loguru,tqdm,dotenv"
 known_typing = "typing,types,typing_extensions,mypy,mypy_extensions"
 sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 default_section = "FIRSTPARTY"
 use_parentheses = true
 multi_line_output = 3
-line_length = 88
+line_length = 100
 include_trailing_comma = true
 lines_between_types = 1
+skip_gitignore = true
+skip_glob = ["setup*.py", "*-example.py"]
+
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
 # It's the equivalent of r-strings in Python.  Multiline strings are treated as
@@ -132,28 +247,441 @@ lines_between_types = 1
 # character.
 
 [tool.black]
-line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
+line-length = 100
+include = '''
+(
+    \.pyi?$
+)
+'''
 exclude = '''
-/(
+(
     \.eggs
   | \.git
-  | \.hg
   | \.mypy_cache
-  | \.tox
+  | \.pytest_cache
   | \.nox
   | \.venv
+  | \.idea
   | _build
   | build
   | build_configs
   | dist
-  | 3rd-party
+  | extern
   | data
   | htmlcov
-  | mckit\.egg-info
+  | \.egg-info
+  | _tab\.py$
   | notebooks
   | tutorial
   | wrk
-)/
+)
 '''
+
+[tool.pytest.ini_options]
+minversion = "6.2"
+cache_dir = '.cache/pytest'
+norecursedirs = '''
+*.egg-info
+.*
+build
+data
+dist
+docs/_build
+docs/examples
+htmlcov
+notebooks
+tools
+wrk
+'''
+python_functions = "test_*  profile_*"
+addopts = '''
+-ra
+-q
+--tb=short
+--doctest-modules
+--strict-markers
+--ignore setup.py
+--failed-first
+--benchmark-disable
+--benchmark-storage=.cache/benchmarks
+--benchmark-autosave
+--benchmark-compare
+--benchmark-group-by=name,fullname
+'''
+doctest_optionflags = "ELLIPSIS NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ALLOW_UNICODE ALLOW_BYTES"
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+# xfail tests that pass should fail the test suite
+xfail_strict = true
+filterwarnings = [
+    "error",
+    'ignore:Implementing implicit namespace packages \(as specified in PEP 420\) is preferred to `pkg_resources.declare_namespace`',
+    "ignore:.*not typechecking multipledispatch.dispatcher.*UserWarning",
+    'ignore:.*io.FileIO \[closed\]',
+    'ignore:.*Deprecated call to `pkg_resources.declare_namespace',
+    'ignore:.*Implicit None on return values:DeprecationWarning',
+    # pandas 2.1.4 at python 3.12
+    'ignore:.*datetime.datetime.utcfromtimestamp\(\) is deprecated:DeprecationWarning',
+    # openpyxl 3.1.2 qt python 3.12
+    'ignore:.*datetime.datetime.utcnow\(\):DeprecationWarning'
+]
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+
+[tool.xdoctest]
+quiet = true
+options = ""
+
+[tool.coverage.paths]
+source = ["src", ".nox/*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+omit = ["*_tab.py", "**/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90  # TODO dvp: increase limit to 100 with code maturing
+omit = ["*_tab.py", "**/__init__.py"]
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self.debug",
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+ignore_errors = true
+sort = "Cover"
+
+
+# MyPy config
+# See https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml-file
+#     https://dev.to/tusharsadhwani/the-comprehensive-guide-to-mypy-561m
+[tool.mypy]
+python_version = "3.11"
+# strict = true     # TODO dvp: uncomment this to get strict control
+follow_imports = "silent"
+# namespace_packages = true
+warn_return_any = true
+warn_unused_configs = true
+show_error_codes = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+disable_error_code = ["annotation-unchecked"]
+show_error_context = true
+error_summary = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = true
+files = "src/**/*.py"
+plugins = ["numpy.typing.mypy_plugin"]
+
+[[tool.mypy.overrides]]
+module = [
+    "IPython.core.magic",
+    "IPython.core.magic_arguments",
+    "click",
+    "click.testing",
+    "loguru",
+    "mckit.*",  # TODO (dvp, style): make everything typed including extension 'geometry'
+    "multipledispatch",
+    "nox",
+    "numpy.testing",
+    "pandas",
+    "pytest",
+    "scipy.constants",
+    "scipy.sparse",
+    "tomli",
+    "tomllib",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tomllib",
+    "tomli",
+]
+allow_redefinition = true
+disable_error_code = "no-redef"
+
+[tool.check-manifest]
+ignore = [
+    "tests/*",
+    "tools/*",
+    "*.yaml",
+    "noxfile.py",
+]
+
+[tool.ipdb]
+# For debugging in jupyterlab and ipython
+# see https://github.com/gotcha/ipdb
+context = 5
+
+[tool.tryceratops]
+include = ["src"]
+experimental = true
+
+[tool.pydocstringformatter]
+write = true
+style = "pep257"
+exclude = ["tools/**", "src/**/*_parser.py", "src/**/*_tab.py"]
+strip-whitespaces = true
+max-line-length = 100
+summary-quotes-same-line = true
+
+
+[tool.pylint]
+good-names-rgxs = ["."]  # a single character variable is okay
+logging-format-style = "new"   # use {} in logging messages
+deprecated-modules = ["six"]
+extension-pkg-allow-list = ["duckdb"]
+disable = [
+    "wrong-import-order"  # this is `isort` responsibility
+]
+
+
+[tool.ruff]
+target-version = "py38"
+#see full list: https://beta.ruff.rs/docs/rules/#pyflakes-f
+#or run 'ruff linter' to see a brief list
+lint.select= [
+    "A", # flake8-builtins
+    # "ANN", # flake8-annotations
+    # "ARG", # flake8-unused-arguments
+    "B", # flake8-bugbear
+    "BLE", # flake8-blind-except
+    "C4", # flake8-comprehensions
+    "C90", # mccabe
+    "COM", # flake8-commas
+    "DJ", # flake8-django
+    "D", # pydocstyle
+    # "DTZ", # flake8-datetimez
+    # "EM", # flake8-errmsg
+    # "ERA", # eradicate
+    "E", # pycodestyle
+    # "EXE", # flake8-executable
+    # "FBT", # flake8-boolean-trap
+    "F", # Pyflakes
+    "G", # flake8-logging-format
+    "ICN", # flake8-import-conventions
+    # "I", # isort
+    "INP", # flake8-no-pep420
+    # "ISC", # flake8-implicit-str-concat
+    "N", # pep8-naming
+    # "NPY", # NumPy-specific rules
+    "PD", # pandas-vet
+    # "PGH", # pygrep-hooks
+    "PIE", # flake8-pie
+    "PL", # Pylint
+    "PT", # flake8-pytest-style
+    # "PTH", # flake8-use-pathlib
+    "PYI", # flake8-pyi
+    # "Q", # flake8-quotes
+    "RET", # flake8-return
+    # "RSE", # flake8-raise
+    "RUF", # Ruff-specific rules
+    "S", # flake8-bandit
+    # "SIM", # flake8-simplify
+    # "SLF", # flake8-self
+    "T10", # flake8-debugger
+    # "T20", # flake8-print
+    # "TCH", # flake8-type-checking
+    # "TID", # flake8-tidy-imports
+    "TRY", # tryceratops
+    "UP", # pyupgrade
+    "W", # pycodestyle 2
+    "YTT", # flake8-2020
+]
+
+# Ignore rules that currently fail on the codebase
+lint.ignore = [
+    "ANN001", # ANN001 Missing type annotation for function argument: doesn't allow to use functools dispatching
+    "ANN002", # ANN002 Missing type annotation for *drop_items: ... as above
+    "ANN101", # ANN101 Missing type annotation for self in method
+    "ANN102", # ANN102 Missing type annotation for cls in classmethod
+    # "ANN201", # Missing return type annotation for public function `mesh2com`
+    "ANN202", # ANN202 Missing return type annotation for protected function: ... dispatching
+    "ANN204", # ANN204 Missing return type annotation for special method
+
+    "ARG001", # Unused function argument: `expected`
+
+    "B905",   # B905 `zip()` without an explicit `strict=` parameter - ignore while support 3.8, 3.9
+
+    # "C812",   # C812 Missing trailing comma: black compatibility
+    "C901",   # too complex - ...
+
+    "COM812", #  [*] Trailing comma missing
+
+    "D100",   # Missing docstring in public module
+    "D101",   # Missing docstring in public class
+    "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
+    "D105",   # D105 Missing docstring in magic method (__hash__, __eq__)
+    "D104",   # Missing docstring in public package
+    "D106",   # Missing docstring in public nested class
+    "D107",   # Missing docstring in __init__
+    # "D417",   # Missing argument descriptions in the docstring: `config`, `ebins`, - TODO
+
+
+    # "E203",  # E203: Whitespace before ‘:'
+    # "E401",  # Multiple imports on one line
+    "E402",    # Module level import not at top of file
+    "E501",    # Line too long (<LENGTH> > 100 characters)
+    # "E701",  # Multiple statements on one line (colon)
+    # "E702",  # Multiple statements on one line (semicolon)
+    # "E703",  # Statement ends with an unnecessary semicolon
+    # "E704",  # Multiple statements on one line (def)
+    # "E711",  # Comparison to `None` should be `cond is not None`
+    # "E712",  # Comparison to `<BOOL>` should be `cond is <BOOL>`
+    # "E713",  # Test for membership should be `not in`
+    # "E714",  # Test for object identity should be `is not`
+    # "E721",  # Do not compare types, use `isinstance()`
+    # "E722",  # Do not use bare `except`
+    # "E731",  # Do not assign a `lambda` expression, use a `def`
+    # "E741",  # Ambiguous variable name: `<VARIABLE>`
+    # "E743",  # Ambiguous function name: `<FUNCTION>`
+
+    # "EM101",   # Exception must not use a string literal, assign to variable first
+    # "EM102",   # Exception must not use an f-string literal, assign to variable first
+
+    "N803",    # Argument name `R` should be lowercase
+    "N806",    # Variable `D` in function should be lowercase
+
+    # "F401",  # `<TYPE>` imported but unused
+    # "F403",  # `from <MODULE> import *` used; unable to detect undefined names
+    # "F405",  # `<TYPE>` may be undefined, or defined from star imports: `<MODULE>`
+    # "F523",  # `.format` call has unused arguments at position(s): <INDEX>
+    # "F601",  # Dictionary key literal `'<KEY>'` repeated
+    # "F811",  # Redefinition of unused `<VARIABLE>` from line <LINE>
+    # "F821",  # Undefined name `VARIABLE`
+    # "F823",  # Local variable `VARIABLE` referenced before assignment
+    # "F841",  # Local variable `VARIABLE` is assigned to but never used
+
+    # "FBT001",  # Boolean positional arg in function definition (TODO!)
+    # "FBT002",  # Boolean default value in function definition (TODO!)
+    # "FBT003",  # Boolean positional value in function call
+
+    "I001", # import order is controlled by isort
+    # "I101",
+    # "I201",
+    # "I202",
+    "INP001",  # File `tools/clear-prev-dist-info.py` is part of an implicit namespace package.
+
+    # ignore some questionable pandas-vet warnings
+    # "PD005", # use operator instead of method
+    # "PD008", # We use at() to access single values
+    # "PD009", # And we use iat()
+
+    "PLE1205", # logging-too-many-args - with use logure with '{' style of placeholders
+
+    "PLR0912", # Too many branches (15 > 12)
+    "PLR0913", # Too many arguments to function call (6 > 5)
+    "PLR0915", # Too many statements (65 > 50)
+    "PLR2004", # magic number - don't want declare 0.0 as constant
+    "PLR5501", # Consider using `elif` instead of `else` then `if` to remove one indentation level
+
+    "PT019",   # Fixture `_bin` without value is injected as parameter (false positive?)
+
+    "S101",    # Use of `assert` detected
+    # "S301",    # `pickle` and modules that wrap... - TODO - use sql instead of pickle
+
+    # "SLF001",  # Private member accessed: `_geometry_spec`
+
+    "TCH001",  # Move application import `mckit.utils.named` into a type-checking block
+
+    "TRY003",  # Avoid specifying long messages outside the exception class
+
+    # "W503",  # Line break before binary operator: for compatibility with black settings
+]
+
+lint.unfixable = [
+    "F401",    # dont't remove unused imports - TODO add __all__ to  __init__.py files or clean them
+]
+
+# Same as Black.
+line-length = 100
+
+# show an enumeration of all autofixed lint violations
+show-fixes = true
+
+# show source code snippets when reporting violations
+output-format = "concise"
+
+src = ["src", "tests"]
+
+# Allow unused variables when underscore-prefixed.
+# dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+lint.dummy-variable-rgx = "^_$"
+exclude = [
+  "*.egg-info",
+  ".cache",
+  "__pycache__",
+  "adhoc",
+  "docs/source/conf.py",
+  "extern",
+  "extern/nlopt/test/t_python.py",
+  "notebooks",
+  "wrk",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["E402", "F401"]
+"benchmarks/*" = ["S101"]
+"noxfile.py" = ["ANN", "D202"]
+"tests/*" = ["ANN", "D100", "D101", "D102", "D103", "D104", "PLR2004", "S101"]
+"src/mckit/cli/*" = [
+    "PLE1205", # Too many arguments for `logging` format string - we use loguru in CLI modules
+]
+"src/mckit/_init_dynamic_libraries.py" = [ "F401", "E402" ]
+"src/mckit/parser/*" = [
+    "A003",
+    "D",
+    "F811",
+    "F821",
+    "N802",
+    "N816",  # Variable `t_ANY_ignore` in global scope should not be mixedCase
+    "T201",  # print found
+]
+"tests/parser/*" = [
+    "A003",
+    "D",
+    "F811",
+    "F821",
+    "N802",
+    "N816",  # Variable `t_ANY_ignore` in global scope should not be mixedCase
+    "T201",  # print found
+]
+"tools/*" = ["T201", "INP001", "S603", "S607"]
+
+[tool.ruff.lint.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 15
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true  # skip return type for __init__() methods
+
+[tool.ruff.lint.flake8-type-checking]
+strict = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+known-third-party = ["mpl_toolkits", "matplotlib", "numpy", "scipy"]
+required-imports = ["from __future__ import annotations"]
+
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google" # Use Google-style docstrings.
