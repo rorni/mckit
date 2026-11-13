@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# dvp 25-10-23
+
+module add anaconda3  # for Python 3.7, because the default 3.4 doesn't work with dataclasses
+
+# Extract lost particles launching script.
+
+here="$(dirname $0)"
+script="$here/extract_lost_particles.py"
+
+if [[ -f "$script" ]]; then
+  python3 "$script"
+else
+  echo "ERROR: Cannot find $script"
+  exit 1
+fi

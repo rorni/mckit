@@ -1,8 +1,10 @@
-import sys
 import typing as tp
-import numpy as np
-import mckit as mk
+
+import sys
+
 from pathlib import Path
+
+import mckit as mk
 
 universes_to_process = [97, 98, 99]
 
@@ -31,9 +33,7 @@ def load_universe(universe_name: int) -> mk.Universe:
     return universe
 
 
-def process_universe(
-    universe_name: int, min_volume=1e-3, out=sys.stdout
-) -> tp.NoReturn:
+def process_universe(universe_name: int, min_volume=1e-3, out=sys.stdout) -> tp.NoReturn:
     universe = load_universe(universe_name)
     cell: mk.Body = universe[0]
     volume0 = cell.shape.volume(min_volume=min_volume)
@@ -61,9 +61,7 @@ def process_universe(
     material_volume_fractions = []
     for k, v in material_volume_map.items():
         material_volume_fractions.append((material_index[k], v / volume0))
-    mixed_material = mk.Material.mixture(
-        *material_volume_fractions, fraction_type="volume"
-    )
+    mixed_material = mk.Material.mixture(*material_volume_fractions, fraction_type="volume")
     composition = mixed_material.composition
     composition.rename(universe_name)
     print(

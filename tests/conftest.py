@@ -1,43 +1,32 @@
-# tests/conftest.py
-from _pytest.config import Config
+from __future__ import annotations
+
+from pathlib import Path
+
+# noinspection PyPackageRequirements
+import pytest
+
+HERE = Path(__file__).parent
+DATA = (HERE / "data").absolute()
 
 
-# TODO dvp: the following doesn't work, check why?
+@pytest.fixture(scope="session")
+def data() -> Path:
+    """Get Path to tests/data directory.
 
-# import os.path
-# import sys
-# from pathlib import Path
-#
-# import pytest
-#
-# PREFIX_PATH = Path(sys.prefix)
-#
-#
-# @pytest.fixture(scope="session", autouse=True)
-# def set_ld_library_path(request):
-#     print("Setting LD_LIBRARY_PATH")
-#     old_ld_library_path = os.getenv("LD_LIBRARY_PATH", "").split(os.pathsep)
-#     lib_path = PREFIX_PATH / "lib"
-#     assert lib_path.is_dir()
-#     new_ld_library_path = str(lib_path.resolve())
-#
-#     if new_ld_library_path not in old_ld_library_path:
-#
-#         if old_ld_library_path:
-#             new_ld_library_path = os.path.pathsep.join([new_ld_library_path, *old_ld_library_path])
-#             os.environ["LD_LIBRARY_PATH"] = new_ld_library_path
-#
-#             def finalizer():
-#                 os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(old_ld_library_path)
-#         else:
-#             def finalizer():
-#                 pass
-#
-#         request.addfinaYieldGeneratorlizer(finalizer)
+    Returns
+    -------
+    Path to tests/data directory
+    """
+    return DATA
 
 
-def pytest_configure(config: Config) -> None:
-    config.addinivalue_line("markers", "e2e: mark as end-to-end test.")
-    config.addinivalue_line(
-        "markers", 'slow: marks tests as slow (deselect with -m "not slow")'
-    )
+@pytest.fixture
+def cd_tmpdir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Temporarily switch to temp directory.
+
+    Returns
+    -------
+    Path: current (temporal) directory
+    """
+    monkeypatch.chdir(tmp_path)
+    return tmp_path

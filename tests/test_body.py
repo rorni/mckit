@@ -1,14 +1,19 @@
-import pickle
-import typing as tp
+from __future__ import annotations
+
+from typing import Final
+
+import io
+import sys
 
 import numpy as np
 import pytest
 
-from mckit.body import Shape, Body
+from mckit.body import Body, Shape, Simplifier, simplify, simplify_mp, simplify_mpp
 from mckit.box import Box
 from mckit.material import Material
 from mckit.surface import create_surface
 from mckit.transformation import Transformation
+from mckit.universe import Universe
 
 from tests import pass_through_pickle
 
@@ -39,11 +44,8 @@ def surfaces():
 def create_node(kind, args, surfs):
     new_args = []
     for g in args:
-        if isinstance(g, tuple):
-            g = create_node(g[0], g[1], surfs)
-        else:
-            g = surfs[g]
-        new_args.append(g)
+        _g = create_node(g[0], g[1], surfs) if isinstance(g, tuple) else surfs[g]
+        new_args.append(_g)
     return Shape(kind, *new_args)
 
 
@@ -103,8 +105,7 @@ basic_geoms = [
 
 @pytest.fixture(scope="class")
 def geometry(surfaces):
-    geoms = [create_node(g[0], g[1], surfaces) for g in basic_geoms]
-    return geoms
+    return [create_node(g[0], g[1], surfaces) for g in basic_geoms]
 
 
 class TestShape:
@@ -112,10 +113,9 @@ class TestShape:
     def filter_arg(arg, surfs):
         if isinstance(arg, int):
             return surfs[arg]
-        elif isinstance(arg, tuple):
+        if isinstance(arg, tuple):
             return create_node(arg[0], arg[1], surfs)
-        else:
-            return arg
+        return arg
 
     @pytest.mark.parametrize(
         "opc, args, ans_opc, ans_args",
@@ -195,10 +195,10 @@ class TestShape:
     )
     def test_create_failure(self, surfaces, opc, args):
         args = [self.filter_arg(a, surfaces) for a in args]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="expected"):
             Shape(opc, *args)
 
-    polish_cases = [
+    polish_cases: Final = [
         [2, "C", 3, "I", 1, "I", ("C", [5]), "I", 4, "C", "U"],
         [6, "C", 1, "C", "I"],
         [6, "C", 1, "C", "U"],
@@ -248,7 +248,7 @@ class TestShape:
         [13, "C", 12, "C", "I"],
     ]
 
-    @pytest.mark.parametrize("case_no, polish", enumerate(polish_cases))
+    @pytest.mark.parametrize("case_no, polish", list(enumerate(polish_cases)))
     def test_from_polish(self, geometry, surfaces, case_no, polish):
         polish = [self.filter_arg(a, surfaces) for a in polish]
         shape = Shape.from_polish_notation(polish)
@@ -256,81 +256,83 @@ class TestShape:
 
     @pytest.mark.parametrize(
         "case_no, expected",
-        enumerate(
-            [
-                (
-                    "I",
-                    [
-                        ("U", [("S", [2]), ("C", [3]), ("C", [1]), ("S", [5])]),
-                        ("S", [4]),
-                    ],
-                ),
-                ("U", [("S", [6]), ("S", [1])]),
-                ("I", [("S", [6]), ("S", [1])]),
-                (
-                    "I",
-                    [
-                        ("U", [("S", [4]), ("S", [10])]),
-                        (
-                            "U",
-                            [
-                                ("S", [7]),
-                                ("S", [10]),
-                                (
-                                    "I",
-                                    [
-                                        ("U", [("S", [3]), ("S", [4])]),
-                                        ("U", [("S", [4]), ("C", [9])]),
-                                        (
-                                            "U",
-                                            [
-                                                ("C", [6]),
-                                                ("C", [1]),
-                                                ("S", [2]),
-                                                ("S", [5]),
-                                                ("C", [3]),
-                                            ],
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                    ],
-                ),
-                ("I", [("S", [1]), ("U", [("S", [5]), ("C", [3]), ("S", [2])])]),
-                (
-                    "U",
-                    [
-                        ("S", [2]),
-                        (
-                            "I",
-                            [
-                                ("S", [6]),
-                                ("S", [4]),
-                                ("U", [("C", [3]), ("S", [8]), ("S", [5])]),
-                            ],
-                        ),
-                    ],
-                ),
-                (
-                    "I",
-                    [("U", [("S", [1]), ("S", [5])]), ("U", [("S", [1]), ("C", [5])])],
-                ),
-                (
-                    "U",
-                    [("I", [("C", [1]), ("C", [5])]), ("I", [("C", [1]), ("S", [5])])],
-                ),
-                ("U", [("S", [2]), ("C", [11]), ("S", [12])]),
-                ("U", [("C", [1]), ("S", [6])]),
-                (
-                    "I",
-                    [
-                        ("U", [("S", [2]), ("C", [11])]),
-                        ("U", [("S", [2]), ("C", [12])]),
-                    ],
-                ),
-                ("U", [("S", [13]), ("S", [12])]),
-            ]
+        list(
+            enumerate(
+                [
+                    (
+                        "I",
+                        [
+                            ("U", [("S", [2]), ("C", [3]), ("C", [1]), ("S", [5])]),
+                            ("S", [4]),
+                        ],
+                    ),
+                    ("U", [("S", [6]), ("S", [1])]),
+                    ("I", [("S", [6]), ("S", [1])]),
+                    (
+                        "I",
+                        [
+                            ("U", [("S", [4]), ("S", [10])]),
+                            (
+                                "U",
+                                [
+                                    ("S", [7]),
+                                    ("S", [10]),
+                                    (
+                                        "I",
+                                        [
+                                            ("U", [("S", [3]), ("S", [4])]),
+                                            ("U", [("S", [4]), ("C", [9])]),
+                                            (
+                                                "U",
+                                                [
+                                                    ("C", [6]),
+                                                    ("C", [1]),
+                                                    ("S", [2]),
+                                                    ("S", [5]),
+                                                    ("C", [3]),
+                                                ],
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                    ("I", [("S", [1]), ("U", [("S", [5]), ("C", [3]), ("S", [2])])]),
+                    (
+                        "U",
+                        [
+                            ("S", [2]),
+                            (
+                                "I",
+                                [
+                                    ("S", [6]),
+                                    ("S", [4]),
+                                    ("U", [("C", [3]), ("S", [8]), ("S", [5])]),
+                                ],
+                            ),
+                        ],
+                    ),
+                    (
+                        "I",
+                        [("U", [("S", [1]), ("S", [5])]), ("U", [("S", [1]), ("C", [5])])],
+                    ),
+                    (
+                        "U",
+                        [("I", [("C", [1]), ("C", [5])]), ("I", [("C", [1]), ("S", [5])])],
+                    ),
+                    ("U", [("S", [2]), ("C", [11]), ("S", [12])]),
+                    ("U", [("C", [1]), ("S", [6])]),
+                    (
+                        "I",
+                        [
+                            ("U", [("S", [2]), ("C", [11])]),
+                            ("U", [("S", [2]), ("C", [12])]),
+                        ],
+                    ),
+                    ("U", [("S", [13]), ("S", [12])]),
+                ]
+            )
         ),
     )
     def test_complement(self, geometry, surfaces, case_no, expected):
@@ -1897,33 +1899,27 @@ class TestShape:
         result = geometry[geom_no].test_points(point)
         np.testing.assert_array_equal(result, ans)
 
-    @pytest.mark.parametrize(
-        "case_no, expected", enumerate([5, 2, 2, 13, 4, 6, 4, 4, 3, 2])
-    )
+    @pytest.mark.parametrize("case_no, expected", list(enumerate([5, 2, 2, 13, 4, 6, 4, 4, 3, 2])))
     def test_complexity(self, geometry, case_no, expected):
         assert geometry[case_no].complexity() == expected
 
-    box_data = [
+    box_data: Final = [
         [[1.25, 1.75, 1.5], 2.5, 3.5, 3],
         [[-3.25, -1.5, 1.5], 2.5, 3, 3],
         [[5.5, -0.75, 0.75], 2, 1.5, 1.5],
     ]
 
     @pytest.fixture(scope="class")
-    def box(self):
-        boxes = [Box(*b) for b in self.box_data]
-        return boxes
+    @classmethod
+    def box(cls):
+        return [Box(*b) for b in cls.box_data]
 
     @pytest.mark.parametrize("box_no", range(len(box_data)))
     @pytest.mark.parametrize(
         "case_no, expected",
-        enumerate(
-            [(0, 0, -1), (-1, -1, 0), (0, -1, 0), (0, 0, -1), (0, 0, 0), (0, 0, 0)]
-        ),
+        list(enumerate([(0, 0, -1), (-1, -1, 0), (0, -1, 0), (0, 0, -1), (0, 0, 0), (0, 0, 0)])),
     )
-    def test_box(
-        self, geometry, box, box_no: int, case_no: int, expected: tp.Tuple[int]
-    ):
+    def test_box(self, geometry, box, box_no: int, case_no: int, expected: tuple[int]):
         result = geometry[case_no].test_box(box[box_no])
         assert result == expected[box_no]
 
@@ -1931,16 +1927,18 @@ class TestShape:
     @pytest.mark.parametrize("tol", [0.2, None])
     @pytest.mark.parametrize(
         "case_no, expected",
-        enumerate(
-            [
-                [[-4, 4], [-2, 2], [-2, 2]],
-                [[3, 5], [-1, 1], [-1, 1]],
-                [[2, 6], [-2, 2], [-2, 2]],
-                [[-4, 4], [-2, 2], [-2, 2]],
-                [[-3, 6], [-2, 2], [-2, 2]],
-                [[-4, 5], [-1, 1], [-1, 1]],
-                [[2, 6], [-2, 2], [-2, 2]],
-            ]
+        list(
+            enumerate(
+                [
+                    [[-4, 4], [-2, 2], [-2, 2]],
+                    [[3, 5], [-1, 1], [-1, 1]],
+                    [[2, 6], [-2, 2], [-2, 2]],
+                    [[-4, 4], [-2, 2], [-2, 2]],
+                    [[-3, 6], [-2, 2], [-2, 2]],
+                    [[-4, 5], [-1, 1], [-1, 1]],
+                    [[2, 6], [-2, 2], [-2, 2]],
+                ]
+            )
         ),
     )
     def test_bounding_box(self, geometry, tol, case_no, expected):
@@ -1963,15 +1961,17 @@ class TestShape:
     @pytest.mark.parametrize("box_no", range(len(box_data)))
     @pytest.mark.parametrize(
         "case_no, expected",
-        enumerate(
-            [
-                [7.4940, 3.6652, 0],
-                [0, 0, 0.1636],
-                [0.35997, 0, 2.3544],
-                [7.4940, 3.6652, 0],
-                [7.8540, 3.1416, 2.3544],
-                [1.9635, 1.30900, 0.1636],
-            ]
+        list(
+            enumerate(
+                [
+                    [7.4940, 3.6652, 0],
+                    [0, 0, 0.1636],
+                    [0.35997, 0, 2.3544],
+                    [7.4940, 3.6652, 0],
+                    [7.8540, 3.1416, 2.3544],
+                    [1.9635, 1.30900, 0.1636],
+                ]
+            )
         ),
     )
     def test_volume(self, geometry, box, box_no: int, case_no: int, expected):
@@ -1980,29 +1980,31 @@ class TestShape:
 
     @pytest.mark.parametrize(
         "case_no, expected",
-        enumerate(
-            [
-                [2, 3, 1, 5, 4],
-                [6, 1],
-                [6, 1],
-                [6, 1, 2, 5, 3, 4, 9, 7, 10],
-                [5, 3, 2, 1],
-                [3, 8, 5, 4, 6, 2],
-                [1, 5],
-                [1, 5],
-                [2, 11, 12],
-                [1, 6],
-                [2, 11, 12],
-                [13, 12],
-            ]
+        list(
+            enumerate(
+                [
+                    [2, 3, 1, 5, 4],
+                    [6, 1],
+                    [6, 1],
+                    [6, 1, 2, 5, 3, 4, 9, 7, 10],
+                    [5, 3, 2, 1],
+                    [3, 8, 5, 4, 6, 2],
+                    [1, 5],
+                    [1, 5],
+                    [2, 11, 12],
+                    [1, 6],
+                    [2, 11, 12],
+                    [13, 12],
+                ]
+            )
         ),
     )
     def test_get_surface(self, geometry, surfaces, case_no, expected):
-        expected = set(surfaces[s] for s in expected)
+        expected = {surfaces[s] for s in expected}
         surfs = geometry[case_no].get_surfaces()
         assert surfs == expected
 
-    @pytest.mark.parametrize("case_no, polish", enumerate(polish_cases))
+    @pytest.mark.parametrize("case_no, polish", list(enumerate(polish_cases)))
     def test_pickle(self, surfaces, case_no, polish):
         polish = [self.filter_arg(a, surfaces) for a in polish]
         g = Shape.from_polish_notation(polish)
@@ -2010,7 +2012,7 @@ class TestShape:
         # definite test results with respect to the body being tested.
         # After body saving and loading they must have absolutely the same
         # results.
-        points = np.random.random((10000, 3))
+        points = np.random.default_rng().random((10000, 3))
         points -= np.array([0.5, 0.5, 0.5])
         points *= np.array([20, 10, 10])
         results = g.test_points(points)
@@ -2025,21 +2027,23 @@ class TestShape:
 
     @pytest.mark.parametrize(
         "case_no, replace_names",
-        enumerate(
-            [
-                [2, 3, 1, 5, 4],
-                [],
-                [6],
-                [1, 5, 7, 10],
-                [5, 3, 2],
-                [3, 8, 5, 4, 6, 2],
-                [1, 5],
-                [5],
-                [12],
-                [1, 6],
-                [2, 11, 12],
-                [13, 12],
-            ]
+        list(
+            enumerate(
+                [
+                    [2, 3, 1, 5, 4],
+                    [],
+                    [6],
+                    [1, 5, 7, 10],
+                    [5, 3, 2],
+                    [3, 8, 5, 4, 6, 2],
+                    [1, 5],
+                    [5],
+                    [12],
+                    [1, 6],
+                    [2, 11, 12],
+                    [13, 12],
+                ]
+            )
         ),
     )
     def test_replace_surf(self, geometry, case_no, replace_names):
@@ -2052,14 +2056,25 @@ class TestShape:
         new_surfs = new_shape.get_surfaces()
         ids = {id(s) for s in new_surfs}
         ids_ans = {
-            id(s) if n not in replace_names else id(replace_dict[s])
-            for n, s in surfs.items()
+            id(s) if n not in replace_names else id(replace_dict[s]) for n, s in surfs.items()
         }
         assert ids == ids_ans
 
 
+def assert_options(body: Body, options: dict) -> None:
+    """Assert options of a body.
+
+    The name moved from the options dictionary to the explicit `name` attribute.
+    """
+    for k, v in options.items():
+        if k == "name":
+            assert body.name() == v
+        else:
+            assert body.options[k] == v
+
+
 class TestBody:
-    kwarg_data = [
+    kwarg_data: Final = [
         {"name": 1},
         {"name": 2, "MAT": Material(atomic=[("C-12", 1)], density=3.5)},
         {"name": 3, "U": 4},
@@ -2072,11 +2087,10 @@ class TestBody:
         shape = geometry[case_no]
         body = Body(shape, **kwargs)
         assert body.shape == shape
-        for k, v in kwargs.items():
-            assert body.options[k] == v
+        assert_options(body, kwargs)
         assert body.material() == kwargs.get("MAT", None)
 
-    @pytest.mark.parametrize("case_no, polish", enumerate(TestShape.polish_cases))
+    @pytest.mark.parametrize("case_no, polish", list(enumerate(TestShape.polish_cases)))
     def test_create_polish(self, geometry, surfaces, case_no, polish):
         polish = [TestShape.filter_arg(a, surfaces) for a in polish]
         body = Body(polish)
@@ -2085,38 +2099,26 @@ class TestBody:
     @pytest.mark.parametrize("kwargs", kwarg_data)
     @pytest.mark.parametrize(
         "no1, no2",
-        [
-            (i, j)
-            for i in range(len(basic_geoms))
-            for j in range(len(basic_geoms))
-            if i != j
-        ],
+        [(i, j) for i in range(len(basic_geoms)) for j in range(len(basic_geoms)) if i != j],
     )
     def test_intersection(self, geometry, no1, no2, kwargs):
         body1 = Body(geometry[no1], **kwargs)
         body2 = Body(geometry[no2], name="1001")
         body = body1.intersection(body2)
         assert body.shape == body1.shape.intersection(body2.shape)
-        for k, v in kwargs.items():
-            assert body.options[k] == v
+        assert_options(body, kwargs)
 
     @pytest.mark.parametrize("kwargs", kwarg_data)
     @pytest.mark.parametrize(
         "no1, no2",
-        [
-            (i, j)
-            for i in range(len(basic_geoms))
-            for j in range(len(basic_geoms))
-            if i != j
-        ],
+        [(i, j) for i in range(len(basic_geoms)) for j in range(len(basic_geoms)) if i != j],
     )
     def test_union(self, geometry, no1, no2, kwargs):
         body1 = Body(geometry[no1], **kwargs)
         body2 = Body(geometry[no2], name="1001")
         body = body1.union(body2)
         assert body.shape == body1.shape.union(body2.shape)
-        for k, v in kwargs.items():
-            assert body.options[k] == v
+        assert_options(body, kwargs)
 
     @pytest.mark.slow
     @pytest.mark.parametrize("kwarg", kwarg_data)
@@ -2152,11 +2154,12 @@ class TestBody:
         gb = Box([3, 0, 0], 26, 20, 20)
         simple_body = body.simplify(min_volume=0.001, box=gb)
         assert simple_body.shape == expected_shape
-        for k, v in kwarg.items():
-            assert simple_body.options[k] == v
-        assert simple_body.material() == kwarg.get("MAT", None)
+        assert_options(simple_body, kwarg)
+        assert simple_body.material() == kwarg.get("MAT", None), (
+            "Material value should be preserved on simplification"
+        )
 
-    split_surfaces = {
+    split_surfaces: Final = {
         1: create_surface("SX", 4, 2, name=1),
         2: create_surface("SX", -1, 2, name=2),
         3: create_surface("SX", 5, 2, name=3),
@@ -2220,13 +2223,12 @@ class TestBody:
             )
         gb = Box([0, 0, 0], 100, 100, 100)
         split_bodies = body.split(min_volume=0.001, box=gb)
-        print(body.shape.get_stat_table())
+        body.shape.get_stat_table()
         assert len(split_bodies) == len(expected)
         split_shapes = {b.shape for b in split_bodies}
         assert split_shapes == expected
         for b in split_bodies:
-            for k, v in kwarg.items():
-                assert b.options[k] == v
+            assert_options(b, kwarg)
             assert b.material() == kwarg.get("MAT", None)
 
     @pytest.mark.parametrize(
@@ -2280,8 +2282,8 @@ class TestBody:
     def test_transform(self, geometry, tr, case_no: int, fill_tr):
         # The idea is to generate many random points. This points have some
         # definite test results with respect to the body being tested.
-        # After transformation they must have absolutely the same results.
-        points = np.random.random((10000, 3))
+        # After transformation, they must have absolutely the same results.
+        points = np.random.default_rng().random((10000, 3))
         points -= np.array([0.5, 0.5, 0.5])
         points *= np.array([20, 10, 10])
 
@@ -2303,10 +2305,295 @@ class TestBody:
         # TODO: Check testing of FILL without 'transform' case
         np.testing.assert_array_equal(results, new_results)
 
-    @pytest.mark.skip
-    def test_print(self):
-        raise NotImplementedError
 
-    @pytest.mark.skip
-    def test_fill(self):
-        raise NotImplementedError
+def _make_fill_envelope():
+    """Creates a body bounded by PY planes, intended to be filled with universes."""
+    py0 = create_surface("PY", 0, name=3)
+    py2 = create_surface("PY", 2, name=4)
+    fill_shape = Shape("I", py0, Shape("C", py2))
+    return Body(fill_shape, name=1), py0, py2
+
+
+def _make_fill_universe():
+    """Creates a universe with a single x-slab cell to use as a filler."""
+    px0 = create_surface("PX", 0, name=1)
+    px2 = create_surface("PX", 2, name=2)
+    filler = Body(Shape("I", px0, Shape("C", px2)), name=10)
+    return Universe([filler], name=2), px0, px2
+
+
+class TestFill:
+    """Tests of the Body.fill method."""
+
+    def test_fill_without_universe_and_fill_option(self):
+        cell, _, _ = _make_fill_envelope()
+        assert cell.options.get("FILL") is None
+        result = cell.fill()
+        assert result == [cell]
+        assert result[0] is cell
+
+    def test_fill_with_universe_argument(self):
+        cell, py0, py2 = _make_fill_envelope()
+        universe, px0, px2 = _make_fill_universe()
+        result = cell.fill(universe)
+        assert len(result) == 1
+        expected = Shape("I", Shape("S", px0), Shape("C", px2), Shape("S", py0), Shape("C", py2))
+        assert result[0].shape == expected
+
+    def test_fill_from_fill_option(self):
+        cell, py0, py2 = _make_fill_envelope()
+        universe, px0, px2 = _make_fill_universe()
+        cell.options["FILL"] = {"universe": universe}
+        result = cell.fill()
+        assert len(result) == 1
+        expected = Shape("I", Shape("S", px0), Shape("C", px2), Shape("S", py0), Shape("C", py2))
+        assert result[0].shape == expected
+
+    def test_fill_with_transform(self):
+        cell, py0, py2 = _make_fill_envelope()
+        universe, _, _ = _make_fill_universe()
+        cell.options["FILL"] = {
+            "universe": universe,
+            "transform": Transformation(translation=[1, 0, 0]),
+        }
+        result = cell.fill()
+        assert len(result) == 1
+        px1 = create_surface("PX", 1)
+        px3 = create_surface("PX", 3)
+        expected = Shape("I", Shape("S", px1), Shape("C", px3), Shape("S", py0), Shape("C", py2))
+        assert result[0].shape == expected
+
+    def test_fill_recurrent(self):
+        so = create_surface("SO", 1.0, name=9)
+        u_deep = Universe([Body(Shape("S", so), name=7)], name=4)
+        px0 = create_surface("PX", 0, name=1)
+        px2 = create_surface("PX", 2, name=2)
+        mid = Body(Shape("I", px0, Shape("C", px2)), name=8)
+        mid.options["FILL"] = {"universe": u_deep}
+        u_mid = Universe([mid], name=6)
+        cell, py0, py2 = _make_fill_envelope()
+        cell.options["FILL"] = {"universe": u_mid}
+        expected = Shape("I", Shape("S", px0), Shape("C", px2), Shape("S", py0), Shape("C", py2))
+        # Without the recurrent flag the deep universe is not expanded.
+        result = cell.fill()
+        assert len(result) == 1
+        assert result[0].shape == expected
+        # With the flag the mid cell is filled with the deep universe first.
+        result = cell.fill(recurrent=True)
+        assert len(result) == 1
+        expected = Shape(
+            "I",
+            Shape("S", so),
+            Shape("S", px0),
+            Shape("C", px2),
+            Shape("S", py0),
+            Shape("C", py2),
+        )
+        assert result[0].shape == expected
+
+    def test_fill_propagates_universe_option(self):
+        cell, _py0, _py2 = _make_fill_envelope()
+        universe, _, _ = _make_fill_universe()
+        cell.options["FILL"] = {"universe": universe}
+        cell.options["U"] = 8
+        result = cell.fill()
+        assert len(result) == 1
+        assert result[0].options.get("U") == 8
+
+    def test_fill_simplify(self):
+        cell, py0, py2 = _make_fill_envelope()
+        universe, px0, px2 = _make_fill_universe()
+        cell.options["FILL"] = {"universe": universe}
+        result = cell.fill(universe=universe, simplify=True)
+        assert len(result) == 1
+        expected = Shape("I", Shape("S", px0), Shape("C", px2), Shape("S", py0), Shape("C", py2))
+        assert result[0].shape == expected
+        # The 'U' option is inherited from the filling cell, not from the envelope.
+        assert result[0].options.get("U") is universe
+
+
+def _axes():
+    """Creates fresh basis planes for the internals tests (names don't matter for equality)."""
+    return (
+        create_surface("PX", 0, name=1),
+        create_surface("PY", 0, name=2),
+        create_surface("PZ", 0, name=3),
+    )
+
+
+class TestShapeInternals:
+    """Tests of Shape internals left uncovered by the general shape and body suites."""
+
+    def test_get_words_of_degenerate_shapes(self):
+        assert Shape("E").get_words() == ["EMPTY_SET"]
+        assert Shape("R").get_words() == ["UNIVERSE_SET"]
+        # A degenerate shape is not wrapped in parentheses whatever parent's operation is.
+        assert Shape("E").get_words("I") == ["EMPTY_SET"]
+
+    def test_complexity_of_degenerate_shapes(self):
+        assert Shape("E").complexity() == 0
+        assert Shape("R").complexity() == 0
+
+    def test_get_simplest_of_non_boolean_shape(self):
+        px, _py, _pz = _axes()
+        shape = Shape("C", px)
+        assert shape.get_simplest() == [shape]
+
+    def test_get_simplest_without_statistics(self):
+        """Without box statistics the shape degenerates to the inverse of its operation."""
+        px, py, _pz = _axes()
+        shape_i = Shape("I", px, py)
+        assert shape_i.get_simplest() == [Shape("E")]
+        shape_u = Shape("U", px, py)
+        assert shape_u.get_simplest() == [Shape("R")]
+
+    def test_get_simplest_trims_variants_beyond_min_complexity(self):
+        """Variants with complexity greater than the minimal one more than trim_size are dropped."""
+        px0 = create_surface("PX", 0, name=1)
+        py0 = create_surface("PY", 0, name=3)
+        py2 = create_surface("PY", 2, name=4)
+        shape = Shape("I", px0, py0, Shape("U", py2, Shape("I", px0, py0)))
+        shape.collect_statistics(Box([0, 0, 0], 4, 4, 4), 0.05)
+        variants = shape.get_simplest(0)
+        assert [v.complexity() for v in variants] == [2, 4]
+        assert variants[0] == Shape("I", px0, py0)
+
+    def test_equality_with_mismatched_args_groups(self):
+        """Shapes with unequal hash group composition are never equal."""
+        px, py, _pz = _axes()
+        px2 = create_surface("PX", 2, name=4)
+        py2 = create_surface("PY", 2, name=5)
+        shape = Shape("I", px, py)
+        # args numbers differ, duplicated args are kept
+        assert shape != Shape("I", px, py, py)
+        # the other shape misses the first hash group entirely
+        assert shape != Shape("I", px2, py2)
+        # a hash group repeated twice compared to a group of different size
+        assert Shape("I", px, px) != Shape("I", px, px2)
+
+    def test_is_complement_of_halfspaces(self):
+        px, py, _pz = _axes()
+        assert Shape("C", px).is_complement(Shape("S", px))
+        assert not Shape("C", px).is_complement(Shape("S", py))
+        # The empty set and the whole space are complements too.
+        assert Shape("E").is_complement(Shape("R"))
+
+    def test_is_complement_of_multiple_args(self):
+        """Every argument of the shape must have its complement in the other shape."""
+        px, py, pz = _axes()
+        shape = Shape("U", Shape("C", px), Shape("C", py))
+        assert shape.is_complement(Shape("I", px, py))
+        # one of the arguments is not complemented
+        assert not shape.is_complement(Shape("I", px, px))
+        shape_pz = Shape("U", Shape("C", px), Shape("C", pz))
+        assert not shape_pz.is_complement(Shape("I", px, py))
+
+    def test_is_complement_rejects_mismatched_args_numbers(self):
+        """Different args numbers reject the complement even with complementary hashes."""
+        # No naturally built pair of shapes has complementary hashes and different
+        # args numbers, so the hash match is forced to exercise the defensive check.
+        px, py, _pz = _axes()
+        shape = Shape("U", Shape("C", px), Shape("C", py))
+        other = Shape("I", px, py, py)
+        other._hash = ~hash(shape)
+        assert not shape.is_complement(other)
+
+    def test_from_polish_notation_accepts_bodies(self):
+        """A Body operand is unwrapped to its shape."""
+        px, py, _pz = _axes()
+        body = Body(Shape("I", px, py))
+        assert Shape.from_polish_notation([body]) == body.shape
+        assert Shape.from_polish_notation([body, "C"]) == body.shape.complement()
+
+
+class TestBodyInternals:
+    """Tests of Body internals left uncovered by the general body suites."""
+
+    def test_create_rejects_unsuitable_geometry(self):
+        with pytest.raises(TypeError, match="Geometry list or Shape is expected"):
+            Body("abc")
+
+    def test_hash_depends_on_name(self):
+        px, py, _pz = _axes()
+        shape = Shape("I", px, py)
+        body = Body(shape, name=1)
+        assert hash(Body(shape, name=1)) == hash(body)
+        assert hash(body) != hash(Body(shape, name=2))
+
+    def test_is_empty(self):
+        px, py, _pz = _axes()
+        assert Body(Shape("E")).is_empty
+        assert not Body(Shape("I", px, py)).is_empty
+
+    def test_is_graveyard(self):
+        px, py, _pz = _axes()
+        assert Body(Shape("I", px, py)).is_graveyard
+        positive = Body(Shape("I", px, py), IMPN=2.0, IMPP=2.0, IMPE=2.0)
+        assert not positive.is_graveyard
+
+    def test_importance_defaults_to_zero(self):
+        px, py, _pz = _axes()
+        body = Body(Shape("I", px, py))
+        assert body.importance() == 0.0
+        assert body.importance("P") == 0.0
+        assert body.importance("E") == 0.0
+        positive = Body(Shape("I", px, py), IMPN=2.5)
+        assert positive.importance("N") == 2.5
+
+    def test_is_equivalent_to_with_fill(self):
+        """Only the FILL presence matters beyond the shape, the universe value doesn't."""
+        px, py, _pz = _axes()
+        shape = Shape("I", px, py)
+        filled = Body(shape, FILL={"universe": "u"})
+        assert not filled.is_equivalent_to(Body(shape))
+        assert Body(shape).is_equivalent_to(Body(shape))
+
+    def test_material_rejects_unexpected_type(self):
+        px, py, _pz = _axes()
+        body = Body(Shape("I", px, py), MAT="dummy")
+        with pytest.raises(ValueError, match="Unexpected type of composition"):
+            body.material()
+
+
+class TestSimplifyHelpers:
+    """Tests of the top level simplification helpers."""
+
+    def test_simplify_skips_empty_simplification(self):
+        px, py, _pz = _axes()
+        cells = [Body(Shape("I", px, py)), Body(Shape("I", px, Shape("C", px)))]
+        result = list(simplify(cells))
+        assert len(result) == 1  # the body simplifies to empty and is skipped
+        assert result[0].shape == Shape("I", px, py)
+
+    def test_simplifier_roundtrip(self):
+        box = Box([0, 0, 0], 100.0, 100.0, 100.0)
+        simplifier = Simplifier(box=box, min_volume=1.0)
+        restored = pass_through_pickle(simplifier)
+        assert restored.box == simplifier.box
+        assert restored.min_volume == simplifier.min_volume
+        px, py, _pz = _axes()
+        cell = Body(Shape("I", px, py))
+        assert restored(cell).shape == cell.shape
+
+    @pytest.mark.slow
+    def test_multiprocess_simplification(self, monkeypatch):
+        """Tests both multiprocessing variants in one test to spare pool startup cost.
+
+        A Pool requires importable main like under pytest and is not probed in bare scripts.
+        """
+        px, py, _pz = _axes()
+        cells = [Body(Shape("I", px, py)), Body(Shape("U", px, Shape("C", px)))]
+        result = list(simplify_mp(cells, chunk_size=1))
+        assert len(result) == 2
+        assert result[0].shape == cells[0].shape
+
+        # A tty-like stdout makes the progress bar render its items, so its
+        # item formatting function gets exercised too.
+        class FakeOut(io.StringIO):
+            def isatty(self):
+                return True
+
+        monkeypatch.setattr(sys, "stdout", FakeOut())
+        result = list(simplify_mpp(cells, chunk_size=1))
+        assert len(result) == 2
+        assert result[0].shape == cells[0].shape

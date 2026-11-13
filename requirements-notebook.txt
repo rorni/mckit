@@ -1,8 +1,0 @@
-ipykernel
-ipython
-jupyter
-jupyterlab
-matplotlib
-pandas
-seaborn
-xarray

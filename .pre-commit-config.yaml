@@ -1,9 +1,112 @@
+# To use:
+#
+#     pre-commit run -a
+#
+# Or:
+#
+#     pre-commit install  # (runs every time you commit in git)
+#
+# To update this file:
+#
+#     pre-commit autoupdate
+#
+# See:
+#     https://pre-commit.com/                   and
+#     https://github.com/pre-commit/pre-commit  for more information
+#     https://pre-commit.com/hooks.html         for more hooks
+# default_language_version:
+#   python: python3.14
+
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+
+  # Standard hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v6.0.0"
     hooks:
-    -   id: check-yaml
--   repo: https://github.com/psf/black
-    rev: 20.8b1
+      - id: check-added-large-files
+        exclude: (uv|pixi).lock
+      - id: check-ast
+        exclude: notebooks
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-json
+        exclude: notebooks
+      - id: check-merge-conflict
+        exclude: \.rst$
+      - id: check-shebang-scripts-are-executable
+      # - id: check-symlinks
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+        exclude: notebooks
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: data|.ipynb$|^\.
+      - id: name-tests-test
+        exclude: common.py|help*.*py
+        args:
+          - --pytest-test-first
+      - id: mixed-line-ending
+      - id: pretty-format-json
+        args: [--autofix, --no-ensure-ascii, --no-sort-keys]
+        exclude: data|\.ipynb$
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.37.4
     hooks:
-    -   id: black
+      - id: check-dependabot
+      - id: check-github-workflows
+        args: ["--verbose"]
+      - id: check-readthedocs
+
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "v2.26.0"
+    hooks:
+      - id: pyproject-fmt
+
+  - repo: https://github.com/fredrikaverpil/creosote
+    rev: v5.2.0
+    hooks:
+      - id: creosote
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.1
+    hooks:
+      - id: uv-lock 
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.1
+    hooks:
+      - id: ruff-check
+        exclude: ^notebooks|^extern
+      - id: ruff-format
+        exclude: ^notebooks|^extern|ipynb$
+
+
+  # Check for common shell mistakes
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: "v0.11.0.1"
+    hooks:
+      - id: shellcheck
+        args: [ --external-sources ]
+        stages: [ manual ]
+
+  # Check pre-commit config
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+
+  # CMake format
+  - repo: https://github.com/BlankSpruce/gersemi-pre-commit
+    rev: 0.29.2
+    hooks:
+    - id: gersemi
+
+  # Clang format the codebase automatically
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: "v22.1.8"
+    hooks:
+      - id: clang-format
+        types_or: [c++, c, cuda]

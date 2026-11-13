@@ -1,10 +1,16 @@
-import tempfile
+from __future__ import annotations
+
+import io
+import sys
 import textwrap
-from typing import Dict, List, Set, Union
+
+from copy import deepcopy
+from pathlib import Path
 
 import numpy as np
 import pytest
 
+# from dill.pointers import parent
 from mckit.body import Body, Card, Shape
 from mckit.box import Box
 from mckit.material import Composition, Element, Material
@@ -18,31 +24,33 @@ from mckit.universe import (
     collect_transformations,
     surface_selector,
 )
-from mckit.utils.resource import filename_resolver
 
-data_filename_resolver = filename_resolver("tests")
+HERE = Path(__file__).parent
+TEST_DATA = HERE / "data"
+UNIVERSE_TEST_DATA = TEST_DATA / "universe"
 
-TStatItem = Dict[
-    int, Union[List[int], Set[Universe]]
-]  # TODO dvp: cool but isn't this too much freedom?
-TStat = Dict[str, TStatItem]
+
+TStatItem = dict[int, list[int] | set[Universe]]  # TODO dvp: cool but isn't this too much freedom?
+TStat = dict[str, TStatItem]
 
 
 @pytest.fixture(scope="module")
 def universe():
     cases = {
-        1: "universe_test_data/universe1.i",
-        2: "universe_test_data/universe2.i",
-        3: "universe_test_data/universe3.i",
-        4: "universe_test_data/universe4.i",
-        5: "universe_test_data/universe5.i",
-        1002: "universe_test_data/universe1002.i",
-        1012: "universe_test_data/universe1012.i",
-        1022: "universe_test_data/universe1022.i",
+        1: "universe1.i",
+        2: "universe2.i",
+        3: "universe3.i",
+        4: "universe4.i",
+        5: "universe5.i",
+        1002: "universe1002.i",
+        1012: "universe1012.i",
+        1022: "universe1022.i",
     }
 
     def _universe(case: int) -> Universe:
-        result: ParseResult = from_file(data_filename_resolver(cases[case]))
+        path = UNIVERSE_TEST_DATA / cases[case]
+        assert path.is_file(), f"Cannot find test data {path}"
+        result: ParseResult = from_file(path)
         return result.universe
 
     return _universe
@@ -81,7 +89,7 @@ _emp = Shape("R")
 def test_init(cells, kwargs):
     u = Universe(cells, **kwargs)
     assert len(u._cells) == len(cells)
-    for c1, c2 in zip(u._cells, cells):
+    for c1, c2 in zip(u._cells, cells, strict=False):
         assert c1.name() == c2.name()
         assert c1.shape == c2.shape
     assert u.name() == kwargs.get("name", 0)
@@ -289,9 +297,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "keep",
             [7],
@@ -303,9 +309,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "new",
             [5],
@@ -317,9 +321,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=2), density=2.0),
             ),
             "clash",
             [7],
@@ -331,9 +333,7 @@ def test_init(cells, kwargs):
             Body(
                 Shape("C", Sphere([0, 3, 0], 0.5, name=8)),
                 name=7,
-                MAT=Material(
-                    composition=Composition(atomic=[("Fe-56", 1)], name=6), density=2.0
-                ),
+                MAT=Material(composition=Composition(atomic=[("Fe-56", 1)], name=6), density=2.0),
             ),
             "clash",
             [7],
@@ -356,7 +356,7 @@ def test_add_cells(universe, case, cells, name_rule, new_name, new_surfs, new_co
         added_cells = u._cells[-len(new_name) :]
         if isinstance(cells, Body):
             cells = [cells]
-        for added_cell, cell, name in zip(added_cells, cells, new_name):
+        for added_cell, cell, name in zip(added_cells, cells, new_name, strict=False):
             assert added_cell.shape == cell.shape
             assert added_cell is not cell
             assert added_cell.name() == name
@@ -388,7 +388,7 @@ def test_add_cells_neg(universe, case, cells, shapes):
     added_cells = u._cells[-len(cells) :]
     if isinstance(cells, Body):
         cells = [cells]
-    for added_cell, cell, shape in zip(added_cells, cells, shapes):
+    for added_cell, cell, shape in zip(added_cells, cells, shapes, strict=False):
         assert added_cell.shape == shape
         assert added_cell is not cell
         assert added_cell.name() == cell.name()
@@ -578,7 +578,7 @@ def test_get_compositions(universe, case, answer):
 @pytest.mark.parametrize("case, extent", [(1, [20, 10, 10])])
 def test_transform(universe, case, tr, extent):
     u = universe(case)
-    points = np.random.random((50000, 3))
+    points = np.random.default_rng().random((50000, 3))
     points -= np.array([0.5, 0.5, 0.5])
     points *= np.array(extent)
     test_results = [c.shape.test_points(points) for c in u]
@@ -587,7 +587,7 @@ def test_transform(universe, case, tr, extent):
     tr_points = tr.apply2point(points)
     tr_results = [c.shape.test_points(tr_points) for c in tr_u]
     assert len(u._cells) == len(tr_u._cells)
-    for r, r_tr in zip(test_results, tr_results):
+    for r, r_tr in zip(test_results, tr_results, strict=False):
         np.testing.assert_array_equal(r, r_tr)
 
 
@@ -600,7 +600,7 @@ def test_copy(universe, case):
     assert u.verbose_name == uc.verbose_name
     assert u._comment == uc._comment
     assert len(u._cells) == len(uc._cells)
-    for c, cc in zip(u, uc):
+    for c, cc in zip(u, uc, strict=False):
         assert cc is not c
         assert c.name() == cc.name()
         assert c.shape == cc.shape
@@ -648,9 +648,9 @@ def test_bounding_box(universe, tol, case, expected):
 )
 def test_select(universe, case, condition, inner, answer):
     u = universe(case)
-    result = u.select(condition, inner=inner)
-    assert len(result) == len(answer)
-    for r, (cls, name) in zip(result, answer):
+    selection = u.select(condition, inner=inner)
+    assert len(selection) == len(answer)
+    for r, (cls, name) in zip(selection, answer, strict=False):
         assert isinstance(r, cls)
         assert r.name() == name
 
@@ -708,11 +708,13 @@ def test_get_universes(universe, case, answer):
 def test_name_clashes(
     universe,
     case: int,
-    rename: Dict[int, Dict[str, int]],
+    rename: dict[int, dict[str, int]],
     stat: TStat,
 ):
+    rename = deepcopy(rename)
+    stat = deepcopy(stat)
     u: Universe = universe(case)
-    universes_index: Dict[int, Universe] = {x.name(): x for x in u.get_universes()}
+    universes_index: dict[int, Universe] = {x.name(): x for x in u.get_universes()}
     for uname, ren_dict in rename.items():
         universes_index[uname].rename(**ren_dict)
     for stat_item in stat.values():
@@ -790,24 +792,17 @@ def test_name_clashes(
 def test_name_clashes_with_common_materials(
     universe,
     case: int,
-    common_mat: Set[Composition],
+    common_mat: set[Composition],
     stat: TStat,
 ):
+    stat = deepcopy(stat)
     u = universe(case)
     universes_idx = {x.name(): x for x in u.get_universes()}
     u.set_common_materials(common_mat)
     for stat_item in stat.values():
         for kind, universes_names in stat_item.items():
-            stat_item[kind] = {
-                universes_idx[uname] if uname else None for uname in universes_names
-            }
+            stat_item[kind] = {universes_idx[uname] if uname else None for uname in universes_names}
     s = u.name_clashes()
-    for c in u._common_materials:
-        print(c.mcnp_repr())
-    for name, un in universes_idx.items():
-        print(name)
-        for c in un.get_compositions():
-            print(c.mcnp_repr())
     assert s == stat
 
 
@@ -870,7 +865,7 @@ def test_set_common_materials(universe, case, common_mat):
         (2, {"universe": 2}, 1012, Box([0, 0, 0], 20, 20, 20)),
         (
             2,
-            {"predicate": lambda c: "transform" in c.options["FILL"].keys()},
+            {"predicate": lambda c: "transform" in c.options["FILL"]},
             1022,
             Box([0, 0, 0], 20, 20, 20),
         ),
@@ -988,10 +983,10 @@ def test_alone(universe, case):
     u = universe(case)
     current_universe = u.alone()
     assert current_universe is not u
-    assert 0 == current_universe.name()
+    assert current_universe.name() == 0
     assert u.verbose_name == current_universe.verbose_name
     assert len(u._cells) == len(current_universe._cells)
-    for c, cc in zip(u, current_universe):
+    for c, cc in zip(u, current_universe, strict=False):
         assert cc is not c
         assert c.name() == cc.name()
         assert c.shape == cc.shape
@@ -1068,12 +1063,11 @@ def test_simplify(universe, case, complexities, verbose):
         (3, Box([0, 0, 0], 20, 20, 20)),
     ],
 )
-def test_save(universe, case, box):
+def test_save(universe, case, box, tmp_path):
     u = universe(case)
-    out = tempfile.NamedTemporaryFile(mode="w+b", delete=False)
-    u.save(out.name)
-    out.close()
-    ur = from_file(out.name).universe
+    out = tmp_path / "test-save.mcnp"
+    u.save(out)
+    ur = from_file(out).universe
 
     points = box.generate_random_points(100000)
     universes_orig = {x.name(): x for x in u.get_universes()}
@@ -1100,10 +1094,9 @@ def test_save_exception(tmp_path, universe, case, rename):
     for uname, ren_dict in rename.items():
         universes_idx[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save(tmp_path)
+        u.save(tmp_path / f"{case}.i")
 
 
-@pytest.mark.xfail(reason="Check this renaming")
 @pytest.mark.parametrize(
     "case, rename",
     [
@@ -1117,7 +1110,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
     for uname, ren_dict in rename.items():
         universes_idx[uname].rename(**ren_dict)
     with pytest.raises(NameClashError):
-        u.save(tmp_path)
+        u.save(tmp_path / f"{case}.i", check_clashes=True)
 
 
 @pytest.mark.parametrize(
@@ -1133,7 +1126,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
 
                 TR1 1 1 1
             """,
-            [1],
+            [],
         ),
         (
             """\
@@ -1145,7 +1138,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
 
             TR1 1 1 1
             """,
-            [1],
+            [],
         ),
         (
             """\
@@ -1159,7 +1152,7 @@ def test_save_exception2(tmp_path, universe, case, rename):
             TR1 1 1 1
             TR2 -1 -1 -1
             """,
-            [1, 2],
+            [],
         ),
         (
             """\
@@ -1176,12 +1169,148 @@ def test_save_exception2(tmp_path, universe, case, rename):
             TR2 -1 -1 -1
             TR3  0 1 0
             """,
-            [1, 2, 3],
+            [3],
         ),
     ],
 )
-def test_collect_transformations(case: str, expected: List[int]) -> None:
+def test_collect_transformations(case: str, expected: list[int]) -> None:
+    """Only transformations to filling universes should remain in the model."""
     case = textwrap.dedent(case)
     u = from_text(case).universe
     actual = sorted(map(int, map(Card.name, collect_transformations(u))))
     assert actual == expected
+
+
+def test_str(universe) -> None:
+    assert str(universe(1)) == "Universe(name=0)"
+
+
+def test_has_equivalent_cells_of_different_length() -> None:
+    s1 = create_surface("PX", 0, name=1)
+    s2 = create_surface("PY", 0, name=2)
+    u1 = Universe([Body(Shape("S", s1), name=1)], name=1)
+    u2 = Universe([Body(Shape("S", s1), name=2), Body(Shape("S", s2), name=3)], name=2)
+    assert not u1.has_equivalent_cells(u2)
+    assert not u2.has_equivalent_cells(u1)
+
+
+def test_surface_selector_rejects_invalid_type() -> None:
+    with pytest.raises(TypeError, match="Invalid type of surface_names parameter"):
+        surface_selector(1.5)
+
+
+def test_name_clash_error_message() -> None:
+    """The dict form of the exception formats one line per clashed entity."""
+    u1 = Universe([], name=1)
+    u2 = Universe([], name=2)
+    err = NameClashError({"Cell": {1: {u1, u2}}, "Surface": {2: {u1}}})
+    lines = str(err).strip().splitlines()
+    assert len(lines) == 2
+    assert lines[0].startswith("Cell 1 is found in universes ")
+    # The order of universe names follows set iteration, so compare as a set.
+    names = lines[0].rsplit("[", 1)[1].rsplit("]", 1)[0]
+    assert {int(x) for x in names.split(", ")} == {1, 2}
+    assert lines[1] == "Surface 2 is found in universes [1]"
+
+
+def test_rename_rejects_negative_name(universe) -> None:
+    u = universe(1)
+    with pytest.raises(ValueError, match="Universe name -1 < 0"):
+        u.rename(name=-1)
+
+
+def test_check_clashes(universe) -> None:
+    u = universe(2)
+    universes_idx = {x.name(): x for x in u.get_universes()}
+    universes_idx[2].rename(start_cell=2)
+    with pytest.raises(NameClashError) as exc_info:
+        u.check_clashes()
+    assert "cell 2 is found in universes" in str(exc_info.value)
+    # A universe without clashes passes the check.
+    universe(1).check_clashes()
+
+
+def test_verbose_name_setter() -> None:
+    u = Universe([], name=1)
+    with pytest.raises(ValueError, match="Cannot use multiple lines"):
+        u.verbose_name = "a\nb"
+    with pytest.raises(ValueError, match="Too long universe verbose name"):
+        u.verbose_name = "x" * 81
+    u.verbose_name = "fine"
+    assert u.verbose_name == "fine"
+
+
+def test_apply_fill_by_cell_body(universe) -> None:
+    u = universe(2)
+    cell = next(c for c in u if c.name() == 1)
+    u.apply_fill(cell=cell)
+    ua = universe(1012)
+    points = Box([0, 0, 0], 20, 20, 20).generate_random_points(100000)
+    np.testing.assert_array_equal(u.test_points(points), ua.test_points(points))
+
+
+def test_apply_fill_by_universe_object(universe) -> None:
+    u = universe(2)
+    filler = next(x for x in u.get_universes() if x.name() == 1)
+    u.apply_fill(universe=filler)
+    ua = universe(1022)
+    points = Box([0, 0, 0], 20, 20, 20).generate_random_points(100000)
+    np.testing.assert_array_equal(u.test_points(points), ua.test_points(points))
+
+
+def test_bounding_box_skips_graveyard_cells(universe) -> None:
+    u = universe(2)
+    bb = u.bounding_box(skip_graveyard_cells=True)
+    u_without_graveyard = Universe([c for c in u if not c.is_graveyard])
+    expected = u_without_graveyard.bounding_box()
+    np.testing.assert_allclose(bb.center, expected.center)
+    np.testing.assert_allclose(bb.dimensions, expected.dimensions)
+
+
+def test_simplify_drops_cells_that_become_empty() -> None:
+    """Cells turned empty within the simplification box are dropped."""
+    s0 = create_surface("PX", 0, name=1)
+    s30 = create_surface("PX", 30, name=2)
+    s40 = create_surface("PX", 40, name=3)
+    # The union of the half-spaces is empty within the simplification box,
+    # but not empty by construction, so the universe keeps the cell at start.
+    u = Universe(
+        [
+            Body(Shape("U", Shape("S", s30), Shape("S", s40)), name=5),
+            Body(Shape("S", s0), name=6),
+        ],
+    )
+    assert [c.name() for c in u] == [5, 6]
+    u.simplify(box=Box([0, 0, 0], 20, 20, 20), min_volume=0.1, verbose=False)
+    assert [c.name() for c in u] == [6]
+
+
+@pytest.mark.slow
+def test_simplify_verbose_output(universe, monkeypatch) -> None:
+    """A tty-like stdout makes the progress bar render items, exercising fmt_fun."""
+
+    class FakeOut(io.StringIO):
+        def isatty(self):
+            return True
+
+    monkeypatch.setattr(sys, "stdout", FakeOut())
+    u = universe(1)
+    u.simplify(min_volume=0.1, verbose=True)
+    assert len(u._cells) == 4
+    assert "Simplifying cell #" in sys.stdout.getvalue()
+
+
+def test_collect_transformations_of_named_surface_and_body_transformations() -> None:
+    """Named transformations of surfaces and cells are collected too."""
+    surface_tr = Transformation([1, 1, 1], name=1)
+    surface = create_surface("PX", 0, name=21)
+    surface.transformation = surface_tr
+    body_tr = Transformation([-1, -1, -1], name=2)
+    s1 = create_surface("PX", 0, name=1)
+    cells = [
+        Body(Shape("S", surface), name=1),
+        Body(Shape("S", s1), name=2, TRCL=body_tr),
+    ]
+    u = Universe(cells)
+    actual = sorted(map(int, map(Card.name, collect_transformations(u))))
+    assert actual == [1, 2]

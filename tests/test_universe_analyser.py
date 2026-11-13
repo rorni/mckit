@@ -1,14 +1,13 @@
+from __future__ import annotations
+
 from io import StringIO
 
-from mckit.universe import UniverseAnalyser
 from mckit.parser import from_file
-from mckit.utils import path_resolver
-
-cli_data = path_resolver("tests.cli")
+from mckit.universe import UniverseAnalyser
 
 
-def test_test_universe_analyser():
-    universe_path = cli_data("data/shared_surface.mcnp")
+def test_test_universe_analyser(data):
+    universe_path = data / "cli/shared_surface.mcnp"
     assert universe_path.exists()
     universe = from_file(universe_path).universe
     analyzer = UniverseAnalyser(universe)

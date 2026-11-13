@@ -1,8 +1,10 @@
-import pytest
-import numpy as np
+from __future__ import annotations
 
-from mckit.transformation import Transformation, IDENTITY_ROTATION
+import numpy as np
+import pytest
+
 from mckit.geometry import ORIGIN
+from mckit.transformation import IDENTITY_ROTATION, Transformation, calc_z_rotation
 
 
 @pytest.mark.parametrize(
@@ -33,11 +35,7 @@ from mckit.geometry import ORIGIN
             {"name": 1},
         ),
         (
-            {
-                "rotation": np.cos(
-                    np.array([30, 60, 90, 120, 30, 90, 90, 90, 0]) * np.pi / 180
-                )
-            },
+            {"rotation": np.cos(np.array([30, 60, 90, 120, 30, 90, 90, 90, 0]) * np.pi / 180)},
             np.cos(np.array([[30, 120, 90], [60, 30, 90], [90, 90, 0]]) * np.pi / 180),
             ORIGIN,
             {},
@@ -76,7 +74,10 @@ def test_creation(args, rot, offset, options):
     np.testing.assert_array_almost_equal(tr._u, rot)
     np.testing.assert_array_almost_equal(tr._t, offset)
     for k, v in options.items():
-        assert tr[k] == v
+        if k == "name":
+            assert tr.name() == v
+        else:
+            assert tr[k] == v
 
 
 @pytest.mark.parametrize(
@@ -103,7 +104,7 @@ def test_creation(args, rot, offset, options):
     ],
 )
 def test_creation_failure(args):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"wrong|is greater"):
         Transformation(**args)
 
 
@@ -275,10 +276,10 @@ def test_plane_transformation(transforms, norm, point):
 def test_gq_transformation(transforms, point, radius):
     m1 = IDENTITY_ROTATION
     v1 = -2 * point
-    k1 = np.linalg.norm(point) ** 2 - radius ** 2
+    k1 = np.linalg.norm(point) ** 2 - radius**2
     m, v, k = transforms.apply2gq(m1, v1, k1)
     v_ref = -2 * transforms.apply2point(point)
-    k_ref = np.linalg.norm(-0.5 * v_ref) ** 2 - radius ** 2
+    k_ref = np.linalg.norm(-0.5 * v_ref) ** 2 - radius**2
     np.testing.assert_array_almost_equal(m, m1)
     np.testing.assert_array_almost_equal(v, v_ref)
     np.testing.assert_array_almost_equal(k, k_ref)
@@ -305,10 +306,9 @@ tr_tr_cases = [
 ]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def trtr():
-    tr = [Transformation(**tdata) for tdata in tr_tr_cases]
-    return tr
+    return [Transformation(**tdata) for tdata in tr_tr_cases]
 
 
 @pytest.mark.parametrize("tr1_no", range(len(tr_tr_cases)))
@@ -374,3 +374,52 @@ def test_set_item(trtr, tr_no, options):
         tr[k] = v
     for k, v in options.items():
         assert tr[k] == v
+
+
+def test_eq():
+    """Transformation equality follows the geometry, not the name or comment."""
+    tr1 = Transformation(translation=[1, 0, 0], name=1, comment=["a note"])
+    tr2 = Transformation(translation=[1, 0, 0], name=1, comment=["a note"])
+    tr3 = Transformation(translation=[0, 1, 0], name=1)
+    tr4 = Transformation(translation=[1, 0, 0], name=2, comment=["a note"])
+    assert tr1 == tr2
+    assert hash(tr1) == hash(tr2)
+    assert tr1 != tr3
+    assert tr1 == tr4
+    assert tr1 != "not a transformation"
+
+
+class TestIsCloseTo:
+    def test_self(self):
+        tr = Transformation(translation=[1, 0, 0])
+        assert tr.is_close_to(tr)
+
+    def test_not_a_transformation(self):
+        tr = Transformation(translation=[1, 0, 0])
+        assert not tr.is_close_to(np.array([1, 0, 0]))
+
+    def test_close(self):
+        tr1 = Transformation(translation=[1, 0, 0])
+        tr2 = Transformation(translation=[1.0 + 1.0e-15, 0, 0])
+        assert tr1.is_close_to(tr2)
+
+    def test_not_close(self):
+        tr1 = Transformation(translation=[1, 0, 0])
+        tr2 = Transformation(translation=[1.0 + 1.0e-9, 0, 0])
+        assert not tr1.is_close_to(tr2)
+
+
+def test_calc_z_rotation():
+    theta = np.pi / 6
+    actual = calc_z_rotation(theta)
+    expected = np.array(
+        [
+            [np.cos(theta), -np.sin(theta), 0],
+            [np.sin(theta), np.cos(theta), 0],
+            [0, 0, 1],
+        ],
+        dtype=np.float64,
+    )
+    np.testing.assert_array_almost_equal(actual, expected)
+    # Zero rotation angle gives the identity matrix
+    np.testing.assert_array_almost_equal(calc_z_rotation(0.0), IDENTITY_ROTATION)

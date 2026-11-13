@@ -1,20 +1,245 @@
-import numpy as np
+from __future__ import annotations
 
+from textwrap import dedent
+
+import numpy as np
 import pytest
 
-from mckit.parser.meshtal_parser import meshtal_lexer, meshtal_parser
-from mckit.utils import filename_resolver
+from lark import TextSlice
 
-file_resolver = filename_resolver("tests")
+from mckit.parser.meshtal_parser import (
+    _block_text,
+    _floats_from_block,
+    _spatial_bin_floats_from_block,
+    parse,
+    parse_header,
+    parse_tally,
+    read_meshtal,
+)
+
+
+@pytest.mark.parametrize(
+    "text, code, version, build,  date, title, nps",
+    [
+        (
+            dedent("""\
+                mcnp   version 5     ld=09292010  probid =  05/24/18 12:21:45
+                 fmesh test
+                 Number of histories used for normalizing tallies =      10000000.00
+                """),
+            "mcnp",
+            "5",
+            "09292010",
+            "05/24/18 12:21:45",
+            "fmesh test",
+            10000000.00,
+        ),
+        (
+            dedent("""\
+                d1sune version 3.1.4 ld=05152019  probid =  11/12/21 18:25:06
+                 C
+                 Number of histories used for normalizing tallies =   10000000000.00
+                """),
+            "d1sune",
+            "3.1.4",
+            "05152019",
+            "11/12/21 18:25:06",
+            "C",
+            10000000000.00,
+        ),
+    ],
+)
+def test_parse_header(
+    text: str, code: str, version: str, build: str, date: str, title: str, nps: float
+) -> None:
+    parse_result = parse_header(text)
+    assert parse_result.code == code
+    assert parse_result.version == version
+    assert parse_result.build == build
+    assert parse_result.date == date
+    assert parse_result.title == title
+    assert parse_result.histories == nps
+
+
+@pytest.mark.parametrize(
+    "text, name, comment, particle, bin_sizes",
+    [
+        (
+            dedent("""\
+             Mesh Tally Number        14
+             Rectilinear block tally
+             This is a neutron mesh tally.
+
+             Tally bin boundaries:
+                X direction:     -3.00     -1.00      1.00      3.00
+                Y direction:     -3.00     -1.00      1.00      3.00      5.00
+                Z direction:     -4.00     -1.60      0.80      3.20      5.60      8.00
+                Energy bin boundaries: 0.00E+00 1.00E+36
+
+            Energy Bin:  0.00E+00 - 1.00E+36 MeV
+
+              X bin:      -3.00   -    -1.00
+
+                 Tally Results:  Y (across) by Z (down)
+                            -2.00        0.00        2.00        4.00
+                    -2.80 7.18813E-03 1.06634E-02 7.17257E-03 3.47599E-03
+                    -0.40 3.06754E-03 3.67344E-03 3.06150E-03 1.93182E-03
+                     2.00 1.46764E-03 1.64976E-03 1.47022E-03 1.04730E-03
+                     4.40 7.66660E-04 8.36825E-04 7.71489E-04 5.73177E-04
+                     6.80 4.03778E-04 4.28819E-04 3.98268E-04 3.11514E-04
+
+                 Relative Errors
+                            -2.00        0.00        2.00        4.00
+                    -2.80 0.00169     0.00137     0.00169     0.00233
+                    -0.40 0.00264     0.00243     0.00264     0.00319
+                     2.00 0.00386     0.00366     0.00384     0.00437
+                     4.40 0.00532     0.00515     0.00532     0.00593
+                     6.80 0.00722     0.00705     0.00727     0.00800
+
+
+              X bin:      -1.00   -     1.00
+
+                 Tally Results:  Y (across) by Z (down)
+                            -2.00        0.00        2.00        4.00
+                    -2.80 1.06743E-02 2.01953E-02 1.06720E-02 4.24826E-03
+                    -0.40 3.67618E-03 4.44305E-03 3.66319E-03 2.24115E-03
+                     2.00 1.64985E-03 1.83404E-03 1.63652E-03 1.18622E-03
+                     4.40 8.36179E-04 9.03003E-04 8.30197E-04 6.40838E-04
+                     6.80 4.36976E-04 4.60324E-04 4.30752E-04 3.43042E-04
+
+                 Relative Errors
+                            -2.00        0.00        2.00        4.00
+                    -2.80 0.00137     0.00093     0.00137     0.00212
+                    -0.40 0.00243     0.00221     0.00243     0.00302
+                     2.00 0.00367     0.00350     0.00368     0.00419
+                     4.40 0.00514     0.00497     0.00517     0.00572
+                     6.80 0.00698     0.00682     0.00703     0.00774
+
+
+              X bin:       1.00   -     3.00
+
+                 Tally Results:  Y (across) by Z (down)
+                            -2.00        0.00        2.00        4.00
+                    -2.80 7.21022E-03 1.06646E-02 7.19676E-03 3.47633E-03
+                    -0.40 3.08980E-03 3.66923E-03 3.07813E-03 1.93512E-03
+                     2.00 1.48035E-03 1.63603E-03 1.47782E-03 1.05235E-03
+                     4.40 7.68615E-04 8.31973E-04 7.74412E-04 5.78607E-04
+                     6.80 4.02710E-04 4.26487E-04 4.05770E-04 3.11651E-04
+
+                 Relative Errors
+                            -2.00        0.00        2.00        4.00
+                    -2.80 0.00169     0.00137     0.00169     0.00233
+                    -0.40 0.00263     0.00243     0.00264     0.00319
+                     2.00 0.00383     0.00368     0.00384     0.00436
+                     4.40 0.00534     0.00516     0.00531     0.00589
+                     6.80 0.00725     0.00705     0.00720     0.00800
+              """),
+            14,
+            "Rectilinear block tally",
+            "NEUTRON",
+            {"X": 4, "Y": 5, "Z": 6, "ENERGY": 2},
+        ),
+        (
+            dedent(
+                """\
+ Mesh Tally Number        74
+ This is a neutron mesh tally.
+
+ Tally bin boundaries:
+    X direction:     -3.00     -1.00      1.00      3.00
+    Y direction:     -3.00     -1.00      1.00      3.00      5.00
+    Z direction:     -4.00     -3.00     -2.00     -1.00      0.00      1.00
+    Energy bin boundaries: 0.00E+00 1.00E+36
+
+        X         Y         Z     Result     Rel Error
+     -2.000    -2.000    -3.500 0.00000E+00 0.00000E+00
+     -2.000    -2.000    -2.500 6.27702E-03 2.24830E-03
+     -2.000    -2.000    -1.500 4.35550E-03 2.63811E-03
+     -2.000    -2.000    -0.500 3.08614E-03 3.10952E-03
+     -2.000    -2.000     0.500 2.24486E-03 3.63575E-03
+     -2.000     0.000    -3.500 1.45306E-02 1.46500E-03
+     -2.000     0.000    -2.500 8.59736E-03 1.84926E-03
+     -2.000     0.000    -1.500 5.46472E-03 2.30835E-03
+     -2.000     0.000    -0.500 3.67699E-03 2.81878E-03
+     -2.000     0.000     0.500 2.59166E-03 3.36778E-03
+     -2.000     2.000    -3.500 9.03290E-03 1.97542E-03
+     -2.000     2.000    -2.500 6.26415E-03 2.25144E-03
+     -2.000     2.000    -1.500 4.33504E-03 2.64319E-03
+     -2.000     2.000    -0.500 3.08761E-03 3.10959E-03
+     -2.000     2.000     0.500 2.23683E-03 3.62573E-03
+     -2.000     4.000    -3.500 4.06754E-03 3.04694E-03
+     -2.000     4.000    -2.500 3.19242E-03 3.26414E-03
+     -2.000     4.000    -1.500 2.51993E-03 3.53917E-03
+     -2.000     4.000    -0.500 1.96192E-03 3.92537E-03
+     -2.000     4.000     0.500 1.50871E-03 4.38197E-03
+      0.000    -2.000    -3.500 1.45132E-02 1.46549E-03
+      0.000    -2.000    -2.500 8.63447E-03 1.84509E-03
+      0.000    -2.000    -1.500 5.47173E-03 2.30611E-03
+      0.000    -2.000    -0.500 3.68526E-03 2.81385E-03
+      0.000    -2.000     0.500 2.58725E-03 3.36711E-03
+      0.000     0.000    -3.500 3.19700E-02 8.39012E-04
+      0.000     0.000    -2.500 1.31972E-02 1.39430E-03
+      0.000     0.000    -1.500 7.10455E-03 1.95952E-03
+      0.000     0.000    -0.500 4.40634E-03 2.53111E-03
+      0.000     0.000     0.500 2.96430E-03 3.11841E-03
+      0.000     2.000    -3.500 1.45048E-02 1.46653E-03
+      0.000     2.000    -2.500 8.63950E-03 1.84612E-03
+      0.000     2.000    -1.500 5.46359E-03 2.30960E-03
+      0.000     2.000    -0.500 3.67178E-03 2.81762E-03
+      0.000     2.000     0.500 2.57053E-03 3.37416E-03
+      0.000     4.000    -3.500 4.99942E-03 2.73104E-03
+      0.000     4.000    -2.500 3.89479E-03 2.95514E-03
+      0.000     4.000    -1.500 2.99886E-03 3.25122E-03
+      0.000     4.000    -0.500 2.26266E-03 3.66135E-03
+      0.000     4.000     0.500 1.73108E-03 4.13756E-03
+      2.000    -2.000    -3.500 9.08998E-03 1.97264E-03
+      2.000    -2.000    -2.500 6.27654E-03 2.24742E-03
+      2.000    -2.000    -1.500 4.38343E-03 2.63617E-03
+      2.000    -2.000    -0.500 3.11244E-03 3.08949E-03
+      2.000    -2.000     0.500 2.25694E-03 3.61779E-03
+      2.000     0.000    -3.500 1.44999E-02 1.46565E-03
+      2.000     0.000    -2.500 8.62357E-03 1.84595E-03
+      2.000     0.000    -1.500 5.47940E-03 2.30669E-03
+      2.000     0.000    -0.500 3.67164E-03 2.81720E-03
+      2.000     0.000     0.500 2.57404E-03 3.37333E-03
+      2.000     2.000    -3.500 9.09387E-03 1.97189E-03
+      2.000     2.000    -2.500 6.25030E-03 2.25217E-03
+      2.000     2.000    -1.500 4.35821E-03 2.63446E-03
+      2.000     2.000    -0.500 3.10312E-03 3.09805E-03
+      2.000     2.000     0.500 2.25166E-03 3.62754E-03
+      2.000     4.000    -3.500 4.06678E-03 3.04754E-03
+      2.000     4.000    -2.500 3.19813E-03 3.26402E-03
+      2.000     4.000    -1.500 2.51588E-03 3.54243E-03
+      2.000     4.000    -0.500 1.95568E-03 3.91995E-03
+      2.000     4.000     0.500 1.52583E-03 4.37779E-03
+"""
+            ),
+            74,
+            None,
+            "NEUTRON",
+            {"X": 4, "Y": 5, "Z": 6, "ENERGY": 2},
+        ),
+    ],
+)
+def test_parse_tally(
+    text: str, name: int, comment: str | None, particle: str, bin_sizes: dict[str, int]
+) -> None:
+    parse_result = parse_tally(TextSlice.cast_from(text))
+    assert parse_result.name == name
+    assert parse_result.comment == comment or comment is None
+    assert parse_result.particle == particle
+    assert bin_sizes.keys() == parse_result.bins.keys()
+    for b, size in bin_sizes.items():
+        assert parse_result.bins[b].size == size
 
 
 @pytest.mark.parametrize(
     "mesh_file, expected",
     [
         (
-            "parser_test_data/fmesh.m",
+            "parser/fmesh.m",
             {
-                "date": "05/24/1812:21:45",
+                "date": "05/24/18 12:21:45",
                 "histories": 10000000.00,
                 "title": "fmesh test",
                 "tallies": [
@@ -159,9 +384,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -1089,9 +1312,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -1448,9 +1669,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -2207,9 +2426,9 @@ file_resolver = filename_resolver("tests")
             },
         ),
         (
-            "parser_test_data/d1s_mesh.m",
+            "parser/d1s_mesh.m",
             {
-                "date": "12/17/1814:06:18",
+                "date": "12/17/18 14:06:18",
                 "histories": 766606920.00,
                 "title": "Test of neutron flux calculations for reference.",
                 "tallies": [
@@ -4047,9 +4266,9 @@ file_resolver = filename_resolver("tests")
             },
         ),
         (
-            "parser_test_data/fmesh3.m",
+            "parser/fmesh3.m",
             {
-                "date": "05/24/1812:21:45",
+                "date": "05/24/18 12:21:45",
                 "histories": 10000000.00,
                 "title": "fmesh test",
                 "tallies": [
@@ -4194,9 +4413,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -4763,9 +4980,9 @@ file_resolver = filename_resolver("tests")
             },
         ),
         (
-            "parser_test_data/fmesh2.m",
+            "parser/fmesh2.m",
             {
-                "date": "05/24/1812:21:45",
+                "date": "05/24/18 12:21:45",
                 "histories": 10000000.00,
                 "title": "fmesh test",
                 "tallies": [
@@ -4779,9 +4996,7 @@ file_resolver = filename_resolver("tests")
                             "ENERGY": np.array([0.00e00, 6.67e00, 1.33e01, 2.00e01]),
                             "R": np.array([0.00, 1.00, 2.00, 3.00]),
                             "Z": np.array([0.00, 1.25, 2.50, 3.75, 5.00]),
-                            "THETA": np.array(
-                                [0.000, 0.200, 0.400, 0.600, 0.800, 1.000]
-                            ),
+                            "THETA": np.array([0.000, 0.200, 0.400, 0.600, 0.800, 1.000]),
                         },
                         "result": np.array(
                             [
@@ -5349,23 +5564,142 @@ file_resolver = filename_resolver("tests")
         ),
     ],
 )
-def test_meshtal_parser(mesh_file, expected):
-    mesh_file = file_resolver(mesh_file)
-    with open(mesh_file) as f:
-        text = f.read() + "\n"
-    meshtal_lexer.begin("INITIAL")
-    tallies = meshtal_parser.parse(text, lexer=meshtal_lexer)
-    assert tallies.keys() == expected.keys()
-    for k in ["date", "histories", "title"]:
-        assert tallies[k] == expected[k]
-    for t, a in zip(tallies["tallies"], expected["tallies"]):
-        for k in ["name", "particle", "geom"]:
-            assert t[k] == a[k]
+def test_meshtal_parser(mesh_file, expected, data):
+    mesh_file = data / mesh_file
+    with mesh_file.open() as f:
+        text = f.read()  # + "\n"
+    parse_result = parse(text)
+    # assert tallies.keys() == expected.keys()
+    assert parse_result.date == expected["date"]
+    assert parse_result.histories == expected["histories"]
+    assert parse_result.title == expected["title"]
+    tallies = parse_result.tallies
+    for t, a in zip(tallies, expected["tallies"], strict=False):
+        assert t.name == a["name"]
+        assert t.particle == a["particle"]
+        assert t.geom == a["geom"]
         for k, v in a["bins"].items():
-            np.testing.assert_array_almost_equal(t["bins"][k], v)
-        np.testing.assert_array_almost_equal(t["result"], a["result"])
-        np.testing.assert_array_almost_equal(t["error"], a["error"])
+            np.testing.assert_array_almost_equal(t.bins[k], v)
+        np.testing.assert_array_almost_equal(t.result, a["result"])
+        np.testing.assert_array_almost_equal(t.error, a["error"])
 
 
-if __name__ == "__main__":
-    pytest.main()
+def test_read_meshtal_tally_selection(data):
+
+    mesh_file = data / "parser" / "fmesh.m"
+    tallies = read_meshtal(mesh_file, tally=14)
+    assert list(tallies.keys()) == [14]
+    tallies = read_meshtal(mesh_file, tally=[14])
+    assert list(tallies.keys()) == [14]
+    tallies = read_meshtal(mesh_file, tally={14})
+    assert list(tallies.keys()) == [14]
+    tallies = read_meshtal(mesh_file)
+    assert len(tallies) == 7
+
+
+_MESHTAL_HEADER = """\
+mcnp   version 5     ld=09292010  probid =  05/24/18 12:21:45
+ fmesh test
+ Number of histories used for normalizing tallies =      10000000.00
+
+"""
+
+_CYL_VEC_TALLY = """\
+ Mesh Tally Number        94
+ This is a neutron mesh tally.
+
+ Tally bin boundaries:
+  Cylinder origin at  0.00E+00 0.00E+00 0.00E+00, axis in  0.000E+00 0.000E+00 1.000E+00 direction, VEC direction 1.000E+00 0.000E+00 0.000E+00
+    R direction:      0.00      2.00
+    Z direction:     -1.00      1.00
+    Theta direction (revolutions):     0.000     1.000
+    Energy bin boundaries: 0.00E+00 1.00E+36 2.00E+36
+
+    R         Z         Th    Result     Rel Error
+     1.000     0.000     0.500 1.00000E-04 1.00000E-02
+     1.000     0.000     0.500 2.00000E-04 2.00000E-02
+"""
+
+_TIME_COLUMNAR_TALLY = """\
+ Mesh Tally Number        84
+ This is a neutron mesh tally.
+
+ Tally bin boundaries:
+    X direction:     -3.00      3.00
+    Y direction:     -3.00      3.00
+    Z direction:     -3.00      3.00
+    Decay Time: 0.00E+00 1.00E+36
+
+    X         Y         Z    Result     Rel Error
+    -1.000    -1.000    -1.000 1.00000E-04 1.00000E-02
+    -1.000    -1.000    -1.000 2.00000E-04 2.00000E-02
+"""
+
+
+def test_parse_header_unexpected_header() -> None:
+    with pytest.raises(ValueError, match="Unexpected meshtal header: junk header"):
+        _ = parse_header("junk header\nline2\nhist=1\n")
+
+
+def test_block_text_with_text_slice() -> None:
+    assert _block_text(TextSlice("abcdef", 1, 3)) == "bc"
+
+
+def test_floats_from_block_empty_matrix() -> None:
+    with pytest.raises(ValueError, match="Empty matrix is found"):
+        _ = _floats_from_block("single line")
+
+
+def test_spatial_bin_floats_from_block_empty_matrix() -> None:
+    with pytest.raises(ValueError, match="Empty matrix is found"):
+        _ = _spatial_bin_floats_from_block("one line")
+
+
+def test_parse_tally_with_vec() -> None:
+    parse_result = parse_tally(TextSlice.cast_from(_CYL_VEC_TALLY))
+    assert parse_result.geom == "CYL"
+    np.testing.assert_array_equal(parse_result.vec, [1.0, 0.0, 0.0])
+    np.testing.assert_array_equal(parse_result.origin, [0.0, 0.0, 0.0])
+    np.testing.assert_array_equal(parse_result.axis, [0.0, 0.0, 1.0])
+    assert sorted(parse_result.bins) == ["ENERGY", "R", "THETA", "Z"]
+    assert parse_result.result.shape == (2, 1, 1, 1)
+
+
+def test_parse_tally_with_time_bins() -> None:
+    parse_result = parse_tally(TextSlice.cast_from(_TIME_COLUMNAR_TALLY))
+    assert parse_result.geom == "XYZ"
+    assert sorted(parse_result.bins) == ["TIME", "X", "Y", "Z"]
+    np.testing.assert_array_equal(parse_result.bins["TIME"], [0.0, 1e36])
+    assert parse_result.result.shape == (2, 1, 1, 1)
+    np.testing.assert_array_almost_equal(parse_result.result.ravel(), [1e-4, 2e-4])
+    np.testing.assert_array_almost_equal(parse_result.error.ravel(), [1e-2, 2e-2])
+
+
+def test_read_meshtal_str_path(tmp_path):
+    mesh_file = tmp_path / "cyl_vec.m"
+    mesh_file.write_text(_MESHTAL_HEADER + _CYL_VEC_TALLY)
+    tallies = read_meshtal(str(mesh_file))
+    assert list(tallies.keys()) == [94]
+    mesh = tallies[94]
+    assert mesh.mesh.__class__.__name__ == "CylMesh"
+    np.testing.assert_array_equal(mesh.mesh._vec, [1.0, 0.0, 0.0])
+
+
+def test_read_meshtal_empty_selection(tmp_path):
+    mesh_file = tmp_path / "cyl_vec.m"
+    mesh_file.write_text(_MESHTAL_HEADER + _CYL_VEC_TALLY)
+    assert read_meshtal(mesh_file, tally=set()) == {}
+
+
+def test_read_meshtal_filtering_segment_without_trailing_newline(tmp_path):
+    """A last tally line without the trailing newline still gets filtered by number."""
+    mesh_file = tmp_path / "cyl_vec_no_nl.m"
+    mesh_file.write_text((_MESHTAL_HEADER + _CYL_VEC_TALLY).rstrip("\n"))
+    assert read_meshtal(mesh_file, tally=99) == {}
+
+
+def test_read_meshtal_truncated_tally_segment_filtered_out(tmp_path):
+    """A truncated file ending with a bare tally label is skipped gracefully."""
+    mesh_file = tmp_path / "truncated.m"
+    mesh_file.write_text(_MESHTAL_HEADER + " Mesh Tally Number        94")
+    assert read_meshtal(mesh_file, tally=99) == {}

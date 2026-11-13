@@ -1,13 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import pytest
 
 from mckit.cli.runner import mckit
 from mckit.parser import from_file
-from mckit.utils.resource import filename_resolver
-
-
-data_filename_resolver = filename_resolver("tests.cli")
 
 
 def test_when_there_is_no_args(runner):
@@ -17,24 +15,24 @@ def test_when_there_is_no_args(runner):
         assert "Usage:" in result.output
 
 
-def test_transformation_is_not_defined(runner):
+def test_transformation_is_not_defined(runner, data):
     result = runner.invoke(
         mckit,
-        args=["transform", data_filename_resolver("data/simple_cubes.mcnp")],
+        args=["transform", str(data / "cli/simple_cubes.mcnp")],
         catch_exceptions=False,
     )
     assert result.exit_code > 0
     assert "Missing option" in result.output
 
 
-def test_output_is_not_defined(runner):
+def test_output_is_not_defined(runner, data):
     result = runner.invoke(
         mckit,
         args=[
             "transform",
             "--transformation",
             "1",
-            data_filename_resolver("data/simple_cubes.mcnp"),
+            str(data / "cli/simple_cubes.mcnp"),
         ],
         catch_exceptions=False,
     )
@@ -46,11 +44,11 @@ def test_output_is_not_defined(runner):
 def test_not_existing_mcnp_file(runner):
     result = runner.invoke(
         mckit,
-        args=["transform", "-t", "1", "not-existing.imcnp"],
+        args=["transform", "-t", "1", "not-existing.mcnp"],
         catch_exceptions=False,
     )
     assert result.exit_code > 0
-    assert "Path 'not-existing.imcnp' does not exist" in result.output
+    assert "Path 'not-existing.mcnp' does not exist" in result.output
 
 
 @pytest.mark.parametrize(
@@ -58,16 +56,16 @@ def test_not_existing_mcnp_file(runner):
     [
         (
             "identical transformation",
-            "data/simple_cubes_with_tallies.mcnp",
+            "cli/simple_cubes_with_tallies.mcnp",
             "1",
-            "data/simple_cubes_with_tallies.mcnp",
+            "cli/simple_cubes_with_tallies.mcnp",
         ),
     ],
 )
-def test_happy_path(runner, msg, _source, transformation, expected):
-    source = data_filename_resolver(_source)
+def test_happy_path(runner, msg, _source, transformation, expected, data):
+    source = data / _source
     out = Path(source).name
-    transformations = data_filename_resolver("data/brick-transformations.txt")
+    transformations = data / "cli/brick-transformations.txt"
     with runner.isolated_filesystem():
         result = runner.invoke(
             mckit,
@@ -76,10 +74,10 @@ def test_happy_path(runner, msg, _source, transformation, expected):
                 "-t",
                 transformation,
                 "-i",
-                transformations,
+                str(transformations),
                 "-o",
                 str(out),
-                source,
+                str(source),
             ],
             catch_exceptions=False,
         )
@@ -92,50 +90,47 @@ def test_happy_path(runner, msg, _source, transformation, expected):
     "source, transformation, transformations, expected",
     [
         (
-            "data/brick1.mcnp",
+            "cli/brick1.mcnp",
             "1",
-            "data/brick-transformations.txt",
-            "data/brick1-x+10.mcnp",
+            "cli/brick-transformations.txt",
+            "cli/brick1-x+10.mcnp",
         ),
         (
-            "data/brick1.mcnp",
+            "cli/brick1.mcnp",
             "2",
-            "data/brick-transformations.txt",
-            "data/brick1-rot-z90.mcnp",
+            "cli/brick-transformations.txt",
+            "cli/brick1-rot-z90.mcnp",
         ),
     ],
 )
-def test_when_transform_happy_path(
-    runner, source, transformation, transformations, expected
-):
-    source = data_filename_resolver(source)
-    transformations = data_filename_resolver(transformations)
-    with runner.isolated_filesystem():
-        out = "test_when_transformation_is_specified_by_spec.out"
-        result = runner.invoke(
-            mckit,
-            args=[
-                "transform",
-                "-o",
-                out,
-                "-t",
-                transformation,
-                "-i",
-                transformations,
-                source,
-            ],
-            catch_exceptions=False,
-        )
-        assert result.exit_code == 0, f"Failed to transform {source}"
-        expected_universe = from_file(data_filename_resolver(expected)).universe
-        expected_surfaces = list(expected_universe[0])
-        actual_universe = from_file(out).universe
-        actual_surfaces = list(actual_universe[0])
+def test_when_transform_happy_path(runner, source, transformation, transformations, expected, data):
+    source = data / source
+    transformations = data / transformations
+    out = "test_when_transformation_is_specified_by_spec.out"
+    result = runner.invoke(
+        mckit,
+        args=[
+            "transform",
+            "-o",
+            out,
+            "-t",
+            transformation,
+            "-i",
+            str(transformations),
+            str(source),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0, f"Failed to transform {source}"
+    expected_universe = from_file(data / expected).universe
+    expected_surfaces = list(expected_universe[0])
+    actual_universe = from_file(out).universe
+    actual_surfaces = list(actual_universe[0])
 
-        def key(a):
-            return a.args[0].options["name"]
+    def key(a):
+        return a.args[0].name()
 
-        assert sorted(actual_surfaces, key=key) == sorted(expected_surfaces, key=key)
+    assert sorted(actual_surfaces, key=key) == sorted(expected_surfaces, key=key)
 
 
 # @pytest.mark.parametrize(
@@ -165,7 +160,7 @@ def test_when_transform_happy_path(
 #         expected = expected.split()
 #         for e in expected:
 #             assert (out / e).exists()
-#         text = (out / "cells_start.txt").read_text(encoding=MCNP_ENCODING)
+#         text = (out / "cells_start.txt").read_text(encoding="utf8")
 #         assert is_comment_text(text), "Should be MCNP comment text"
 
 
